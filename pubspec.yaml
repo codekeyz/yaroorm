@@ -1,15 +1,24 @@
 name: pharaoh_turbo
-description: A sample command-line application.
+description: Turbo-charged full-stack framework for Web & API development using Pharaoh.
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+repository: https://github.com/Pharaoh-Framework/pharaoh-turbo
 
 environment:
-  sdk: ^3.2.2
+  sdk: ^3.0.0
 
-# Add regular dependencies here.
 dependencies:
-  # path: ^1.8.0
+  pharaoh:
 
+dependency_overrides:
+  spanner:
+    git: 
+      url: git@github.com:Pharaoh-Framework/pharaoh.git
+      path: packages/spanner
+  pharaoh:
+    git: 
+      url: git@github.com:Pharaoh-Framework/pharaoh.git
+      path: packages/pharaoh
+  
 dev_dependencies:
-  lints: ^2.1.0
-  test: ^1.24.0
+  spookie: ^1.0.1
+
