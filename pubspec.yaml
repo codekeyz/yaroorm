@@ -21,4 +21,5 @@ dependency_overrides:
   
 dev_dependencies:
   spookie: ^1.0.1
+  lints: ^3.0.0
 
