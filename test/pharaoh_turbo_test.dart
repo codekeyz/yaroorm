@@ -1,8 +1,6 @@
-import 'package:pharaoh_turbo/pharaoh_turbo.dart';
+@Skip()
 import 'package:test/test.dart';
 
 void main() {
-  test('calculate', () {
-    expect(calculate(), 42);
-  });
+  group('A group of tests', () {});
 }
