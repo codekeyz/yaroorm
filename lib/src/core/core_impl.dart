@@ -11,19 +11,13 @@ class _YarooAppImpl extends Application {
   }
 
   @override
-  void useRoutes(RoutesResolver routeResolver) async {
-    final routes = routeResolver.call().compressed;
-    final reqHandlers = routes.whereType<RouteMethodDefinition>();
+  void useRoutes(RoutesResolver routeResolver) {
+    final reqHandlers = routeResolver.call().methods;
     for (final ctrl in reqHandlers) {
       for (final method in ctrl.mapping.methods) {
         _spanner.addRoute(method, ctrl.mapping.path, ctrl.classMethod);
       }
     }
-  }
-
-  @override
-  void useConfig(ConfigResolver configResolver) {
-    _config = configResolver.call();
   }
 
   @override

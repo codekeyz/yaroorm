@@ -7,7 +7,7 @@ import '../core.dart';
 import 'router.dart';
 import 'utils.dart';
 
-extension on ClassMethodDefinition {
+extension on ControllerMethodDefinition {
   void validate() {
     final ctrlMirror = reflectClass($1);
 
@@ -53,7 +53,7 @@ class MiddlewareDefinition extends RouteDefinition {
 }
 
 class RouteMethodDefinition extends RouteDefinition {
-  final ClassMethodDefinition classMethod;
+  final ControllerMethodDefinition classMethod;
   final RouteMapping mapping;
 
   RouteMethodDefinition(this.classMethod, this.mapping)
@@ -130,4 +130,10 @@ extension RouteDefinitionExtension on Iterable<RouteDefinition> {
     }
     return compressedList;
   }
+
+  List<RouteMethodDefinition> get methods =>
+      compressed.whereType<RouteMethodDefinition>().toList();
+
+  List<MiddlewareDefinition> get middlewares =>
+      compressed.whereType<MiddlewareDefinition>().toList();
 }

@@ -3,9 +3,9 @@ library router;
 import 'package:spanner/spanner.dart';
 import 'definition.dart';
 
-export 'definition.dart';
+export 'definition.dart' show RouteDefinitionExtension;
 
-typedef ClassMethodDefinition = (Type controller, Symbol symbol);
+typedef ControllerMethodDefinition = (Type controller, Symbol symbol);
 
 abstract class RouteDefinition {
   final RouteDefinitionType type;
@@ -14,35 +14,59 @@ abstract class RouteDefinition {
   void commit(Spanner spanner);
 }
 
-abstract interface class Router {
-  static RouteMethodDefinition get(String path, ClassMethodDefinition defn) =>
+abstract interface class Route {
+  static RouteMethodDefinition get(
+    String path,
+    ControllerMethodDefinition defn,
+  ) =>
       RouteMethodDefinition(defn, RouteMapping([HTTPMethod.GET], path));
 
-  static RouteMethodDefinition head(String path, ClassMethodDefinition defn) =>
+  static RouteMethodDefinition head(
+    String path,
+    ControllerMethodDefinition defn,
+  ) =>
       RouteMethodDefinition(defn, RouteMapping([HTTPMethod.HEAD], path));
 
-  static RouteMethodDefinition post(String path, ClassMethodDefinition defn) =>
+  static RouteMethodDefinition post(
+    String path,
+    ControllerMethodDefinition defn,
+  ) =>
       RouteMethodDefinition(defn, RouteMapping([HTTPMethod.POST], path));
 
-  static RouteMethodDefinition put(String path, ClassMethodDefinition defn) =>
+  static RouteMethodDefinition put(
+    String path,
+    ControllerMethodDefinition defn,
+  ) =>
       RouteMethodDefinition(defn, RouteMapping([HTTPMethod.PUT], path));
 
-  static RouteMethodDefinition delete(String path, ClassMethodDefinition defn) =>
+  static RouteMethodDefinition delete(
+    String path,
+    ControllerMethodDefinition defn,
+  ) =>
       RouteMethodDefinition(defn, RouteMapping([HTTPMethod.DELETE], path));
 
-  static RouteMethodDefinition patch(String path, ClassMethodDefinition defn) =>
+  static RouteMethodDefinition patch(
+    String path,
+    ControllerMethodDefinition defn,
+  ) =>
       RouteMethodDefinition(defn, RouteMapping([HTTPMethod.PATCH], path));
 
-  static RouteMethodDefinition options(String path, ClassMethodDefinition defn) =>
+  static RouteMethodDefinition options(
+    String path,
+    ControllerMethodDefinition defn,
+  ) =>
       RouteMethodDefinition(defn, RouteMapping([HTTPMethod.OPTIONS], path));
 
-  static RouteMethodDefinition trace(String path, ClassMethodDefinition defn) =>
+  static RouteMethodDefinition trace(
+    String path,
+    ControllerMethodDefinition defn,
+  ) =>
       RouteMethodDefinition(defn, RouteMapping([HTTPMethod.TRACE], path));
 
   static RouteMethodDefinition mapping(
     List<HTTPMethod> methods,
     String path,
-    ClassMethodDefinition defn,
+    ControllerMethodDefinition defn,
   ) {
     var mapping = RouteMapping(methods, path);
     if (methods.contains(HTTPMethod.ALL)) mapping = RouteMapping([HTTPMethod.ALL], path);
@@ -63,13 +87,13 @@ abstract interface class Router {
     resource = resource.toLowerCase();
     final paramName = parameterName ?? resource;
 
-    return Router.group(resource).routes([
-      Router.get('/', (controller, #index)),
-      Router.get('/<$paramName>', (controller, #show)),
-      Router.post('/', (controller, #create)),
-      Router.put('/<$paramName>', (controller, #update)),
-      Router.patch('/<$paramName>', (controller, #update)),
-      Router.delete('/<$paramName>', (controller, #delete))
+    return Route.group(resource).routes([
+      Route.get('/', (controller, #index)),
+      Route.get('/<$paramName>', (controller, #show)),
+      Route.post('/', (controller, #create)),
+      Route.put('/<$paramName>', (controller, #update)),
+      Route.patch('/<$paramName>', (controller, #update)),
+      Route.delete('/<$paramName>', (controller, #delete))
     ]);
   }
 }

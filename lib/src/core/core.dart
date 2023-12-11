@@ -2,16 +2,20 @@ import 'dart:async';
 
 import 'package:get_it/get_it.dart';
 import 'package:pharaoh/pharaoh.dart';
+import 'package:reflectable/reflectable.dart';
 import 'package:spanner/spanner.dart';
 
 import '_config/config.dart';
 import '_router/router.dart';
 
-part './_controller/controller.dart';
-part './_service/service.dart';
-part './core_impl.dart';
+import 'package:collection/collection.dart';
+import 'package:reflectable/reflectable.dart' as r;
 
-final GetIt _getIt = GetIt.instance..registerSingleton<Application>(_YarooAppImpl());
+part '_http/http.dart';
+part './core_impl.dart';
+part './_service/service.dart';
+part './_container/container.dart';
+part './_reflector/reflector.dart';
 
 typedef RoutesResolver = List<RouteDefinition> Function();
 
@@ -29,18 +33,28 @@ abstract interface class Application {
   T singleton<T extends Object>(T instance);
 
   void useRoutes(RoutesResolver routeResolver);
-
-  void useConfig(ConfigResolver config);
 }
 
 abstract class ApplicationFactory {
-  List<ServiceProvider> get providers;
+  final ConfigResolver appConfig;
+
+  ApplicationFactory({
+    required this.appConfig,
+  });
 
   List<Middleware> get globalMiddlewares;
 
   Future<void> bootstrap() async {
-    await Future.wait(
-      providers.map((e) => Future.sync(() => e.boot())),
-    );
+    final config = appConfig.call();
+    final providers = config.getValue<List<Type>>('providers');
+
+    for (final type in providers) {
+      final provider = createNewInstance<ServiceProvider>(ResourceType.provider, type);
+      await provider.boot();
+    }
+
+    // await Future.wait(
+    //   providers.map((e) => Future.sync(() => e.boot())),
+    // );
   }
 }

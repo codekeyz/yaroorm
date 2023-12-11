@@ -1,7 +1,8 @@
 part of '../core.dart';
 
-abstract class ServiceProvider {
-  Application get app => Application._instance;
-
-  FutureOr<void> boot();
+class PharaohServiceProvider extends ServiceProvider {
+  @override
+  FutureOr<void> boot() {
+    _getIt.registerSingleton<Pharaoh>(Pharaoh());
+  }
 }
