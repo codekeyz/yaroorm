@@ -1,4 +1,4 @@
-name: pharaoh_turbo
+name: yaroo
 description: Class and annotation based development with Pharaoh.
 version: 0.0.1
 repository: https://github.com/Pharaoh-Framework/pharaoh-turbo
@@ -7,9 +7,14 @@ environment:
   sdk: ^3.0.0
 
 dependencies:
+  spanner:
   pharaoh:
   meta: ^1.11.0
   collection: ^1.18.0
+  dotenv: ^4.2.0
+  get_it: ^7.6.4
+  uuid: ^4.2.1
+  analyzer:
 
 dependency_overrides:
   spanner:

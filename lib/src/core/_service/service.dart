@@ -1,7 +1,7 @@
 part of '../core.dart';
 
 abstract class ServiceProvider {
-  late final TurboApp app = TurboApp.instance;
+  Application get app => Application._instance;
 
   FutureOr<void> boot();
 }

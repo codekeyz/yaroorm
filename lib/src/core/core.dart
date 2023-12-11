@@ -1,45 +1,30 @@
 import 'dart:async';
-import 'dart:convert';
 
-import 'package:dotenv/dotenv.dart';
 import 'package:get_it/get_it.dart';
 import 'package:pharaoh/pharaoh.dart';
 import 'package:spanner/spanner.dart';
 
-import '_router/definition.dart';
+import '_config/config.dart';
+import '_router/router.dart';
 
+part './_controller/controller.dart';
 part './_service/service.dart';
+part './core_impl.dart';
 
-DotEnv? _env;
-
-T? env<T>(String name, [T? defaultValue]) {
-  _env ??= DotEnv(quiet: true, includePlatformEnvironment: false)..load();
-  final strVal = _env![name];
-
-  if (strVal == null) return defaultValue;
-  final parsedVal = switch (T) {
-    const (String) => strVal,
-    const (int) => int.tryParse(strVal),
-    const (num) => num.tryParse(strVal),
-    const (double) => double.tryParse(strVal),
-    const (List<String>) => jsonDecode(strVal),
-    _ => throw PharaohException.value('Unsupported value type used in `env`.'),
-  };
-  return (parsedVal ?? defaultValue) as T;
-}
-
-typedef TurboAppConfig = Map<String, dynamic>;
-
-final GetIt _getIt = GetIt.instance..registerSingleton<TurboApp>(_TurboAppImpl());
+final GetIt _getIt = GetIt.instance..registerSingleton<Application>(_YarooAppImpl());
 
 typedef RoutesResolver = List<RouteDefinition> Function();
 
-typedef ConfigResolver = TurboAppConfig Function();
+typedef ConfigResolver = YarooAppConfig Function();
 
-abstract interface class TurboApp {
-  static TurboApp instance = _getIt.get<TurboApp>();
+abstract interface class Application {
+  static final Application _instance = _getIt.get<Application>();
 
-  TurboAppConfig get config;
+  String get name;
+
+  String get url;
+
+  YarooAppConfig get config;
 
   T singleton<T extends Object>(T instance);
 
@@ -48,34 +33,14 @@ abstract interface class TurboApp {
   void useConfig(ConfigResolver config);
 }
 
-class _TurboAppImpl extends TurboApp {
-  late final TurboAppConfig _config;
+abstract class ApplicationFactory {
+  List<ServiceProvider> get providers;
 
-  final Spanner _spanner = Spanner();
+  List<Middleware> get globalMiddlewares;
 
-  @override
-  T singleton<T extends Object>(T instance) {
-    return _getIt.registerSingleton<T>(instance);
-  }
-
-  @override
-  TurboAppConfig get config => _config;
-
-  @override
-  void useRoutes(RoutesResolver routeResolver) async {
-    final routes = routeResolver.call().compressed;
-    final reqHandlers = routes.whereType<RouteMethodDefinition>();
-    for (final ctrl in reqHandlers) {
-      for (final method in ctrl.mapping.methods) {
-        _spanner.addRoute(method, ctrl.mapping.path, ctrl.classMethod);
-      }
-    }
-  }
-
-  @override
-  void useConfig(ConfigResolver configResolver) {
-    _config = configResolver.call();
-
-    print(_config);
+  Future<void> bootstrap() async {
+    await Future.wait(
+      providers.map((e) => Future.sync(() => e.boot())),
+    );
   }
 }

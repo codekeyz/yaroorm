@@ -1,11 +1,18 @@
 library router;
 
-import 'package:pharaoh/pharaoh.dart';
+import 'package:spanner/spanner.dart';
 import 'definition.dart';
 
 export 'definition.dart';
 
 typedef ClassMethodDefinition = (Type controller, Symbol symbol);
+
+abstract class RouteDefinition {
+  final RouteDefinitionType type;
+  const RouteDefinition(this.type);
+
+  void commit(Spanner spanner);
+}
 
 abstract interface class Router {
   static RouteMethodDefinition get(String path, ClassMethodDefinition defn) =>

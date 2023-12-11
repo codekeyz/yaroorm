@@ -3,16 +3,9 @@ import 'dart:mirrors';
 import 'package:pharaoh/pharaoh.dart';
 import 'package:spanner/spanner.dart';
 
-import '../_controller/controller.dart';
+import '../core.dart';
 import 'router.dart';
 import 'utils.dart';
-
-class PharaohAnnotationError extends ArgumentError {
-  PharaohAnnotationError(
-    String message, {
-    Object? value,
-  }) : super.value(value, 'Pharaoh Annotation Error', message);
-}
 
 extension on ClassMethodDefinition {
   void validate() {
@@ -30,13 +23,6 @@ extension on ClassMethodDefinition {
 }
 
 enum RouteDefinitionType { route, group, middleware }
-
-abstract interface class RouteDefinition {
-  final RouteDefinitionType type;
-  const RouteDefinition(this.type);
-
-  void commit(Spanner spanner);
-}
 
 class RouteMapping {
   final List<HTTPMethod> methods;

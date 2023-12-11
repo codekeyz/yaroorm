@@ -1,4 +1,8 @@
-abstract class BaseController {}
+part of '../core.dart';
+
+abstract class BaseController {
+  Application get app => Application._instance;
+}
 
 // import 'dart:mirrors';
 
