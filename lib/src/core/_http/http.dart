@@ -21,5 +21,6 @@ class Param {
 
 @Target({TargetKind.parameter})
 class Body {
-  const Body();
+  final String? param;
+  const Body({this.param});
 }

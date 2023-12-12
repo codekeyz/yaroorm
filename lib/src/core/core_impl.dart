@@ -1,13 +1,14 @@
 part of 'core.dart';
 
-class _YarooAppImpl extends Application {
+class _YarooAppImpl implements Application {
   late final YarooAppConfig _appConfig;
+  late final Spanner _spanner;
 
-  Spanner get spanner => Application._spanner;
+  _YarooAppImpl(this._spanner);
 
   @override
   T singleton<T extends Object>(T instance) {
-    return _getIt.registerSingleton<T>(instance);
+    return registerSingleton<T>(instance);
   }
 
   @override
@@ -19,14 +20,14 @@ class _YarooAppImpl extends Application {
   void useRoutes(RoutesResolver routeResolver) {
     final routeDefns = routeResolver.call();
     for (var defn in routeDefns) {
-      defn.commit(spanner);
+      defn.commit(_spanner);
     }
   }
 
   @override
   void useMiddlewares(List<Middleware> middleware) {
     for (final middleware in middleware) {
-      spanner.addMiddleware('/', middleware);
+      _spanner.addMiddleware('/', middleware);
     }
   }
 

@@ -1,6 +1,9 @@
 import 'package:collection/collection.dart';
 import 'package:reflectable/reflectable.dart' as r;
 
+import '../_container/container.dart';
+import '../_router/definition.dart';
+import '../_router/router.dart';
 import '../_router/utils.dart';
 import '../core.dart';
 
@@ -53,20 +56,30 @@ T createNewInstance<T extends Object>(Type classType) {
 
   final dependencies = constructorParameters
       .map((e) => e.reflectedType)
-      .map((type) => getInstanceFromRegistry(type))
+      .map((type) => instanceFromRegistry(type: type))
       .toList();
 
   return classMirror.newInstance(unnamedConstructor, dependencies) as T;
 }
 
-void ensureControllerHasMethod(Type type, Symbol method) {
+ControllerMethod parseControllerMethod(ControllerMethodDefinition defn) {
+  final type = defn.$1;
+  final method = defn.$2;
+
   final ctrlMirror = inject.reflectType(type) as r.ClassMirror;
   if (ctrlMirror.superclass?.reflectedType != BaseController) {
     throw ArgumentError('$type must extend BaseController');
   }
 
   final methods = ctrlMirror.instanceMembers.values.whereType<r.MethodMirror>();
-  if (!methods.any((e) => e.simpleName == symbolToString(method))) {
+  final actualMethod =
+      methods.firstWhereOrNull((e) => e.simpleName == symbolToString(method));
+  if (actualMethod == null) {
     throw ArgumentError('$type does not have method  #${symbolToString(method)}');
   }
+
+  // final parameters = actualMethod.parameters.map((e) => e.reflectedType);
+  // print(parameters);
+
+  return ControllerMethod(defn);
 }

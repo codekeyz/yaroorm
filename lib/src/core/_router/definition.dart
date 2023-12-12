@@ -6,10 +6,6 @@ import '../core.dart';
 import 'router.dart';
 import 'utils.dart';
 
-extension on ControllerMethodDefinition {
-  void validate() => ensureControllerHasMethod($1, $2);
-}
-
 enum RouteDefinitionType { route, group, middleware }
 
 class RouteMapping {
@@ -35,30 +31,34 @@ class MiddlewareDefinition extends RouteDefinition {
       );
 
   @override
-  void commit(Spanner spanner) {
-    spanner.addMiddleware(mapping.path, mdw);
-  }
+  void commit(Spanner spanner) => spanner.addMiddleware(mapping.path, mdw);
+}
+
+class ControllerMethod {
+  final ControllerMethodDefinition classMethod;
+  final List<Type> parameters = [];
+
+  ControllerMethod(this.classMethod);
 }
 
 class ControllerRouteMethodDefinition extends RouteDefinition {
-  final ControllerMethodDefinition classMethod;
+  final ControllerMethod method;
   final RouteMapping mapping;
 
-  ControllerRouteMethodDefinition(this.classMethod, this.mapping)
-      : super(RouteDefinitionType.route) {
-    classMethod.validate();
-  }
+  ControllerRouteMethodDefinition(ControllerMethodDefinition defn, this.mapping)
+      : method = parseControllerMethod(defn),
+        super(RouteDefinitionType.route);
 
   ControllerRouteMethodDefinition prefix(String prefix) =>
-      ControllerRouteMethodDefinition(classMethod, mapping.prefix(prefix));
+      ControllerRouteMethodDefinition(method.classMethod, mapping.prefix(prefix));
 
   @override
   void commit(Spanner spanner) {
-    for (final method in mapping.methods) {
+    for (final routeMethod in mapping.methods) {
       spanner.addRoute(
-        method,
+        routeMethod,
         mapping.path,
-        useRequestHandler(_controllerHandler(classMethod)),
+        useRequestHandler(_controllerHandler(method)),
       );
     }
   }
@@ -149,10 +149,13 @@ class FunctionalRouteDefinition extends RouteDefinition {
   }
 }
 
-RequestHandler _controllerHandler(ControllerMethodDefinition defn) {
+RequestHandler _controllerHandler(ControllerMethod method) {
+  final defn = method.classMethod;
+
   return (req, res) async {
     final instance = createNewInstance<BaseController>(defn.$1);
     final mirror = inject.reflect(instance);
+
     final result = await Future.sync(
       () => mirror.invoke(symbolToString(defn.$2), [req, res]),
     );
