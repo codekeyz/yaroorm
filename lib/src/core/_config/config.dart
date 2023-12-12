@@ -26,21 +26,24 @@ extension ConfigExt on YarooAppConfig {
   static final String name = 'name';
   static final String url = 'url';
   static final String port = 'port';
+  static final String providers = 'providers';
 
   String get appName => this[ConfigExt.name];
 
   Uri get appUri {
     final url = this[ConfigExt.url];
-    return Uri.tryParse(url) ??
+    final port = getValue<int>(ConfigExt.port);
+    final uri = Uri.tryParse(url) ??
         (throw ArgumentError.value(url, null, 'APP_URL is not a valid url'));
+    if (port == null) return uri;
+    return uri.replace(port: port);
   }
 
-  String get appUrl => this[ConfigExt.url];
+  int get appPort => appUri.port;
 
-  String get appPort => this[ConfigExt.port] ?? appUri.port;
-
-  T getValue<T>(String name) {
+  T? getValue<T>(String name) {
     final value = this[name];
+    if (value == null) return null;
     if (value is! T) {
       throw ArgumentError.value(value, null, 'Invalid value provided for config type $T');
     }

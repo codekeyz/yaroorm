@@ -10,9 +10,7 @@ environment:
 
 dependencies:
   pharaoh:
-    git: 
-      url: git@github.com:Pharaoh-Framework/pharaoh.git
-      path: packages/pharaoh
+    path: ../pharaoh-dev/packages/pharaoh
   spanner: ^1.0.1
   meta: ^1.11.0
   collection: ^1.18.0

@@ -1,5 +1,6 @@
 library router;
 
+import 'package:pharaoh/pharaoh.dart';
 import 'package:spanner/spanner.dart';
 import 'definition.dart';
 
@@ -15,69 +16,70 @@ abstract class RouteDefinition {
 }
 
 abstract interface class Route {
-  static RouteMethodDefinition get(
+  static ControllerRouteMethodDefinition get(
     String path,
     ControllerMethodDefinition defn,
   ) =>
-      RouteMethodDefinition(defn, RouteMapping([HTTPMethod.GET], path));
+      ControllerRouteMethodDefinition(defn, RouteMapping([HTTPMethod.GET], path));
 
-  static RouteMethodDefinition head(
+  static ControllerRouteMethodDefinition head(
     String path,
     ControllerMethodDefinition defn,
   ) =>
-      RouteMethodDefinition(defn, RouteMapping([HTTPMethod.HEAD], path));
+      ControllerRouteMethodDefinition(defn, RouteMapping([HTTPMethod.HEAD], path));
 
-  static RouteMethodDefinition post(
+  static ControllerRouteMethodDefinition post(
     String path,
     ControllerMethodDefinition defn,
   ) =>
-      RouteMethodDefinition(defn, RouteMapping([HTTPMethod.POST], path));
+      ControllerRouteMethodDefinition(defn, RouteMapping([HTTPMethod.POST], path));
 
-  static RouteMethodDefinition put(
+  static ControllerRouteMethodDefinition put(
     String path,
     ControllerMethodDefinition defn,
   ) =>
-      RouteMethodDefinition(defn, RouteMapping([HTTPMethod.PUT], path));
+      ControllerRouteMethodDefinition(defn, RouteMapping([HTTPMethod.PUT], path));
 
-  static RouteMethodDefinition delete(
+  static ControllerRouteMethodDefinition delete(
     String path,
     ControllerMethodDefinition defn,
   ) =>
-      RouteMethodDefinition(defn, RouteMapping([HTTPMethod.DELETE], path));
+      ControllerRouteMethodDefinition(defn, RouteMapping([HTTPMethod.DELETE], path));
 
-  static RouteMethodDefinition patch(
+  static ControllerRouteMethodDefinition patch(
     String path,
     ControllerMethodDefinition defn,
   ) =>
-      RouteMethodDefinition(defn, RouteMapping([HTTPMethod.PATCH], path));
+      ControllerRouteMethodDefinition(defn, RouteMapping([HTTPMethod.PATCH], path));
 
-  static RouteMethodDefinition options(
+  static ControllerRouteMethodDefinition options(
     String path,
     ControllerMethodDefinition defn,
   ) =>
-      RouteMethodDefinition(defn, RouteMapping([HTTPMethod.OPTIONS], path));
+      ControllerRouteMethodDefinition(defn, RouteMapping([HTTPMethod.OPTIONS], path));
 
-  static RouteMethodDefinition trace(
+  static ControllerRouteMethodDefinition trace(
     String path,
     ControllerMethodDefinition defn,
   ) =>
-      RouteMethodDefinition(defn, RouteMapping([HTTPMethod.TRACE], path));
+      ControllerRouteMethodDefinition(defn, RouteMapping([HTTPMethod.TRACE], path));
 
-  static RouteMethodDefinition mapping(
+  static ControllerRouteMethodDefinition mapping(
     List<HTTPMethod> methods,
     String path,
     ControllerMethodDefinition defn,
   ) {
     var mapping = RouteMapping(methods, path);
     if (methods.contains(HTTPMethod.ALL)) mapping = RouteMapping([HTTPMethod.ALL], path);
-    return RouteMethodDefinition(defn, mapping);
+    return ControllerRouteMethodDefinition(defn, mapping);
   }
 
   static RouteGroupDefinition group(
     String prefix, {
     List<MiddlewareDefinition> middlewares = const [],
   }) =>
-      RouteGroupDefinition('/$prefix', methods: const [], middlewares: middlewares);
+      RouteGroupDefinition('/$prefix',
+          controllerDefns: const [], middlewares: middlewares);
 
   static RouteGroupDefinition resource(
     String resource,
@@ -96,4 +98,11 @@ abstract interface class Route {
       Route.delete('/<$paramName>', (controller, #delete))
     ]);
   }
+
+  static FunctionalRouteDefinition func(
+    HTTPMethod method,
+    String path,
+    RequestHandler handler,
+  ) =>
+      FunctionalRouteDefinition(HTTPMethod.GET, path, handler);
 }

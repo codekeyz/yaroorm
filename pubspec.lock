@@ -348,11 +348,9 @@ packages:
   pharaoh:
     dependency: "direct main"
     description:
-      path: "packages/pharaoh"
-      ref: HEAD
-      resolved-ref: "9e470c6b11c645f99dd1be84f1b7157a156d2f39"
-      url: "git@github.com:Pharaoh-Framework/pharaoh.git"
-    source: git
+      path: "../pharaoh-dev/packages/pharaoh"
+      relative: true
+    source: path
     version: "0.0.5+6"
   pool:
     dependency: transitive

@@ -52,17 +52,17 @@ class MiddlewareDefinition extends RouteDefinition {
   }
 }
 
-class RouteMethodDefinition extends RouteDefinition {
+class ControllerRouteMethodDefinition extends RouteDefinition {
   final ControllerMethodDefinition classMethod;
   final RouteMapping mapping;
 
-  RouteMethodDefinition(this.classMethod, this.mapping)
+  ControllerRouteMethodDefinition(this.classMethod, this.mapping)
       : super(RouteDefinitionType.route) {
     classMethod.validate();
   }
 
-  RouteMethodDefinition prefix(String prefix) =>
-      RouteMethodDefinition(classMethod, mapping.prefix(prefix));
+  ControllerRouteMethodDefinition prefix(String prefix) =>
+      ControllerRouteMethodDefinition(classMethod, mapping.prefix(prefix));
 
   @override
   void commit(Spanner spanner) {
@@ -75,29 +75,32 @@ class RouteMethodDefinition extends RouteDefinition {
 class RouteGroupDefinition extends RouteDefinition {
   final String name;
   List<MiddlewareDefinition> middlewareDefinitions = [];
-  List<RouteMethodDefinition> methodDefinitions = [];
+  List<ControllerRouteMethodDefinition> controllerDefns = [];
+  List<FunctionalRouteDefinition> functionDefns = [];
 
   RouteGroupDefinition(
     this.name, {
     List<MiddlewareDefinition> middlewares = const [],
-    List<RouteMethodDefinition> methods = const [],
+    List<ControllerRouteMethodDefinition> controllerDefns = const [],
+    this.functionDefns = const [],
     String? prefix,
   }) : super(RouteDefinitionType.group) {
     final groupPrefix = prefix ?? name.toLowerCase();
-    methodDefinitions = methods.map((e) => e.prefix(groupPrefix)).toList();
+    this.controllerDefns = controllerDefns.map((e) => e.prefix(groupPrefix)).toList();
     middlewareDefinitions = middlewares.map((e) => e.prefix(groupPrefix)).toList();
   }
 
-  RouteGroupDefinition routes(List<RouteMethodDefinition> methods) =>
-      RouteGroupDefinition(
+  RouteGroupDefinition routes(List<RouteDefinition> routes) => RouteGroupDefinition(
         name,
-        methods: methods,
+        controllerDefns: routes.whereType<ControllerRouteMethodDefinition>().toList(),
+        functionDefns: routes.whereType<FunctionalRouteDefinition>().toList(),
         middlewares: middlewareDefinitions,
       );
 
   RouteGroupDefinition prefix(String prefix) => RouteGroupDefinition(
         name,
-        methods: methodDefinitions,
+        controllerDefns: controllerDefns,
+        functionDefns: functionDefns,
         middlewares: middlewareDefinitions,
         prefix: prefix.toLowerCase(),
       );
@@ -107,7 +110,7 @@ class RouteGroupDefinition extends RouteDefinition {
     for (final mdw in middlewareDefinitions) {
       mdw.commit(spanner);
     }
-    for (final defn in methodDefinitions) {
+    for (final defn in [...controllerDefns, ...functionDefns]) {
       defn.commit(spanner);
     }
   }
@@ -122,7 +125,8 @@ extension RouteDefinitionExtension on Iterable<RouteDefinition> {
           defn as RouteGroupDefinition;
           compressedList
             ..addAll(defn.middlewareDefinitions)
-            ..addAll(defn.methodDefinitions);
+            ..addAll(defn.controllerDefns)
+            ..addAll(defn.functionDefns);
           break;
         default:
           compressedList.add(defn);
@@ -131,9 +135,24 @@ extension RouteDefinitionExtension on Iterable<RouteDefinition> {
     return compressedList;
   }
 
-  List<RouteMethodDefinition> get methods =>
-      compressed.whereType<RouteMethodDefinition>().toList();
-
   List<MiddlewareDefinition> get middlewares =>
       compressed.whereType<MiddlewareDefinition>().toList();
+
+  List<RouteDefinition> get reqHandlers {
+    return compressed.where((e) => e is! MiddlewareDefinition).toList();
+  }
+}
+
+class FunctionalRouteDefinition extends RouteDefinition {
+  final RequestHandler handler;
+  final HTTPMethod method;
+  final String path;
+
+  const FunctionalRouteDefinition(this.method, this.path, this.handler)
+      : super(RouteDefinitionType.route);
+
+  @override
+  void commit(Spanner spanner) {
+    spanner.addRoute(method, path, useRequestHandler(handler));
+  }
 }

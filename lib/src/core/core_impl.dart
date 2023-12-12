@@ -1,9 +1,9 @@
 part of 'core.dart';
 
 class _YarooAppImpl extends Application {
-  late final YarooAppConfig _config;
+  late final YarooAppConfig _appConfig;
 
-  final Spanner _spanner = Spanner();
+  Spanner get spanner => Application._spanner;
 
   @override
   T singleton<T extends Object>(T instance) {
@@ -11,21 +11,42 @@ class _YarooAppImpl extends Application {
   }
 
   @override
+  void _useConfig(YarooAppConfig appConfig) {
+    _appConfig = appConfig;
+  }
+
+  @override
   void useRoutes(RoutesResolver routeResolver) {
-    final reqHandlers = routeResolver.call().methods;
-    for (final ctrl in reqHandlers) {
-      for (final method in ctrl.mapping.methods) {
-        _spanner.addRoute(method, ctrl.mapping.path, ctrl.classMethod);
-      }
+    final routeDefns = routeResolver.call();
+    for (var defn in routeDefns) {
+      defn.commit(spanner);
     }
   }
 
   @override
-  String get name => _config.appName;
+  void useMiddlewares(List<Middleware> middleware) {
+    for (final middleware in middleware) {
+      spanner.addMiddleware('/', middleware);
+    }
+  }
+
+  Middleware _createCtrlHandler(ControllerMethodDefinition method) {
+    return (req, res, next) {
+      print(method);
+
+      return next(res.ok('Hello World 🚀'));
+    };
+  }
 
   @override
-  String get url => _config.appUrl;
+  YarooAppConfig get config => _appConfig;
 
   @override
-  YarooAppConfig get config => _config;
+  String get name => config.appName;
+
+  @override
+  String get url => config.appUri.toString();
+
+  @override
+  int get port => config.appPort;
 }

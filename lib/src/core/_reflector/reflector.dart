@@ -1,6 +1,11 @@
-part of '../core.dart';
+import 'package:collection/collection.dart';
+import 'package:reflectable/reflectable.dart' as r;
+
+import '../core.dart';
 
 const unnamedConstructor = '';
+
+const inject = Injectable();
 
 List<X> filteredDeclarationsOf<X extends r.DeclarationMirror>(
   r.ClassMirror cm,
@@ -35,9 +40,7 @@ extension ClassMirrorExtensions on r.ClassMirror {
   }
 }
 
-enum ResourceType { provider, service, controller }
-
-T createNewInstance<T extends Object>(ResourceType resourceType, Type classType) {
+T createNewInstance<T extends Object>(Type classType) {
   final classMirror = reflectType(classType);
   final constructorMethod = classMirror.declarations.entries
       .firstWhereOrNull((e) => e.key == '$classType')

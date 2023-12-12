@@ -2,21 +2,6 @@
 
 part of '../core.dart';
 
-class Injectable extends Reflectable {
-  const Injectable()
-      : super(
-          invokingCapability,
-          newInstanceCapability,
-          declarationsCapability,
-          reflectedTypeCapability,
-          typeRelationsCapability,
-          instanceInvokeCapability,
-          subtypeQuantifyCapability,
-        );
-}
-
-const inject = Injectable();
-
 mixin _AppInstance {
   Application get app => Application._instance;
 }
@@ -31,4 +16,14 @@ abstract class ServiceProvider with _AppInstance {
       ];
 
   FutureOr<void> boot();
+}
+
+@Target({TargetKind.parameter})
+class Param {
+  const Param(String name);
+}
+
+@Target({TargetKind.parameter})
+class Body {
+  const Body();
 }
