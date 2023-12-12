@@ -56,8 +56,18 @@ class AppServiceProvider extends ServiceProvider {
   @override
   FutureOr<void> boot() {
     final spanner = Spanner();
+    final pharaoh = Pharaoh()..useSpanner(spanner);
+
+    final environment = Environment(
+      autoReload: false,
+      trimBlocks: true,
+      leftStripBlocks: true,
+      loader: FileSystemLoader(paths: ['public']),
+    );
+    pharaoh.viewEngine = JinjaViewEngine(environment);
+
+    registerSingleton<Pharaoh>(pharaoh);
     registerSingleton<Application>(_YarooAppImpl(spanner));
-    registerSingleton<Pharaoh>(Pharaoh()..useSpanner(spanner));
   }
 }
 
