@@ -1,25 +1,13 @@
-import 'dart:mirrors';
-
 import 'package:pharaoh/pharaoh.dart';
 import 'package:spanner/spanner.dart';
 
+import '../_reflector/reflector.dart';
 import '../core.dart';
 import 'router.dart';
 import 'utils.dart';
 
 extension on ControllerMethodDefinition {
-  void validate() {
-    final ctrlMirror = reflectClass($1);
-
-    if (ctrlMirror.superclass?.reflectedType != BaseController) {
-      throw ArgumentError('${$1} must extend BaseController');
-    }
-
-    final methods = ctrlMirror.instanceMembers.values.whereType<MethodMirror>();
-    if (!methods.any((e) => e.simpleName == $2)) {
-      throw ArgumentError('${$1} does not have method ${symbolToString($2)}');
-    }
-  }
+  void validate() => ensureControllerHasMethod($1, $2);
 }
 
 enum RouteDefinitionType { route, group, middleware }
@@ -67,7 +55,11 @@ class ControllerRouteMethodDefinition extends RouteDefinition {
   @override
   void commit(Spanner spanner) {
     for (final method in mapping.methods) {
-      spanner.addRoute(method, mapping.path, classMethod);
+      spanner.addRoute(
+        method,
+        mapping.path,
+        _controllerHandler(classMethod),
+      );
     }
   }
 }
@@ -155,4 +147,15 @@ class FunctionalRouteDefinition extends RouteDefinition {
   void commit(Spanner spanner) {
     spanner.addRoute(method, path, useRequestHandler(handler));
   }
+}
+
+Middleware _controllerHandler(ControllerMethodDefinition defn) {
+  return (req, res, next) async {
+    final ctrl = createNewInstance<BaseController>(defn.$1);
+    final result = await invokeMethodOnController(ctrl, defn.$2);
+
+    print(result);
+
+    return next(res.ok('Hello World 🚀'));
+  };
 }

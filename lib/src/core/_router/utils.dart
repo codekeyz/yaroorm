@@ -6,7 +6,7 @@ String cleanRoute(String route) {
 
 String symbolToString(Symbol symbol) {
   final str = symbol.toString();
-  return '#${str.substring(8, str.length - 1)}';
+  return '#${str.substring(8, str.length - 2)}';
 }
 
 Future<void> launchUrl(String url) async {

@@ -30,14 +30,6 @@ class _YarooAppImpl extends Application {
     }
   }
 
-  Middleware _createCtrlHandler(ControllerMethodDefinition method) {
-    return (req, res, next) {
-      print(method);
-
-      return next(res.ok('Hello World 🚀'));
-    };
-  }
-
   @override
   YarooAppConfig get config => _appConfig;
 

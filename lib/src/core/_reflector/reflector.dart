@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:reflectable/reflectable.dart' as r;
 
+import '../_router/utils.dart';
 import '../core.dart';
 
 const unnamedConstructor = '';
@@ -56,4 +57,24 @@ T createNewInstance<T extends Object>(Type classType) {
       .toList();
 
   return classMirror.newInstance(unnamedConstructor, dependencies) as T;
+}
+
+Future<dynamic> invokeMethodOnController(
+  BaseController instance,
+  Symbol method,
+) async {
+  final mirror = inject.reflect(instance);
+  return Future.sync(() => mirror.invoke(method.toString(), []));
+}
+
+void ensureControllerHasMethod(Type type, Symbol method) {
+  final ctrlMirror = inject.reflectType(type) as r.ClassMirror;
+  if (ctrlMirror.superclass?.reflectedType != BaseController) {
+    throw ArgumentError('$type must extend BaseController');
+  }
+
+  final methods = ctrlMirror.instanceMembers.values.whereType<r.MethodMirror>();
+  if (!methods.any((e) => '#${e.simpleName}' == symbolToString(method))) {
+    throw ArgumentError('$type does not have method  ${symbolToString(method)}');
+  }
 }
