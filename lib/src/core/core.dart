@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:meta/meta.dart';
 import 'package:reflectable/reflectable.dart' as r;
 import 'package:meta/meta_meta.dart';
 import 'package:pharaoh/pharaoh.dart';
 import 'package:spanner/spanner.dart';
+import 'package:spookie/spookie.dart';
 
 import '_config/config.dart';
 import '_container/container.dart';
@@ -101,4 +103,7 @@ abstract class ApplicationFactory {
       await registerSingleton(provider).boot();
     }
   }
+
+  @visibleForTesting
+  Future<Spookie> get tester => request(instanceFromRegistry<Pharaoh>());
 }
