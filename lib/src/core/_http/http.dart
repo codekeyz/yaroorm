@@ -11,10 +11,6 @@ abstract class BaseController with _AppInstance {}
 
 @inject
 abstract class ServiceProvider with _AppInstance {
-  static List<Type> get defaultProviders => [
-        PharaohServiceProvider,
-      ];
-
   FutureOr<void> boot();
 }
 

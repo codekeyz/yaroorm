@@ -14,7 +14,6 @@ import '_router/utils.dart';
 
 part '_http/http.dart';
 part './core_impl.dart';
-part './_service/service.dart';
 part './_container/container.dart';
 
 class Injectable extends r.Reflectable {

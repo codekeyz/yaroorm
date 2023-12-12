@@ -58,7 +58,7 @@ class ControllerRouteMethodDefinition extends RouteDefinition {
       spanner.addRoute(
         method,
         mapping.path,
-        _controllerHandler(classMethod),
+        useRequestHandler(_controllerHandler(classMethod)),
       );
     }
   }
@@ -149,13 +149,14 @@ class FunctionalRouteDefinition extends RouteDefinition {
   }
 }
 
-Middleware _controllerHandler(ControllerMethodDefinition defn) {
-  return (req, res, next) async {
-    final ctrl = createNewInstance<BaseController>(defn.$1);
-    final result = await invokeMethodOnController(ctrl, defn.$2);
+RequestHandler _controllerHandler(ControllerMethodDefinition defn) {
+  return (req, res) async {
+    final instance = createNewInstance<BaseController>(defn.$1);
+    final mirror = inject.reflect(instance);
+    final result = await Future.sync(
+      () => mirror.invoke(symbolToString(defn.$2), [req, res]),
+    );
 
-    print(result);
-
-    return next(res.ok('Hello World 🚀'));
+    return result;
   };
 }

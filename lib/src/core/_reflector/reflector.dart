@@ -59,14 +59,6 @@ T createNewInstance<T extends Object>(Type classType) {
   return classMirror.newInstance(unnamedConstructor, dependencies) as T;
 }
 
-Future<dynamic> invokeMethodOnController(
-  BaseController instance,
-  Symbol method,
-) async {
-  final mirror = inject.reflect(instance);
-  return Future.sync(() => mirror.invoke(method.toString(), []));
-}
-
 void ensureControllerHasMethod(Type type, Symbol method) {
   final ctrlMirror = inject.reflectType(type) as r.ClassMirror;
   if (ctrlMirror.superclass?.reflectedType != BaseController) {
@@ -74,7 +66,7 @@ void ensureControllerHasMethod(Type type, Symbol method) {
   }
 
   final methods = ctrlMirror.instanceMembers.values.whereType<r.MethodMirror>();
-  if (!methods.any((e) => '#${e.simpleName}' == symbolToString(method))) {
-    throw ArgumentError('$type does not have method  ${symbolToString(method)}');
+  if (!methods.any((e) => e.simpleName == symbolToString(method))) {
+    throw ArgumentError('$type does not have method  #${symbolToString(method)}');
   }
 }
