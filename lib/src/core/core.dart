@@ -82,7 +82,7 @@ abstract class ApplicationFactory {
 
   List<Middleware> get globalMiddlewares => [];
 
-  Future<void> bootstrap() async {
+  Future<void> bootstrap({bool isTesting = false}) async {
     final config = appConfig.call();
     final providers = config.getValue<List<Type>>(ConfigExt.providers)!;
 
@@ -91,6 +91,8 @@ abstract class ApplicationFactory {
     Application._instance
       .._useConfig(config)
       ..useMiddlewares(globalMiddlewares);
+
+    if (isTesting) return;
 
     await instanceFromRegistry<Pharaoh>().listen(port: Application._instance.port);
 
