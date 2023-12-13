@@ -400,14 +400,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.5"
-  retry:
-    dependency: "direct main"
-    description:
-      name: retry
-      sha256: "822e118d5b3aafed083109c72d5f484c6dc66707885e07c0fbcb8b986bba7efc"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.1.2"
   shelf:
     dependency: transitive
     description:
@@ -465,7 +457,7 @@ packages:
     source: hosted
     version: "1.10.0"
   spanner:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: spanner
       sha256: d513394e304a41ed2d00831fb879a13c6ed5e9331ef7b5f3f194817ce947e318
@@ -497,7 +489,7 @@ packages:
     source: hosted
     version: "2.5.0+2"
   sqflite_common_ffi:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: sqflite_common_ffi
       sha256: "873677ee78738a723d1ded4ccb23980581998d873d30ee9c331f6a81748663ff"
