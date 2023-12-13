@@ -7,6 +7,7 @@ import 'package:pharaoh/pharaoh.dart';
 import 'package:spanner/spanner.dart';
 import 'package:spookie/spookie.dart';
 
+import '../database/driver.dart';
 import '_config/config.dart';
 import '_container/container.dart';
 import '_reflector/reflector.dart';
@@ -31,8 +32,6 @@ class Injectable extends r.Reflectable {
 }
 
 typedef RoutesResolver = List<RouteDefinition> Function();
-
-typedef ConfigResolver = YarooAppConfig Function();
 
 abstract interface class Application {
   static final Application _instance = instanceFromRegistry<Application>();
@@ -75,16 +74,19 @@ class AppServiceProvider extends ServiceProvider {
 
 abstract class ApplicationFactory {
   final ConfigResolver appConfig;
+  final ConfigResolver? dbConfig;
 
-  ApplicationFactory({
-    required this.appConfig,
-  });
+  ApplicationFactory(this.appConfig, {this.dbConfig});
 
   List<Middleware> get globalMiddlewares => [];
 
   Future<void> bootstrap({bool isTesting = false}) async {
     final config = appConfig.call();
     final providers = config.getValue<List<Type>>(ConfigExt.providers)!;
+
+    if (dbConfig != null) {
+      await DatabaseDriver.init(dbConfig!.call()).connect();
+    }
 
     await _setupAndBootProviders(providers);
 

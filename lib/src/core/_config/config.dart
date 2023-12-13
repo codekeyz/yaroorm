@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:dotenv/dotenv.dart';
 
+typedef ConfigResolver<T extends Map<String, dynamic>> = T Function();
+
 DotEnv? _env;
 
 T? env<T>(String name, [T? defaultValue]) {
@@ -40,7 +42,9 @@ extension ConfigExt on YarooAppConfig {
   }
 
   int get appPort => appUri.port;
+}
 
+extension ConfigExtension on Map<String, dynamic> {
   T? getValue<T>(String name) {
     final value = this[name];
     if (value == null) return null;

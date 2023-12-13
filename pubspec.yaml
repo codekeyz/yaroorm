@@ -21,6 +21,10 @@ dependencies:
   build_runner: ^2.4.7
   spookie: ^1.0.1
 
+  # database stuff
+  sqflite_common_ffi: ^2.3.1
+  retry: ^3.1.2
+
 dependency_overrides:
 
 dev_dependencies:
