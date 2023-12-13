@@ -1,4 +1,5 @@
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import '../migration.dart';
+import 'sqlite_driver.dart';
 
 typedef DatabaseConfig = Map<String, dynamic>;
 
@@ -13,6 +14,7 @@ class DatabaseConnection {
   final String? password;
   final String database;
   final String? charset, collation;
+  final bool dbForeignKeys;
   final DatabaseDriverType driver;
 
   const DatabaseConnection(
@@ -26,6 +28,7 @@ class DatabaseConnection {
     this.port,
     this.url,
     this.username,
+    this.dbForeignKeys = true,
   });
 
   factory DatabaseConnection.from(String name, Map<String, dynamic> connInfo) {
@@ -40,6 +43,7 @@ class DatabaseConnection {
       password: connInfo['password'],
       username: connInfo['username'],
       url: connInfo['url'],
+      dbForeignKeys: connInfo['foreign_key_constraints'],
     );
   }
 }
@@ -71,9 +75,6 @@ abstract interface class DatabaseDriver {
   String get database;
 
   /// Schema name used to perform all write queries.
-  String get scheme;
-
-  /// Schema name used to perform all write queries.
   DatabaseDriverType get type;
 
   /// Performs connection to the database.
@@ -85,34 +86,6 @@ abstract interface class DatabaseDriver {
   ///
   /// Depend on driver type it may create a connection pool.
   Future<void> disconnect();
-}
 
-class SqliteDriver implements DatabaseDriver {
-  final DatabaseConnection config;
-
-  Database? _database;
-
-  SqliteDriver(this.config);
-
-  @override
-  Future<void> connect() async {
-    sqfliteFfiInit();
-    var databaseFactory = databaseFactoryFfi;
-    _database = await databaseFactory.openDatabase(config.database);
-  }
-
-  @override
-  String get database => throw UnimplementedError();
-
-  @override
-  Future<void> disconnect() async {
-    if (_database?.isOpen != true) return;
-    await _database!.close();
-  }
-
-  @override
-  String get scheme => config.database;
-
-  @override
-  DatabaseDriverType get type => DatabaseDriverType.sqlite;
+  TableBlueprint newTable(String name);
 }
