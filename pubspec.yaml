@@ -1,25 +1,28 @@
-name: pharaoh_turbo
+name: yaroo
 description: Class and annotation based development with Pharaoh.
 version: 0.0.1
 repository: https://github.com/Pharaoh-Framework/pharaoh-turbo
+
+publish_to: none
 
 environment:
   sdk: ^3.0.0
 
 dependencies:
   pharaoh:
+    path: ../pharaoh-dev/packages/pharaoh
+  yaroorm:
+    path: ./yaroorm
   meta: ^1.11.0
   collection: ^1.18.0
+  dotenv: ^4.2.0
+  get_it: ^7.6.4
+  uuid: ^4.2.1
+  reflectable: ^4.0.5
+  build_runner: ^2.4.7
+  spookie: ^1.0.1
 
 dependency_overrides:
-  spanner:
-    git: 
-      url: git@github.com:Pharaoh-Framework/pharaoh.git
-      path: packages/spanner
-  pharaoh:
-    git: 
-      url: git@github.com:Pharaoh-Framework/pharaoh.git
-      path: packages/pharaoh
 
 dev_dependencies:
   lints: ^3.0.0
