@@ -1,6 +1,4 @@
-final class Record {
+final class Entity {
   final String? name;
-  const Record({this.name});
+  const Entity({this.name});
 }
-
-const record = Record();

@@ -1,16 +1,14 @@
 name: yaroorm
 description: A starting point for Dart libraries or applications.
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
 
 environment:
-  sdk: ^3.2.2
+  sdk: ^3.0.0
 
-# Add regular dependencies here.
 dependencies:
   collection: ^1.18.0
   sqflite_common_ffi: ^2.3.1
-  # path: ^1.8.0
+  reflectable: ^4.0.5
 
 dev_dependencies:
   lints: ^2.1.0
