@@ -35,3 +35,5 @@ T registerSingleton<T extends Object>(T instance) {
   }
   return instance;
 }
+
+bool isRegistered<T extends Object>() => _getIt.isRegistered<T>();

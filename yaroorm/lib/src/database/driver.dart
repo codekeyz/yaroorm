@@ -1,12 +1,11 @@
-import 'package:collection/collection.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import '../config/config.dart';
 
 typedef DatabaseConfig = Map<String, dynamic>;
 
 enum DatabaseDriverType { sqlite, pgsql, mongo }
 
-class DatabaseConfiguration {
+class DatabaseConnection {
+  final String name;
   final String? url;
   final String? host;
   final String? port;
@@ -16,7 +15,8 @@ class DatabaseConfiguration {
   final String? charset, collation;
   final DatabaseDriverType driver;
 
-  const DatabaseConfiguration(
+  const DatabaseConnection(
+    this.name,
     this.database,
     this.driver, {
     this.charset,
@@ -28,9 +28,10 @@ class DatabaseConfiguration {
     this.username,
   });
 
-  factory DatabaseConfiguration.from(Map<String, dynamic> connInfo) {
-    return DatabaseConfiguration(
-      connInfo.getValue<String>('database')!,
+  factory DatabaseConnection.from(String name, Map<String, dynamic> connInfo) {
+    return DatabaseConnection(
+      name,
+      connInfo['database'],
       _getDriverType(connInfo),
       charset: connInfo['charset'],
       collation: connInfo['collation'],
@@ -44,7 +45,7 @@ class DatabaseConfiguration {
 }
 
 DatabaseDriverType _getDriverType(Map<String, dynamic> connInfo) {
-  final value = connInfo.getValue('driver');
+  final value = connInfo['driver'];
   return switch (value) {
     'sqlite' => DatabaseDriverType.sqlite,
     'pgsql' => DatabaseDriverType.pgsql,
@@ -56,25 +57,11 @@ DatabaseDriverType _getDriverType(Map<String, dynamic> connInfo) {
 }
 
 abstract interface class DatabaseDriver {
-  factory DatabaseDriver.init(DatabaseConfig config) {
-    final defaultConn = config.getValue('default');
-    if (defaultConn == null) {
-      throw ArgumentError.notNull('Default Database Connection');
-    }
-
-    final connections = config.getValue<Map<String, dynamic>>('connections') ?? {};
-    final connInfo =
-        connections.entries.firstWhereOrNull((e) => e.key == defaultConn)?.value;
-    if (connInfo == null) {
-      throw ArgumentError('No Connection info found for $defaultConn');
-    }
-
-    final dbConfig = DatabaseConfiguration.from(connInfo);
-    final driver = dbConfig.driver;
-
+  factory DatabaseDriver.init(DatabaseConnection dbConn) {
+    final driver = dbConn.driver;
     switch (driver) {
       case DatabaseDriverType.sqlite:
-        return SqliteDriver(dbConfig);
+        return SqliteDriver(dbConn);
       default:
         throw ArgumentError.value(driver, null, 'Driver not yet supported');
     }
@@ -101,7 +88,7 @@ abstract interface class DatabaseDriver {
 }
 
 class SqliteDriver implements DatabaseDriver {
-  final DatabaseConfiguration config;
+  final DatabaseConnection config;
 
   Database? _database;
 

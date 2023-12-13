@@ -6,8 +6,7 @@ import 'package:reflectable/reflectable.dart' as r;
 import 'package:meta/meta_meta.dart';
 import 'package:spookie/spookie.dart';
 
-import '../deps/yaroorm.dart';
-
+import '../database/manager.dart';
 import '_config/config.dart';
 import '_container/container.dart';
 import '_reflector/reflector.dart';
@@ -85,7 +84,7 @@ abstract class ApplicationFactory {
     final providers = config.getValue<List<Type>>(ConfigExt.providers)!;
 
     if (dbConfig != null) {
-      await DatabaseDriver.init(dbConfig!.call()).connect();
+      await DatabaseManager.init(dbConfig!).defaultDriver.connect();
     }
 
     await _setupAndBootProviders(providers);
