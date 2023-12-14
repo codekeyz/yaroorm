@@ -1,14 +1,17 @@
 import 'package:collection/collection.dart';
+import 'package:yaroorm/yaroorm.dart';
 
 import '../core/_config/config.dart';
 import '../core/_container/container.dart';
-import '../deps/yaroorm.dart';
 
-class DatabaseManager {
+class DBManager {
   late final List<DatabaseConnection> connections;
   late final DatabaseConnection defaultConn;
 
   final Map<String, DatabaseDriver> _driverInstances = {};
+
+  static Query<Model> query<Model extends Entity>() =>
+      Query.query<Model>(DBManager.instance.defaultDriver);
 
   DatabaseDriver get defaultDriver => _driverInstances[defaultConn.name]!;
 
@@ -19,18 +22,18 @@ class DatabaseManager {
     return _driverInstances[connName] = DatabaseDriver.init(connInfo);
   }
 
-  DatabaseManager._(this.connections, this.defaultConn) {
+  DBManager._(this.connections, this.defaultConn) {
     _driverInstances[defaultConn.name] = DatabaseDriver.init(defaultConn);
   }
 
-  static DatabaseManager get instance {
-    if (!isRegistered<DatabaseManager>()) {
+  static DBManager get instance {
+    if (!isRegistered<DBManager>()) {
       throw Exception('Database Manager not initialized.');
     }
-    return instanceFromRegistry<DatabaseManager>();
+    return instanceFromRegistry<DBManager>();
   }
 
-  factory DatabaseManager.init(ConfigResolver dbConfig) {
+  factory DBManager.init(ConfigResolver dbConfig) {
     final configuration = dbConfig.call();
     final defaultConn = configuration.getValue('default');
     if (defaultConn == null) {
@@ -49,7 +52,7 @@ class DatabaseManager {
       throw ArgumentError('Database connection info not found for $defaultConn');
     }
 
-    final instance = DatabaseManager._(connections.toList(), defaultConnection);
-    return registerSingleton<DatabaseManager>(instance);
+    final instance = DBManager._(connections.toList(), defaultConnection);
+    return registerSingleton<DBManager>(instance);
   }
 }

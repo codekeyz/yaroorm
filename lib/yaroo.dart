@@ -6,4 +6,3 @@ export 'src/core/core.dart';
 export 'src/database/manager.dart';
 
 export 'src/deps/pharaoh.dart';
-export 'src/deps/yaroorm.dart';

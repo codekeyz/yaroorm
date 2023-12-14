@@ -84,7 +84,7 @@ abstract class ApplicationFactory {
     final providers = config.getValue<List<Type>>(ConfigExt.providers)!;
 
     if (dbConfig != null) {
-      await DatabaseManager.init(dbConfig!).defaultDriver.connect();
+      await DBManager.init(dbConfig!).defaultDriver.connect();
     }
 
     await _setupAndBootProviders(providers);
