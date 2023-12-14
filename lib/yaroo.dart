@@ -7,4 +7,4 @@ export 'src/database/manager.dart';
 
 export 'src/deps/pharaoh.dart';
 export 'package:yaroorm/src/database/migration.dart';
-export 'package:yaroorm/src/query/model.dart';
+export 'package:yaroorm/src/query/query.dart';

@@ -76,7 +76,6 @@ class AppServiceProvider extends ServiceProvider {
 abstract class ApplicationFactory {
   final ConfigResolver appConfig;
   final ConfigResolver? dbConfig;
-  bool _serverStarted = false;
 
   ApplicationFactory(this.appConfig, {this.dbConfig});
 

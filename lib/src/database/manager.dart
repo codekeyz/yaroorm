@@ -10,8 +10,13 @@ class DBManager {
 
   final Map<String, DatabaseDriver> _driverInstances = {};
 
-  static Query<Model> query<Model extends Entity>() =>
-      Query.query<Model>(DBManager.instance.defaultDriver);
+  static RecordQueryInterface<Model> query<Model extends Entity>({String? table}) {
+    table ??= Model.runtimeType.toString().toLowerCase();
+    return RecordQueryInterface<Model>(
+      table,
+      driver: DBManager.instance.defaultDriver,
+    );
+  }
 
   DatabaseDriver get defaultDriver => _driverInstances[defaultConn.name]!;
 
