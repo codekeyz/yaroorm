@@ -6,3 +6,5 @@ export 'src/core/core.dart';
 export 'src/database/manager.dart';
 
 export 'src/deps/pharaoh.dart';
+export 'package:yaroorm/src/database/migration.dart';
+export 'package:yaroorm/src/query/model.dart';
