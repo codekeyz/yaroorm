@@ -1,4 +1,4 @@
-import '../migration.dart';
+import '../table.dart';
 import 'sqlite_driver.dart';
 
 typedef DatabaseConfig = Map<String, dynamic>;
@@ -91,6 +91,9 @@ abstract interface class DatabaseDriver {
   Future<void> disconnect();
 
   TableBlueprint get blueprint;
-}
 
-typedef TableBluePrintFunc = void Function(TableBlueprint $table);
+  /// Execute scripts on the database.
+  ///
+  /// Execution varies across drivers
+  Future<dynamic> execute(String script);
+}

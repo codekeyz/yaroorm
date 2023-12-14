@@ -12,15 +12,3 @@ class ReflectableEntity extends r.Reflectable {
 }
 
 const entity = ReflectableEntity();
-
-class ReflectableMigration extends r.Reflectable {
-  const ReflectableMigration()
-      : super(
-          r.newInstanceCapability,
-          r.reflectedTypeCapability,
-          r.typeRelationsCapability,
-          r.instanceInvokeCapability,
-        );
-}
-
-const migration = ReflectableMigration();

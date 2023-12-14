@@ -7,7 +7,6 @@ import 'package:pharaoh/pharaoh.dart';
 import 'package:reflectable/reflectable.dart' as r;
 import 'package:meta/meta_meta.dart';
 import 'package:spookie/spookie.dart';
-import 'package:yaroorm/yaroorm.dart';
 
 import '../database/manager.dart';
 import '_config/config.dart';
@@ -77,6 +76,7 @@ class AppServiceProvider extends ServiceProvider {
 abstract class ApplicationFactory {
   final ConfigResolver appConfig;
   final ConfigResolver? dbConfig;
+  bool _serverStarted = false;
 
   ApplicationFactory(this.appConfig, {this.dbConfig});
 
@@ -102,11 +102,13 @@ abstract class ApplicationFactory {
       .._useConfig(config)
       ..useMiddlewares(globalMiddlewares);
 
-    if (start_server) {
-      await instanceFromRegistry<Pharaoh>().listen(port: Application._instance.port);
+    if (start_server) await startServer();
+  }
 
-      await launchUrl(Application._instance.url);
-    }
+  Future<void> startServer() async {
+    await instanceFromRegistry<Pharaoh>().listen(port: Application._instance.port);
+
+    await launchUrl(Application._instance.url);
   }
 
   Future<void> _setupAndBootProviders(List<Type> providers) async {
@@ -114,17 +116,6 @@ abstract class ApplicationFactory {
       final provider = createNewInstance<ServiceProvider>(type);
       await registerSingleton(provider).boot();
     }
-  }
-
-  Future<void> runMigration(Migration migration, {DatabaseDriver? driver}) async {
-    if (dbConfig == null) {
-      throw Exception('Database Config Resolver not found');
-    }
-    driver ??= DBManager.instance.defaultDriver;
-  }
-
-  Future<void> runMigrations(List<Migration> migrations, {DatabaseDriver? driver}) async {
-    driver ??= DBManager.instance.defaultDriver;
   }
 
   @visibleForTesting

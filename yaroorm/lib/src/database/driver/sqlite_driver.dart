@@ -1,6 +1,6 @@
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import '../migration.dart';
+import '../table.dart';
 import 'driver.dart';
 
 class SqliteDriver implements DatabaseDriver {
@@ -43,59 +43,76 @@ class SqliteDriver implements DatabaseDriver {
 
   @override
   TableBlueprint get blueprint => _SqliteTableBlueprint();
+
+  @override
+  Future execute(String script) async {
+    final db = _database;
+    if (!isOpen || db == null) throw Exception('Database is not open');
+    await db.execute(script);
+  }
 }
 
 class _SqliteTableBlueprint implements TableBlueprint {
-  final List<String> statements = [];
+  final List<String> _statements = [];
 
   @override
   void id() {
-    statements.add('id INTEGER PRIMARY KEY');
+    _statements.add('id INTEGER PRIMARY KEY');
   }
 
   @override
   void string(String name) {
-    statements.add('$name TEXT');
+    _statements.add('$name TEXT');
   }
 
   @override
   void double(String name) {
-    statements.add('$name REAL');
+    _statements.add('$name REAL');
   }
 
   @override
   void float(String name) {
-    statements.add('$name REAL');
+    _statements.add('$name REAL');
   }
 
   @override
   void integer(String name) {
-    statements.add('$name INTEGER');
+    _statements.add('$name INTEGER');
   }
 
   @override
   void blob(String name) {
-    statements.add('$name BLOB');
+    _statements.add('$name BLOB');
   }
 
   @override
   void boolean(String name) {
-    statements.add('$name INTEGER');
+    _statements.add('$name INTEGER');
   }
 
   @override
   void datetime(String name) {
-    statements.add('$name DATETIME');
+    _statements.add('$name DATETIME');
   }
 
   @override
   void timestamp(String name) {
-    statements.add('$name DATETIME');
+    _statements.add('$name DATETIME');
   }
 
   @override
   void timestamps({String createdAt = 'created_at', String updatedAt = 'updated_at'}) {
-    statements.add('$createdAt DATETIME');
-    statements.add('$updatedAt DATETIME');
+    _statements.add('$createdAt DATETIME');
+    _statements.add('$updatedAt DATETIME');
+  }
+
+  @override
+  String createScript(String tableName) {
+    return 'CREATE TABLE $tableName (${_statements.join(', ')});';
+  }
+
+  @override
+  String dropScript(String tableName) {
+    return 'DROP TABLE IF EXISTS $tableName;';
   }
 }
