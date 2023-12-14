@@ -1,3 +1,4 @@
+import '../../query/primitives.dart';
 import '../../query/query.dart';
 import '../database.dart';
 import 'sqlite_driver.dart';
@@ -92,6 +93,8 @@ abstract interface class DatabaseDriver {
   Future<void> disconnect();
 
   TableBlueprint get blueprint;
+
+  QueryPrimitiveSerializer get querySerializer;
 
   Future<T> query<T extends Entity>(RecordQueryInterface<T> query);
 

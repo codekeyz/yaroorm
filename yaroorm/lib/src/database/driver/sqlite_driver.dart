@@ -1,5 +1,6 @@
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import '../../query/primitives.dart';
 import '../../query/query.dart';
 import '../migration.dart';
 import 'driver.dart';
@@ -7,6 +8,8 @@ import 'driver.dart';
 class SqliteDriver implements DatabaseDriver {
   final DatabaseConnection config;
 
+  final QueryPrimitiveSerializer _queryPrimitiveSerializer =
+      const _SqliteQueryPrimitiveSerializer();
   Database? _database;
 
   SqliteDriver(this.config);
@@ -54,8 +57,12 @@ class SqliteDriver implements DatabaseDriver {
 
   @override
   Future<T> query<T extends Entity>(RecordQueryInterface<T> query) async {
-    throw Exception();
+    final script = querySerializer.acceptQuery(query);
+    throw Exception(script);
   }
+
+  @override
+  QueryPrimitiveSerializer get querySerializer => _queryPrimitiveSerializer;
 }
 
 class _SqliteTableBlueprint implements TableBlueprint {
@@ -134,4 +141,77 @@ class _SqliteTableBlueprint implements TableBlueprint {
       ..writeln('DROP TABLE temp_info; DROP TABLE temp_data;');
     return renameScript.toString();
   }
+}
+
+class _SqliteQueryPrimitiveSerializer implements QueryPrimitiveSerializer {
+  const _SqliteQueryPrimitiveSerializer();
+
+  @override
+  String acceptQuery(RecordQueryInterface<Entity> query) {
+    final queryBuilder = StringBuffer();
+
+    final selectStatement = acceptSelect(query.fieldSelections.toList());
+    queryBuilder.write(selectStatement);
+    queryBuilder.write('FROM ${query.tableName}');
+
+    final whereClause = query.whereClause;
+    if (whereClause != null) {
+      final whereStatement = acceptWhereClause(whereClause);
+      queryBuilder.write(' $whereStatement');
+    }
+
+    return '${queryBuilder.toString()};';
+  }
+
+  @override
+  String acceptSelect(List<String> fields) {
+    return fields.isEmpty ? 'SELECT * ' : 'SELECT ${fields.join(', ')}';
+  }
+
+  String _whereValueToScript(WhereClauseValue clauseVal) {
+    final value = clauseVal.value;
+    final wrappedValue = switch (value.runtimeType) {
+      const (int) => value,
+      const (List<String>) =>
+        '(${List<String>.from(value).map((e) => "'$e'").join(', ')})',
+      const (List<int>) => '(${List<int>.from(value).join(', ')})',
+      const (List<num>) => '(${List<num>.from(value).join(', ')})',
+      const (List<double>) => '(${List<double>.from(value).join(', ')})',
+      _ => "'$value'"
+    };
+
+    return '${clauseVal.field} ${clauseVal.condition} $wrappedValue';
+  }
+
+  @override
+  String acceptWhereClause(WhereClause clause) {
+    if (clause is CompositeWhereClause) {
+      final whereBuilder = StringBuffer();
+      whereBuilder.write('WHERE ${_whereValueToScript(clause.value)}');
+      for (final subpart in clause.subparts) {
+        whereBuilder.write(
+            ' ${subpart.operator.name} ${_whereValueToScript(subpart.clause.value)}');
+      }
+      return whereBuilder.toString();
+    }
+
+    return 'WHERE ${_whereValueToScript(clause.value)}';
+  }
+
+  @override
+  String acceptOrderBy(List<OrderBy> orderBys) {
+    // TODO: implement acceptOrderBy
+    throw UnimplementedError();
+  }
+}
+
+void main() {
+  final query = RecordQueryInterface('users')
+      .where('username', '=', 'Chima')
+      .or('lastname', '=', '23')
+      .or('hello', '>', 22)
+      .or('hello', '!=', 24059)
+      .query;
+
+  print(_SqliteQueryPrimitiveSerializer().acceptQuery(query));
 }

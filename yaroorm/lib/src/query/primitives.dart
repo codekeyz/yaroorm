@@ -1,19 +1,85 @@
 import '../database/driver/driver.dart';
 import 'query.dart';
 
-typedef WhereData<A> = ({String field, Symbol optor, A? value});
-
-class WhereCondition {
-  final WhereData<dynamic> value;
-  const WhereCondition(this.value);
+abstract class Clause<T> {
+  final T value;
+  const Clause(this.value);
 }
 
-enum OrderByDirection { asc, desc }
+// ignore: constant_identifier_names
+enum LogicalOperator { AND, OR }
+
+class LogicalClause<T extends Clause> {
+  final LogicalOperator operator;
+  final T clause;
+  const LogicalClause(this.operator, this.clause);
+}
+
+typedef WhereClauseValue<A> = ({String field, String condition, A? value});
+
+class WhereClause<QueryResult extends Entity> extends Clause<WhereClauseValue> {
+  final RecordQueryInterface<QueryResult> _query;
+
+  WhereClause(super.value, this._query);
+
+  RecordQueryInterface<QueryResult> get query => _query;
+
+  CompositeWhereClause<QueryResult> and<ValueType>(
+    String field,
+    String condition,
+    ValueType val,
+  ) {
+    return _query.whereClause = CompositeWhereClause<QueryResult>(this)
+      ..subparts.add(LogicalClause(
+        LogicalOperator.AND,
+        WhereClause<QueryResult>(
+            (field: field, condition: condition, value: val), _query),
+      ));
+  }
+
+  CompositeWhereClause<QueryResult> or<ValueType>(
+    String field,
+    String condition,
+    ValueType val,
+  ) {
+    return _query.whereClause = CompositeWhereClause<QueryResult>(this)
+      ..subparts.add(LogicalClause(
+        LogicalOperator.OR,
+        WhereClause<QueryResult>(
+            (field: field, condition: condition, value: val), _query),
+      ));
+  }
+}
+
+class CompositeWhereClause<QueryResult extends Entity> extends WhereClause<QueryResult> {
+  final List<LogicalClause<WhereClause<QueryResult>>> subparts = [];
+
+  CompositeWhereClause(WhereClause<QueryResult> parent)
+      : super(parent.value, parent._query);
+
+  @override
+  CompositeWhereClause<QueryResult> and<Type>(String field, String condition, Type val) {
+    subparts.add(LogicalClause(
+      LogicalOperator.AND,
+      WhereClause<QueryResult>((field: field, condition: condition, value: val), _query),
+    ));
+    return this;
+  }
+
+  @override
+  CompositeWhereClause<QueryResult> or<Type>(String field, String condition, Type val) {
+    subparts.add(LogicalClause(
+      LogicalOperator.OR,
+      WhereClause<QueryResult>((field: field, condition: condition, value: val), _query),
+    ));
+    return this;
+  }
+}
 
 typedef OrderBy = ({String field, OrderByDirection order});
 
 abstract interface class TableOperations<Model extends Entity> {
-  RecordQueryInterface<Model> where<Value>(String field, Symbol optor, Value value);
+  WhereClause<Model> where<Value>(String field, String optor, Value value);
 
   RecordQueryInterface<Model> select(List<String> fields);
 
@@ -23,7 +89,11 @@ abstract interface class TableOperations<Model extends Entity> {
 }
 
 abstract class QueryPrimitiveSerializer {
-  String acceptWhereCondition(WhereCondition condition);
+  String acceptWhereClause(WhereClause clause);
+
+  String acceptQuery(RecordQueryInterface query);
 
   String acceptSelect(List<String> fields);
+
+  String acceptOrderBy(List<OrderBy> orderBys);
 }

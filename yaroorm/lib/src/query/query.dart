@@ -2,37 +2,31 @@ import '../database/driver/driver.dart';
 import '../reflection/reflection.dart';
 import 'primitives.dart';
 
-export 'primitives.dart';
+enum OrderByDirection { asc, desc }
 
 @entity
 abstract class Entity {}
 
 final class RecordQueryInterface<Model extends Entity> implements TableOperations<Model> {
-  final String tableName;
-  final List<WhereCondition> _whereConditions = [];
-  final Set<String> _fieldSelections = {};
-  final Set<OrderBy> _orderBy = {};
+  final DatabaseDriver? _driver;
 
-  DatabaseDriver? _driver;
+  final String tableName;
+  final Set<String> fieldSelections = {};
+  final Set<OrderBy> orderByProps = {};
+
+  WhereClause? whereClause;
 
   RecordQueryInterface(this.tableName, {DatabaseDriver? driver}) : _driver = driver;
 
   @override
-  RecordQueryInterface<Model> where<Value>(String field, Symbol optor, Value value) {
-    final condition = WhereCondition((field: field, optor: optor, value: value));
-    _whereConditions.add(condition);
-    return this;
-  }
-
-  @override
   RecordQueryInterface<Model> select(List<String> fields) {
-    _fieldSelections.addAll(fields);
+    fieldSelections.addAll(fields);
     return this;
   }
 
   @override
   RecordQueryInterface<Model> orderBy(String field, OrderByDirection direction) {
-    _orderBy.add((field: field, order: direction));
+    orderByProps.add((field: field, order: direction));
     return this;
   }
 
@@ -41,5 +35,21 @@ final class RecordQueryInterface<Model extends Entity> implements TableOperation
     driver ??= _driver;
 
     throw Exception('Hello World');
+  }
+
+  String get rawQuery {
+    if (_driver == null) {
+      throw Exception('Cannot resolve rawQuery. No driver provided');
+    }
+    return _driver!.querySerializer.acceptQuery(this);
+  }
+
+  @override
+  WhereClause<Model> where<Value>(String field, String condition, Value value) {
+    if (whereClause != null) throw Exception('Only one where clause is supported');
+    return whereClause = WhereClause<Model>(
+      (field: field, condition: condition, value: value),
+      this,
+    );
   }
 }
