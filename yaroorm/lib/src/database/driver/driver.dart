@@ -1,4 +1,5 @@
-import '../table.dart';
+import '../../query/query.dart';
+import '../database.dart';
 import 'sqlite_driver.dart';
 
 typedef DatabaseConfig = Map<String, dynamic>;
@@ -91,6 +92,8 @@ abstract interface class DatabaseDriver {
   Future<void> disconnect();
 
   TableBlueprint get blueprint;
+
+  Future<T> query<T extends Entity>(RecordQueryInterface<T> query);
 
   /// Execute scripts on the database.
   ///

@@ -1,8 +1,35 @@
 // ignore_for_file: avoid_function_literals_in_foreach_calls
 
 import 'driver/driver.dart';
-import 'table.dart';
 import 'package:recase/recase.dart';
+
+abstract interface class TableBlueprint {
+  void id();
+
+  void string(String name);
+
+  void integer(String name);
+
+  void double(String name);
+
+  void float(String name);
+
+  void boolean(String name);
+
+  void timestamp(String name);
+
+  void datetime(String name);
+
+  void blob(String name);
+
+  void timestamps({String createdAt = 'created_at', String updatedAt = 'updated_at'});
+
+  String createScript(String tableName);
+
+  String dropScript(String tableName);
+
+  String renameScript(String fromName, String toName);
+}
 
 typedef TableBluePrintFunc = TableBlueprint Function(TableBlueprint $table);
 
@@ -20,6 +47,8 @@ class Schema {
   static Schema create(String name, TableBluePrintFunc func) => Schema._(name, func);
 
   static Schema dropIfExists(String name) => _DropSchema(name);
+
+  static Schema rename(String from, String to) => _RenameSchema(from, to);
 }
 
 class _DropSchema extends Schema {
@@ -27,6 +56,15 @@ class _DropSchema extends Schema {
 
   @override
   String toScript(TableBlueprint $table) => $table.dropScript(tableName);
+}
+
+class _RenameSchema extends Schema {
+  final String newName;
+
+  _RenameSchema(String from, this.newName) : super._(from, null);
+
+  @override
+  String toScript(TableBlueprint $table) => $table.renameScript(tableName, newName);
 }
 
 abstract class Migration {

@@ -1,15 +1,5 @@
-import 'engine.dart';
-import 'model.dart';
-
-mixin TableOperations<Model extends Entity> {
-  RecordSelection<Model> where<Value>(String field, Symbol optor, Value value);
-
-  RecordSelection<Model> select(List<String> fields);
-
-  RecordSelection<Model> orderBy(String field, OrderByDirection direction);
-
-  Future<Model> get();
-}
+import '../database/driver/driver.dart';
+import 'query.dart';
 
 typedef WhereData<A> = ({String field, Symbol optor, A? value});
 
@@ -21,3 +11,19 @@ class WhereCondition {
 enum OrderByDirection { asc, desc }
 
 typedef OrderBy = ({String field, OrderByDirection order});
+
+abstract interface class TableOperations<Model extends Entity> {
+  RecordQueryInterface<Model> where<Value>(String field, Symbol optor, Value value);
+
+  RecordQueryInterface<Model> select(List<String> fields);
+
+  RecordQueryInterface<Model> orderBy(String field, OrderByDirection direction);
+
+  Future<Model> get({DatabaseDriver? driver});
+}
+
+abstract class QueryPrimitiveSerializer {
+  String acceptWhereCondition(WhereCondition condition);
+
+  String acceptSelect(List<String> fields);
+}

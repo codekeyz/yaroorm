@@ -1,6 +1,7 @@
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import '../table.dart';
+import '../../query/query.dart';
+import '../migration.dart';
 import 'driver.dart';
 
 class SqliteDriver implements DatabaseDriver {
@@ -49,6 +50,11 @@ class SqliteDriver implements DatabaseDriver {
     final db = _database;
     if (!isOpen || db == null) throw Exception('Database is not open');
     await db.execute(script);
+  }
+
+  @override
+  Future<T> query<T extends Entity>(RecordQueryInterface<T> query) async {
+    throw Exception();
   }
 }
 
@@ -114,5 +120,18 @@ class _SqliteTableBlueprint implements TableBlueprint {
   @override
   String dropScript(String tableName) {
     return 'DROP TABLE IF EXISTS $tableName;';
+  }
+
+  @override
+  String renameScript(String oldName, String toName) {
+    final StringBuffer renameScript = StringBuffer();
+    renameScript
+      ..writeln(
+          'CREATE TABLE temp_info AS SELECT * FROM PRAGMA table_info(\'$oldName\');')
+      ..writeln('CREATE TABLE temp_data AS SELECT * FROM $oldName;')
+      ..writeln('CREATE TABLE $toName AS SELECT * FROM temp_data WHERE 1 = 0;')
+      ..writeln('INSERT INTO $toName SELECT * FROM temp_data;')
+      ..writeln('DROP TABLE temp_info; DROP TABLE temp_data;');
+    return renameScript.toString();
   }
 }
