@@ -1,18 +1,5 @@
+import '../reflection/reflection.dart';
 import 'driver/driver.dart';
-
-class TableColumn {
-  final String name;
-  final String dataType;
-  final bool primaryKey;
-  final bool primaryKeyAutoIncrement;
-
-  TableColumn(
-    this.name,
-    this.dataType, {
-    this.primaryKey = false,
-    this.primaryKeyAutoIncrement = false,
-  });
-}
 
 abstract interface class TableBlueprint {
   void id();
@@ -34,28 +21,36 @@ abstract interface class TableBlueprint {
   void blob(String name);
 
   void timestamps({String createdAt = 'created_at', String updatedAt = 'updated_at'});
-}
 
-abstract class Migration {
-  void up(List<dynamic> $actions);
-
-  void down(List<dynamic> $actions);
+  List<String> get statements;
 }
 
 class Schema {
   final String name;
-  final TableBluePrintFunc? _bluePrint;
-  final bool _dropIfExists;
+  final TableBluePrintFunc? _bluePrintFunc;
 
-  // String get createTableStatement => 'CREATE TABLE $name (${statements.join(', ')})';
+  String toScript(TableBlueprint $table) {
+    _bluePrintFunc!.call($table);
+    return 'CREATE TABLE $name (${$table.statements.join(', ')})';
+  }
 
-  const Schema._(
-    this.name,
-    this._bluePrint, {
-    bool shouldDrop = false,
-  }) : _dropIfExists = shouldDrop;
+  const Schema._(this.name, this._bluePrintFunc);
 
   static Schema create(String name, TableBluePrintFunc func) => Schema._(name, func);
 
-  static Schema dropIfExists(String name) => Schema._(name, null, shouldDrop: true);
+  static Schema dropIfExists(String name) => _DropSchema(name);
+}
+
+class _DropSchema extends Schema {
+  const _DropSchema(String name) : super._(name, null);
+
+  @override
+  String toScript(TableBlueprint $table) => 'DROP TABLE IF EXISTS $name';
+}
+
+@migration
+abstract class Migration {
+  void up(List<dynamic> $actions);
+
+  void down(List<dynamic> $actions);
 }

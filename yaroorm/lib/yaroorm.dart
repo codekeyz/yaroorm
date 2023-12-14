@@ -1,5 +1,6 @@
 library;
 
-export 'src/database/migration.dart';
-export 'src/database/driver/driver.dart';
 export 'src/query/query.dart';
+export 'src/database/database.dart';
+export 'src/reflection/reflection.dart'
+    show ReflectableEntity, ReflectableMigration, entity, migration;
