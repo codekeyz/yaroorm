@@ -27,8 +27,9 @@ class SqliteDriver implements DatabaseDriver {
 
   @override
   Future<void> disconnect() async {
-    if (_database?.isOpen != true) return;
+    if (!isOpen) return;
     await _database!.close();
+    _database = null;
   }
 
   @override
@@ -39,6 +40,9 @@ class SqliteDriver implements DatabaseDriver {
 
   @override
   TableBlueprint newTable(String tableName) => _SqliteTableBlueprint(tableName);
+
+  @override
+  bool get isOpen => _database?.isOpen ?? false;
 }
 
 class _SqliteTableBlueprint extends TableBlueprint {

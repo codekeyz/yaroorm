@@ -74,6 +74,9 @@ abstract interface class DatabaseDriver {
   /// Database name used to perform all write queries.
   String get database;
 
+  /// Check if the database is open for operation
+  bool get isOpen;
+
   /// Schema name used to perform all write queries.
   DatabaseDriverType get type;
 

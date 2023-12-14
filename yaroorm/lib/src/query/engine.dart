@@ -56,6 +56,7 @@ class _QueryImpl<Model extends Entity> implements Query<Model> {
 
   @override
   Future<Model> execute() async {
+    if (!_driver.isOpen) await _driver.connect();
     throw Exception();
   }
 }
