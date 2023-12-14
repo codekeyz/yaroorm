@@ -90,5 +90,7 @@ abstract interface class DatabaseDriver {
   /// Depend on driver type it may create a connection pool.
   Future<void> disconnect();
 
-  TableBlueprint newTable(String name);
+  TableBlueprint get blueprint;
 }
+
+typedef TableBluePrintFunc = void Function(TableBlueprint $table);

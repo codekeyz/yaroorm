@@ -1,25 +1,61 @@
-abstract class TableColumn {}
+import 'driver/driver.dart';
 
-abstract class TableBlueprint {
+class TableColumn {
   final String name;
+  final String dataType;
+  final bool primaryKey;
+  final bool primaryKeyAutoIncrement;
 
-  TableBlueprint(this.name);
+  TableColumn(
+    this.name,
+    this.dataType, {
+    this.primaryKey = false,
+    this.primaryKeyAutoIncrement = false,
+  });
+}
 
-  TableColumn id();
+abstract interface class TableBlueprint {
+  void id();
 
-  TableColumn string(String name);
+  void string(String name);
 
-  TableColumn timestamp(String name);
+  void integer(String name);
 
-  TableColumn password(String name);
+  void double(String name);
 
-  TableColumn rememberToken();
+  void float(String name);
 
-  TableColumn timestamps();
+  void boolean(String name);
+
+  void timestamp(String name);
+
+  void datetime(String name);
+
+  void blob(String name);
+
+  void timestamps({String createdAt = 'created_at', String updatedAt = 'updated_at'});
 }
 
 abstract class Migration {
-  void up(TableBlueprint $table);
+  void up(List<dynamic> $actions);
 
-  void down(TableBlueprint $table);
+  void down(List<dynamic> $actions);
+}
+
+class Schema {
+  final String name;
+  final TableBluePrintFunc? _bluePrint;
+  final bool _dropIfExists;
+
+  // String get createTableStatement => 'CREATE TABLE $name (${statements.join(', ')})';
+
+  const Schema._(
+    this.name,
+    this._bluePrint, {
+    bool shouldDrop = false,
+  }) : _dropIfExists = shouldDrop;
+
+  static Schema create(String name, TableBluePrintFunc func) => Schema._(name, func);
+
+  static Schema dropIfExists(String name) => Schema._(name, null, shouldDrop: true);
 }
