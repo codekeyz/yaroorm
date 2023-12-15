@@ -1,8 +1,9 @@
 // ignore_for_file: avoid_function_literals_in_foreach_calls
 
-import 'driver/driver.dart';
-import 'package:recase/recase.dart';
 import 'package:meta/meta.dart';
+import 'package:recase/recase.dart';
+
+import 'driver/driver.dart';
 
 abstract interface class TableBlueprint {
   void id();

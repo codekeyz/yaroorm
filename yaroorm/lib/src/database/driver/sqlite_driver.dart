@@ -15,7 +15,7 @@ class SqliteDriver implements DatabaseDriver {
   SqliteDriver(this.config);
 
   @override
-  Future<void> connect() async {
+  Future<DatabaseDriver> connect() async {
     sqfliteFfiInit();
     var databaseFactory = databaseFactoryFfi;
     _database = await databaseFactory.openDatabase(config.database,
@@ -25,6 +25,7 @@ class SqliteDriver implements DatabaseDriver {
         await db.execute('PRAGMA foreign_keys = ON;');
       }
     }));
+    return this;
   }
 
   @override

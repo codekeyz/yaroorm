@@ -85,7 +85,7 @@ abstract interface class DatabaseDriver {
   /// Performs connection to the database.
   ///
   /// Depend on driver type it may create a connection pool.
-  Future<void> connect();
+  Future<DatabaseDriver> connect();
 
   /// Performs connection to the database.
   ///
