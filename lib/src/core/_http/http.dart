@@ -2,15 +2,15 @@
 
 part of '../core.dart';
 
-mixin _AppInstance {
+abstract interface class AppInstance {
   Application get app => Application._instance;
 }
 
 @inject
-abstract class BaseController with _AppInstance {}
+abstract class BaseController extends AppInstance {}
 
 @inject
-abstract class ServiceProvider with _AppInstance {
+abstract class ServiceProvider extends AppInstance {
   static List<Type> get defaultProviders => [AppServiceProvider];
 
   FutureOr<void> boot();

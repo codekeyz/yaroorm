@@ -18,11 +18,12 @@ dependencies:
   dotenv: ^4.2.0
   get_it: ^7.6.4
   uuid: ^4.2.1
-  reflectable: ^4.0.5
+  reflectable:
+    git:
+      url: git@github.com:codekeyz/reflectable.dart.git
+      path: reflectable
   build_runner: ^2.4.7
   spookie: ^1.0.1
-
-dependency_overrides:
 
 dev_dependencies:
   lints: ^3.0.0

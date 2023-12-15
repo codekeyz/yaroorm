@@ -2,15 +2,20 @@ name: yaroorm
 description: A starting point for Dart libraries or applications.
 version: 1.0.0
 
+publish_to: none
+
 environment:
   sdk: ^3.0.0
 
 dependencies:
   collection: ^1.18.0
   sqflite_common_ffi: ^2.3.1
-  reflectable: ^4.0.5
-  analyzer:
+  reflectable:
+    git:
+      url: git@github.com:codekeyz/reflectable.dart.git
+      path: reflectable
   recase: ^4.1.0
+  meta: ^1.11.0
 
 dev_dependencies:
   lints: ^2.1.0
