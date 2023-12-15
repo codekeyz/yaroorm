@@ -6,7 +6,6 @@ import 'package:meta/meta.dart';
 import 'package:pharaoh/pharaoh.dart';
 import 'package:reflectable/reflectable.dart' as r;
 import 'package:meta/meta_meta.dart';
-import 'package:spanner/spanner.dart';
 import 'package:spookie/spookie.dart';
 
 import '../database/manager.dart';
@@ -98,7 +97,7 @@ abstract class ApplicationFactory {
   Future<void> startServer() async {
     final app = instanceFromRegistry<Application>() as _YarooAppImpl;
 
-    await app._startServer();
+    await app._createPharaohInstance().listen(port: app.port);
 
     await launchUrl(Application._instance.url);
   }
@@ -109,6 +108,7 @@ abstract class ApplicationFactory {
       .._useConfig(appConfig)
       ..useMiddlewares(globalMiddlewares);
 
+    /// boostrap providers
     final providers = appConfig.getValue<List<Type>>(ConfigExt.providers)!;
     for (final type in providers) {
       final provider = createNewInstance<ServiceProvider>(type);
@@ -118,7 +118,7 @@ abstract class ApplicationFactory {
 
   @visibleForTesting
   Future<Spookie> get tester {
-    final app = instanceFromRegistry<Application>() as _YarooAppImpl;
-    return request(app._pharaoh);
+    final application = (instanceFromRegistry<Application>() as _YarooAppImpl);
+    return request(application._createPharaohInstance());
   }
 }

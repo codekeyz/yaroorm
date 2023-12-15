@@ -1,11 +1,13 @@
+// ignore_for_file: avoid_function_literals_in_foreach_calls
+
 part of 'core.dart';
 
 class _YarooAppImpl implements Application {
   late final YarooAppConfig _appConfig;
   late final Spanner _spanner;
-  late final Pharaoh _pharaoh;
+  late final ViewEngine _viewEngine;
 
-  _YarooAppImpl(this._spanner) : _pharaoh = Pharaoh()..useSpanner(_spanner);
+  _YarooAppImpl(this._spanner);
 
   @override
   T singleton<T extends Object>(T instance) {
@@ -19,22 +21,18 @@ class _YarooAppImpl implements Application {
 
   @override
   void useMiddlewares(List<Middleware> middlewares) {
-    for (final mdw in middlewares) {
-      _spanner.addMiddleware('/', mdw);
-    }
+    middlewares.forEach((mdw) => _spanner.addMiddleware<Middleware>('/', mdw));
   }
 
   @override
   void useRoutes(RoutesResolver routeResolver) {
-    final routeDefns = routeResolver.call();
-    for (var defn in routeDefns) {
-      defn.commit(_spanner);
-    }
+    final routes = routeResolver.call();
+    routes.forEach((route) => route.commit(_spanner));
   }
 
   @override
   void useViewEngine(ViewEngine viewEngine) {
-    _pharaoh.viewEngine = viewEngine;
+    _viewEngine = viewEngine;
   }
 
   @override
@@ -49,7 +47,7 @@ class _YarooAppImpl implements Application {
   @override
   int get port => config.appPort;
 
-  Future<Pharaoh> _startServer() {
-    return _pharaoh.listen(port: port);
-  }
+  Pharaoh _createPharaohInstance() => Pharaoh()
+    ..useSpanner(_spanner)
+    ..viewEngine = _viewEngine;
 }
