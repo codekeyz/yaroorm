@@ -1,5 +1,4 @@
 import 'package:pharaoh/pharaoh.dart';
-import 'package:spanner/spanner.dart';
 
 import '../_reflector/reflector.dart';
 import '../core.dart';

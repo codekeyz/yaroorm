@@ -72,14 +72,8 @@ class SqliteDriver implements DatabaseDriver {
   QueryPrimitiveSerializer get querySerializer => _queryPrimitiveSerializer;
 
   @override
-  Future<List<Map<String, dynamic>>> insert(
-    String table,
-    Map<String, dynamic> data,
-  ) async {
-    final entityId = await _getDatabase().insert(table, data);
-    final query = _queryPrimitiveSerializer
-        .acceptQuery(EntityTableInterface(table).where('id', '=', entityId).query);
-    return await _getDatabase().rawQuery(query);
+  Future<int> insert(String tableName, Map<String, dynamic> data) {
+    return _getDatabase().insert(tableName, data);
   }
 }
 

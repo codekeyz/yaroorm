@@ -1,7 +1,6 @@
 library router;
 
 import 'package:pharaoh/pharaoh.dart';
-import 'package:spanner/spanner.dart';
 import 'definition.dart';
 
 export 'definition.dart' show RouteDefinitionExtension;

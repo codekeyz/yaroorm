@@ -98,7 +98,7 @@ abstract interface class DatabaseDriver {
 
   Future<T> query<T extends Entity>(EntityTableInterface<T> query);
 
-  Future<List<Map<String, dynamic>>> insert(String table, Map<String, dynamic> data);
+  Future<dynamic> insert(String tableName, Map<String, dynamic> data);
 
   /// Execute scripts on the database.
   ///
