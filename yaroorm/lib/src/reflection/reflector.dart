@@ -3,6 +3,7 @@ import 'package:reflectable/reflectable.dart' as r;
 class ReflectableEntity extends r.Reflectable {
   const ReflectableEntity()
       : super(
+          r.typeCapability,
           r.invokingCapability,
           r.metadataCapability,
           r.newInstanceCapability,
@@ -11,6 +12,7 @@ class ReflectableEntity extends r.Reflectable {
           r.typeRelationsCapability,
           r.instanceInvokeCapability,
           r.subtypeQuantifyCapability,
+          r.typingCapability,
         );
 }
 

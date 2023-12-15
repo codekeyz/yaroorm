@@ -18,15 +18,13 @@ class SqliteDriver implements DatabaseDriver {
   Future<void> connect() async {
     sqfliteFfiInit();
     var databaseFactory = databaseFactoryFfi;
-    _database = await databaseFactory.openDatabase(
-      config.database,
-      options: OpenDatabaseOptions(onOpen: (db) async {
-        // Enable foreign key support
-        if (config.dbForeignKeys) {
-          await db.execute('PRAGMA foreign_keys = ON;');
-        }
-      }),
-    );
+    _database = await databaseFactory.openDatabase(config.database,
+        options: OpenDatabaseOptions(onOpen: (db) async {
+      // Enable foreign key support
+      if (config.dbForeignKeys) {
+        await db.execute('PRAGMA foreign_keys = ON;');
+      }
+    }));
   }
 
   @override
@@ -48,6 +46,12 @@ class SqliteDriver implements DatabaseDriver {
   @override
   TableBlueprint get blueprint => _SqliteTableBlueprint();
 
+  Database _getDatabase() {
+    final db = _database;
+    if (!isOpen || db == null) throw Exception('Database is not open');
+    return db;
+  }
+
   @override
   Future execute(String script) async {
     final db = _database;
@@ -56,13 +60,27 @@ class SqliteDriver implements DatabaseDriver {
   }
 
   @override
-  Future<T> query<T extends Entity>(RecordQueryInterface<T> query) async {
-    final script = querySerializer.acceptQuery(query);
-    throw Exception(script);
+  Future<T> query<T extends Entity>(EntityTableInterface<T> query) async {
+    final queryStr = _queryPrimitiveSerializer.acceptQuery(query);
+
+    print(queryStr);
+
+    throw Exception('Hello World');
   }
 
   @override
   QueryPrimitiveSerializer get querySerializer => _queryPrimitiveSerializer;
+
+  @override
+  Future<List<Map<String, dynamic>>> insert(
+    String table,
+    Map<String, dynamic> data,
+  ) async {
+    final entityId = await _getDatabase().insert(table, data);
+    final query = _queryPrimitiveSerializer
+        .acceptQuery(EntityTableInterface(table).where('id', '=', entityId).query);
+    return await _getDatabase().rawQuery(query);
+  }
 }
 
 class _SqliteTableBlueprint implements TableBlueprint {
@@ -147,7 +165,7 @@ class _SqliteQueryPrimitiveSerializer implements QueryPrimitiveSerializer {
   const _SqliteQueryPrimitiveSerializer();
 
   @override
-  String acceptQuery(RecordQueryInterface<Entity> query) {
+  String acceptQuery(EntityTableInterface<Entity> query) {
     final queryBuilder = StringBuffer();
 
     final selectStatement = acceptSelect(query.fieldSelections.toList());
@@ -157,7 +175,7 @@ class _SqliteQueryPrimitiveSerializer implements QueryPrimitiveSerializer {
     final whereClause = query.whereClause;
     if (whereClause != null) {
       final whereStatement = acceptWhereClause(whereClause);
-      queryBuilder.write(' $whereStatement');
+      queryBuilder.write(' WHERE $whereStatement');
     }
 
     return '${queryBuilder.toString()};';
@@ -187,15 +205,14 @@ class _SqliteQueryPrimitiveSerializer implements QueryPrimitiveSerializer {
   String acceptWhereClause(WhereClause clause) {
     if (clause is CompositeWhereClause) {
       final whereBuilder = StringBuffer();
-      whereBuilder.write('WHERE ${_whereValueToScript(clause.value)}');
+      whereBuilder.write(_whereValueToScript(clause.value));
       for (final subpart in clause.subparts) {
         whereBuilder.write(
             ' ${subpart.operator.name} ${_whereValueToScript(subpart.clause.value)}');
       }
       return whereBuilder.toString();
     }
-
-    return 'WHERE ${_whereValueToScript(clause.value)}';
+    return _whereValueToScript(clause.value);
   }
 
   @override
@@ -203,15 +220,4 @@ class _SqliteQueryPrimitiveSerializer implements QueryPrimitiveSerializer {
     // TODO: implement acceptOrderBy
     throw UnimplementedError();
   }
-}
-
-void main() {
-  final query = RecordQueryInterface('users')
-      .where('username', '=', 'Chima')
-      .or('lastname', '=', '23')
-      .or('hello', '>', 22)
-      .or('hello', '!=', 24059)
-      .query;
-
-  print(_SqliteQueryPrimitiveSerializer().acceptQuery(query));
 }

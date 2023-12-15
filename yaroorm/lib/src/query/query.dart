@@ -1,13 +1,54 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import '../database/driver/driver.dart';
-import '../reflection/reflection.dart';
+import '../reflection/reflector.dart';
 import 'primitives.dart';
 
 enum OrderByDirection { asc, desc }
 
-@entity
-abstract class Entity {}
+class PrimaryKey<Type> {
+  Type? _value;
 
-final class RecordQueryInterface<Model extends Entity> implements TableOperations<Model> {
+  Type get value => _value!;
+
+  set val(Type? value) => _setValue(value);
+
+  void _setValue(Type? value) {
+    if (value == null) return;
+    if (Type is! String || Type is! int) {
+      throw Exception('Primay Key value must be either `String` or `int` Type');
+    }
+    _value = value;
+  }
+
+  PrimaryKey({Type? value}) {
+    _setValue(value);
+  }
+
+  static dynamic fromJson<T>(dynamic data) {
+    if (data == null) return PrimaryKey<T>(value: null);
+    if (data is int) return PrimaryKey<T>(value: data as T);
+    return PrimaryKey<T>(value: '$data' as T);
+  }
+
+  static T toJson<T>(T input) => input;
+}
+
+@entity
+abstract class Entity<T> {
+  Map<String, dynamic> toJson();
+
+  @JsonKey(fromJson: PrimaryKey.fromJson, toJson: PrimaryKey.toJson)
+  PrimaryKey<T> id = PrimaryKey<T>();
+
+  late DateTime createdAt;
+
+  late DateTime updatedAt;
+
+  bool get enableTimestamps => true;
+}
+
+final class EntityTableInterface<Model extends Entity> implements TableOperations<Model> {
   final DatabaseDriver? _driver;
 
   final String tableName;
@@ -16,23 +57,16 @@ final class RecordQueryInterface<Model extends Entity> implements TableOperation
 
   WhereClause? whereClause;
 
-  RecordQueryInterface(this.tableName, {DatabaseDriver? driver}) : _driver = driver;
-
-  @override
-  RecordQueryInterface<Model> select(List<String> fields) {
-    fieldSelections.addAll(fields);
-    return this;
-  }
-
-  @override
-  RecordQueryInterface<Model> orderBy(String field, OrderByDirection direction) {
-    orderByProps.add((field: field, order: direction));
-    return this;
-  }
+  EntityTableInterface(this.tableName, {DatabaseDriver? driver}) : _driver = driver;
 
   @override
   Future<Model> get({DatabaseDriver? driver}) async {
     driver ??= _driver;
+    if (driver == null) {
+      throw Exception('No Database driver provided');
+    }
+
+    final result = await driver.query(this);
 
     throw Exception('Hello World');
   }
@@ -52,4 +86,19 @@ final class RecordQueryInterface<Model extends Entity> implements TableOperation
       this,
     );
   }
+
+  @override
+  Future<Model> insert(Model model) async {
+    if (model.enableTimestamps) {
+      model.createdAt = model.updatedAt = DateTime.now().toUtc();
+    }
+
+    final result = await _driver!.insert(tableName, model.toJson()..remove('id'));
+    print(result);
+
+    return model;
+  }
+
+  @override
+  Future<void> insertMany(List<Model> entity) async {}
 }

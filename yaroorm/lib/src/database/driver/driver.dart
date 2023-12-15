@@ -96,7 +96,9 @@ abstract interface class DatabaseDriver {
 
   QueryPrimitiveSerializer get querySerializer;
 
-  Future<T> query<T extends Entity>(RecordQueryInterface<T> query);
+  Future<T> query<T extends Entity>(EntityTableInterface<T> query);
+
+  Future<List<Map<String, dynamic>>> insert(String table, Map<String, dynamic> data);
 
   /// Execute scripts on the database.
   ///

@@ -18,11 +18,11 @@ class LogicalClause<T extends Clause> {
 typedef WhereClauseValue<A> = ({String field, String condition, A? value});
 
 class WhereClause<QueryResult extends Entity> extends Clause<WhereClauseValue> {
-  final RecordQueryInterface<QueryResult> _query;
+  final EntityTableInterface<QueryResult> _query;
 
   WhereClause(super.value, this._query);
 
-  RecordQueryInterface<QueryResult> get query => _query;
+  EntityTableInterface<QueryResult> get query => _query;
 
   CompositeWhereClause<QueryResult> and<ValueType>(
     String field,
@@ -81,17 +81,17 @@ typedef OrderBy = ({String field, OrderByDirection order});
 abstract interface class TableOperations<Model extends Entity> {
   WhereClause<Model> where<Value>(String field, String optor, Value value);
 
-  RecordQueryInterface<Model> select(List<String> fields);
-
-  RecordQueryInterface<Model> orderBy(String field, OrderByDirection direction);
-
   Future<Model> get({DatabaseDriver? driver});
+
+  Future<Model> insert(Model entity);
+
+  Future<void> insertMany(List<Model> entity);
 }
 
 abstract class QueryPrimitiveSerializer {
   String acceptWhereClause(WhereClause clause);
 
-  String acceptQuery(RecordQueryInterface query);
+  String acceptQuery(EntityTableInterface query);
 
   String acceptSelect(List<String> fields);
 
