@@ -466,7 +466,7 @@ packages:
     source: hosted
     version: "1.10.0"
   spanner:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: spanner
       sha256: d513394e304a41ed2d00831fb879a13c6ed5e9331ef7b5f3f194817ce947e318

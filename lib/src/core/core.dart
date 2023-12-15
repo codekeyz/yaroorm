@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 import 'package:pharaoh/pharaoh.dart';
 import 'package:reflectable/reflectable.dart' as r;
 import 'package:meta/meta_meta.dart';
+import 'package:spanner/spanner.dart';
 import 'package:spookie/spookie.dart';
 
 import '../database/manager.dart';
@@ -51,25 +52,22 @@ abstract interface class Application {
 
   void useRoutes(RoutesResolver routeResolver);
 
+  void useViewEngine(ViewEngine viewEngine);
+
   void _useConfig(YarooAppConfig appConfig);
 }
 
 class AppServiceProvider extends ServiceProvider {
   @override
   FutureOr<void> boot() {
-    final spanner = Spanner();
-    final pharaoh = Pharaoh()..useSpanner(spanner);
-
+    /// setup jinja view engine
     final environment = Environment(
       autoReload: false,
       trimBlocks: true,
       leftStripBlocks: true,
       loader: FileSystemLoader(paths: ['public']),
     );
-    pharaoh.viewEngine = JinjaViewEngine(environment);
-
-    registerSingleton<Pharaoh>(pharaoh);
-    registerSingleton<Application>(_YarooAppImpl(spanner));
+    app.useViewEngine(JinjaViewEngine(environment));
   }
 }
 
@@ -79,7 +77,7 @@ abstract class ApplicationFactory {
 
   ApplicationFactory(this.appConfig, {this.dbConfig});
 
-  List<Middleware> get globalMiddlewares => [];
+  List<Middleware> get globalMiddlewares => [bodyParser];
 
   Future<void> bootstrap({
     bool bootstap_pharaoh = true,
@@ -90,27 +88,28 @@ abstract class ApplicationFactory {
       await DB.init(dbConfig!).defaultDriver.connect();
     }
 
-    if (!bootstap_pharaoh) return;
+    if (bootstap_pharaoh) {
+      await _bootstrapComponents(appConfig.call());
 
-    final config = appConfig.call();
-    final providers = config.getValue<List<Type>>(ConfigExt.providers)!;
-
-    await _setupAndBootProviders(providers);
-
-    Application._instance
-      .._useConfig(config)
-      ..useMiddlewares(globalMiddlewares);
-
-    if (start_server) await startServer();
+      if (start_server) await startServer();
+    }
   }
 
   Future<void> startServer() async {
-    await instanceFromRegistry<Pharaoh>().listen(port: Application._instance.port);
+    final app = instanceFromRegistry<Application>() as _YarooAppImpl;
+
+    await app._startServer();
 
     await launchUrl(Application._instance.url);
   }
 
-  Future<void> _setupAndBootProviders(List<Type> providers) async {
+  Future<void> _bootstrapComponents(YarooAppConfig appConfig) async {
+    final application = registerSingleton<Application>(_YarooAppImpl(Spanner()));
+    application
+      .._useConfig(appConfig)
+      ..useMiddlewares(globalMiddlewares);
+
+    final providers = appConfig.getValue<List<Type>>(ConfigExt.providers)!;
     for (final type in providers) {
       final provider = createNewInstance<ServiceProvider>(type);
       await registerSingleton(provider).boot();
@@ -118,5 +117,8 @@ abstract class ApplicationFactory {
   }
 
   @visibleForTesting
-  Future<Spookie> get tester => request(instanceFromRegistry<Pharaoh>());
+  Future<Spookie> get tester {
+    final app = instanceFromRegistry<Application>() as _YarooAppImpl;
+    return request(app._pharaoh);
+  }
 }

@@ -3,8 +3,9 @@ part of 'core.dart';
 class _YarooAppImpl implements Application {
   late final YarooAppConfig _appConfig;
   late final Spanner _spanner;
+  late final Pharaoh _pharaoh;
 
-  _YarooAppImpl(this._spanner);
+  _YarooAppImpl(this._spanner) : _pharaoh = Pharaoh()..useSpanner(_spanner);
 
   @override
   T singleton<T extends Object>(T instance) {
@@ -17,6 +18,13 @@ class _YarooAppImpl implements Application {
   }
 
   @override
+  void useMiddlewares(List<Middleware> middlewares) {
+    for (final mdw in middlewares) {
+      _spanner.addMiddleware('/', mdw);
+    }
+  }
+
+  @override
   void useRoutes(RoutesResolver routeResolver) {
     final routeDefns = routeResolver.call();
     for (var defn in routeDefns) {
@@ -25,10 +33,8 @@ class _YarooAppImpl implements Application {
   }
 
   @override
-  void useMiddlewares(List<Middleware> middleware) {
-    for (final middleware in middleware) {
-      _spanner.addMiddleware('/', middleware);
-    }
+  void useViewEngine(ViewEngine viewEngine) {
+    _pharaoh.viewEngine = viewEngine;
   }
 
   @override
@@ -42,4 +48,8 @@ class _YarooAppImpl implements Application {
 
   @override
   int get port => config.appPort;
+
+  Future<Pharaoh> _startServer() {
+    return _pharaoh.listen(port: port);
+  }
 }

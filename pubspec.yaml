@@ -9,6 +9,8 @@ environment:
   sdk: ^3.0.0
 
 dependencies:
+  spookie: ^1.0.1
+  spanner: ^1.0.1
   pharaoh:
     path: ../pharaoh-dev/packages/pharaoh
   yaroorm:
@@ -23,7 +25,6 @@ dependencies:
       url: git@github.com:codekeyz/reflectable.dart.git
       path: reflectable
   build_runner: ^2.4.7
-  spookie: ^1.0.1
 
 dev_dependencies:
   lints: ^3.0.0

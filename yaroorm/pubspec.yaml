@@ -16,6 +16,7 @@ dependencies:
       path: reflectable
   recase: ^4.1.0
   meta: ^1.11.0
+  json_annotation: ^4.8.1
 
 dev_dependencies:
   lints: ^2.1.0
