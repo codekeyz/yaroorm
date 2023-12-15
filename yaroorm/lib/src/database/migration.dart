@@ -2,6 +2,7 @@
 
 import 'driver/driver.dart';
 import 'package:recase/recase.dart';
+import 'package:meta/meta.dart';
 
 abstract interface class TableBlueprint {
   void id();
@@ -24,10 +25,13 @@ abstract interface class TableBlueprint {
 
   void timestamps({String createdAt = 'created_at', String updatedAt = 'updated_at'});
 
+  @protected
   String createScript(String tableName);
 
+  @protected
   String dropScript(String tableName);
 
+  @protected
   String renameScript(String fromName, String toName);
 }
 
