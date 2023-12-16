@@ -1,19 +1,19 @@
 import 'package:reflectable/reflectable.dart' as r;
 
+import '../query/entity.dart';
+
 class ReflectableEntity extends r.Reflectable {
   const ReflectableEntity()
       : super(
-          r.typeCapability,
-          r.invokingCapability,
-          r.metadataCapability,
-          r.newInstanceCapability,
+          const r.StaticInvokeCapability('fromJson'),
           r.declarationsCapability,
-          r.reflectedTypeCapability,
-          r.typeRelationsCapability,
-          r.instanceInvokeCapability,
+          r.newInstanceCapability,
+
+          ///
+          r.typeCapability,
           r.subtypeQuantifyCapability,
-          r.typingCapability,
         );
 }
 
-const entity = ReflectableEntity();
+r.ClassMirror reflectType(Type type) =>
+    entity.reflectType(type) as r.ClassMirror;
