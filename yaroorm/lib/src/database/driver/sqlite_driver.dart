@@ -20,7 +20,6 @@ class SqliteDriver implements DatabaseDriver {
     var databaseFactory = databaseFactoryFfi;
     _database = await databaseFactory.openDatabase(config.database,
         options: OpenDatabaseOptions(onOpen: (db) async {
-      // Enable foreign key support
       if (config.dbForeignKeys) {
         await db.execute('PRAGMA foreign_keys = ON;');
       }
@@ -39,42 +38,37 @@ class SqliteDriver implements DatabaseDriver {
   bool get isOpen => _database?.isOpen ?? false;
 
   @override
-  String get database => config.database;
-
-  @override
   DatabaseDriverType get type => DatabaseDriverType.sqlite;
 
   @override
   TableBlueprint get blueprint => _SqliteTableBlueprint();
 
-  Database _getDatabase() {
+  Future<Database> _getDatabase() async {
     final db = _database;
-    if (!isOpen || db == null) throw Exception('Database is not open');
-    return db;
+    if (db == null) throw Exception('Database is not open');
+    if (!db.isOpen) await connect();
+    return _database!;
   }
 
   @override
-  Future execute(String script) async {
-    final db = _database;
-    if (!isOpen || db == null) throw Exception('Database is not open');
-    await db.execute(script);
+  Future<void> execute(String script) async {
+    return (await _getDatabase()).execute(script);
   }
 
   @override
-  Future<T> query<T extends Entity>(EntityTableInterface<T> query) async {
-    final queryStr = _queryPrimitiveSerializer.acceptQuery(query);
-
-    print(queryStr);
-
-    throw Exception('Hello World');
+  Future<List<Map<String, dynamic>>> query<T extends Entity>(
+    EntityTableInterface<T> query,
+  ) async {
+    final sql = _queryPrimitiveSerializer.acceptQuery(query);
+    return (await _getDatabase()).rawQuery(sql);
   }
 
   @override
   QueryPrimitiveSerializer get querySerializer => _queryPrimitiveSerializer;
 
   @override
-  Future<int> insert(String tableName, Map<String, dynamic> data) {
-    return _getDatabase().insert(tableName, data);
+  Future<int> insert(String tableName, Map<String, dynamic> data) async {
+    return (await _getDatabase()).insert(tableName, data);
   }
 }
 
@@ -127,7 +121,10 @@ class _SqliteTableBlueprint implements TableBlueprint {
   }
 
   @override
-  void timestamps({String createdAt = 'created_at', String updatedAt = 'updated_at'}) {
+  void timestamps({
+    String createdAt = 'created_at',
+    String updatedAt = 'updated_at',
+  }) {
     _statements.add('$createdAt DATETIME');
     _statements.add('$updatedAt DATETIME');
   }

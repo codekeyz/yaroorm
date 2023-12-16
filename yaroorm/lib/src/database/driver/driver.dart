@@ -73,9 +73,6 @@ abstract interface class DatabaseDriver {
     }
   }
 
-  /// Database name used to perform all write queries.
-  String get database;
-
   /// Check if the database is open for operation
   bool get isOpen;
 
@@ -96,7 +93,13 @@ abstract interface class DatabaseDriver {
 
   QueryPrimitiveSerializer get querySerializer;
 
-  Future<T> query<T extends Entity>(EntityTableInterface<T> query);
+  /// Perform query on the database
+  ///
+  /// [EntityTableInterface] gives you a unified interface to make
+  /// your queries work on any database driver
+  Future<List<Map<String, dynamic>>> query<T extends Entity>(
+    EntityTableInterface<T> query,
+  );
 
   Future<dynamic> insert(String tableName, Map<String, dynamic> data);
 

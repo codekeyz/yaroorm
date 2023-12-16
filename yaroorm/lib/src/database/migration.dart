@@ -3,6 +3,7 @@
 import 'package:meta/meta.dart';
 import 'package:recase/recase.dart';
 
+import '../query/entity.dart';
 import 'driver/driver.dart';
 
 abstract interface class TableBlueprint {
@@ -24,7 +25,10 @@ abstract interface class TableBlueprint {
 
   void blob(String name);
 
-  void timestamps({String createdAt = 'created_at', String updatedAt = 'updated_at'});
+  void timestamps({
+    String createdAt = entityCreatedAtColumnName,
+    String updatedAt = entityUpdatedAtColumnName,
+  });
 
   @protected
   String createScript(String tableName);
@@ -49,7 +53,8 @@ class Schema {
   String toScript(TableBlueprint $table) =>
       _bluePrintFunc!.call($table).createScript(tableName);
 
-  static Schema create(String name, TableBluePrintFunc func) => Schema._(name, func);
+  static Schema create(String name, TableBluePrintFunc func) =>
+      Schema._(name, func);
 
   static Schema dropIfExists(String name) => _DropSchema(name);
 
@@ -69,7 +74,8 @@ class _RenameSchema extends Schema {
   _RenameSchema(String from, this.newName) : super._(from, null);
 
   @override
-  String toScript(TableBlueprint $table) => $table.renameScript(tableName, newName);
+  String toScript(TableBlueprint $table) =>
+      $table.renameScript(tableName, newName);
 }
 
 abstract class Migration {
