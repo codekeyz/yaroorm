@@ -42,7 +42,7 @@ class DB {
 
   static void init(ConfigResolver dbConfig) {
     final configuration = dbConfig.call();
-    final defaultConn = configuration.getValue('default');
+    final defaultConn = configuration.getValue<String>('default');
     if (defaultConn == null) {
       throw ArgumentError.notNull('Default database connection');
     }
@@ -60,7 +60,8 @@ class DB {
     DB._connections
       ..clear()
       ..addAll(connections);
+
     DB.defaultConn = defaultConn;
-    DB._driverInstances[defaultConn] = DatabaseDriver.init(defaultConn);
+    DB._driverInstances[defaultConn] = DatabaseDriver.init(defaultConnection);
   }
 }
