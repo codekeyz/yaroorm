@@ -1,6 +1,5 @@
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import '../../query/primitives.dart';
 import '../../query/query.dart';
 import '../migration.dart';
 import 'driver.dart';
@@ -160,17 +159,30 @@ class _SqliteQueryPrimitiveSerializer implements QueryPrimitiveSerializer {
   String acceptQuery(EntityTableInterface<Entity> query) {
     final queryBuilder = StringBuffer();
 
+    /// SELECT
     final selectStatement = acceptSelect(query.fieldSelections.toList());
     queryBuilder.write(selectStatement);
     queryBuilder.write('FROM ${query.tableName}');
 
+    /// WHERE
     final whereClause = query.whereClause;
     if (whereClause != null) {
-      final whereStatement = acceptWhereClause(whereClause);
-      queryBuilder.write(' WHERE $whereStatement');
+      queryBuilder.write(' WHERE ${acceptWhereClause(whereClause)}');
     }
 
-    return '${queryBuilder.toString()};';
+    /// ORDER BY
+    final orderBys = query.orderByProps;
+    if (orderBys.isNotEmpty) {
+      queryBuilder.write(' ORDER BY ${acceptOrderBy(orderBys.toList())}');
+    }
+
+    /// LIMIT
+    final limit = query.limitValue;
+    if (limit != null) {
+      queryBuilder.write(' LIMIT ${acceptLimit(limit)}');
+    }
+
+    return '${queryBuilder.toString()}$terminator';
   }
 
   @override
@@ -209,7 +221,16 @@ class _SqliteQueryPrimitiveSerializer implements QueryPrimitiveSerializer {
 
   @override
   String acceptOrderBy(List<OrderBy> orderBys) {
-    // TODO: implement acceptOrderBy
-    throw UnimplementedError();
+    direction(OrderByDirection dir) =>
+        dir == OrderByDirection.asc ? 'ASC' : 'DESC';
+    return orderBys
+        .map((e) => '${e.field} ${direction(e.direction)}')
+        .join(', ');
   }
+
+  @override
+  String acceptLimit(int limit) => '$limit';
+
+  @override
+  String get terminator => ';';
 }

@@ -1,9 +1,11 @@
 import '../database/driver/driver.dart';
 import '../reflection/entity_helpers.dart';
 import 'entity.dart';
-import 'primitives.dart';
 
 export 'entity.dart';
+
+part 'operations.dart';
+part 'primitives/where.dart';
 
 enum OrderByDirection { asc, desc }
 
@@ -15,7 +17,12 @@ final class EntityTableInterface<Model extends Entity>
   final Set<String> fieldSelections = {};
   final Set<OrderBy> orderByProps = {};
 
-  WhereClause? whereClause;
+  WhereClause? _whereClause;
+  int? _limit;
+
+  WhereClause? get whereClause => _whereClause;
+
+  int? get limitValue => _limit;
 
   EntityTableInterface(this.tableName, {DatabaseDriver? driver})
       : _driver = driver;
@@ -29,27 +36,33 @@ final class EntityTableInterface<Model extends Entity>
   }
 
   @override
-  Future<Model> insert(Model model) async {
-    if (model.enableTimestamps) {
-      model.createdAt = model.updatedAt = DateTime.now().toUtc();
-    }
-    final recordId =
-        await _driver!.insert(tableName, model.toJson()..remove('id'));
-    return model..id = model.id.withKey(recordId);
+  Future<List<Model>> all() async {
+    final results = await _driver!.query(this);
+    if (results.isEmpty) return <Model>[];
+    return results.map<Model>(jsonToEntity<Model>).toList();
   }
 
   @override
-  Future<List<Model>> all() async {
-    final result = await _driver!.query(this);
-    if (result.isEmpty) return <Model>[];
-    return result.map<Model>(jsonToEntity<Model>).toList();
+  Future<List<Model>> limit(int limit) async {
+    _limit = limit;
+    final results = await _driver!.query(this);
+    if (results.isEmpty) return <Model>[];
+    return results.map<Model>(jsonToEntity<Model>).toList();
+  }
+
+  @override
+  EntityTableInterface<Model> orderBy(
+    String field,
+    OrderByDirection direction,
+  ) {
+    orderByProps.add((field: field, direction: direction));
+    return this;
   }
 
   @override
   Future<Model?> findOne() async {
-    final result = await _driver!.query(this);
-    if (result.isEmpty) return null;
-    return jsonToEntity<Model>(result.first);
+    final results = await this.limit(1);
+    return results.firstOrNull;
   }
 
   @override
@@ -58,9 +71,19 @@ final class EntityTableInterface<Model extends Entity>
     String condition,
     Value value,
   ) {
-    return whereClause = WhereClause<Model>(
+    return _whereClause = WhereClause<Model>(
       (field: field, condition: condition, value: value),
       this,
     );
+  }
+
+  @override
+  Future<Model> insert(Model model) async {
+    if (model.enableTimestamps) {
+      model.createdAt = model.updatedAt = DateTime.now().toUtc();
+    }
+    final recordId =
+        await _driver!.insert(tableName, model.toJson()..remove('id'));
+    return model..id = model.id.withKey(recordId);
   }
 }

@@ -1,4 +1,3 @@
-import '../../query/primitives.dart';
 import '../../query/query.dart';
 import '../database.dart';
 import 'sqlite_driver.dart';
