@@ -7,4 +7,5 @@ export 'src/database/manager.dart';
 
 export 'src/deps/pharaoh.dart';
 export 'package:yaroorm/src/database/migration.dart';
-export 'package:yaroorm/src/query/query.dart';
+export 'package:yaroorm/src/database/entity.dart';
+export 'package:yaroorm/src/access/access.dart' show OrderByDirection;

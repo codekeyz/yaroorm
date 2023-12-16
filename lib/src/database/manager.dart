@@ -8,8 +8,12 @@ class UseDatabaseConnection {
   late final DatabaseDriver _driver;
   UseDatabaseConnection(this.connection) : _driver = DB.driver(connection);
 
-  EntityTableInterface<Model> table<Model extends Entity>(String table) {
-    return EntityTableInterface<Model>(table, driver: _driver);
+  ReadOperation<Model> read<Model extends Entity>(String table) {
+    return ReadQuery<Model>(table, _driver);
+  }
+
+  UpdateOperation<Model> update<Model extends Entity>(String table) {
+    return UpdateQuery<Model>(table, _driver);
   }
 }
 
@@ -24,8 +28,11 @@ class DB {
 
   static DatabaseDriver get defaultDriver => driver(defaultConn);
 
-  static EntityTableInterface<Model> table<Model extends Entity>(String table) =>
-      UseDatabaseConnection(defaultConn).table(table);
+  static ReadOperation<Model> read<Model extends Entity>(String table) =>
+      UseDatabaseConnection(defaultConn).read(table);
+
+  static UpdateOperation<Model> update<Model extends Entity>(String table) =>
+      UseDatabaseConnection(defaultConn).update(table);
 
   static UseDatabaseConnection connection(String connName) =>
       UseDatabaseConnection(connName);
