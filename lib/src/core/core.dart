@@ -84,7 +84,8 @@ abstract class ApplicationFactory {
     bool start_server = true,
   }) async {
     if (bootstrap_database && dbConfig != null) {
-      await DB.init(dbConfig!).defaultDriver.connect();
+      DB.init(dbConfig!);
+      await DB.defaultDriver.connect();
     }
 
     if (bootstap_pharaoh) {

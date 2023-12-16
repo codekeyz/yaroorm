@@ -9,8 +9,7 @@ export 'entity.dart';
 
 enum OrderByDirection { asc, desc }
 
-final class EntityTableInterface<Model extends Entity>
-    implements TableOperations<Model> {
+final class EntityTableInterface<Model extends Entity> implements TableOperations<Model> {
   final DatabaseDriver? _driver;
 
   final String tableName;
@@ -19,8 +18,7 @@ final class EntityTableInterface<Model extends Entity>
 
   WhereClause? whereClause;
 
-  EntityTableInterface(this.tableName, {DatabaseDriver? driver})
-      : _driver = driver;
+  EntityTableInterface(this.tableName, {DatabaseDriver? driver}) : _driver = driver;
 
   @override
   Future<Model> get({DatabaseDriver? driver}) async {
@@ -56,20 +54,16 @@ final class EntityTableInterface<Model extends Entity>
     if (model.enableTimestamps) {
       model.createdAt = model.updatedAt = DateTime.now().toUtc();
     }
-    final recordId =
-        await _driver!.insert(tableName, model.toJson()..remove('id'));
+    final recordId = await _driver!.insert(tableName, model.toJson()..remove('id'));
     return model..id = model.id.withKey(recordId);
   }
-
-  @override
-  Future<void> insert_many(List<Model> entity) async {}
 
   @override
   Future<List<Model>> all() async {
     /// TODO: move this into a re-usable field later
     final mirror = (reflectType(Model));
-    final fromJson = mirror.staticMembers.entries
-        .firstWhereOrNull((d) => d.key == 'fromJson');
+    final fromJson =
+        mirror.staticMembers.entries.firstWhereOrNull((d) => d.key == 'fromJson');
     if (fromJson == null) {
       throw Exception("$Model.fromJson static method not found.");
     }

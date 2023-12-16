@@ -2,24 +2,33 @@ import 'package:collection/collection.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import '../core/_config/config.dart';
-import '../core/_container/container.dart';
+
+class UseDatabaseConnection {
+  final String connection;
+  late final DatabaseDriver _driver;
+  UseDatabaseConnection(this.connection) : _driver = DB.driver(connection);
+
+  EntityTableInterface<Model> table<Model extends Entity>(String table) {
+    return EntityTableInterface<Model>(table, driver: _driver);
+  }
+}
 
 class DB {
   static final List<DatabaseConnection> _connections = [];
   static final Map<String, DatabaseDriver> _driverInstances = {};
 
-  late final List<Migration> migrations;
-  late final DatabaseConnection defaultConn;
+  static late final String defaultConn;
+  static late final List<Migration> migrations;
 
-  static DB get instance {
-    if (!isRegistered<DB>()) {
-      throw Exception('Database Manager not initialized.');
-    }
-    return instanceFromRegistry<DB>();
-  }
+  DB._();
+
+  static DatabaseDriver get defaultDriver => driver(defaultConn);
 
   static EntityTableInterface<Model> table<Model extends Entity>(String table) =>
-      EntityTableInterface<Model>(table, driver: instance.defaultDriver);
+      UseDatabaseConnection(defaultConn).table(table);
+
+  static UseDatabaseConnection connection(String connName) =>
+      UseDatabaseConnection(connName);
 
   static DatabaseDriver driver(String connName) {
     final cached = _driverInstances[connName];
@@ -31,13 +40,7 @@ class DB {
     return _driverInstances[connName] = DatabaseDriver.init(connInfo);
   }
 
-  DB._(this.defaultConn) {
-    _driverInstances[defaultConn.name] = DatabaseDriver.init(defaultConn);
-  }
-
-  DatabaseDriver get defaultDriver => _driverInstances[defaultConn.name]!;
-
-  factory DB.init(ConfigResolver dbConfig) {
+  static void init(ConfigResolver dbConfig) {
     final configuration = dbConfig.call();
     final defaultConn = configuration.getValue('default');
     if (defaultConn == null) {
@@ -53,7 +56,11 @@ class DB {
     if (defaultConnection == null) {
       throw ArgumentError('Database connection info not found for $defaultConn');
     }
-    _connections.addAll(connections);
-    return registerSingleton<DB>(DB._(defaultConnection));
+
+    DB._connections
+      ..clear()
+      ..addAll(connections);
+    DB.defaultConn = defaultConn;
+    DB._driverInstances[defaultConn] = DatabaseDriver.init(defaultConn);
   }
 }
