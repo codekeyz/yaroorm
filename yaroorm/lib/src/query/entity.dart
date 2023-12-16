@@ -2,6 +2,11 @@ import 'package:json_annotation/json_annotation.dart';
 
 import '../reflection/reflector.dart';
 
+const entity = ReflectableEntity();
+
+const String entityCreatedAtColumnName = 'created_at';
+const String entityUpdatedAtColumnName = 'updated_at';
+
 class PrimaryKey<T> {
   final T? value;
 
@@ -15,26 +20,23 @@ class PrimaryKey<T> {
   PrimaryKey({this.value}) {
     if (value == null) return;
     if (!(value is String || value is int)) {
-      throw Exception('Primay Key value must be either `String` or `int` Type');
+      throw Exception(
+          'Primary Key value must be either `String` or `int` Type');
     }
   }
 
   dynamic toJson() => PrimaryKey.thisToJson(this);
 
-  static dynamic thisFromJson<T>(data) {
-    if (data == null) return PrimaryKey<T>(value: null);
-    if (data is int) return PrimaryKey<T>(value: data as T);
+  static thisFromJson<T>(data) {
+    if (data == null) return PrimaryKey(value: null);
+    if (data is int) return PrimaryKey<int>(value: data);
+    if (data is String) return PrimaryKey<String>(value: data);
     return PrimaryKey<T>(value: '$data' as T);
   }
 
   static T thisToJson<T>(data) {
     return (data as PrimaryKey).value;
   }
-}
-
-class Hello extends Entity {
-  @override
-  Map<String, dynamic> toJson() => {};
 }
 
 @entity
@@ -51,8 +53,10 @@ abstract class Entity<T> {
   @JsonKey(fromJson: PrimaryKey.thisFromJson, toJson: PrimaryKey.thisToJson)
   PrimaryKey<T> id = PrimaryKey<T>();
 
+  @JsonKey(name: entityCreatedAtColumnName)
   late DateTime createdAt;
 
+  @JsonKey(name: entityUpdatedAtColumnName)
   late DateTime updatedAt;
 
   bool get enableTimestamps => true;

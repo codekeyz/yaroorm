@@ -3,6 +3,7 @@ import 'query.dart';
 
 abstract class Clause<T> {
   final T value;
+
   const Clause(this.value);
 }
 
@@ -12,6 +13,7 @@ enum LogicalOperator { AND, OR }
 class LogicalClause<T extends Clause> {
   final LogicalOperator operator;
   final T clause;
+
   const LogicalClause(this.operator, this.clause);
 }
 
@@ -51,26 +53,31 @@ class WhereClause<QueryResult extends Entity> extends Clause<WhereClauseValue> {
   }
 }
 
-class CompositeWhereClause<QueryResult extends Entity> extends WhereClause<QueryResult> {
+class CompositeWhereClause<QueryResult extends Entity>
+    extends WhereClause<QueryResult> {
   final List<LogicalClause<WhereClause<QueryResult>>> subparts = [];
 
   CompositeWhereClause(WhereClause<QueryResult> parent)
       : super(parent.value, parent._query);
 
   @override
-  CompositeWhereClause<QueryResult> and<Type>(String field, String condition, Type val) {
+  CompositeWhereClause<QueryResult> and<Type>(
+      String field, String condition, Type val) {
     subparts.add(LogicalClause(
       LogicalOperator.AND,
-      WhereClause<QueryResult>((field: field, condition: condition, value: val), _query),
+      WhereClause<QueryResult>(
+          (field: field, condition: condition, value: val), _query),
     ));
     return this;
   }
 
   @override
-  CompositeWhereClause<QueryResult> or<Type>(String field, String condition, Type val) {
+  CompositeWhereClause<QueryResult> or<Type>(
+      String field, String condition, Type val) {
     subparts.add(LogicalClause(
       LogicalOperator.OR,
-      WhereClause<QueryResult>((field: field, condition: condition, value: val), _query),
+      WhereClause<QueryResult>(
+          (field: field, condition: condition, value: val), _query),
     ));
     return this;
   }
@@ -85,7 +92,7 @@ abstract interface class TableOperations<Model extends Entity> {
 
   Future<Model> insert(Model entity);
 
-  Future<void> insertMany(List<Model> entity);
+  Future<List<Model>> all();
 }
 
 abstract class QueryPrimitiveSerializer {
