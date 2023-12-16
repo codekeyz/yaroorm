@@ -7,6 +7,8 @@ const entity = ReflectableEntity();
 const String entityCreatedAtColumnName = 'created_at';
 const String entityUpdatedAtColumnName = 'updated_at';
 
+const String entityToJsonStaticFuncName = 'fromJson';
+
 class PrimaryKey<T> {
   final T? value;
 

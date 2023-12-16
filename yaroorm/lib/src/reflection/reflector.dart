@@ -1,6 +1,7 @@
 import 'package:reflectable/reflectable.dart' as r;
 
 import '../query/entity.dart';
+import 'entity_helpers.dart';
 
 class ReflectableEntity extends r.Reflectable {
   const ReflectableEntity()
@@ -15,5 +16,11 @@ class ReflectableEntity extends r.Reflectable {
         );
 }
 
-r.ClassMirror reflectType(Type type) =>
-    entity.reflectType(type) as r.ClassMirror;
+r.ClassMirror reflectType(Type type) {
+  try {
+    return entity.reflectType(type) as r.ClassMirror;
+  } catch (e) {
+    throw EntityValidationException(
+        'Unable to reflect on $type. Re-run your build command');
+  }
+}

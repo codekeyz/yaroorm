@@ -1,4 +1,3 @@
-import '../database/driver/driver.dart';
 import 'query.dart';
 
 abstract class Clause<T> {
@@ -85,12 +84,12 @@ class CompositeWhereClause<QueryResult extends Entity>
 
 typedef OrderBy = ({String field, OrderByDirection order});
 
-abstract interface class TableOperations<Model extends Entity> {
+abstract interface class EntityOperations<Model extends Entity> {
   WhereClause<Model> where<Value>(String field, String optor, Value value);
 
-  Future<Model> get({DatabaseDriver? driver});
-
   Future<Model> insert(Model entity);
+
+  Future<Model?> findOne();
 
   Future<List<Model>> all();
 }
