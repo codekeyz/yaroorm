@@ -4,16 +4,16 @@ import 'package:yaroorm/yaroorm.dart';
 import '../core/_config/config.dart';
 
 class UseDatabaseConnection {
-  final String connection;
+  final String name;
   late final DatabaseDriver _driver;
-  UseDatabaseConnection(this.connection) : _driver = DB.driver(connection);
+  UseDatabaseConnection(this.name) : _driver = DB.driver(name);
 
-  ReadOperation<Model> read<Model extends Entity>(String table) {
-    return ReadQuery<Model>(table, _driver);
+  ReadQuery<Model> read<Model extends Entity>(String table) {
+    return ReadQuery<Model>.make(table, _driver);
   }
 
-  UpdateOperation<Model> update<Model extends Entity>(String table) {
-    return UpdateQuery<Model>(table, _driver);
+  UpdateQuery<Model> update<Model extends Entity>(String table) {
+    return UpdateQuery<Model>.make(table, _driver);
   }
 }
 
@@ -21,18 +21,18 @@ class DB {
   static final List<DatabaseConnection> _connections = [];
   static final Map<String, DatabaseDriver> _driverInstances = {};
 
-  static late final String defaultConn;
+  static late final UseDatabaseConnection defaultConnection;
   static late final List<Migration> migrations;
 
   DB._();
 
-  static DatabaseDriver get defaultDriver => driver(defaultConn);
+  static DatabaseDriver get defaultDriver => defaultConnection._driver;
 
-  static ReadOperation<Model> read<Model extends Entity>(String table) =>
-      UseDatabaseConnection(defaultConn).read(table);
+  static ReadQuery<Model> read<Model extends Entity>(String table) =>
+      defaultConnection.read(table);
 
-  static UpdateOperation<Model> update<Model extends Entity>(String table) =>
-      UseDatabaseConnection(defaultConn).update(table);
+  static UpdateQuery<Model> update<Model extends Entity>(String table) =>
+      defaultConnection.update(table);
 
   static UseDatabaseConnection connection(String connName) =>
       UseDatabaseConnection(connName);
@@ -68,7 +68,7 @@ class DB {
       ..clear()
       ..addAll(connections);
 
-    DB.defaultConn = defaultConn;
+    DB.defaultConnection = UseDatabaseConnection(defaultConn);
     DB._driverInstances[defaultConn] = DatabaseDriver.init(defaultConnection);
   }
 }

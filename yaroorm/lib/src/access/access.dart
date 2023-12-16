@@ -42,38 +42,62 @@ mixin InsertOperation<Model extends Entity> {
   Future<Model> insert(Model model);
 }
 
-abstract interface class BaseOperation {
+abstract interface class BaseQuery {
   final String tableName;
   final DatabaseDriver driver;
 
-  BaseOperation(this.tableName, this.driver);
+  BaseQuery(this.tableName, this.driver);
 
   String get statement;
 }
 
-abstract interface class ReadOperation<Model extends Entity>
-    extends BaseOperation
+abstract class ReadQuery<Model extends Entity> extends BaseQuery
     with
         FindOperation<Model>,
         InsertOperation<Model>,
         OrderByOperation<ReadQuery<Model>>,
         LimitOperation<Future<List<Model>>> {
-  ReadOperation(super.tableName, super.driver);
+  late final Set<String> fieldSelections;
+  late final Set<OrderBy> orderByProps;
+
+  late WhereClause? _whereClause;
+  late int? _limit;
+
+  ReadQuery(super.tableName, super.driver)
+      : fieldSelections = {},
+        orderByProps = {},
+        _whereClause = null,
+        _limit = null;
+
+  factory ReadQuery.make(String tableName, DatabaseDriver driver) =>
+      _ReadQueryImpl(tableName, driver);
+
+  WhereClause? get whereClause => _whereClause;
+
+  int? get limitValue => _limit;
 
   WhereClause<Model> where<Value>(
     String field,
     String condition,
     Value value,
   );
+
+  @override
+  String get statement => driver.serializer.acceptQuery(this);
 }
 
-abstract interface class UpdateOperation<Model extends Entity>
-    extends BaseOperation {
-  UpdateOperation(super.tableName, super.driver);
+abstract interface class UpdateQuery<Model extends Entity> extends BaseQuery {
+  UpdateQuery(super.tableName, super.driver);
+
+  factory UpdateQuery.make(String tableName, DatabaseDriver driver) =>
+      _UpdateQueryImpl(tableName, driver);
 
   WhereClause<Model> where<Value>(
     String field,
     String condition,
     Value value,
   );
+
+  @override
+  String get statement => driver.serializer.acceptUpdate(this);
 }

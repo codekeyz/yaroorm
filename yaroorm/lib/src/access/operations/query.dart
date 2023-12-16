@@ -2,18 +2,9 @@ part of '../access.dart';
 
 enum OrderByDirection { asc, desc }
 
-final class ReadQuery<Model extends Entity> extends ReadOperation<Model> {
-  final Set<String> fieldSelections = {};
-  final Set<OrderBy> orderByProps = {};
-
-  WhereClause? _whereClause;
-  int? _limit;
-
-  WhereClause? get whereClause => _whereClause;
-
-  int? get limitValue => _limit;
-
-  ReadQuery(super.tableName, super.driver);
+final class _ReadQueryImpl<Model extends Entity> extends ReadQuery<Model> {
+  _ReadQueryImpl(String tableName, DatabaseDriver driver)
+      : super(tableName, driver);
 
   @override
   Future<Model?> findOne() async {
@@ -63,7 +54,4 @@ final class ReadQuery<Model extends Entity> extends ReadOperation<Model> {
     orderByProps.add((field: field, direction: direction));
     return this;
   }
-
-  @override
-  String get statement => driver.serializer.acceptQuery(this);
 }

@@ -1,10 +1,7 @@
 part of '../access.dart';
 
-final class UpdateQuery<Model extends Entity> extends UpdateOperation<Model> {
-  UpdateQuery(super.tableName, super.driver);
-
-  @override
-  String get statement => driver.serializer.acceptUpdate(this);
+final class _UpdateQueryImpl<Model extends Entity> extends UpdateQuery<Model> {
+  _UpdateQueryImpl(super.tableName, super.driver);
 
   @override
   WhereClause<Model> where<Value>(
