@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:reflectable/reflectable.dart';
 
-import '../query/entity.dart';
+import '../database/entity.dart';
 import 'reflector.dart';
 
 class EntityValidationException implements Exception {

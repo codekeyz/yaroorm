@@ -3,8 +3,8 @@
 import 'package:meta/meta.dart';
 import 'package:recase/recase.dart';
 
-import '../query/entity.dart';
 import 'driver/driver.dart';
+import 'entity.dart';
 
 abstract interface class TableBlueprint {
   void id();

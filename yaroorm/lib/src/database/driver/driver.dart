@@ -1,4 +1,4 @@
-import '../../query/query.dart';
+import '../../access/access.dart';
 import '../database.dart';
 import 'sqlite_driver.dart';
 
@@ -90,14 +90,14 @@ abstract interface class DatabaseDriver {
 
   TableBlueprint get blueprint;
 
-  QueryPrimitiveSerializer get querySerializer;
+  PrimitiveSerializer get serializer;
 
   /// Perform query on the database
   ///
-  /// [EntityTableInterface] gives you a unified interface to make
+  /// [ReadQuery] gives you a unified interface to make
   /// your queries work on any database driver
   Future<List<Map<String, dynamic>>> query<T extends Entity>(
-    EntityTableInterface<T> query,
+    ReadQuery<T> query,
   );
 
   Future<dynamic> insert(String tableName, Map<String, dynamic> data);

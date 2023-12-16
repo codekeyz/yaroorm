@@ -1,4 +1,4 @@
-part of '../query.dart';
+part of '../access.dart';
 
 abstract class Clause<T> {
   final T value;
@@ -20,10 +20,10 @@ typedef WhereClauseValue<A> = ({String field, String condition, A? value});
 
 class WhereClause<Model extends Entity> extends Clause<WhereClauseValue>
     with
-        FindOneOperation<Model>,
+        FindOperation<Model>,
         LimitOperation<Future<List<Model>>>,
         OrderByOperation<WhereClause<Model>> {
-  final EntityTableInterface<Model> _query;
+  final ReadQuery<Model> _query;
 
   WhereClause(super.value, this._query);
 
@@ -33,10 +33,15 @@ class WhereClause<Model extends Entity> extends Clause<WhereClauseValue>
     ValueType val,
   ) {
     return _query._whereClause = CompositeWhereClause<Model>(this)
-      ..subparts.add(LogicalClause(
+      ..subparts.add(
+        LogicalClause(
           LogicalOperator.AND,
           WhereClause<Model>(
-              (field: field, condition: condition, value: val), _query)));
+            (field: field, condition: condition, value: val),
+            _query,
+          ),
+        ),
+      );
   }
 
   CompositeWhereClause<Model> or<ValueType>(
@@ -47,14 +52,20 @@ class WhereClause<Model extends Entity> extends Clause<WhereClauseValue>
     return _query._whereClause = CompositeWhereClause<Model>(this)
       ..subparts.add(
         LogicalClause(
-            LogicalOperator.OR,
-            WhereClause<Model>(
-                (field: field, condition: condition, value: val), _query)),
+          LogicalOperator.OR,
+          WhereClause<Model>(
+            (field: field, condition: condition, value: val),
+            _query,
+          ),
+        ),
       );
   }
 
   @override
   Future<Model?> findOne() => _query.findOne();
+
+  @override
+  Future<List<Model>> findMany() => _query.findMany();
 
   @override
   Future<List<Model>> limit(int limit) => _query.limit(limit);
@@ -65,7 +76,7 @@ class WhereClause<Model extends Entity> extends Clause<WhereClauseValue>
     return this;
   }
 
-  Future<List<Model>> get() => _query.all();
+  String get statement => _query.statement;
 }
 
 class CompositeWhereClause<QueryResult extends Entity>
@@ -84,7 +95,9 @@ class CompositeWhereClause<QueryResult extends Entity>
     subparts.add(LogicalClause(
       LogicalOperator.AND,
       WhereClause<QueryResult>(
-          (field: field, condition: condition, value: val), _query),
+        (field: field, condition: condition, value: val),
+        _query,
+      ),
     ));
     return this;
   }
@@ -98,7 +111,9 @@ class CompositeWhereClause<QueryResult extends Entity>
     subparts.add(LogicalClause(
       LogicalOperator.OR,
       WhereClause<QueryResult>(
-          (field: field, condition: condition, value: val), _query),
+        (field: field, condition: condition, value: val),
+        _query,
+      ),
     ));
     return this;
   }

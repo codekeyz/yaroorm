@@ -1,6 +1,6 @@
 import 'package:reflectable/reflectable.dart' as r;
 
-import '../query/entity.dart';
+import '../database/entity.dart';
 import 'entity_helpers.dart';
 
 class ReflectableEntity extends r.Reflectable {
