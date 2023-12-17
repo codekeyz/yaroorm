@@ -7,12 +7,6 @@ final class _QueryImpl extends Query {
       : super(tableName, driver);
 
   @override
-  WhereClause where<Value>(String field, String condition, [Value? value]) {
-    final clauseValue = WhereClauseValue.from(field, condition, value);
-    return _whereClause = WhereClauseImpl(clauseValue, this);
-  }
-
-  @override
   Query orderByAsc(String field) {
     orderByProps.add((field: field, direction: OrderByDirection.asc));
     return this;
@@ -68,5 +62,69 @@ final class _QueryImpl extends Query {
   Future<T?> first<T>() async {
     final results = await take<T>(1);
     return results.firstOrNull;
+  }
+
+  @override
+  WhereClause where<Value>(String field, String condition, [Value? value]) {
+    return _whereClause = WhereClauseImpl(
+      this,
+      WhereClauseValue.from(field, condition, value),
+    );
+  }
+
+  @override
+  WhereClause whereBetween<Value>(
+    String field,
+    WhereBetweenArgs<Value> args,
+  ) {
+    return _whereClause =
+        WhereClause.fromOperator(field, Operator.BETWEEN, args, query: this);
+  }
+
+  @override
+  WhereClause whereNotBetween<Value>(
+    String field,
+    WhereBetweenArgs<Value> args,
+  ) {
+    return _whereClause = WhereClause.fromOperator(
+        field, Operator.NOT_BETWEEN, args,
+        query: this);
+  }
+
+  @override
+  WhereClause whereIn<Value>(String field, List<Value> values) {
+    return _whereClause =
+        WhereClause.fromOperator(field, Operator.IN, values, query: this);
+  }
+
+  @override
+  WhereClause whereNotIn<Value>(String field, List<Value> values) {
+    return _whereClause =
+        WhereClause.fromOperator(field, Operator.NOT_IN, values, query: this);
+  }
+
+  @override
+  WhereClause whereLike<Value>(String field, String pattern) {
+    return _whereClause =
+        WhereClause.fromOperator(field, Operator.LIKE, pattern, query: this);
+  }
+
+  @override
+  WhereClause whereNotLike<Value>(String field, String pattern) {
+    return _whereClause = WhereClause.fromOperator(
+        field, Operator.NOT_LIKE, pattern,
+        query: this);
+  }
+
+  @override
+  WhereClause whereNull(String field) {
+    return _whereClause =
+        WhereClause.fromOperator(field, Operator.NULL, null, query: this);
+  }
+
+  @override
+  WhereClause whereNotNull(String field) {
+    return _whereClause =
+        WhereClause.fromOperator(field, Operator.NOT_NULL, null, query: this);
   }
 }

@@ -54,6 +54,7 @@ abstract interface class QueryBase {
 abstract class Query extends QueryBase
     with
         ReadOperation,
+        WhereOperation,
         LimitOperation,
         UpdateOperation,
         DeleteOperation,
@@ -62,7 +63,7 @@ abstract class Query extends QueryBase
   late final Set<String> fieldSelections;
   late final Set<OrderBy> orderByProps;
 
-  late WhereClauseImpl? _whereClause;
+  late WhereClause? _whereClause;
   late int? _limit;
 
   Query(super.tableName, super.driver)
@@ -76,9 +77,7 @@ abstract class Query extends QueryBase
 
   int? get limit => _limit;
 
-  WhereClauseImpl? get whereClause => _whereClause;
-
-  WhereClause where<Value>(String field, String condition, [Value? val]);
+  WhereClause? get whereClause => _whereClause;
 
   @override
   Future<List<T>> take<T>(int limit);

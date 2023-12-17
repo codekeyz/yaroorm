@@ -153,16 +153,16 @@ class _SqliteSerializer implements PrimitiveSerializer {
   String acceptWhereClause(WhereClause clause) {
     if (clause is CompositeWhereClause) {
       final whereBuilder = StringBuffer();
-      whereBuilder.write(_acceptWhereClauseValue(clause.value));
+      whereBuilder.write(_acceptWhereClauseValue(clause.clauseVal));
       for (final subpart in clause.subparts) {
         final LogicalOperator operator = subpart.$1;
-        final WhereClauseValue value = subpart.$2.value;
+        final WhereClauseValue value = subpart.$2.clauseVal;
         whereBuilder
             .write(' ${operator.name} ${_acceptWhereClauseValue(value)}');
       }
       return whereBuilder.toString();
     }
-    return _acceptWhereClauseValue(clause.value);
+    return _acceptWhereClauseValue(clause.clauseVal);
   }
 
   @override
@@ -197,13 +197,6 @@ class _SqliteSerializer implements PrimitiveSerializer {
     final valueOperator = clauseVal.comparer.operator;
     final wrapped = acceptDartValue(value);
 
-    if (valueOperator == Operator.BETWEEN) {
-      if (value is! List || value.length != 2) {
-        throw ArgumentError.value(value, null,
-            'BETWEEN operator expects a List Value and must have 2 values');
-      }
-    }
-
     return switch (valueOperator) {
       Operator.LESS_THAN => '$field < $wrapped',
       Operator.GREAT_THAN => '$field > $wrapped',
@@ -222,10 +215,10 @@ class _SqliteSerializer implements PrimitiveSerializer {
       Operator.NULL => '$field IS NULL',
       Operator.NOT_NULL => '$field IS NOT NULL',
       //
-      Operator.BETWEEN =>
-        '$field BETWEEN ${acceptDartValue(value[0])} AND ${acceptDartValue(value[1])}',
-      Operator.NOT_BETWEEN =>
-        '$field NOT BETWEEN ${acceptDartValue(value[0])} AND ${acceptDartValue(value[1])}'
+      Operator.BETWEEN || Operator.NOT_BETWEEN => value is WhereBetweenArgs
+          ? '$field ${valueOperator == Operator.BETWEEN ? 'BETWEEN' : 'NOT BETWEEN'} ${acceptDartValue((value).$1)} AND ${acceptDartValue((value).$2)}'
+          : throw ArgumentError.value(
+              value, null, 'BETWEEN operator expects a Tuple (value1, value1)')
     };
   }
 }

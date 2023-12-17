@@ -8,22 +8,16 @@ mixin WhereOperation {
   WhereClause where<Value>(
     String field,
     String condition, [
-    Value? val,
-  ]);
-
-  WhereClause orWhere<Value>(
-    String field,
-    String condition, [
-    Value? val,
+    Value? value,
   ]);
 
   WhereClause whereNull(String field);
 
   WhereClause whereNotNull(String field);
 
-  WhereClause whereIn<Value>(String field, List<Value> val);
+  WhereClause whereIn<Value>(String field, List<Value> values);
 
-  WhereClause whereNotIn<Value>(String field, List<Value> val);
+  WhereClause whereNotIn<Value>(String field, List<Value> values);
 
   WhereClause whereLike<Value>(String field, String pattern);
 
@@ -41,9 +35,9 @@ mixin WhereOperation {
 }
 
 abstract class Clause<T> {
-  final T value;
+  final T clauseVal;
 
-  const Clause(this.value);
+  const Clause(this.clauseVal);
 }
 
 enum LogicalOperator { AND, OR }
@@ -98,13 +92,18 @@ class WhereClauseValue<A> {
 
   const WhereClauseValue(this.field, this.comparer);
 
-  factory WhereClauseValue.from(
-    String field,
-    String condition,
-    dynamic value,
-  ) =>
-      WhereClauseValue(
-          field, (operator: _strToOperator(condition), value: value));
+  factory WhereClauseValue.from(String field, String condition, value) {
+    final operator = _strToOperator(condition);
+    if ([Operator.BETWEEN, Operator.NOT_BETWEEN].contains(operator)) {
+      if (value is! List || value.length != 2) {
+        throw ArgumentError.value(
+            value, null, '$operator requires [val1, val2] as value');
+      }
+      final WhereBetweenArgs whereArgs = (value[0], value[1]);
+      value = whereArgs;
+    }
+    return WhereClauseValue(field, (operator: operator, value: value));
+  }
 }
 
 abstract class WhereClause extends Clause<WhereClauseValue>
@@ -115,13 +114,29 @@ abstract class WhereClause extends Clause<WhereClauseValue>
         OrderByOperation<WhereClause> {
   final Query _query;
 
-  WhereClause(super.value, this._query);
+  WhereClause(this._query, super.clauseVal);
 
-  @override
-  WhereClause where<Value>(String field, String condition, [Value? val]);
+  static WhereClause fromString(String field, String condition, dynamic value,
+      {required Query query}) {
+    return WhereClauseImpl(
+      query,
+      WhereClauseValue.from(field, condition, value),
+    );
+  }
 
-  @override
-  WhereClause orWhere<Value>(String field, String condition, [Value? val]);
+  static WhereClause fromOperator(
+    String field,
+    Operator operator,
+    dynamic value, {
+    required Query query,
+  }) {
+    return WhereClauseImpl(
+      query,
+      WhereClauseValue(field, (operator: operator, value: value)),
+    );
+  }
+
+  WhereClause orWhere<Value>(String field, String condition, [Value? value]);
 
   @override
   WhereClause orderByAsc(String field) {
