@@ -17,9 +17,27 @@ mixin WhereOperation {
     Value? val,
   ]);
 
+  WhereClause whereNull(String field);
+
+  WhereClause whereNotNull(String field);
+
   WhereClause whereIn<Value>(String field, List<Value> val);
 
-  WhereClause whereBetween<Value>(String field, WhereBetweenArgs<Value> args);
+  WhereClause whereNotIn<Value>(String field, List<Value> val);
+
+  WhereClause whereLike<Value>(String field, String pattern);
+
+  WhereClause whereNotLike<Value>(String field, String pattern);
+
+  WhereClause whereBetween<Value>(
+    String field,
+    WhereBetweenArgs<Value> args,
+  );
+
+  WhereClause whereNotBetween<Value>(
+    String field,
+    WhereBetweenArgs<Value> args,
+  );
 }
 
 abstract class Clause<T> {
@@ -85,11 +103,16 @@ class WhereClauseValue<A> {
     String condition,
     dynamic value,
   ) =>
-      WhereClauseValue(field, (operator: _strToOperator(condition), value: value));
+      WhereClauseValue(
+          field, (operator: _strToOperator(condition), value: value));
 }
 
 abstract class WhereClause extends Clause<WhereClauseValue>
-    with WhereOperation, FindOperation, LimitOperation, OrderByOperation<WhereClause> {
+    with
+        WhereOperation,
+        FindOperation,
+        LimitOperation,
+        OrderByOperation<WhereClause> {
   final Query _query;
 
   WhereClause(super.value, this._query);
@@ -123,7 +146,8 @@ abstract class WhereClause extends Clause<WhereClauseValue>
 
   Future<void> delete() => _query._delete(this);
 
-  Future<void> update(Map<String, dynamic> values) => _query._update(this, values);
+  Future<void> update(Map<String, dynamic> values) =>
+      _query._update(this, values);
 
   String get statement => _query.statement;
 }

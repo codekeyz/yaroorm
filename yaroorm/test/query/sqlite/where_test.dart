@@ -10,10 +10,11 @@ void main() {
         DatabaseDriverType.sqlite,
       )));
 
-  group('where_clause_test', () {
-    group('when `.where` call', () {
+  group('Query with', () {
+    group('.where', () {
       test('of level 1', () {
-        final query = Query.make('users', driver).where('firstname', '=', 'Chima');
+        final query =
+            Query.make('users', driver).where('firstname', '=', 'Chima');
 
         expect(
           query.statement,
@@ -44,7 +45,7 @@ void main() {
         );
       });
 
-      group('with `orWhere` call', () {
+      group('chained with `.orWhere`', () {
         test('of level 1', () {
           final query = Query.make('users', driver)
               .where('firstname', '=', 'Chima')
@@ -107,11 +108,102 @@ void main() {
           );
         });
       });
+
+      group('chained with', () {
+        test('.whereNull', () {
+          final query = Query.make('users', driver)
+              .where('firstname', '=', 'Chima')
+              .whereNull('age');
+
+          expect(
+            query.statement,
+            'SELECT * FROM users WHERE firstname = \'Chima\' AND age IS NULL;',
+          );
+        });
+
+        test('.whereNotNull', () {
+          final query = Query.make('users', driver)
+              .where('firstname', '=', 'Chima')
+              .whereNotNull('age');
+
+          expect(
+            query.statement,
+            'SELECT * FROM users WHERE firstname = \'Chima\' AND age IS NOT NULL;',
+          );
+        });
+
+        test('.whereIn', () {
+          final query = Query.make('users', driver)
+              .where('firstname', '=', 'Chima')
+              .whereIn('age', [22, 24, 25]);
+
+          expect(
+            query.statement,
+            'SELECT * FROM users WHERE firstname = \'Chima\' AND age IN (22, 24, 25);',
+          );
+        });
+
+        test('.whereNotIn', () {
+          final query = Query.make('users', driver)
+              .where('firstname', '=', 'Chima')
+              .whereNotIn('age', [22, 24, 25]);
+
+          expect(
+            query.statement,
+            'SELECT * FROM users WHERE firstname = \'Chima\' AND age NOT IN (22, 24, 25);',
+          );
+        });
+
+        test('.whereLike', () {
+          final query = Query.make('users', driver)
+              .where('firstname', '=', 'Chima')
+              .whereLike('lastname', 'hello%');
+
+          expect(
+            query.statement,
+            'SELECT * FROM users WHERE firstname = \'Chima\' AND lastname LIKE \'hello%\';',
+          );
+        });
+
+        test('.whereNotLike', () {
+          final query = Query.make('users', driver)
+              .where('firstname', '=', 'Chima')
+              .whereNotLike('lastname', 'hello%');
+
+          expect(
+            query.statement,
+            'SELECT * FROM users WHERE firstname = \'Chima\' AND lastname NOT LIKE \'hello%\';',
+          );
+        });
+
+        test('.whereBetween', () {
+          final query = Query.make('users', driver)
+              .where('firstname', '=', 'Chima')
+              .whereBetween<int>('lastname', (22, 50));
+
+          expect(
+            query.statement,
+            'SELECT * FROM users WHERE firstname = \'Chima\' AND lastname BETWEEN 22 AND 50;',
+          );
+        });
+
+        test('.whereNotBetween', () {
+          final query = Query.make('users', driver)
+              .where('firstname', '=', 'Chima')
+              .whereNotBetween<double>('lastname', (22.34, 50));
+
+          expect(
+            query.statement,
+            'SELECT * FROM users WHERE firstname = \'Chima\' AND lastname NOT BETWEEN 22.34 AND 50.0;',
+          );
+        });
+      });
     });
 
-    group('when handwritten operator', () {
+    group('handwritten operator', () {
       test('=', () {
-        final query = Query.make('users', driver).where('firstname', '=', 'Chima');
+        final query =
+            Query.make('users', driver).where('firstname', '=', 'Chima');
 
         expect(
           query.statement,
@@ -120,9 +212,11 @@ void main() {
       });
 
       test('!=', () {
-        final query = Query.make('users', driver).where('firstname', '!=', 'Chima');
+        final query =
+            Query.make('users', driver).where('firstname', '!=', 'Chima');
 
-        expect(query.statement, 'SELECT * FROM users WHERE firstname != \'Chima\';');
+        expect(query.statement,
+            'SELECT * FROM users WHERE firstname != \'Chima\';');
       });
 
       test('>', () {
@@ -150,8 +244,8 @@ void main() {
       });
 
       test('in', () {
-        final query =
-            Query.make('users', driver).where('places', 'in', ['Accra', 'Tema']);
+        final query = Query.make('users', driver)
+            .where('places', 'in', ['Accra', 'Tema']);
 
         expect(
           query.statement,
@@ -160,8 +254,8 @@ void main() {
       });
 
       test('not in', () {
-        final query =
-            Query.make('users', driver).where('places', 'not in', ['Accra', 'Tema']);
+        final query = Query.make('users', driver)
+            .where('places', 'not in', ['Accra', 'Tema']);
 
         expect(
           query.statement,
@@ -188,7 +282,8 @@ void main() {
       });
 
       test('like', () {
-        final query = Query.make('users', driver).where('places', 'like', "MerryC");
+        final query =
+            Query.make('users', driver).where('places', 'like', "MerryC");
 
         expect(
           query.statement,
@@ -197,7 +292,8 @@ void main() {
       });
 
       test('not like', () {
-        final query = Query.make('users', driver).where('places', 'not like', "MerryC");
+        final query =
+            Query.make('users', driver).where('places', 'not like', "MerryC");
 
         expect(
           query.statement,
@@ -206,7 +302,8 @@ void main() {
       });
 
       test('between', () {
-        final query = Query.make('users', driver).where('age', 'between', [22, 30]);
+        final query =
+            Query.make('users', driver).where('age', 'between', [22, 30]);
 
         expect(
           query.statement,
@@ -215,7 +312,8 @@ void main() {
       });
 
       test('not between', () {
-        final query = Query.make('users', driver).where('age', 'not between', [22, 30]);
+        final query =
+            Query.make('users', driver).where('age', 'not between', [22, 30]);
 
         expect(
           query.statement,
