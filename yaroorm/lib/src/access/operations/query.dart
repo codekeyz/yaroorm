@@ -66,8 +66,8 @@ final class _QueryImpl<Model extends Entity> extends Query<Model> {
   }
 
   @override
-  Future<void> _delete(WhereClause<Model> where) {
+  Future<void> _delete(WhereClause<Model> where) async {
     final query = DeleteQuery(tableName, driver, whereClause: where);
-    throw UnimplementedError();
+    await driver.delete(query);
   }
 }
