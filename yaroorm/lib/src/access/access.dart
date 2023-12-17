@@ -5,6 +5,12 @@ import '../reflection/entity_helpers.dart';
 part 'operations/query.dart';
 part 'primitives/where.dart';
 
+mixin ReadOperation {
+  Future<T?> first<T>();
+
+  Future<List<T>> all<T>();
+}
+
 mixin FindOperation {
   Future<T?> findOne<T>();
 
@@ -30,7 +36,9 @@ mixin DeleteOperation {
 typedef OrderBy = ({String field, OrderByDirection direction});
 
 mixin OrderByOperation<ReturnType> {
-  ReturnType orderBy(String field, OrderByDirection direction);
+  ReturnType orderByAsc(String field);
+
+  ReturnType orderByDesc(String field);
 }
 
 abstract interface class QueryBase {
@@ -44,7 +52,7 @@ abstract interface class QueryBase {
 
 abstract class Query extends QueryBase
     with
-        FindOperation,
+        ReadOperation,
         LimitOperation,
         UpdateOperation,
         DeleteOperation,

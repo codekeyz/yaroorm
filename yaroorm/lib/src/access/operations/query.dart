@@ -15,8 +15,14 @@ final class _QueryImpl extends Query {
   }
 
   @override
-  Query orderBy(String field, OrderByDirection direction) {
-    orderByProps.add((field: field, direction: direction));
+  Query orderByAsc(String field) {
+    orderByProps.add((field: field, direction: OrderByDirection.asc));
+    return this;
+  }
+
+  @override
+  Query orderByDesc(String field) {
+    orderByProps.add((field: field, direction: OrderByDirection.desc));
     return this;
   }
 
@@ -44,7 +50,7 @@ final class _QueryImpl extends Query {
   }
 
   @override
-  Future<List<T>> findMany<T>() async {
+  Future<List<T>> all<T>() async {
     final results = await driver.query(this);
     if (results.isEmpty) return <T>[];
     if (T == dynamic) return results as dynamic;
@@ -61,7 +67,7 @@ final class _QueryImpl extends Query {
   }
 
   @override
-  Future<T?> findOne<T>() async {
+  Future<T?> first<T>() async {
     final results = await take<T>(1);
     return results.firstOrNull;
   }

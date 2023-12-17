@@ -24,7 +24,7 @@ class WhereClause extends Clause<WhereClauseValue>
 
   WhereClause(super.value, this._query);
 
-  CompositeWhereClause and<ValueType>(
+  CompositeWhereClause andWhere<ValueType>(
     String field,
     String condition,
     ValueType val,
@@ -36,7 +36,7 @@ class WhereClause extends Clause<WhereClauseValue>
       ));
   }
 
-  CompositeWhereClause or<ValueType>(
+  CompositeWhereClause orWhere<ValueType>(
     String field,
     String condition,
     ValueType val,
@@ -49,8 +49,14 @@ class WhereClause extends Clause<WhereClauseValue>
   }
 
   @override
-  WhereClause orderBy(String field, OrderByDirection direction) {
-    _query.orderByProps.add((field: field, direction: direction));
+  WhereClause orderByAsc(String field) {
+    _query.orderByProps.add((field: field, direction: OrderByDirection.asc));
+    return this;
+  }
+
+  @override
+  WhereClause orderByDesc(String field) {
+    _query.orderByProps.add((field: field, direction: OrderByDirection.desc));
     return this;
   }
 
@@ -62,10 +68,10 @@ class WhereClause extends Clause<WhereClauseValue>
   String get statement => _query.statement;
 
   @override
-  Future<T?> findOne<T>() => _query.findOne<T>();
+  Future<T?> findOne<T>() => _query.first<T>();
 
   @override
-  Future<List<T>> findMany<T>() => _query.findMany<T>();
+  Future<List<T>> findMany<T>() => _query.all<T>();
 
   @override
   Future<List<T>> take<T>(int limit) => _query.take<T>(limit);
@@ -77,7 +83,7 @@ class CompositeWhereClause extends WhereClause {
   CompositeWhereClause(WhereClause parent) : super(parent.value, parent._query);
 
   @override
-  CompositeWhereClause and<Type>(
+  CompositeWhereClause andWhere<Type>(
     String field,
     String condition,
     Type val,
@@ -90,7 +96,7 @@ class CompositeWhereClause extends WhereClause {
   }
 
   @override
-  CompositeWhereClause or<Type>(
+  CompositeWhereClause orWhere<Type>(
     String field,
     String condition,
     Type val,
