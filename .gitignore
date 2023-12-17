@@ -1,6 +1,7 @@
-# https://dart.dev/guides/libraries/private-files
-# Created by `dart pub`
-.dart_tool/
-.build
-.vscode
+**/pubspec_overrides.yaml
 .idea
+.dart_tool
+.vscode
+**/pubspec.lock
+
+**/melos_**
