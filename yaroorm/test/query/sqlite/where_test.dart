@@ -2,9 +2,9 @@ import 'package:test/test.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 void main() {
-  late DatabaseDriver _driver;
+  late DatabaseDriver driver;
 
-  setUpAll(() => _driver = DatabaseDriver.init(DatabaseConnection(
+  setUpAll(() => driver = DatabaseDriver.init(DatabaseConnection(
         'testdb',
         'sqlite',
         DatabaseDriverType.sqlite,
@@ -13,8 +13,7 @@ void main() {
   group('where_clause_test', () {
     group('when `.where` call', () {
       test('of level 1', () {
-        final query =
-            Query.make('users', _driver).where('firstname', '=', 'Chima');
+        final query = Query.make('users', driver).where('firstname', '=', 'Chima');
 
         expect(
           query.statement,
@@ -23,7 +22,7 @@ void main() {
       });
 
       test('of level 2', () {
-        final query = Query.make('users', _driver)
+        final query = Query.make('users', driver)
             .where('firstname', '=', 'Chima')
             .where('lastname', '=', 'Precious');
 
@@ -34,7 +33,7 @@ void main() {
       });
 
       test('of level 3', () {
-        final query = Query.make('users', _driver)
+        final query = Query.make('users', driver)
             .where('firstname', '=', 'Chima')
             .where('lastname', '=', 'Precious')
             .where('age', '=', 22);
@@ -47,7 +46,7 @@ void main() {
 
       group('with `orWhere` call', () {
         test('of level 1', () {
-          final query = Query.make('users', _driver)
+          final query = Query.make('users', driver)
               .where('firstname', '=', 'Chima')
               .orWhere('age', '=', 203);
 
@@ -58,7 +57,7 @@ void main() {
         });
 
         test('of level 2', () {
-          final query = Query.make('users', _driver)
+          final query = Query.make('users', driver)
               .where('firstname', '=', 'Chima')
               .orWhere('age', '=', 203)
               .where('city', '!=', 'Accra');
@@ -70,7 +69,7 @@ void main() {
         });
 
         test('of level 3', () {
-          final query = Query.make('users', _driver)
+          final query = Query.make('users', driver)
               .where('firstname', '=', 'Chima')
               .orWhere('age', '=', 203)
               .orWhere('city', '!=', 'Accra');
@@ -82,7 +81,7 @@ void main() {
         });
 
         test('of level 4', () {
-          final query = Query.make('users', _driver)
+          final query = Query.make('users', driver)
               .where('firstname', '=', 'Chima')
               .orWhere('age', '=', 203)
               .orWhere('city', '!=', 'Accra')
@@ -95,7 +94,7 @@ void main() {
         });
 
         test('of level 4', () {
-          final query = Query.make('users', _driver)
+          final query = Query.make('users', driver)
               .where('firstname', '=', 'Chima')
               .orWhere('age', '=', 203)
               .orWhere('city', '!=', 'Accra')
@@ -112,8 +111,7 @@ void main() {
 
     group('when handwritten operator', () {
       test('=', () {
-        final query =
-            Query.make('users', _driver).where('firstname', '=', 'Chima');
+        final query = Query.make('users', driver).where('firstname', '=', 'Chima');
 
         expect(
           query.statement,
@@ -122,40 +120,38 @@ void main() {
       });
 
       test('!=', () {
-        final query =
-            Query.make('users', _driver).where('firstname', '!=', 'Chima');
+        final query = Query.make('users', driver).where('firstname', '!=', 'Chima');
 
-        expect(query.statement,
-            'SELECT * FROM users WHERE firstname != \'Chima\';');
+        expect(query.statement, 'SELECT * FROM users WHERE firstname != \'Chima\';');
       });
 
       test('>', () {
-        final query = Query.make('users', _driver).where('age', '>', 23);
+        final query = Query.make('users', driver).where('age', '>', 23);
 
         expect(query.statement, 'SELECT * FROM users WHERE age > 23;');
       });
 
       test('<', () {
-        final query = Query.make('users', _driver).where('age', '<', 23);
+        final query = Query.make('users', driver).where('age', '<', 23);
 
         expect(query.statement, 'SELECT * FROM users WHERE age < 23;');
       });
 
       test('>=', () {
-        final query = Query.make('users', _driver).where('age', '>=', 223);
+        final query = Query.make('users', driver).where('age', '>=', 223);
 
         expect(query.statement, 'SELECT * FROM users WHERE age >= 223;');
       });
 
       test('<=', () {
-        final query = Query.make('users', _driver).where('age', '<=', 34.3);
+        final query = Query.make('users', driver).where('age', '<=', 34.3);
 
         expect(query.statement, 'SELECT * FROM users WHERE age <= 34.3;');
       });
 
       test('in', () {
-        final query = Query.make('users', _driver)
-            .where('places', 'in', ['Accra', 'Tema']);
+        final query =
+            Query.make('users', driver).where('places', 'in', ['Accra', 'Tema']);
 
         expect(
           query.statement,
@@ -164,8 +160,8 @@ void main() {
       });
 
       test('not in', () {
-        final query = Query.make('users', _driver)
-            .where('places', 'not in', ['Accra', 'Tema']);
+        final query =
+            Query.make('users', driver).where('places', 'not in', ['Accra', 'Tema']);
 
         expect(
           query.statement,
@@ -174,7 +170,7 @@ void main() {
       });
 
       test('null', () {
-        final query = Query.make('users', _driver).where('places', 'null');
+        final query = Query.make('users', driver).where('places', 'null');
 
         expect(
           query.statement,
@@ -183,7 +179,7 @@ void main() {
       });
 
       test('not null', () {
-        final query = Query.make('users', _driver).where('places', 'not null');
+        final query = Query.make('users', driver).where('places', 'not null');
 
         expect(
           query.statement,
@@ -192,8 +188,7 @@ void main() {
       });
 
       test('like', () {
-        final query =
-            Query.make('users', _driver).where('places', 'like', "MerryC");
+        final query = Query.make('users', driver).where('places', 'like', "MerryC");
 
         expect(
           query.statement,
@@ -202,8 +197,7 @@ void main() {
       });
 
       test('not like', () {
-        final query =
-            Query.make('users', _driver).where('places', 'not like', "MerryC");
+        final query = Query.make('users', driver).where('places', 'not like', "MerryC");
 
         expect(
           query.statement,
@@ -212,8 +206,7 @@ void main() {
       });
 
       test('between', () {
-        final query =
-            Query.make('users', _driver).where('age', 'between', [22, 30]);
+        final query = Query.make('users', driver).where('age', 'between', [22, 30]);
 
         expect(
           query.statement,
@@ -222,8 +215,7 @@ void main() {
       });
 
       test('not between', () {
-        final query =
-            Query.make('users', _driver).where('age', 'not between', [22, 30]);
+        final query = Query.make('users', driver).where('age', 'not between', [22, 30]);
 
         expect(
           query.statement,

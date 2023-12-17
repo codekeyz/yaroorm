@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 part of '../access.dart';
 
 typedef WhereBetweenArgs<Value> = (Value var1, Value var2);
@@ -83,16 +85,11 @@ class WhereClauseValue<A> {
     String condition,
     dynamic value,
   ) =>
-      WhereClauseValue(
-          field, (operator: _strToOperator(condition), value: value));
+      WhereClauseValue(field, (operator: _strToOperator(condition), value: value));
 }
 
 abstract class WhereClause extends Clause<WhereClauseValue>
-    with
-        WhereOperation,
-        FindOperation,
-        LimitOperation,
-        OrderByOperation<WhereClause> {
+    with WhereOperation, FindOperation, LimitOperation, OrderByOperation<WhereClause> {
   final Query _query;
 
   WhereClause(super.value, this._query);
@@ -126,8 +123,7 @@ abstract class WhereClause extends Clause<WhereClauseValue>
 
   Future<void> delete() => _query._delete(this);
 
-  Future<void> update(Map<String, dynamic> values) =>
-      _query._update(this, values);
+  Future<void> update(Map<String, dynamic> values) => _query._update(this, values);
 
   String get statement => _query.statement;
 }
