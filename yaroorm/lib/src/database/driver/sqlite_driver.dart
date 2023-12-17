@@ -58,24 +58,32 @@ class SqliteDriver implements DatabaseDriver {
   Future<List<Map<String, dynamic>>> query<T extends Entity>(
     ReadQuery<T> query,
   ) async {
-    final sql = _serializer.acceptQuery(query);
+    final sql = _serializer.acceptReadQuery(query);
     return (await _getDatabase()).rawQuery(sql);
   }
 
   @override
-  PrimitiveSerializer get serializer => _serializer;
+  Future<List<Map<String, dynamic>>> update<T extends Entity>(
+    UpdateQuery<T> query,
+  ) async {
+    final sql = _serializer.acceptUpdateQuery(query);
+    return (await _getDatabase()).rawQuery(sql);
+  }
 
   @override
   Future<int> insert(String tableName, Map<String, dynamic> data) async {
     return (await _getDatabase()).insert(tableName, data);
   }
+
+  @override
+  PrimitiveSerializer get serializer => _serializer;
 }
 
 class _SqliteSerializer implements PrimitiveSerializer {
   const _SqliteSerializer();
 
   @override
-  String acceptQuery(ReadQuery<Entity> query) {
+  String acceptReadQuery(ReadQuery<Entity> query) {
     final queryBuilder = StringBuffer();
 
     /// SELECT
@@ -105,30 +113,30 @@ class _SqliteSerializer implements PrimitiveSerializer {
   }
 
   @override
-  String acceptUpdate(UpdateQuery<Entity> update) {
-    return '';
-  }
+  String acceptUpdateQuery(UpdateQuery<Entity> query) {
+    final queryBuilder = StringBuffer();
 
-  @override
-  String get terminator => ';';
+    queryBuilder.write('UPDATE ${query.tableName}');
+
+    final values = query.values.entries
+        .map((e) => '${e.key} = ${acceptDartValue(e.value)}')
+        .join(', ');
+
+    queryBuilder
+      ..write(' SET $values')
+      ..write(' WHERE ${acceptWhereClause(query.whereClause)}')
+      ..write(terminator);
+
+    return queryBuilder.toString();
+  }
 
   @override
   String acceptSelect(List<String> fields) {
     return fields.isEmpty ? 'SELECT * ' : 'SELECT ${fields.join(', ')}';
   }
 
-  String _whereValueToScript(WhereClauseValue clauseVal) {
-    final value = clauseVal.value;
-    final wrappedValue = switch (value.runtimeType) {
-      const (int) => value,
-      const (List<String>) =>
-        '(${List<String>.from(value).map((e) => "'$e'").join(', ')})',
-      const (List<int>) => '(${List<int>.from(value).join(', ')})',
-      const (List<num>) => '(${List<num>.from(value).join(', ')})',
-      const (List<double>) => '(${List<double>.from(value).join(', ')})',
-      _ => "'$value'"
-    };
-
+  String _wrapWhereValue(WhereClauseValue clauseVal) {
+    final wrappedValue = acceptDartValue(clauseVal.value);
     return '${clauseVal.field} ${clauseVal.condition} $wrappedValue';
   }
 
@@ -136,14 +144,14 @@ class _SqliteSerializer implements PrimitiveSerializer {
   String acceptWhereClause(WhereClause clause) {
     if (clause is CompositeWhereClause) {
       final whereBuilder = StringBuffer();
-      whereBuilder.write(_whereValueToScript(clause.value));
+      whereBuilder.write(_wrapWhereValue(clause.value));
       for (final subpart in clause.subparts) {
         whereBuilder.write(
-            ' ${subpart.operator.name} ${_whereValueToScript(subpart.clause.value)}');
+            ' ${subpart.operator.name} ${_wrapWhereValue(subpart.clause.value)}');
       }
       return whereBuilder.toString();
     }
-    return _whereValueToScript(clause.value);
+    return _wrapWhereValue(clause.value);
   }
 
   @override
@@ -157,6 +165,20 @@ class _SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptLimit(int limit) => '$limit';
+
+  @override
+  String get terminator => ';';
+
+  @override
+  dynamic acceptDartValue(dartValue) => switch (dartValue.runtimeType) {
+        const (int) => dartValue,
+        const (List<String>) => '(${dartValue.map((e) => "'$e'").join(', ')})',
+        const (List<int>) ||
+        const (List<num>) ||
+        const (List<double>) =>
+          '(${dartValue.join(', ')})',
+        _ => "'$dartValue'"
+      };
 }
 
 class _SqliteTableBlueprint implements TableBlueprint {

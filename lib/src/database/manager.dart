@@ -11,10 +11,6 @@ class UseDatabaseConnection {
   ReadQuery<Model> query<Model extends Entity>(String table) {
     return ReadQuery<Model>.make(table, _driver);
   }
-
-  UpdateQuery<Model> update<Model extends Entity>(String table) {
-    return UpdateQuery<Model>.make(table, _driver);
-  }
 }
 
 class DB {
@@ -30,9 +26,6 @@ class DB {
 
   static ReadQuery<Model> query<Model extends Entity>(String table) =>
       defaultConnection.query(table);
-
-  static UpdateQuery<Model> update<Model extends Entity>(String table) =>
-      defaultConnection.update(table);
 
   static UseDatabaseConnection connection(String connName) =>
       UseDatabaseConnection(connName);

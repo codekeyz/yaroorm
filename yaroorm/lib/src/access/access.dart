@@ -3,13 +3,12 @@ import '../database/entity.dart';
 import '../reflection/entity_helpers.dart';
 
 part 'operations/query.dart';
-part 'operations/update.dart';
 part 'primitives/where.dart';
 
 abstract class PrimitiveSerializer {
-  String acceptQuery(ReadQuery query);
+  String acceptReadQuery(ReadQuery query);
 
-  String acceptUpdate(UpdateQuery update);
+  String acceptUpdateQuery(UpdateQuery query);
 
   String acceptWhereClause(WhereClause clause);
 
@@ -18,6 +17,8 @@ abstract class PrimitiveSerializer {
   String acceptOrderBy(List<OrderBy> orderBys);
 
   String acceptLimit(int limit);
+
+  dynamic acceptDartValue(dynamic value);
 
   String get terminator;
 }
@@ -28,6 +29,14 @@ mixin FindOperation<Model extends Entity> {
   Future<List<Model>> findMany();
 }
 
+mixin UpdateOperation<Model extends Entity> {
+  Future<void> _update(WhereClause<Model> where, Map<String, dynamic> values);
+}
+
+mixin InsertOperation<Model extends Entity> {
+  Future<Model> insert(Model model);
+}
+
 mixin LimitOperation<ReturnType> {
   ReturnType limit(int limit);
 }
@@ -36,10 +45,6 @@ typedef OrderBy = ({String field, OrderByDirection direction});
 
 mixin OrderByOperation<ReturnType> {
   ReturnType orderBy(String field, OrderByDirection direction);
-}
-
-mixin InsertOperation<Model extends Entity> {
-  Future<Model> insert(Model model);
 }
 
 abstract interface class BaseQuery {
@@ -55,12 +60,13 @@ abstract class ReadQuery<Model extends Entity> extends BaseQuery
     with
         FindOperation<Model>,
         InsertOperation<Model>,
+        UpdateOperation<Model>,
         OrderByOperation<ReadQuery<Model>>,
         LimitOperation<Future<List<Model>>> {
   late final Set<String> fieldSelections;
   late final Set<OrderBy> orderByProps;
 
-  late WhereClause? _whereClause;
+  late WhereClause<Model>? _whereClause;
   late int? _limit;
 
   ReadQuery(super.tableName, super.driver)
@@ -72,32 +78,27 @@ abstract class ReadQuery<Model extends Entity> extends BaseQuery
   factory ReadQuery.make(String tableName, DatabaseDriver driver) =>
       _ReadQueryImpl(tableName, driver);
 
-  WhereClause? get whereClause => _whereClause;
+  WhereClause<Model>? get whereClause => _whereClause;
 
   int? get limitValue => _limit;
 
-  WhereClause<Model> where<Value>(
-    String field,
-    String condition,
-    Value value,
-  );
+  WhereClause<Model> where<Value>(String field, String condition, Value value);
 
   @override
-  String get statement => driver.serializer.acceptQuery(this);
+  String get statement => driver.serializer.acceptReadQuery(this);
 }
 
-abstract interface class UpdateQuery<Model extends Entity> extends BaseQuery {
-  UpdateQuery(super.tableName, super.driver);
+class UpdateQuery<Model extends Entity> extends BaseQuery {
+  final WhereClause<Model> whereClause;
+  final Map<String, dynamic> values;
 
-  factory UpdateQuery.make(String tableName, DatabaseDriver driver) =>
-      _UpdateQueryImpl(tableName, driver);
-
-  WhereClause<Model> where<Value>(
-    String field,
-    String condition,
-    Value value,
-  );
+  UpdateQuery(
+    super.tableName,
+    super.driver, {
+    required this.whereClause,
+    required this.values,
+  });
 
   @override
-  String get statement => driver.serializer.acceptUpdate(this);
+  String get statement => driver.serializer.acceptUpdateQuery(this);
 }

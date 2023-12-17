@@ -62,6 +62,12 @@ class WhereClause<Model extends Entity> extends Clause<WhereClauseValue>
   }
 
   @override
+  WhereClause<Model> orderBy(String field, OrderByDirection direction) {
+    _query.orderByProps.add((field: field, direction: direction));
+    return this;
+  }
+
+  @override
   Future<Model?> findOne() => _query.findOne();
 
   @override
@@ -70,11 +76,8 @@ class WhereClause<Model extends Entity> extends Clause<WhereClauseValue>
   @override
   Future<List<Model>> limit(int limit) => _query.limit(limit);
 
-  @override
-  WhereClause<Model> orderBy(String field, OrderByDirection direction) {
-    _query.orderByProps.add((field: field, direction: direction));
-    return this;
-  }
+  Future<void> update(Map<String, dynamic> values) =>
+      _query._update(this, values);
 
   String get statement => _query.statement;
 }

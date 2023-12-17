@@ -7,6 +7,24 @@ final class _ReadQueryImpl<Model extends Entity> extends ReadQuery<Model> {
       : super(tableName, driver);
 
   @override
+  WhereClause<Model> where<Value>(
+    String field,
+    String condition,
+    Value value,
+  ) {
+    return _whereClause = WhereClause<Model>(
+      (field: field, condition: condition, value: value),
+      this,
+    );
+  }
+
+  @override
+  ReadQuery<Model> orderBy(String field, OrderByDirection direction) {
+    orderByProps.add((field: field, direction: direction));
+    return this;
+  }
+
+  @override
   Future<Model?> findOne() async {
     final results = await this.limit(1);
     return results.firstOrNull;
@@ -17,18 +35,6 @@ final class _ReadQueryImpl<Model extends Entity> extends ReadQuery<Model> {
     final results = await driver.query(this);
     if (results.isEmpty) return <Model>[];
     return results.map<Model>(jsonToEntity<Model>).toList();
-  }
-
-  @override
-  WhereClause<Model> where<Value>(
-    String field,
-    String condition,
-    Value value,
-  ) {
-    return _whereClause = WhereClause<Model>(
-      (field: field, condition: condition, value: value),
-      this,
-    );
   }
 
   @override
@@ -50,8 +56,12 @@ final class _ReadQueryImpl<Model extends Entity> extends ReadQuery<Model> {
   }
 
   @override
-  ReadQuery<Model> orderBy(String field, OrderByDirection direction) {
-    orderByProps.add((field: field, direction: direction));
-    return this;
+  Future<void> _update(
+    WhereClause<Model> where,
+    Map<String, dynamic> values,
+  ) async {
+    final query =
+        UpdateQuery(tableName, driver, whereClause: where, values: values);
+    await driver.update(query);
   }
 }

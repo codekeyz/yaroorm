@@ -93,11 +93,13 @@ abstract interface class DatabaseDriver {
   PrimitiveSerializer get serializer;
 
   /// Perform query on the database
-  ///
-  /// [ReadQuery] gives you a unified interface to make
-  /// your queries work on any database driver
   Future<List<Map<String, dynamic>>> query<T extends Entity>(
     ReadQuery<T> query,
+  );
+
+  /// Perform update on the database
+  Future<List<Map<String, dynamic>>> update<T extends Entity>(
+    UpdateQuery<T> query,
   );
 
   Future<dynamic> insert(String tableName, Map<String, dynamic> data);
