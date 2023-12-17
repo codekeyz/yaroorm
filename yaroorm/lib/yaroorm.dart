@@ -1,5 +1,4 @@
 library;
 
-export 'src/core.dart';
-export 'src/annotation.dart';
-export 'src/database/driver.dart';
+export 'src/access/access.dart';
+export 'src/database/database.dart';

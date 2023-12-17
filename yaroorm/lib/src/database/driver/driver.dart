@@ -1,4 +1,7 @@
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import '../../access/access.dart';
+import '../../access/primitives/serializer.dart';
+import '../database.dart';
+import 'sqlite_driver.dart';
 
 typedef DatabaseConfig = Map<String, dynamic>;
 
@@ -13,6 +16,7 @@ class DatabaseConnection {
   final String? password;
   final String database;
   final String? charset, collation;
+  final bool dbForeignKeys;
   final DatabaseDriverType driver;
 
   const DatabaseConnection(
@@ -26,6 +30,7 @@ class DatabaseConnection {
     this.port,
     this.url,
     this.username,
+    this.dbForeignKeys = true,
   });
 
   factory DatabaseConnection.from(String name, Map<String, dynamic> connInfo) {
@@ -40,6 +45,7 @@ class DatabaseConnection {
       password: connInfo['password'],
       username: connInfo['username'],
       url: connInfo['url'],
+      dbForeignKeys: connInfo['foreign_key_constraints'],
     );
   }
 }
@@ -67,11 +73,8 @@ abstract interface class DatabaseDriver {
     }
   }
 
-  /// Database name used to perform all write queries.
-  String get database;
-
-  /// Schema name used to perform all write queries.
-  String get scheme;
+  /// Check if the database is open for operation
+  bool get isOpen;
 
   /// Schema name used to perform all write queries.
   DatabaseDriverType get type;
@@ -79,40 +82,36 @@ abstract interface class DatabaseDriver {
   /// Performs connection to the database.
   ///
   /// Depend on driver type it may create a connection pool.
-  Future<void> connect();
+  Future<DatabaseDriver> connect();
 
   /// Performs connection to the database.
   ///
   /// Depend on driver type it may create a connection pool.
   Future<void> disconnect();
-}
 
-class SqliteDriver implements DatabaseDriver {
-  final DatabaseConnection config;
+  TableBlueprint get blueprint;
 
-  Database? _database;
+  PrimitiveSerializer get serializer;
 
-  SqliteDriver(this.config);
+  /// Perform query on the database
+  Future<List<Map<String, dynamic>>> query<T extends Entity>(
+    Query<T> query,
+  );
 
-  @override
-  Future<void> connect() async {
-    sqfliteFfiInit();
-    var databaseFactory = databaseFactoryFfi;
-    _database = await databaseFactory.openDatabase(config.database);
-  }
+  /// Perform update on the database
+  Future<List<Map<String, dynamic>>> update<T extends Entity>(
+    UpdateQuery<T> query,
+  );
 
-  @override
-  String get database => throw UnimplementedError();
+  /// Perform delete on the database
+  Future<List<Map<String, dynamic>>> delete<T extends Entity>(
+    DeleteQuery<T> query,
+  );
 
-  @override
-  Future<void> disconnect() async {
-    if (_database?.isOpen != true) return;
-    await _database!.close();
-  }
+  Future<dynamic> insert(String tableName, Map<String, dynamic> data);
 
-  @override
-  String get scheme => config.database;
-
-  @override
-  DatabaseDriverType get type => DatabaseDriverType.sqlite;
+  /// Execute scripts on the database.
+  ///
+  /// Execution varies across drivers
+  Future<dynamic> execute(String script);
 }
