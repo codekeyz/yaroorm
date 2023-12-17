@@ -2,8 +2,8 @@ part of '../access.dart';
 
 enum OrderByDirection { asc, desc }
 
-final class _ReadQueryImpl<Model extends Entity> extends ReadQuery<Model> {
-  _ReadQueryImpl(String tableName, DatabaseDriver driver)
+final class _QueryImpl<Model extends Entity> extends Query<Model> {
+  _QueryImpl(String tableName, DatabaseDriver driver)
       : super(tableName, driver);
 
   @override
@@ -19,7 +19,7 @@ final class _ReadQueryImpl<Model extends Entity> extends ReadQuery<Model> {
   }
 
   @override
-  ReadQuery<Model> orderBy(String field, OrderByDirection direction) {
+  Query<Model> orderBy(String field, OrderByDirection direction) {
     orderByProps.add((field: field, direction: direction));
     return this;
   }
@@ -63,5 +63,11 @@ final class _ReadQueryImpl<Model extends Entity> extends ReadQuery<Model> {
     final query =
         UpdateQuery(tableName, driver, whereClause: where, values: values);
     await driver.update(query);
+  }
+
+  @override
+  Future<void> _delete(WhereClause<Model> where) {
+    final query = DeleteQuery(tableName, driver, whereClause: where);
+    throw UnimplementedError();
   }
 }

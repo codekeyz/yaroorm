@@ -1,6 +1,7 @@
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../../access/access.dart';
+import '../../access/primitives/serializer.dart';
 import '../entity.dart';
 import '../migration.dart';
 import 'driver.dart';
@@ -8,7 +9,7 @@ import 'driver.dart';
 class SqliteDriver implements DatabaseDriver {
   final DatabaseConnection config;
 
-  final PrimitiveSerializer _serializer = const _SqliteSerializer();
+  final _serializer = const _SqliteSerializer();
   Database? _database;
 
   SqliteDriver(this.config);
@@ -56,7 +57,7 @@ class SqliteDriver implements DatabaseDriver {
 
   @override
   Future<List<Map<String, dynamic>>> query<T extends Entity>(
-    ReadQuery<T> query,
+    Query<T> query,
   ) async {
     final sql = _serializer.acceptReadQuery(query);
     return (await _getDatabase()).rawQuery(sql);
@@ -67,6 +68,14 @@ class SqliteDriver implements DatabaseDriver {
     UpdateQuery<T> query,
   ) async {
     final sql = _serializer.acceptUpdateQuery(query);
+    return (await _getDatabase()).rawQuery(sql);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> delete<T extends Entity>(
+    DeleteQuery<T> query,
+  ) async {
+    final sql = _serializer.acceptDeleteQuery(query);
     return (await _getDatabase()).rawQuery(sql);
   }
 
@@ -83,7 +92,7 @@ class _SqliteSerializer implements PrimitiveSerializer {
   const _SqliteSerializer();
 
   @override
-  String acceptReadQuery(ReadQuery<Entity> query) {
+  String acceptReadQuery(Query<Entity> query) {
     final queryBuilder = StringBuffer();
 
     /// SELECT
@@ -124,6 +133,18 @@ class _SqliteSerializer implements PrimitiveSerializer {
 
     queryBuilder
       ..write(' SET $values')
+      ..write(' WHERE ${acceptWhereClause(query.whereClause)}')
+      ..write(terminator);
+
+    return queryBuilder.toString();
+  }
+
+  @override
+  String acceptDeleteQuery(DeleteQuery<Entity> query) {
+    final queryBuilder = StringBuffer();
+
+    queryBuilder
+      ..write('DELETE FROM ${query.tableName}')
       ..write(' WHERE ${acceptWhereClause(query.whereClause)}')
       ..write(terminator);
 

@@ -1,4 +1,5 @@
 import '../../access/access.dart';
+import '../../access/primitives/serializer.dart';
 import '../database.dart';
 import 'sqlite_driver.dart';
 
@@ -94,12 +95,17 @@ abstract interface class DatabaseDriver {
 
   /// Perform query on the database
   Future<List<Map<String, dynamic>>> query<T extends Entity>(
-    ReadQuery<T> query,
+    Query<T> query,
   );
 
   /// Perform update on the database
   Future<List<Map<String, dynamic>>> update<T extends Entity>(
     UpdateQuery<T> query,
+  );
+
+  /// Perform delete on the database
+  Future<List<Map<String, dynamic>>> delete<T extends Entity>(
+    DeleteQuery<T> query,
   );
 
   Future<dynamic> insert(String tableName, Map<String, dynamic> data);

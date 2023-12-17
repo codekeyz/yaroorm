@@ -8,9 +8,8 @@ class UseDatabaseConnection {
   late final DatabaseDriver _driver;
   UseDatabaseConnection(this.name) : _driver = DB.driver(name);
 
-  ReadQuery<Model> query<Model extends Entity>(String table) {
-    return ReadQuery<Model>.make(table, _driver);
-  }
+  Query<Model> query<Model extends Entity>(String table) =>
+      Query<Model>.make(table, _driver);
 }
 
 class DB {
@@ -24,7 +23,7 @@ class DB {
 
   static DatabaseDriver get defaultDriver => defaultConnection._driver;
 
-  static ReadQuery<Model> query<Model extends Entity>(String table) =>
+  static Query<Model> query<Model extends Entity>(String table) =>
       defaultConnection.query(table);
 
   static UseDatabaseConnection connection(String connName) =>

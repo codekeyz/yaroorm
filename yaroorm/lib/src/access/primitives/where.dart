@@ -23,7 +23,7 @@ class WhereClause<Model extends Entity> extends Clause<WhereClauseValue>
         FindOperation<Model>,
         LimitOperation<Future<List<Model>>>,
         OrderByOperation<WhereClause<Model>> {
-  final ReadQuery<Model> _query;
+  final Query<Model> _query;
 
   WhereClause(super.value, this._query);
 
@@ -75,6 +75,8 @@ class WhereClause<Model extends Entity> extends Clause<WhereClauseValue>
 
   @override
   Future<List<Model>> limit(int limit) => _query.limit(limit);
+
+  Future<void> delete() => _query._delete(this);
 
   Future<void> update(Map<String, dynamic> values) =>
       _query._update(this, values);
