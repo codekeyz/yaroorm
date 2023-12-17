@@ -21,7 +21,7 @@ dependencies:
   uuid: ^4.2.1
   reflectable:
     git:
-      url: git@github.com:codekeyz/reflectable.dart.git
+      url: https://github.com/codekeyz/reflectable.dart.git
       path: reflectable
   build_runner: ^2.4.7
 
