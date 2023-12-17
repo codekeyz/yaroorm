@@ -94,19 +94,13 @@ abstract interface class DatabaseDriver {
   PrimitiveSerializer get serializer;
 
   /// Perform query on the database
-  Future<List<Map<String, dynamic>>> query<T extends Entity>(
-    Query<T> query,
-  );
+  Future<List<Map<String, dynamic>>> query(Query query);
 
   /// Perform update on the database
-  Future<List<Map<String, dynamic>>> update<T extends Entity>(
-    UpdateQuery<T> query,
-  );
+  Future<List<Map<String, dynamic>>> update(UpdateQuery query);
 
   /// Perform delete on the database
-  Future<List<Map<String, dynamic>>> delete<T extends Entity>(
-    DeleteQuery<T> query,
-  );
+  Future<List<Map<String, dynamic>>> delete(DeleteQuery query);
 
   Future<dynamic> insert(String tableName, Map<String, dynamic> data);
 

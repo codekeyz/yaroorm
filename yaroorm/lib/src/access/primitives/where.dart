@@ -18,63 +18,41 @@ class LogicalClause<T extends Clause> {
 
 typedef WhereClauseValue<A> = ({String field, String condition, A? value});
 
-class WhereClause<Model extends Entity> extends Clause<WhereClauseValue>
-    with
-        FindOperation<Model>,
-        LimitOperation<Future<List<Model>>>,
-        OrderByOperation<WhereClause<Model>> {
-  final Query<Model> _query;
+class WhereClause extends Clause<WhereClauseValue>
+    with FindOperation, LimitOperation, OrderByOperation<WhereClause> {
+  final Query _query;
 
   WhereClause(super.value, this._query);
 
-  CompositeWhereClause<Model> and<ValueType>(
+  CompositeWhereClause and<ValueType>(
     String field,
     String condition,
     ValueType val,
   ) {
-    return _query._whereClause = CompositeWhereClause<Model>(this)
-      ..subparts.add(
-        LogicalClause(
-          LogicalOperator.AND,
-          WhereClause<Model>(
-            (field: field, condition: condition, value: val),
-            _query,
-          ),
-        ),
-      );
+    return _query._whereClause = CompositeWhereClause(this)
+      ..subparts.add(LogicalClause(
+        LogicalOperator.AND,
+        WhereClause((field: field, condition: condition, value: val), _query),
+      ));
   }
 
-  CompositeWhereClause<Model> or<ValueType>(
+  CompositeWhereClause or<ValueType>(
     String field,
     String condition,
     ValueType val,
   ) {
-    return _query._whereClause = CompositeWhereClause<Model>(this)
-      ..subparts.add(
-        LogicalClause(
-          LogicalOperator.OR,
-          WhereClause<Model>(
-            (field: field, condition: condition, value: val),
-            _query,
-          ),
-        ),
-      );
+    return _query._whereClause = CompositeWhereClause(this)
+      ..subparts.add(LogicalClause(
+        LogicalOperator.OR,
+        WhereClause((field: field, condition: condition, value: val), _query),
+      ));
   }
 
   @override
-  WhereClause<Model> orderBy(String field, OrderByDirection direction) {
+  WhereClause orderBy(String field, OrderByDirection direction) {
     _query.orderByProps.add((field: field, direction: direction));
     return this;
   }
-
-  @override
-  Future<Model?> findOne() => _query.findOne();
-
-  @override
-  Future<List<Model>> findMany() => _query.findMany();
-
-  @override
-  Future<List<Model>> take(int limit) => _query.take(limit);
 
   Future<void> delete() => _query._delete(this);
 
@@ -82,43 +60,44 @@ class WhereClause<Model extends Entity> extends Clause<WhereClauseValue>
       _query._update(this, values);
 
   String get statement => _query.statement;
-}
-
-class CompositeWhereClause<QueryResult extends Entity>
-    extends WhereClause<QueryResult> {
-  final List<LogicalClause<WhereClause<QueryResult>>> subparts = [];
-
-  CompositeWhereClause(WhereClause<QueryResult> parent)
-      : super(parent.value, parent._query);
 
   @override
-  CompositeWhereClause<QueryResult> and<Type>(
+  Future<T?> findOne<T>() => _query.findOne<T>();
+
+  @override
+  Future<List<T>> findMany<T>() => _query.findMany<T>();
+
+  @override
+  Future<List<T>> take<T>(int limit) => _query.take<T>(limit);
+}
+
+class CompositeWhereClause extends WhereClause {
+  final List<LogicalClause<WhereClause>> subparts = [];
+
+  CompositeWhereClause(WhereClause parent) : super(parent.value, parent._query);
+
+  @override
+  CompositeWhereClause and<Type>(
     String field,
     String condition,
     Type val,
   ) {
     subparts.add(LogicalClause(
       LogicalOperator.AND,
-      WhereClause<QueryResult>(
-        (field: field, condition: condition, value: val),
-        _query,
-      ),
+      WhereClause((field: field, condition: condition, value: val), _query),
     ));
     return this;
   }
 
   @override
-  CompositeWhereClause<QueryResult> or<Type>(
+  CompositeWhereClause or<Type>(
     String field,
     String condition,
     Type val,
   ) {
     subparts.add(LogicalClause(
       LogicalOperator.OR,
-      WhereClause<QueryResult>(
-        (field: field, condition: condition, value: val),
-        _query,
-      ),
+      WhereClause((field: field, condition: condition, value: val), _query),
     ));
     return this;
   }

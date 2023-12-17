@@ -2,7 +2,6 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../../access/access.dart';
 import '../../access/primitives/serializer.dart';
-import '../entity.dart';
 import '../migration.dart';
 import 'driver.dart';
 
@@ -56,25 +55,19 @@ class SqliteDriver implements DatabaseDriver {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> query<T extends Entity>(
-    Query<T> query,
-  ) async {
+  Future<List<Map<String, dynamic>>> query(Query query) async {
     final sql = _serializer.acceptReadQuery(query);
     return (await _getDatabase()).rawQuery(sql);
   }
 
   @override
-  Future<List<Map<String, dynamic>>> update<T extends Entity>(
-    UpdateQuery<T> query,
-  ) async {
+  Future<List<Map<String, dynamic>>> update(UpdateQuery query) async {
     final sql = _serializer.acceptUpdateQuery(query);
     return (await _getDatabase()).rawQuery(sql);
   }
 
   @override
-  Future<List<Map<String, dynamic>>> delete<T extends Entity>(
-    DeleteQuery<T> query,
-  ) async {
+  Future<List<Map<String, dynamic>>> delete(DeleteQuery query) async {
     final sql = _serializer.acceptDeleteQuery(query);
     return (await _getDatabase()).rawQuery(sql);
   }
@@ -92,7 +85,7 @@ class _SqliteSerializer implements PrimitiveSerializer {
   const _SqliteSerializer();
 
   @override
-  String acceptReadQuery(Query<Entity> query) {
+  String acceptReadQuery(Query query) {
     final queryBuilder = StringBuffer();
 
     /// SELECT
@@ -113,7 +106,7 @@ class _SqliteSerializer implements PrimitiveSerializer {
     }
 
     /// LIMIT
-    final limit = query.limitValue;
+    final limit = query.limit;
     if (limit != null) {
       queryBuilder.write(' LIMIT ${acceptLimit(limit)}');
     }
@@ -122,7 +115,7 @@ class _SqliteSerializer implements PrimitiveSerializer {
   }
 
   @override
-  String acceptUpdateQuery(UpdateQuery<Entity> query) {
+  String acceptUpdateQuery(UpdateQuery query) {
     final queryBuilder = StringBuffer();
 
     queryBuilder.write('UPDATE ${query.tableName}');
@@ -140,7 +133,7 @@ class _SqliteSerializer implements PrimitiveSerializer {
   }
 
   @override
-  String acceptDeleteQuery(DeleteQuery<Entity> query) {
+  String acceptDeleteQuery(DeleteQuery query) {
     final queryBuilder = StringBuffer();
 
     queryBuilder
