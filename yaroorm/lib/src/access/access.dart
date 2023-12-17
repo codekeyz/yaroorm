@@ -4,33 +4,42 @@ import '../reflection/entity_helpers.dart';
 
 part 'operations/query.dart';
 part 'primitives/where.dart';
+part 'primitives/where_impl.dart';
 
-mixin FindOperation<Model extends Entity> {
-  Future<Model?> findOne();
+mixin ReadOperation {
+  Future<T?> first<T>();
 
-  Future<List<Model>> findMany();
+  Future<List<T>> all<T>();
 }
 
-mixin UpdateOperation<Model extends Entity> {
-  Future<void> _update(WhereClause<Model> where, Map<String, dynamic> values);
+mixin FindOperation {
+  Future<T?> findOne<T>();
+
+  Future<List<T>> findMany<T>();
 }
 
-mixin DeleteOperation<Model extends Entity> {
-  Future<void> _delete(WhereClause<Model> where);
-}
-
-mixin InsertOperation<Model extends Entity> {
-  Future<Model> insert(Model model);
+mixin InsertOperation {
+  Future<T> insert<T extends Entity>(T model);
 }
 
 mixin LimitOperation<ReturnType> {
-  ReturnType limit(int limit);
+  ReturnType take<T>(int limit);
+}
+
+mixin UpdateOperation {
+  Future<void> _update(WhereClause where, Map<String, dynamic> values);
+}
+
+mixin DeleteOperation {
+  Future<void> _delete(WhereClause where);
 }
 
 typedef OrderBy = ({String field, OrderByDirection direction});
 
 mixin OrderByOperation<ReturnType> {
-  ReturnType orderBy(String field, OrderByDirection direction);
+  ReturnType orderByAsc(String field);
+
+  ReturnType orderByDesc(String field);
 }
 
 abstract interface class QueryBase {
@@ -42,18 +51,18 @@ abstract interface class QueryBase {
   String get statement;
 }
 
-abstract class Query<Model extends Entity> extends QueryBase
+abstract class Query extends QueryBase
     with
-        FindOperation<Model>,
-        InsertOperation<Model>,
-        UpdateOperation<Model>,
-        DeleteOperation<Model>,
-        OrderByOperation<Query<Model>>,
-        LimitOperation<Future<List<Model>>> {
+        ReadOperation,
+        LimitOperation,
+        UpdateOperation,
+        DeleteOperation,
+        InsertOperation,
+        OrderByOperation<Query> {
   late final Set<String> fieldSelections;
   late final Set<OrderBy> orderByProps;
 
-  late WhereClause<Model>? _whereClause;
+  late WhereClauseImpl? _whereClause;
   late int? _limit;
 
   Query(super.tableName, super.driver)
@@ -65,18 +74,21 @@ abstract class Query<Model extends Entity> extends QueryBase
   factory Query.make(String tableName, DatabaseDriver driver) =>
       _QueryImpl(tableName, driver);
 
-  WhereClause<Model>? get whereClause => _whereClause;
+  int? get limit => _limit;
 
-  int? get limitValue => _limit;
+  WhereClauseImpl? get whereClause => _whereClause;
 
-  WhereClause<Model> where<Value>(String field, String condition, Value value);
+  WhereClause where<Value>(String field, String condition, [Value? val]);
+
+  @override
+  Future<List<T>> take<T>(int limit);
 
   @override
   String get statement => driver.serializer.acceptReadQuery(this);
 }
 
-class UpdateQuery<Model extends Entity> extends QueryBase {
-  final WhereClause<Model> whereClause;
+class UpdateQuery extends QueryBase {
+  final WhereClause whereClause;
   final Map<String, dynamic> values;
 
   UpdateQuery(
@@ -90,8 +102,8 @@ class UpdateQuery<Model extends Entity> extends QueryBase {
   String get statement => driver.serializer.acceptUpdateQuery(this);
 }
 
-class DeleteQuery<Model extends Entity> extends QueryBase {
-  final WhereClause<Model> whereClause;
+class DeleteQuery extends QueryBase {
+  final WhereClause whereClause;
 
   DeleteQuery(
     super.tableName,

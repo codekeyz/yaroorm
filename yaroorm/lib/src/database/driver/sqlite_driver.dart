@@ -2,7 +2,6 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../../access/access.dart';
 import '../../access/primitives/serializer.dart';
-import '../entity.dart';
 import '../migration.dart';
 import 'driver.dart';
 
@@ -56,25 +55,19 @@ class SqliteDriver implements DatabaseDriver {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> query<T extends Entity>(
-    Query<T> query,
-  ) async {
+  Future<List<Map<String, dynamic>>> query(Query query) async {
     final sql = _serializer.acceptReadQuery(query);
     return (await _getDatabase()).rawQuery(sql);
   }
 
   @override
-  Future<List<Map<String, dynamic>>> update<T extends Entity>(
-    UpdateQuery<T> query,
-  ) async {
+  Future<List<Map<String, dynamic>>> update(UpdateQuery query) async {
     final sql = _serializer.acceptUpdateQuery(query);
     return (await _getDatabase()).rawQuery(sql);
   }
 
   @override
-  Future<List<Map<String, dynamic>>> delete<T extends Entity>(
-    DeleteQuery<T> query,
-  ) async {
+  Future<List<Map<String, dynamic>>> delete(DeleteQuery query) async {
     final sql = _serializer.acceptDeleteQuery(query);
     return (await _getDatabase()).rawQuery(sql);
   }
@@ -92,7 +85,7 @@ class _SqliteSerializer implements PrimitiveSerializer {
   const _SqliteSerializer();
 
   @override
-  String acceptReadQuery(Query<Entity> query) {
+  String acceptReadQuery(Query query) {
     final queryBuilder = StringBuffer();
 
     /// SELECT
@@ -113,7 +106,7 @@ class _SqliteSerializer implements PrimitiveSerializer {
     }
 
     /// LIMIT
-    final limit = query.limitValue;
+    final limit = query.limit;
     if (limit != null) {
       queryBuilder.write(' LIMIT ${acceptLimit(limit)}');
     }
@@ -122,7 +115,7 @@ class _SqliteSerializer implements PrimitiveSerializer {
   }
 
   @override
-  String acceptUpdateQuery(UpdateQuery<Entity> query) {
+  String acceptUpdateQuery(UpdateQuery query) {
     final queryBuilder = StringBuffer();
 
     queryBuilder.write('UPDATE ${query.tableName}');
@@ -140,7 +133,7 @@ class _SqliteSerializer implements PrimitiveSerializer {
   }
 
   @override
-  String acceptDeleteQuery(DeleteQuery<Entity> query) {
+  String acceptDeleteQuery(DeleteQuery query) {
     final queryBuilder = StringBuffer();
 
     queryBuilder
@@ -156,23 +149,20 @@ class _SqliteSerializer implements PrimitiveSerializer {
     return fields.isEmpty ? 'SELECT * ' : 'SELECT ${fields.join(', ')}';
   }
 
-  String _wrapWhereValue(WhereClauseValue clauseVal) {
-    final wrappedValue = acceptDartValue(clauseVal.value);
-    return '${clauseVal.field} ${clauseVal.condition} $wrappedValue';
-  }
-
   @override
   String acceptWhereClause(WhereClause clause) {
     if (clause is CompositeWhereClause) {
       final whereBuilder = StringBuffer();
-      whereBuilder.write(_wrapWhereValue(clause.value));
+      whereBuilder.write(_acceptWhereClauseValue(clause.value));
       for (final subpart in clause.subparts) {
-        whereBuilder.write(
-            ' ${subpart.operator.name} ${_wrapWhereValue(subpart.clause.value)}');
+        final LogicalOperator operator = subpart.$1;
+        final WhereClauseValue value = subpart.$2.value;
+        whereBuilder
+            .write(' ${operator.name} ${_acceptWhereClauseValue(value)}');
       }
       return whereBuilder.toString();
     }
-    return _wrapWhereValue(clause.value);
+    return _acceptWhereClauseValue(clause.value);
   }
 
   @override
@@ -192,7 +182,7 @@ class _SqliteSerializer implements PrimitiveSerializer {
 
   @override
   dynamic acceptDartValue(dartValue) => switch (dartValue.runtimeType) {
-        const (int) => dartValue,
+        const (int) || const (double) => dartValue,
         const (List<String>) => '(${dartValue.map((e) => "'$e'").join(', ')})',
         const (List<int>) ||
         const (List<num>) ||
@@ -200,6 +190,44 @@ class _SqliteSerializer implements PrimitiveSerializer {
           '(${dartValue.join(', ')})',
         _ => "'$dartValue'"
       };
+
+  String _acceptWhereClauseValue(WhereClauseValue clauseVal) {
+    final field = clauseVal.field;
+    final value = clauseVal.comparer.value;
+    final valueOperator = clauseVal.comparer.operator;
+    final wrapped = acceptDartValue(value);
+
+    if (valueOperator == Operator.BETWEEN) {
+      if (value is! List || value.length != 2) {
+        throw ArgumentError.value(value, null,
+            'BETWEEN operator expects a List Value and must have 2 values');
+      }
+    }
+
+    return switch (valueOperator) {
+      Operator.LESS_THAN => '$field < $wrapped',
+      Operator.GREAT_THAN => '$field > $wrapped',
+      Operator.LESS_THEN_OR_EQUAL_TO => '$field <= $wrapped',
+      Operator.GREATER_THAN_OR_EQUAL_TO => '$field >= $wrapped',
+      //
+      Operator.EQUAL => '$field = $wrapped',
+      Operator.NOT_EQUAL => '$field != $wrapped',
+      //
+      Operator.IN => '$field IN $wrapped',
+      Operator.NOT_IN => '$field NOT IN $wrapped',
+      //
+      Operator.LIKE => '$field LIKE $wrapped',
+      Operator.NOT_LIKE => '$field NOT LIKE $wrapped',
+      //
+      Operator.NULL => '$field IS NULL',
+      Operator.NOT_NULL => '$field IS NOT NULL',
+      //
+      Operator.BETWEEN =>
+        '$field BETWEEN ${acceptDartValue(value[0])} AND ${acceptDartValue(value[1])}',
+      Operator.NOT_BETWEEN =>
+        '$field NOT BETWEEN ${acceptDartValue(value[0])} AND ${acceptDartValue(value[1])}'
+    };
+  }
 }
 
 class _SqliteTableBlueprint implements TableBlueprint {

@@ -1,31 +1,8 @@
-name: yaroo
-description: Class and annotation based development with Pharaoh.
-version: 0.0.1
-repository: https://github.com/Pharaoh-Framework/pharaoh-turbo
-
-publish_to: none
+name: yaroodev
+repository: https://github.com/codekeyz/yaroo
 
 environment:
   sdk: ^3.0.0
 
-dependencies:
-  spookie: ^1.0.1
-  spanner: ^1.0.1
-  pharaoh:
-    path: ../pharaoh-dev/packages/pharaoh
-  yaroorm:
-    path: ./yaroorm
-  meta: ^1.11.0
-  collection: ^1.18.0
-  dotenv: ^4.2.0
-  get_it: ^7.6.4
-  uuid: ^4.2.1
-  reflectable:
-    git:
-      url: git@github.com:codekeyz/reflectable.dart.git
-      path: reflectable
-  build_runner: ^2.4.7
-
 dev_dependencies:
-  lints: ^3.0.0
-  test: ^1.24.0
+  melos: ^3.2.0
