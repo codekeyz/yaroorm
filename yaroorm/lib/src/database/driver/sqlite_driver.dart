@@ -149,23 +149,20 @@ class _SqliteSerializer implements PrimitiveSerializer {
     return fields.isEmpty ? 'SELECT * ' : 'SELECT ${fields.join(', ')}';
   }
 
-  String _wrapWhereValue(WhereClauseValue clauseVal) {
-    final wrappedValue = acceptDartValue(clauseVal.value);
-    return '${clauseVal.field} ${clauseVal.condition} $wrappedValue';
-  }
-
   @override
   String acceptWhereClause(WhereClause clause) {
     if (clause is CompositeWhereClause) {
       final whereBuilder = StringBuffer();
-      whereBuilder.write(_wrapWhereValue(clause.value));
+      whereBuilder.write(_acceptWhereClauseValue(clause.value));
       for (final subpart in clause.subparts) {
-        whereBuilder.write(
-            ' ${subpart.operator.name} ${_wrapWhereValue(subpart.clause.value)}');
+        final LogicalOperator operator = subpart.$1;
+        final WhereClauseValue value = subpart.$2.value;
+        whereBuilder
+            .write(' ${operator.name} ${_acceptWhereClauseValue(value)}');
       }
       return whereBuilder.toString();
     }
-    return _wrapWhereValue(clause.value);
+    return _acceptWhereClauseValue(clause.value);
   }
 
   @override
@@ -185,7 +182,7 @@ class _SqliteSerializer implements PrimitiveSerializer {
 
   @override
   dynamic acceptDartValue(dartValue) => switch (dartValue.runtimeType) {
-        const (int) => dartValue,
+        const (int) || const (double) => dartValue,
         const (List<String>) => '(${dartValue.map((e) => "'$e'").join(', ')})',
         const (List<int>) ||
         const (List<num>) ||
@@ -193,6 +190,44 @@ class _SqliteSerializer implements PrimitiveSerializer {
           '(${dartValue.join(', ')})',
         _ => "'$dartValue'"
       };
+
+  String _acceptWhereClauseValue(WhereClauseValue clauseVal) {
+    final field = clauseVal.field;
+    final value = clauseVal.comparer.value;
+    final valueOperator = clauseVal.comparer.operator;
+    final wrapped = acceptDartValue(value);
+
+    if (valueOperator == Operator.BETWEEN) {
+      if (value is! List || value.length != 2) {
+        throw ArgumentError.value(value, null,
+            'BETWEEN operator expects a List Value and must have 2 values');
+      }
+    }
+
+    return switch (valueOperator) {
+      Operator.LESS_THAN => '$field < $wrapped',
+      Operator.GREAT_THAN => '$field > $wrapped',
+      Operator.LESS_THEN_OR_EQUAL_TO => '$field <= $wrapped',
+      Operator.GREATER_THAN_OR_EQUAL_TO => '$field >= $wrapped',
+      //
+      Operator.EQUAL => '$field = $wrapped',
+      Operator.NOT_EQUAL => '$field != $wrapped',
+      //
+      Operator.IN => '$field IN $wrapped',
+      Operator.NOT_IN => '$field NOT IN $wrapped',
+      //
+      Operator.LIKE => '$field LIKE $wrapped',
+      Operator.NOT_LIKE => '$field NOT LIKE $wrapped',
+      //
+      Operator.NULL => '$field IS NULL',
+      Operator.NOT_NULL => '$field IS NOT NULL',
+      //
+      Operator.BETWEEN =>
+        '$field BETWEEN ${acceptDartValue(value[0])} AND ${acceptDartValue(value[1])}',
+      Operator.NOT_BETWEEN =>
+        '$field NOT BETWEEN ${acceptDartValue(value[0])} AND ${acceptDartValue(value[1])}'
+    };
+  }
 }
 
 class _SqliteTableBlueprint implements TableBlueprint {

@@ -4,6 +4,7 @@ import '../reflection/entity_helpers.dart';
 
 part 'operations/query.dart';
 part 'primitives/where.dart';
+part 'primitives/where_impl.dart';
 
 mixin ReadOperation {
   Future<T?> first<T>();
@@ -61,7 +62,7 @@ abstract class Query extends QueryBase
   late final Set<String> fieldSelections;
   late final Set<OrderBy> orderByProps;
 
-  late WhereClause? _whereClause;
+  late WhereClauseImpl? _whereClause;
   late int? _limit;
 
   Query(super.tableName, super.driver)
@@ -75,9 +76,9 @@ abstract class Query extends QueryBase
 
   int? get limit => _limit;
 
-  WhereClause? get whereClause => _whereClause;
+  WhereClauseImpl? get whereClause => _whereClause;
 
-  WhereClause where<Value>(String field, String condition, Value value);
+  WhereClause where<Value>(String field, String condition, [Value? val]);
 
   @override
   Future<List<T>> take<T>(int limit);

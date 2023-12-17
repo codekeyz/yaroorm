@@ -7,11 +7,9 @@ final class _QueryImpl extends Query {
       : super(tableName, driver);
 
   @override
-  WhereClause where<Value>(String field, String condition, Value value) {
-    return _whereClause = WhereClause(
-      (field: field, condition: condition, value: value),
-      this,
-    );
+  WhereClause where<Value>(String field, String condition, [Value? value]) {
+    final clauseValue = WhereClauseValue.from(field, condition, value);
+    return _whereClause = WhereClauseImpl(clauseValue, this);
   }
 
   @override
