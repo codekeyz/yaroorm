@@ -24,7 +24,7 @@ class WhereClause extends Clause<WhereClauseValue>
 
   WhereClause(super.value, this._query);
 
-  CompositeWhereClause andWhere<ValueType>(
+  CompositeWhereClause where<ValueType>(
     String field,
     String condition,
     ValueType val,
@@ -83,11 +83,7 @@ class CompositeWhereClause extends WhereClause {
   CompositeWhereClause(WhereClause parent) : super(parent.value, parent._query);
 
   @override
-  CompositeWhereClause andWhere<Type>(
-    String field,
-    String condition,
-    Type val,
-  ) {
+  CompositeWhereClause where<Type>(String field, String condition, Type val) {
     subparts.add(LogicalClause(
       LogicalOperator.AND,
       WhereClause((field: field, condition: condition, value: val), _query),
@@ -96,11 +92,7 @@ class CompositeWhereClause extends WhereClause {
   }
 
   @override
-  CompositeWhereClause orWhere<Type>(
-    String field,
-    String condition,
-    Type val,
-  ) {
+  CompositeWhereClause orWhere<Type>(String field, String condition, Type val) {
     subparts.add(LogicalClause(
       LogicalOperator.OR,
       WhereClause((field: field, condition: condition, value: val), _query),
