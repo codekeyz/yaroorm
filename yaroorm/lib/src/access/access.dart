@@ -24,7 +24,7 @@ mixin InsertOperation<Model extends Entity> {
 }
 
 mixin LimitOperation<ReturnType> {
-  ReturnType limit(int limit);
+  ReturnType take(int limit);
 }
 
 typedef OrderBy = ({String field, OrderByDirection direction});

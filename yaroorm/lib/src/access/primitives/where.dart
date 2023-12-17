@@ -74,7 +74,7 @@ class WhereClause<Model extends Entity> extends Clause<WhereClauseValue>
   Future<List<Model>> findMany() => _query.findMany();
 
   @override
-  Future<List<Model>> limit(int limit) => _query.limit(limit);
+  Future<List<Model>> take(int limit) => _query.take(limit);
 
   Future<void> delete() => _query._delete(this);
 

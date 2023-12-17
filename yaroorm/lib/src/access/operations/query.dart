@@ -26,7 +26,7 @@ final class _QueryImpl<Model extends Entity> extends Query<Model> {
 
   @override
   Future<Model?> findOne() async {
-    final results = await this.limit(1);
+    final results = await this.take(1);
     return results.firstOrNull;
   }
 
@@ -48,7 +48,7 @@ final class _QueryImpl<Model extends Entity> extends Query<Model> {
   }
 
   @override
-  Future<List<Model>> limit(int limit) async {
+  Future<List<Model>> take(int limit) async {
     _limit = limit;
     final results = await driver.query(this);
     if (results.isEmpty) return <Model>[];
