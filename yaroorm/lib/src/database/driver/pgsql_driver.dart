@@ -1,8 +1,10 @@
+import 'package:postgres/postgres.dart' as pg;
+
+import 'sqlite_driver.dart' show SqliteSerializer;
+
 import '../../access/access.dart';
 import '../../access/primitives/serializer.dart';
 import '../database.dart';
-
-import 'package:postgres/postgres.dart' as pg;
 
 class PostgreSqlDriver implements DatabaseDriver {
   final DatabaseConnection config;
@@ -10,8 +12,7 @@ class PostgreSqlDriver implements DatabaseDriver {
 
   PostgreSqlDriver(this.config);
 
-  @override
-  TableBlueprint get blueprint => throw UnimplementedError();
+  static const _serializer = PgSqlPrimitiveSerializer();
 
   @override
   Future<DatabaseDriver> connect() async {
@@ -32,15 +33,20 @@ class PostgreSqlDriver implements DatabaseDriver {
   }
 
   @override
-  Future<void> disconnect() {
-    // TODO: implement disconnect
-    throw UnimplementedError();
+  Future<void> disconnect() async {
+    await db?.close();
+  }
+
+  Future<List<Map<String, dynamic>>> _execRawQuery(String script) async {
+    final result = await db?.execute(script);
+    if (result == null) return [];
+    return result.map((e) => e.toColumnMap()).toList();
   }
 
   @override
-  Future execute(String script) {
-    // TODO: implement execute
-    throw UnimplementedError();
+  Future execute(String script) async {
+    final result = await db?.execute(script);
+    return result?.map((e) => e.toColumnMap()).toList();
   }
 
   @override
@@ -50,98 +56,30 @@ class PostgreSqlDriver implements DatabaseDriver {
   }
 
   @override
-  // TODO: implement isOpen
-  bool get isOpen => throw UnimplementedError();
+  bool get isOpen => db != null && db!.isOpen;
 
   @override
-  Future<List<Map<String, dynamic>>> query(Query query) {
-    // TODO: implement query
-    throw UnimplementedError();
+  Future<List<Map<String, dynamic>>> query(Query query) async {
+    final sqlScript = serializer.acceptReadQuery(query);
+    return _execRawQuery(sqlScript);
   }
 
   @override
-  // TODO: implement serializer
-  PrimitiveSerializer get serializer => throw UnimplementedError();
+  Future<List<Map<String, dynamic>>> update(UpdateQuery query) {
+    final sqlScript = serializer.acceptUpdateQuery(query);
+    return _execRawQuery(sqlScript);
+  }
+
+  @override
+  PrimitiveSerializer get serializer => _serializer;
 
   @override
   DatabaseDriverType get type => DatabaseDriverType.pgsql;
 
   @override
-  Future<List<Map<String, dynamic>>> update(UpdateQuery query) {
-    // TODO: implement update
-    throw UnimplementedError();
-  }
+  TableBlueprint get blueprint => throw UnimplementedError();
 }
 
-class _PostgreSqlTableBlueprint implements TableBlueprint {
-  @override
-  void blob(String name) {
-    // TODO: implement blob
-  }
-
-  @override
-  void boolean(String name) {
-    // TODO: implement boolean
-  }
-
-  @override
-  String createScript(String tableName) {
-    // TODO: implement createScript
-    throw UnimplementedError();
-  }
-
-  @override
-  void datetime(String name) {
-    // TODO: implement datetime
-  }
-
-  @override
-  void double(String name) {
-    // TODO: implement double
-  }
-
-  @override
-  String dropScript(String tableName) {
-    // TODO: implement dropScript
-    throw UnimplementedError();
-  }
-
-  @override
-  void float(String name) {
-    // TODO: implement float
-  }
-
-  @override
-  void id() {
-    // TODO: implement id
-  }
-
-  @override
-  void integer(String name) {
-    // TODO: implement integer
-  }
-
-  @override
-  String renameScript(String fromName, String toName) {
-    // TODO: implement renameScript
-    throw UnimplementedError();
-  }
-
-  @override
-  void string(String name) {
-    // TODO: implement string
-  }
-
-  @override
-  void timestamp(String name) {
-    // TODO: implement timestamp
-  }
-
-  @override
-  void timestamps({
-    String createdAt = entityCreatedAtColumnName,
-    String updatedAt = entityUpdatedAtColumnName,
-  }) {
-    // TODO: implement timestamps
-  }
+class PgSqlPrimitiveSerializer extends SqliteSerializer {
+  const PgSqlPrimitiveSerializer();
 }

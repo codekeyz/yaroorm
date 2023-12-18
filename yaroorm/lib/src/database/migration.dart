@@ -6,24 +6,61 @@ import 'package:recase/recase.dart';
 import 'driver/driver.dart';
 import 'entity.dart';
 
+class Id {}
+
+enum Integer { smallint, integer, bigint }
+
 abstract interface class TableBlueprint {
-  void id();
+  void id({bool autoIncrement = true});
 
-  void string(String name);
+  void string(
+    String name, {
+    String? defaultValue,
+    bool nullable = false,
+  });
 
-  void integer(String name);
+  void integer(
+    String name, {
+    Integer type = Integer.integer,
+    num? defaultValue,
+    bool nullable = false,
+  });
 
-  void double(String name);
+  void double(
+    String name, {
+    num? defaultValue,
+    bool nullable = false,
+  });
 
-  void float(String name);
+  void float(
+    String name, {
+    num? defaultValue,
+    bool nullable = false,
+  });
 
-  void boolean(String name);
+  void boolean(
+    String name, {
+    bool? defaultValue,
+    bool nullable = false,
+  });
 
-  void timestamp(String name);
+  void timestamp(
+    String name, {
+    String? defaultValue,
+    bool nullable = false,
+  });
 
-  void datetime(String name);
+  void datetime(
+    String name, {
+    bool? defaultValue,
+    bool nullable = false,
+  });
 
-  void blob(String name);
+  void blob(
+    String name, {
+    String? defaultValue,
+    bool nullable = false,
+  });
 
   void timestamps({
     String createdAt = entityCreatedAtColumnName,
@@ -50,9 +87,11 @@ class Schema {
 
   Schema._(this.tableName, this._bluePrintFunc);
 
-  String toScript(TableBlueprint $table) => _bluePrintFunc!.call($table).createScript(tableName);
+  String toScript(TableBlueprint $table) =>
+      _bluePrintFunc!.call($table).createScript(tableName);
 
-  static Schema create(String name, TableBluePrintFunc func) => Schema._(name, func);
+  static Schema create(String name, TableBluePrintFunc func) =>
+      Schema._(name, func);
 
   static Schema dropIfExists(String name) => _DropSchema(name);
 
@@ -72,7 +111,8 @@ class _RenameSchema extends Schema {
   _RenameSchema(String from, this.newName) : super._(from, null);
 
   @override
-  String toScript(TableBlueprint $table) => $table.renameScript(tableName, newName);
+  String toScript(TableBlueprint $table) =>
+      $table.renameScript(tableName, newName);
 }
 
 abstract class Migration {
