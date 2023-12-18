@@ -1,66 +1,34 @@
 library router;
 
 import 'package:pharaoh/pharaoh.dart';
+
 import 'definition.dart';
 
-export 'definition.dart' show RouteDefinitionExtension;
-
-typedef ControllerMethodDefinition = (Type controller, Symbol symbol);
-
-abstract class RouteDefinition {
-  final RouteDefinitionType type;
-  const RouteDefinition(this.type);
-
-  void commit(Spanner spanner);
-}
+export '../_router/definition.dart' show RouteDefinition;
 
 abstract interface class Route {
-  static ControllerRouteMethodDefinition get(
-    String path,
-    ControllerMethodDefinition defn,
-  ) =>
+  static ControllerRouteMethodDefinition get(String path, ControllerMethodDefinition defn) =>
       ControllerRouteMethodDefinition(defn, RouteMapping([HTTPMethod.GET], path));
 
-  static ControllerRouteMethodDefinition head(
-    String path,
-    ControllerMethodDefinition defn,
-  ) =>
+  static ControllerRouteMethodDefinition head(String path, ControllerMethodDefinition defn) =>
       ControllerRouteMethodDefinition(defn, RouteMapping([HTTPMethod.HEAD], path));
 
-  static ControllerRouteMethodDefinition post(
-    String path,
-    ControllerMethodDefinition defn,
-  ) =>
+  static ControllerRouteMethodDefinition post(String path, ControllerMethodDefinition defn) =>
       ControllerRouteMethodDefinition(defn, RouteMapping([HTTPMethod.POST], path));
 
-  static ControllerRouteMethodDefinition put(
-    String path,
-    ControllerMethodDefinition defn,
-  ) =>
+  static ControllerRouteMethodDefinition put(String path, ControllerMethodDefinition defn) =>
       ControllerRouteMethodDefinition(defn, RouteMapping([HTTPMethod.PUT], path));
 
-  static ControllerRouteMethodDefinition delete(
-    String path,
-    ControllerMethodDefinition defn,
-  ) =>
+  static ControllerRouteMethodDefinition delete(String path, ControllerMethodDefinition defn) =>
       ControllerRouteMethodDefinition(defn, RouteMapping([HTTPMethod.DELETE], path));
 
-  static ControllerRouteMethodDefinition patch(
-    String path,
-    ControllerMethodDefinition defn,
-  ) =>
+  static ControllerRouteMethodDefinition patch(String path, ControllerMethodDefinition defn) =>
       ControllerRouteMethodDefinition(defn, RouteMapping([HTTPMethod.PATCH], path));
 
-  static ControllerRouteMethodDefinition options(
-    String path,
-    ControllerMethodDefinition defn,
-  ) =>
+  static ControllerRouteMethodDefinition options(String path, ControllerMethodDefinition defn) =>
       ControllerRouteMethodDefinition(defn, RouteMapping([HTTPMethod.OPTIONS], path));
 
-  static ControllerRouteMethodDefinition trace(
-    String path,
-    ControllerMethodDefinition defn,
-  ) =>
+  static ControllerRouteMethodDefinition trace(String path, ControllerMethodDefinition defn) =>
       ControllerRouteMethodDefinition(defn, RouteMapping([HTTPMethod.TRACE], path));
 
   static ControllerRouteMethodDefinition mapping(
@@ -73,17 +41,10 @@ abstract interface class Route {
     return ControllerRouteMethodDefinition(defn, mapping);
   }
 
-  static RouteGroupDefinition group(
-    String prefix, {
-    List<MiddlewareDefinition> middlewares = const [],
-  }) =>
-      RouteGroupDefinition('/$prefix', controllerDefns: const [], middlewares: middlewares);
+  static RouteGroupDefinition group(String name, {String? prefix, List<Middleware> middlewares = const []}) =>
+      RouteGroupDefinition(name, prefix: prefix, middlewares: middlewares);
 
-  static RouteGroupDefinition resource(
-    String resource,
-    Type controller, {
-    String? parameterName,
-  }) {
+  static RouteGroupDefinition resource(String resource, Type controller, {String? parameterName}) {
     resource = resource.toLowerCase();
     final paramName = parameterName ?? resource;
 
@@ -97,10 +58,6 @@ abstract interface class Route {
     ]);
   }
 
-  static FunctionalRouteDefinition func(
-    HTTPMethod method,
-    String path,
-    RequestHandler handler,
-  ) =>
+  static FunctionalRouteDefinition handler(HTTPMethod method, String path, RequestHandler handler) =>
       FunctionalRouteDefinition(HTTPMethod.GET, path, handler);
 }

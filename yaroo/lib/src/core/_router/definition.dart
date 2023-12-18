@@ -2,7 +2,6 @@ import 'package:pharaoh/pharaoh.dart';
 
 import '../_reflector/reflector.dart';
 import '../core.dart';
-import 'router.dart';
 import 'utils.dart';
 
 enum RouteDefinitionType { route, group, middleware }
@@ -18,20 +17,29 @@ class RouteMapping {
   RouteMapping prefix(String prefix) => RouteMapping(methods, '$prefix$_path');
 }
 
-class MiddlewareDefinition extends RouteDefinition {
+abstract class RouteDefinition {
+  late RouteMapping route;
+  final RouteDefinitionType type;
+
+  RouteDefinition(this.type);
+
+  void commit(Spanner spanner);
+
+  RouteDefinition _prefix(String prefix) => this..route = route.prefix(prefix);
+}
+
+class _MiddlewareDefinition extends RouteDefinition {
   final Middleware mdw;
-  final RouteMapping mapping;
 
-  MiddlewareDefinition(this.mdw, this.mapping) : super(RouteDefinitionType.middleware);
-
-  MiddlewareDefinition prefix(String prefix) => MiddlewareDefinition(
-        mdw,
-        mapping.prefix(prefix),
-      );
+  _MiddlewareDefinition(this.mdw, RouteMapping route) : super(RouteDefinitionType.middleware) {
+    this.route = route;
+  }
 
   @override
-  void commit(Spanner spanner) => spanner.addMiddleware(mapping.path, mdw);
+  void commit(Spanner spanner) => spanner.addMiddleware(route.path, mdw);
 }
+
+typedef ControllerMethodDefinition = (Type controller, Symbol symbol);
 
 class ControllerMethod {
   final ControllerMethodDefinition classMethod;
@@ -42,21 +50,19 @@ class ControllerMethod {
 
 class ControllerRouteMethodDefinition extends RouteDefinition {
   final ControllerMethod method;
-  final RouteMapping mapping;
 
-  ControllerRouteMethodDefinition(ControllerMethodDefinition defn, this.mapping)
+  ControllerRouteMethodDefinition(ControllerMethodDefinition defn, RouteMapping mapping)
       : method = parseControllerMethod(defn),
-        super(RouteDefinitionType.route);
-
-  ControllerRouteMethodDefinition prefix(String prefix) =>
-      ControllerRouteMethodDefinition(method.classMethod, mapping.prefix(prefix));
+        super(RouteDefinitionType.route) {
+    route = mapping;
+  }
 
   @override
   void commit(Spanner spanner) {
-    for (final routeMethod in mapping.methods) {
+    for (final routeMethod in route.methods) {
       spanner.addRoute(
         routeMethod,
-        mapping.path,
+        route.path,
         useRequestHandler(_controllerHandler(method)),
       );
     }
@@ -65,71 +71,45 @@ class ControllerRouteMethodDefinition extends RouteDefinition {
 
 class RouteGroupDefinition extends RouteDefinition {
   final String name;
-  List<MiddlewareDefinition> middlewareDefinitions = [];
-  List<ControllerRouteMethodDefinition> controllerDefns = [];
-  List<FunctionalRouteDefinition> functionDefns = [];
+  final List<RouteDefinition> definitions = [];
 
   RouteGroupDefinition(
     this.name, {
-    List<MiddlewareDefinition> middlewares = const [],
-    List<ControllerRouteMethodDefinition> controllerDefns = const [],
-    this.functionDefns = const [],
     String? prefix,
+    List<Middleware> middlewares = const [],
+    List<RouteDefinition> definitions = const [],
   }) : super(RouteDefinitionType.group) {
-    final groupPrefix = prefix ?? name.toLowerCase();
-    this.controllerDefns = controllerDefns.map((e) => e.prefix(groupPrefix)).toList();
-    middlewareDefinitions = middlewares.map((e) => e.prefix(groupPrefix)).toList();
+    route = RouteMapping([HTTPMethod.ALL], '/${prefix ?? name.toLowerCase()}');
+
+    /// add middlewares
+    if (middlewares.isNotEmpty) {
+      final groupMdw = middlewares.reduce((value, e) => value.chain(e));
+      this.definitions.add(_MiddlewareDefinition(groupMdw, route));
+    }
+
+    /// add routes
+    this.definitions.addAll(definitions.map((e) => e._prefix(route.path)));
   }
 
-  RouteGroupDefinition routes(List<RouteDefinition> routes) => RouteGroupDefinition(
-        name,
-        controllerDefns: routes.whereType<ControllerRouteMethodDefinition>().toList(),
-        functionDefns: routes.whereType<FunctionalRouteDefinition>().toList(),
-        middlewares: middlewareDefinitions,
-      );
+  RouteGroupDefinition routes(List<RouteDefinition> subRoutes) {
+    for (final subRoute in subRoutes) {
+      if (subRoute is! RouteGroupDefinition) {
+        definitions.add(subRoute._prefix(route.path));
+        continue;
+      }
 
-  RouteGroupDefinition prefix(String prefix) => RouteGroupDefinition(
-        name,
-        controllerDefns: controllerDefns,
-        functionDefns: functionDefns,
-        middlewares: middlewareDefinitions,
-        prefix: prefix.toLowerCase(),
-      );
+      for (var e in subRoute.definitions) {
+        definitions.add(e._prefix(route.path));
+      }
+    }
+    return this;
+  }
 
   @override
   void commit(Spanner spanner) {
-    for (final mdw in middlewareDefinitions) {
+    for (final mdw in definitions) {
       mdw.commit(spanner);
     }
-    for (final defn in [...controllerDefns, ...functionDefns]) {
-      defn.commit(spanner);
-    }
-  }
-}
-
-extension RouteDefinitionExtension on Iterable<RouteDefinition> {
-  List<RouteDefinition> get compressed {
-    final compressedList = <RouteDefinition>[];
-    for (final defn in this) {
-      switch (defn.type) {
-        case RouteDefinitionType.group:
-          defn as RouteGroupDefinition;
-          compressedList
-            ..addAll(defn.middlewareDefinitions)
-            ..addAll(defn.controllerDefns)
-            ..addAll(defn.functionDefns);
-          break;
-        default:
-          compressedList.add(defn);
-      }
-    }
-    return compressedList;
-  }
-
-  List<MiddlewareDefinition> get middlewares => compressed.whereType<MiddlewareDefinition>().toList();
-
-  List<RouteDefinition> get reqHandlers {
-    return compressed.where((e) => e is! MiddlewareDefinition).toList();
   }
 }
 
@@ -138,7 +118,9 @@ class FunctionalRouteDefinition extends RouteDefinition {
   final HTTPMethod method;
   final String path;
 
-  const FunctionalRouteDefinition(this.method, this.path, this.handler) : super(RouteDefinitionType.route);
+  FunctionalRouteDefinition(this.method, this.path, this.handler) : super(RouteDefinitionType.route) {
+    route = RouteMapping([method], path);
+  }
 
   @override
   void commit(Spanner spanner) {
