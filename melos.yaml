@@ -13,7 +13,7 @@ command:
   bootstrap:
     runPubGetInParallel: false
     hooks:
-      pre: |
+      post: |
         melos exec -- "dart run build_runner build"
 
 scripts:
