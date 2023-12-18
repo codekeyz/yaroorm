@@ -2,8 +2,6 @@
 
 part of '../access.dart';
 
-typedef WhereBetweenArgs<Value> = (Value var1, Value var2);
-
 mixin WhereOperation {
   WhereClause where<Value>(
     String field,
@@ -25,24 +23,22 @@ mixin WhereOperation {
 
   WhereClause whereBetween<Value>(
     String field,
-    WhereBetweenArgs<Value> args,
+    List<Value> args,
   );
 
   WhereClause whereNotBetween<Value>(
     String field,
-    WhereBetweenArgs<Value> args,
+    List<Value> args,
   );
 }
 
-abstract class Clause<T> {
-  final T clauseVal;
-
-  const Clause(this.clauseVal);
+abstract class Clause {
+  WhereClauseValue? clauseValue;
 }
 
 enum LogicalOperator { AND, OR }
 
-typedef CombineClause<T extends Clause> = (LogicalOperator operator, T clause);
+typedef CombineClause<T> = (LogicalOperator operator, T clause);
 
 enum Operator {
   IN,
@@ -96,47 +92,35 @@ class WhereClauseValue<A> {
     final operator = _strToOperator(condition);
     if ([Operator.BETWEEN, Operator.NOT_BETWEEN].contains(operator)) {
       if (value is! List || value.length != 2) {
-        throw ArgumentError.value(
-            value, null, '$operator requires [val1, val2] as value');
+        throw ArgumentError(
+          '${operator.name} requires a List with length 2 (val1, val2)',
+          '$field $condition $value',
+        );
       }
-      final WhereBetweenArgs whereArgs = (value[0], value[1]);
-      value = whereArgs;
     }
     return WhereClauseValue(field, (operator: operator, value: value));
   }
 }
 
-abstract class WhereClause extends Clause<WhereClauseValue>
+abstract class WhereClause extends Clause
     with
         WhereOperation,
         FindOperation,
         LimitOperation,
         OrderByOperation<WhereClause> {
   final Query _query;
+  final LogicalOperator operator;
 
-  WhereClause(this._query, super.clauseVal);
-
-  static WhereClause fromString(String field, String condition, dynamic value,
-      {required Query query}) {
-    return WhereClauseImpl(
-      query,
-      WhereClauseValue.from(field, condition, value),
-    );
-  }
-
-  static WhereClause fromOperator(
-    String field,
-    Operator operator,
-    dynamic value, {
-    required Query query,
-  }) {
-    return WhereClauseImpl(
-      query,
-      WhereClauseValue(field, (operator: operator, value: value)),
-    );
-  }
+  WhereClause(
+    this._query, {
+    this.operator = LogicalOperator.AND,
+  });
 
   WhereClause orWhere<Value>(String field, String condition, [Value? value]);
+
+  Query whereFunc(Function(WhereClauseImpl $query) function);
+
+  Query orWhereFunc(Function(WhereClauseImpl $query) function);
 
   @override
   WhereClause orderByAsc(String field) {
@@ -151,7 +135,7 @@ abstract class WhereClause extends Clause<WhereClauseValue>
   }
 
   @override
-  Future<T?> findOne<T>() => _query.first<T>();
+  Future<T?> findOne<T>() => _query.get<T>();
 
   @override
   Future<List<T>> findMany<T>() => _query.all<T>();

@@ -94,9 +94,23 @@ class _SqliteSerializer implements PrimitiveSerializer {
     queryBuilder.write('FROM ${query.tableName}');
 
     /// WHERE
-    final whereClause = query.whereClause;
-    if (whereClause != null) {
-      queryBuilder.write(' WHERE ${acceptWhereClause(whereClause)}');
+    final clauses = query.whereClauses;
+    if (clauses.isNotEmpty) {
+      final sb = StringBuffer();
+
+      final differentOperators =
+          clauses.map((e) => e.operator).toSet().length > 1;
+
+      for (final clause in clauses) {
+        final result = acceptWhereClause(clause, canGroup: differentOperators);
+        if (sb.isEmpty) {
+          sb.write(result);
+        } else {
+          sb.write(' ${clause.operator.name} $result');
+        }
+      }
+
+      queryBuilder.write(' WHERE $sb');
     }
 
     /// ORDER BY
@@ -150,19 +164,24 @@ class _SqliteSerializer implements PrimitiveSerializer {
   }
 
   @override
-  String acceptWhereClause(WhereClause clause) {
-    if (clause is CompositeWhereClause) {
-      final whereBuilder = StringBuffer();
-      whereBuilder.write(_acceptWhereClauseValue(clause.clauseVal));
-      for (final subpart in clause.subparts) {
-        final LogicalOperator operator = subpart.$1;
-        final WhereClauseValue value = subpart.$2.clauseVal;
-        whereBuilder
-            .write(' ${operator.name} ${_acceptWhereClauseValue(value)}');
-      }
-      return whereBuilder.toString();
+  String acceptWhereClause(WhereClause clause, {bool canGroup = false}) {
+    if (clause is! WhereClauseImpl) {
+      return _acceptWhereClauseValue(clause.clauseValue!);
     }
-    return _acceptWhereClauseValue(clause.clauseVal);
+
+    final value = clause.clauseValue;
+    final subParts = <(LogicalOperator operator, WhereClauseValue value)>[
+      if (value != null) (clause.operator, value),
+      ...clause.subparts.map((e) => (e.$1, e.$2)).toList(),
+    ];
+
+    /// If there are different logical operators joining the WhereGroups and a particular
+    /// group has more than one subpart, then we should wrap it in (...)
+    canGroup = canGroup && subParts.length > 1;
+
+    final result = processClause(subParts);
+
+    return !canGroup ? result : '($result)';
   }
 
   @override
@@ -215,11 +234,29 @@ class _SqliteSerializer implements PrimitiveSerializer {
       Operator.NULL => '$field IS NULL',
       Operator.NOT_NULL => '$field IS NOT NULL',
       //
-      Operator.BETWEEN || Operator.NOT_BETWEEN => value is WhereBetweenArgs
-          ? '$field ${valueOperator == Operator.BETWEEN ? 'BETWEEN' : 'NOT BETWEEN'} ${acceptDartValue((value).$1)} AND ${acceptDartValue((value).$2)}'
-          : throw ArgumentError.value(
-              value, null, 'BETWEEN operator expects a Tuple (value1, value1)')
+      Operator.BETWEEN =>
+        '$field BETWEEN ${acceptDartValue(value[0])} AND ${acceptDartValue(value[1])}',
+      Operator.NOT_BETWEEN =>
+        '$field NOT BETWEEN ${acceptDartValue(value[0])} AND ${acceptDartValue(value[1])}',
     };
+  }
+
+  String processClause(
+    List<(LogicalOperator operator, WhereClauseValue value)> subParts,
+  ) {
+    final group = StringBuffer();
+
+    final firstPart = subParts.removeAt(0);
+    group.write(_acceptWhereClauseValue(firstPart.$2));
+
+    if (subParts.isNotEmpty) {
+      for (final part in subParts) {
+        final value = part.$2;
+        group.write(' ${part.$1.name} ${_acceptWhereClauseValue(value)}');
+      }
+    }
+
+    return group.toString();
   }
 }
 

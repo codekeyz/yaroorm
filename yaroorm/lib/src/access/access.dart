@@ -7,7 +7,7 @@ part 'primitives/where.dart';
 part 'primitives/where_impl.dart';
 
 mixin ReadOperation {
-  Future<T?> first<T>();
+  Future<T?> get<T>();
 
   Future<List<T>> all<T>();
 }
@@ -62,22 +62,20 @@ abstract class Query extends QueryBase
         OrderByOperation<Query> {
   late final Set<String> fieldSelections;
   late final Set<OrderBy> orderByProps;
+  late final List<WhereClause> whereClauses;
 
-  late WhereClause? _whereClause;
   late int? _limit;
 
   Query(super.tableName, super.driver)
       : fieldSelections = {},
         orderByProps = {},
-        _whereClause = null,
+        whereClauses = [],
         _limit = null;
 
   factory Query.make(String tableName, DatabaseDriver driver) =>
       _QueryImpl(tableName, driver);
 
   int? get limit => _limit;
-
-  WhereClause? get whereClause => _whereClause;
 
   @override
   Future<List<T>> take<T>(int limit);

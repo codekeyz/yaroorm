@@ -65,19 +65,19 @@ void main() {
 
           expect(
             query.statement,
-            'SELECT * FROM users WHERE firstname = \'Chima\' OR age = 203 AND city != \'Accra\';',
+            'SELECT * FROM users WHERE firstname = \'Chima\' OR (age = 203 AND city != \'Accra\');',
           );
         });
 
         test('of level 3', () {
           final query = Query.make('users', driver)
-              .where('firstname', '=', 'Chima')
-              .orWhere('age', '=', 203)
-              .orWhere('city', '!=', 'Accra');
+              .where('votes', '>', 100)
+              .orWhere('name', '=', 'Abigail')
+              .where('votes', '>', 50);
 
           expect(
             query.statement,
-            'SELECT * FROM users WHERE firstname = \'Chima\' OR age = 203 OR city != \'Accra\';',
+            'SELECT * FROM users WHERE votes > 100 OR (name = \'Abigail\' AND votes > 50);',
           );
         });
 
@@ -90,7 +90,7 @@ void main() {
 
           expect(
             query.statement,
-            'SELECT * FROM users WHERE firstname = \'Chima\' OR age = 203 OR city != \'Accra\' AND name LIKE \'Chima%\';',
+            'SELECT * FROM users WHERE firstname = \'Chima\' OR (age = 203 OR city != \'Accra\' AND name LIKE \'Chima%\');',
           );
         });
 
@@ -104,7 +104,7 @@ void main() {
 
           expect(
             query.statement,
-            'SELECT * FROM users WHERE firstname = \'Chima\' OR age = 203 OR city != \'Accra\' AND name LIKE \'Chima%\' AND sizes BETWEEN 12 AND 23;',
+            'SELECT * FROM users WHERE firstname = \'Chima\' OR (age = 203 OR city != \'Accra\' AND name LIKE \'Chima%\' AND sizes BETWEEN 12 AND 23);',
           );
         });
       });
@@ -179,7 +179,7 @@ void main() {
         test('.whereBetween', () {
           final query = Query.make('users', driver)
               .where('firstname', '=', 'Chima')
-              .whereBetween<int>('lastname', (22, 50));
+              .whereBetween<int>('lastname', [22, 50]);
 
           expect(
             query.statement,
@@ -190,7 +190,7 @@ void main() {
         test('.whereNotBetween', () {
           final query = Query.make('users', driver)
               .where('firstname', '=', 'Chima')
-              .whereNotBetween<double>('lastname', (22.34, 50));
+              .whereNotBetween<double>('lastname', [22.34, 50]);
 
           expect(
             query.statement,
@@ -320,6 +320,313 @@ void main() {
           'SELECT * FROM users WHERE age NOT BETWEEN 22 AND 30;',
         );
       });
+    });
+
+    group('.whereIn', () {
+      test('of level 1', () {
+        final query = Query.make('users', driver)
+            .whereIn('firstname', ['Accra', 'Tamale']);
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE firstname IN (\'Accra\', \'Tamale\');',
+        );
+      });
+
+      test('of level 2', () {
+        final query = Query.make('users', driver).whereIn(
+            'places', ['Accra', 'Tamale']).where('lastname', '=', 'Precious');
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE places IN (\'Accra\', \'Tamale\') AND lastname = \'Precious\';',
+        );
+      });
+
+      test('of level 3', () {
+        final query = Query.make('users', driver)
+            .whereIn('places', ['Accra', 'Tamale'])
+            .where('lastname', '=', 'Precious')
+            .where('names', 'like', 'Hello%');
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE places IN (\'Accra\', \'Tamale\') AND lastname = \'Precious\' AND names LIKE \'Hello%\';',
+        );
+      });
+
+      test('of level 4', () {
+        final query = Query.make('users', driver)
+            .whereIn('places', ['Accra', 'Tamale'])
+            .where('lastname', '=', 'Precious')
+            .where('names', 'like', 'Hello%')
+            .orWhere('age', 'in', [23, 34, 55]);
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE (places IN (\'Accra\', \'Tamale\') AND lastname = \'Precious\' AND names LIKE \'Hello%\') OR age IN (23, 34, 55);',
+        );
+      });
+    });
+
+    group('.whereNotIn', () {
+      test('of level 1', () {
+        final query = Query.make('users', driver)
+            .whereNotIn('firstname', ['Accra', 'Tamale']);
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE firstname NOT IN (\'Accra\', \'Tamale\');',
+        );
+      });
+
+      test('of level 2', () {
+        final query = Query.make('users', driver).whereNotIn(
+            'places', ['Accra', 'Tamale']).where('lastname', '=', 'Precious');
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE places NOT IN (\'Accra\', \'Tamale\') AND lastname = \'Precious\';',
+        );
+      });
+
+      test('of level 3', () {
+        final query = Query.make('users', driver)
+            .whereNotIn('places', ['Accra', 'Tamale'])
+            .where('lastname', '=', 'Precious')
+            .whereNotNull('names');
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE places NOT IN (\'Accra\', \'Tamale\') AND lastname = \'Precious\' AND names IS NOT NULL;',
+        );
+      });
+
+      test('of level 4', () {
+        final query = Query.make('users', driver)
+            .whereNotIn('places', ['Accra', 'Tamale'])
+            .where('lastname', '=', 'Precious')
+            .where('names', 'like', 'Hello%')
+            .whereBetween('age', [23, 34]);
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE places NOT IN (\'Accra\', \'Tamale\') AND lastname = \'Precious\' AND names LIKE \'Hello%\' AND age BETWEEN 23 AND 34;',
+        );
+      });
+    });
+
+    group('.whereBetween', () {
+      test('of level 1', () {
+        final query = Query.make('users', driver).whereBetween('age', [22, 70]);
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE age BETWEEN 22 AND 70;',
+        );
+      });
+
+      test('of level 2', () {
+        final query = Query.make('users', driver)
+            .whereBetween('places', ['Accra', 'Tamale']).where(
+                'lastname', 'between', [2, 100]);
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE places BETWEEN \'Accra\' AND \'Tamale\' AND lastname BETWEEN 2 AND 100;',
+        );
+      });
+
+      test('of level 3', () {
+        final query = Query.make('users', driver)
+            .whereIn('places', ['Accra', 'Tamale']).whereBetween(
+                'lastname', [22, 48]).where('names', 'like', 'Hello%');
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE places IN (\'Accra\', \'Tamale\') AND lastname BETWEEN 22 AND 48 AND names LIKE \'Hello%\';',
+        );
+      });
+
+      test('of level 4', () {
+        final query = Query.make('users', driver)
+            .whereIn('places', ['Accra', 'Tamale'])
+            .where('lastname', '=', 'Precious')
+            .orWhere('age', 'in', [23, 34, 55])
+            .whereBetween('dates', ['2015-01-01', '2016-12-01']);
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE (places IN (\'Accra\', \'Tamale\') AND lastname = \'Precious\') OR (age IN (23, 34, 55) AND dates BETWEEN \'2015-01-01\' AND \'2016-12-01\');',
+        );
+      });
+    });
+
+    group('.whereNotBetween', () {
+      test('of level 1', () {
+        final query =
+            Query.make('users', driver).whereNotBetween('age', [22, 70]);
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE age NOT BETWEEN 22 AND 70;',
+        );
+      });
+
+      test('of level 2', () {
+        final query = Query.make('users', driver)
+            .whereNotBetween('places', ['Accra', 'Tamale']).where(
+                'lastname', 'between', [2, 100]);
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE places NOT BETWEEN \'Accra\' AND \'Tamale\' AND lastname BETWEEN 2 AND 100;',
+        );
+      });
+
+      test('of level 3', () {
+        final query = Query.make('users', driver)
+            .whereIn('places', ['Accra', 'Tamale']).whereNotBetween(
+                'lastname', [22, 48]).where('names', 'like', 'Hello%');
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE places IN (\'Accra\', \'Tamale\') AND lastname NOT BETWEEN 22 AND 48 AND names LIKE \'Hello%\';',
+        );
+      });
+
+      test('of level 4', () {
+        final query = Query.make('users', driver)
+            .whereIn('places', ['Accra', 'Tamale'])
+            .where('lastname', '=', 'Precious')
+            .orWhere('age', 'in', [23, 34, 55])
+            .whereNotBetween('dates', ['2015-01-01', '2016-12-01']);
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE (places IN (\'Accra\', \'Tamale\') AND lastname = \'Precious\') OR (age IN (23, 34, 55) AND dates NOT BETWEEN \'2015-01-01\' AND \'2016-12-01\');',
+        );
+      });
+    });
+
+    group('.whereLike', () {
+      test('of level 1', () {
+        final query =
+            Query.make('users', driver).whereLike('firstname', 'Names%%');
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE firstname LIKE \'Names%%\';',
+        );
+      });
+
+      test('of level 2', () {
+        final query = Query.make('users', driver)
+            .whereLike('places', 'Chima**')
+            .where('lastname', '=', 'Precious');
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE places LIKE \'Chima**\' AND lastname = \'Precious\';',
+        );
+      });
+
+      test('of level 3', () {
+        final query = Query.make('users', driver)
+            .whereLike('places', 'Hello123')
+            .where('lastname', '=', 'Precious')
+            .where('names', 'like', 'Hello%');
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE places LIKE \'Hello123\' AND lastname = \'Precious\' AND names LIKE \'Hello%\';',
+        );
+      });
+
+      test('of level 4', () {
+        final query = Query.make('users', driver)
+            .whereLike('places', 'Nems#')
+            .where('lastname', '=', 'Precious')
+            .where('names', 'like', 'Hello%')
+            .orWhere('age', 'between', [23, 34]);
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE (places LIKE \'Nems#\' AND lastname = \'Precious\' AND names LIKE \'Hello%\') OR age BETWEEN 23 AND 34;',
+        );
+      });
+    });
+
+    group('.whereNotLike', () {
+      test('of level 1', () {
+        final query =
+            Query.make('users', driver).whereNotLike('firstname', 'Names%%');
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE firstname NOT LIKE \'Names%%\';',
+        );
+      });
+
+      test('of level 2', () {
+        final query = Query.make('users', driver)
+            .whereNotLike('places', 'Chima**')
+            .whereBetween('lastname', [12, 90]);
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE places NOT LIKE \'Chima**\' AND lastname BETWEEN 12 AND 90;',
+        );
+      });
+
+      test('of level 3', () {
+        final query = Query.make('users', driver)
+            .whereNotLike('places', 'Hello123')
+            .where('lastname', '=', 'Precious')
+            .where('names', 'like', 'Hello%');
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE places NOT LIKE \'Hello123\' AND lastname = \'Precious\' AND names LIKE \'Hello%\';',
+        );
+      });
+
+      test('of level 4', () {
+        final query = Query.make('users', driver)
+            .whereNotLike('places', 'Nems#')
+            .where('lastname', '=', 'Precious')
+            .orWhere('names', 'not like', 'Hello%')
+            .orWhere('age', 'between', [23, 34]);
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE (places NOT LIKE \'Nems#\' AND lastname = \'Precious\') OR (names NOT LIKE \'Hello%\' OR age BETWEEN 23 AND 34);',
+        );
+      });
+    });
+
+    test('.whereFunc', () {
+      final query = Query.make('users', driver)
+          .where('name', '=', 'John')
+          .whereFunc(($query) =>
+              $query.where('votes', '>', 100).orWhere('title', '=', 'Admin'));
+
+      expect(
+        query.statement,
+        'SELECT * FROM users WHERE (name = \'John\' AND votes > 100) OR title = \'Admin\';',
+      );
+    });
+
+    test('.orWhereFunc', () {
+      final query = Query.make('users', driver)
+          .where('votes', '>', 100)
+          .orWhereFunc(($query) =>
+              $query.where('name', '=', 'Abigail').where('votes', '>', 50));
+
+      expect(
+        query.statement,
+        'SELECT * FROM users WHERE votes > 100 OR (name = \'Abigail\' AND votes > 50);',
+      );
     });
   });
 }

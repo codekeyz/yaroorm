@@ -1,127 +1,17 @@
 part of '../access.dart';
 
 class WhereClauseImpl extends WhereClause {
-  WhereClauseImpl(super._query, super.value);
+  final List<CombineClause<WhereClauseValue>> subparts = [];
+
+  WhereClauseImpl(
+    Query query, {
+    LogicalOperator operator = LogicalOperator.AND,
+  }) : super(query, operator: operator);
 
   @override
-  WhereClause orWhere<Value>(String field, String condition, [Value? value]) {
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.OR,
-        WhereClause.fromString(field, condition, value, query: _query),
-      ));
-  }
-
-  @override
-  WhereClause where<Value>(String field, String condition, [Value? value]) {
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClause.fromString(field, condition, value, query: _query),
-      ));
-  }
-
-  @override
-  WhereClause whereIn<Value>(String field, List<Value> values) {
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClause.fromOperator(field, Operator.IN, values, query: _query),
-      ));
-  }
-
-  @override
-  WhereClause whereNotIn<Value>(String field, List<Value> values) {
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClause.fromOperator(field, Operator.NOT_IN, values, query: _query),
-      ));
-  }
-
-  @override
-  WhereClause whereLike<Value>(String field, String pattern) {
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClause.fromOperator(field, Operator.LIKE, pattern, query: _query),
-      ));
-  }
-
-  @override
-  WhereClause whereNotLike<Value>(String field, String pattern) {
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClause.fromOperator(field, Operator.NOT_LIKE, pattern,
-            query: _query),
-      ));
-  }
-
-  @override
-  WhereClause whereBetween<Value>(String field, WhereBetweenArgs<Value> args) {
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClause.fromOperator(field, Operator.BETWEEN, args, query: _query),
-      ));
-  }
-
-  @override
-  WhereClause whereNotBetween<Value>(
-    String field,
-    WhereBetweenArgs<Value> args,
-  ) {
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClause.fromOperator(field, Operator.NOT_BETWEEN, args,
-            query: _query),
-      ));
-  }
-
-  @override
-  WhereClause whereNull(String field) {
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClause.fromOperator(field, Operator.NULL, null, query: _query),
-      ));
-  }
-
-  @override
-  WhereClause whereNotNull(String field) {
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClause.fromOperator(field, Operator.NOT_NULL, null, query: _query),
-      ));
-  }
-}
-
-class CompositeWhereClause extends WhereClause {
-  final List<CombineClause<WhereClause>> subparts = [];
-
-  CompositeWhereClause(WhereClauseImpl parent)
-      : super(parent._query, parent.clauseVal);
-
-  @override
-  CompositeWhereClause where<Value>(String field, String condition,
-      [Value? value]) {
-    subparts.add((
-      LogicalOperator.AND,
-      WhereClause.fromString(field, condition, value, query: _query)
-    ));
-    return this;
-  }
-
-  @override
-  CompositeWhereClause orWhere<Value>(String field, String condition,
-      [Value? value]) {
-    subparts.add((
-      LogicalOperator.OR,
-      WhereClause.fromString(field, condition, value, query: _query)
-    ));
+  WhereClauseImpl where<Value>(String field, String condition, [Value? value]) {
+    subparts.add(
+        (LogicalOperator.AND, WhereClauseValue.from(field, condition, value)));
     return this;
   }
 
@@ -129,7 +19,7 @@ class CompositeWhereClause extends WhereClause {
   WhereClause whereIn<Value>(String field, List<Value> values) {
     subparts.add((
       LogicalOperator.AND,
-      WhereClause.fromOperator(field, Operator.IN, values, query: _query)
+      WhereClauseValue(field, (operator: Operator.IN, value: values))
     ));
     return this;
   }
@@ -138,28 +28,25 @@ class CompositeWhereClause extends WhereClause {
   WhereClause whereNotIn<Value>(String field, List<Value> values) {
     subparts.add((
       LogicalOperator.AND,
-      WhereClause.fromOperator(field, Operator.NOT_IN, values, query: _query)
+      WhereClauseValue(field, (operator: Operator.NOT_IN, value: values))
     ));
     return this;
   }
 
   @override
-  WhereClause whereBetween<Value>(String field, WhereBetweenArgs<Value> args) {
+  WhereClause whereBetween<Value>(String field, List<Value> args) {
     subparts.add((
       LogicalOperator.AND,
-      WhereClause.fromOperator(field, Operator.BETWEEN, args, query: _query)
+      WhereClauseValue(field, (operator: Operator.BETWEEN, value: args))
     ));
     return this;
   }
 
   @override
-  WhereClause whereNotBetween<Value>(
-    String field,
-    WhereBetweenArgs<Value> args,
-  ) {
+  WhereClause whereNotBetween<Value>(String field, List<Value> args) {
     subparts.add((
       LogicalOperator.AND,
-      WhereClause.fromOperator(field, Operator.NOT_BETWEEN, args, query: _query)
+      WhereClauseValue(field, (operator: Operator.NOT_BETWEEN, value: args))
     ));
     return this;
   }
@@ -168,7 +55,7 @@ class CompositeWhereClause extends WhereClause {
   WhereClause whereLike<Value>(String field, String pattern) {
     subparts.add((
       LogicalOperator.AND,
-      WhereClause.fromOperator(field, Operator.LIKE, pattern, query: _query)
+      WhereClauseValue(field, (operator: Operator.LIKE, value: pattern))
     ));
     return this;
   }
@@ -177,7 +64,7 @@ class CompositeWhereClause extends WhereClause {
   WhereClause whereNotLike<Value>(String field, String pattern) {
     subparts.add((
       LogicalOperator.AND,
-      WhereClause.fromOperator(field, Operator.NOT_LIKE, pattern, query: _query)
+      WhereClauseValue(field, (operator: Operator.NOT_LIKE, value: pattern))
     ));
     return this;
   }
@@ -186,7 +73,7 @@ class CompositeWhereClause extends WhereClause {
   WhereClause whereNull(String field) {
     subparts.add((
       LogicalOperator.AND,
-      WhereClause.fromOperator(field, Operator.NULL, null, query: _query)
+      WhereClauseValue(field, (operator: Operator.NULL, value: null))
     ));
     return this;
   }
@@ -195,8 +82,45 @@ class CompositeWhereClause extends WhereClause {
   WhereClause whereNotNull(String field) {
     subparts.add((
       LogicalOperator.AND,
-      WhereClause.fromOperator(field, Operator.NOT_NULL, null, query: _query)
+      WhereClauseValue(field, (operator: Operator.NOT_NULL, value: null))
     ));
     return this;
+  }
+
+  @override
+  Query whereFunc(Function(WhereClauseImpl $query) function) {
+    function(this);
+    return _query;
+  }
+
+  @override
+  Query orWhereFunc(Function(WhereClauseImpl $query) function) {
+    function(_useWhereGroup(LogicalOperator.OR));
+    return _query;
+  }
+
+  @override
+  WhereClauseImpl orWhere<Value>(String field, String condition,
+      [Value? value]) {
+    final clauseVal = WhereClauseValue.from(field, condition, value);
+    return _useWhereGroup(LogicalOperator.OR, clauseVal);
+  }
+
+  WhereClauseImpl _useWhereGroup(
+    LogicalOperator operator, [
+    WhereClauseValue? value,
+  ]) {
+    /// if the current group is of the same operator, just add the new condition
+    /// to it.
+    if (this.operator == operator) {
+      if (value == null) return this;
+      return this..subparts.add((operator, value));
+    }
+
+    /// Create a new group and add the clause value
+    final group = WhereClauseImpl(_query, operator: operator)
+      ..clauseValue = value;
+    _query.whereClauses.add(group);
+    return group;
   }
 }

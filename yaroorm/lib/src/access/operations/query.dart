@@ -59,72 +59,88 @@ final class _QueryImpl extends Query {
   }
 
   @override
-  Future<T?> first<T>() async {
+  Future<T?> get<T>() async {
     final results = await take<T>(1);
     return results.firstOrNull;
   }
 
   @override
   WhereClause where<Value>(String field, String condition, [Value? value]) {
-    return _whereClause = WhereClauseImpl(
-      this,
-      WhereClauseValue.from(field, condition, value),
-    );
-  }
-
-  @override
-  WhereClause whereBetween<Value>(
-    String field,
-    WhereBetweenArgs<Value> args,
-  ) {
-    return _whereClause =
-        WhereClause.fromOperator(field, Operator.BETWEEN, args, query: this);
-  }
-
-  @override
-  WhereClause whereNotBetween<Value>(
-    String field,
-    WhereBetweenArgs<Value> args,
-  ) {
-    return _whereClause = WhereClause.fromOperator(
-        field, Operator.NOT_BETWEEN, args,
-        query: this);
+    final newClause = WhereClauseImpl(this)
+      ..clauseValue = WhereClauseValue.from(field, condition, value);
+    whereClauses.add(newClause);
+    return newClause;
   }
 
   @override
   WhereClause whereIn<Value>(String field, List<Value> values) {
-    return _whereClause =
-        WhereClause.fromOperator(field, Operator.IN, values, query: this);
+    final newClause = WhereClauseImpl(this)
+      ..clauseValue =
+          WhereClauseValue(field, (operator: Operator.IN, value: values));
+    whereClauses.add(newClause);
+    return newClause;
   }
 
   @override
   WhereClause whereNotIn<Value>(String field, List<Value> values) {
-    return _whereClause =
-        WhereClause.fromOperator(field, Operator.NOT_IN, values, query: this);
+    final newClause = WhereClauseImpl(this)
+      ..clauseValue =
+          WhereClauseValue(field, (operator: Operator.NOT_IN, value: values));
+    whereClauses.add(newClause);
+    return newClause;
   }
 
   @override
   WhereClause whereLike<Value>(String field, String pattern) {
-    return _whereClause =
-        WhereClause.fromOperator(field, Operator.LIKE, pattern, query: this);
+    final newClause = WhereClauseImpl(this)
+      ..clauseValue =
+          WhereClauseValue(field, (operator: Operator.LIKE, value: pattern));
+    whereClauses.add(newClause);
+    return newClause;
   }
 
   @override
   WhereClause whereNotLike<Value>(String field, String pattern) {
-    return _whereClause = WhereClause.fromOperator(
-        field, Operator.NOT_LIKE, pattern,
-        query: this);
+    final newClause = WhereClauseImpl(this)
+      ..clauseValue = WhereClauseValue(
+          field, (operator: Operator.NOT_LIKE, value: pattern));
+    whereClauses.add(newClause);
+    return newClause;
   }
 
   @override
   WhereClause whereNull(String field) {
-    return _whereClause =
-        WhereClause.fromOperator(field, Operator.NULL, null, query: this);
+    final newClause = WhereClauseImpl(this)
+      ..clauseValue =
+          WhereClauseValue(field, (operator: Operator.NULL, value: null));
+    whereClauses.add(newClause);
+    return newClause;
   }
 
   @override
   WhereClause whereNotNull(String field) {
-    return _whereClause =
-        WhereClause.fromOperator(field, Operator.NOT_NULL, null, query: this);
+    final newClause = WhereClauseImpl(this)
+      ..clauseValue =
+          WhereClauseValue(field, (operator: Operator.NOT_NULL, value: null));
+    whereClauses.add(newClause);
+    return newClause;
+  }
+
+  @override
+  WhereClause whereBetween<Value>(String field, List<Value> args) {
+    final newClause = WhereClauseImpl(this)
+      ..clauseValue =
+          WhereClauseValue(field, (operator: Operator.BETWEEN, value: args));
+    whereClauses.add(newClause);
+    return newClause;
+  }
+
+  @override
+  WhereClause whereNotBetween<Value>(String field, List<Value> args) {
+    final newClause = WhereClauseImpl(this)
+      ..clauseValue = WhereClauseValue(
+          field, (operator: Operator.NOT_BETWEEN, value: args));
+    whereClauses.add(newClause);
+    return newClause;
   }
 }
