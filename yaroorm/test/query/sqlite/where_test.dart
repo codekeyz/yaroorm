@@ -605,6 +605,100 @@ void main() {
       });
     });
 
+    group('.whereNull', () {
+      test('of level 1', () {
+        final query = Query.make('users', driver).whereNull('firstname');
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE firstname IS NULL;',
+        );
+      });
+
+      test('of level 2', () {
+        final query = Query.make('users', driver)
+            .whereNull('places')
+            .where('lastname', '=', 'Precious');
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE places IS NULL AND lastname = \'Precious\';',
+        );
+      });
+
+      test('of level 3', () {
+        final query = Query.make('users', driver)
+            .whereNull('places')
+            .where('lastname', '=', 'Precious')
+            .where('names', 'like', 'Hello%');
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE places IS NULL AND lastname = \'Precious\' AND names LIKE \'Hello%\';',
+        );
+      });
+
+      test('of level 4', () {
+        final query = Query.make('users', driver)
+            .whereNull('places')
+            .where('lastname', '=', 'Precious')
+            .orWhere('names', 'null')
+            .orWhere('age', 'between', [23, 34]);
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE (places IS NULL AND lastname = \'Precious\') OR (names IS NULL OR age BETWEEN 23 AND 34);',
+        );
+      });
+    });
+
+    group('.whereNotNull', () {
+      test('of level 1', () {
+        final query = Query.make('users', driver).whereNotNull('firstname');
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE firstname IS NOT NULL;',
+        );
+      });
+
+      test('of level 2', () {
+        final query = Query.make('users', driver)
+            .whereNotNull('places')
+            .where('lastname', '=', 'Precious');
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE places IS NOT NULL AND lastname = \'Precious\';',
+        );
+      });
+
+      test('of level 3', () {
+        final query = Query.make('users', driver)
+            .whereNotNull('places')
+            .where('lastname', '=', 'Precious')
+            .where('names', 'like', 'Hello%');
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE places IS NOT NULL AND lastname = \'Precious\' AND names LIKE \'Hello%\';',
+        );
+      });
+
+      test('of level 4', () {
+        final query = Query.make('users', driver)
+            .whereNotNull('places')
+            .where('lastname', '=', 'Precious')
+            .orWhere('names', 'not null')
+            .orWhere('age', 'between', [23, 34]);
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE (places IS NOT NULL AND lastname = \'Precious\') OR (names IS NOT NULL OR age BETWEEN 23 AND 34);',
+        );
+      });
+    });
+
     test('.whereFunc', () {
       final query = Query.make('users', driver)
           .where('name', '=', 'John')
