@@ -6,11 +6,6 @@ import '../routes/api.dart' as api;
 import '../routes/web.dart' as web;
 
 class RouteServiceProvider extends ServiceProvider {
-  /// The path to your application's "home" route.
-  ///
-  /// Typically, users are redirected here after authentication.
-  static const home = '/home';
-
   @override
   FutureOr<void> boot() {
     app.useRoutes(
@@ -20,7 +15,7 @@ class RouteServiceProvider extends ServiceProvider {
     | API Routes
     |--------------------------------------------------------------------------
     */
-        Route.group('api', middlewares: api.routes.middlewares).routes(api.routes.reqHandlers),
+        Route.group('api', middlewares: []).routes(api.routes),
 
         /*
     |--------------------------------------------------------------------------
@@ -28,7 +23,7 @@ class RouteServiceProvider extends ServiceProvider {
     |--------------------------------------------------------------------------
     */
 
-        Route.group('/', middlewares: web.routes.middlewares).routes(web.routes.reqHandlers),
+        Route.group('/', middlewares: []).routes(web.routes),
       ],
     );
   }
