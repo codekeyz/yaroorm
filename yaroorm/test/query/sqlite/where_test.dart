@@ -1,17 +1,15 @@
 import 'package:test/test.dart';
 import 'package:yaroorm/yaroorm.dart';
 
+import '../../helpers/drivers.dart';
+
 void main() {
   late DatabaseDriver driver;
 
-  setUpAll(() => driver = DatabaseDriver.init(DatabaseConnection(
-        'testdb',
-        'sqlite',
-        DatabaseDriverType.sqlite,
-      )));
+  setUpAll(() => driver = DatabaseDriver.init(sqliteConnection));
 
-  group('Query with', () {
-    group('.where', () {
+  group('Query with SQLite Driver', () {
+    group('when .where', () {
       test('of level 1', () {
         final query =
             Query.make('users', driver).where('firstname', '=', 'Chima');
@@ -200,7 +198,7 @@ void main() {
       });
     });
 
-    group('handwritten operator', () {
+    group('when handwritten operator', () {
       test('=', () {
         final query =
             Query.make('users', driver).where('firstname', '=', 'Chima');
@@ -322,7 +320,7 @@ void main() {
       });
     });
 
-    group('.whereIn', () {
+    group('when .whereIn', () {
       test('of level 1', () {
         final query = Query.make('users', driver)
             .whereIn('firstname', ['Accra', 'Tamale']);
@@ -369,7 +367,7 @@ void main() {
       });
     });
 
-    group('.whereNotIn', () {
+    group('when .whereNotIn', () {
       test('of level 1', () {
         final query = Query.make('users', driver)
             .whereNotIn('firstname', ['Accra', 'Tamale']);
@@ -416,7 +414,7 @@ void main() {
       });
     });
 
-    group('.whereBetween', () {
+    group('when .whereBetween', () {
       test('of level 1', () {
         final query = Query.make('users', driver).whereBetween('age', [22, 70]);
 
@@ -462,7 +460,7 @@ void main() {
       });
     });
 
-    group('.whereNotBetween', () {
+    group('when .whereNotBetween', () {
       test('of level 1', () {
         final query =
             Query.make('users', driver).whereNotBetween('age', [22, 70]);
@@ -509,7 +507,7 @@ void main() {
       });
     });
 
-    group('.whereLike', () {
+    group('when .whereLike', () {
       test('of level 1', () {
         final query =
             Query.make('users', driver).whereLike('firstname', 'Names%%');
@@ -557,7 +555,7 @@ void main() {
       });
     });
 
-    group('.whereNotLike', () {
+    group('when .whereNotLike', () {
       test('of level 1', () {
         final query =
             Query.make('users', driver).whereNotLike('firstname', 'Names%%');
@@ -605,7 +603,7 @@ void main() {
       });
     });
 
-    group('.whereNull', () {
+    group('when .whereNull', () {
       test('of level 1', () {
         final query = Query.make('users', driver).whereNull('firstname');
 
@@ -652,7 +650,7 @@ void main() {
       });
     });
 
-    group('.whereNotNull', () {
+    group('when .whereNotNull', () {
       test('of level 1', () {
         final query = Query.make('users', driver).whereNotNull('firstname');
 
@@ -699,7 +697,7 @@ void main() {
       });
     });
 
-    test('.whereFunc', () {
+    test('when .whereFunc', () {
       final query = Query.make('users', driver)
           .where('name', '=', 'John')
           .whereFunc(($query) =>
@@ -711,7 +709,7 @@ void main() {
       );
     });
 
-    test('.orWhereFunc', () {
+    test('when .orWhereFunc', () {
       final query = Query.make('users', driver)
           .where('votes', '>', 100)
           .orWhereFunc(($query) =>
