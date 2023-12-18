@@ -3,6 +3,7 @@ name: yaroodev
 packages:
   - yaroo
   - yaroorm
+  - zomato
 
 command:
   version:
