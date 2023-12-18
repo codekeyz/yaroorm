@@ -27,6 +27,7 @@ jobs:
           dart pub global activate melos
           melos bootstrap
 
+
       - name: Check formatting
         run: melos format -- --set-exit-if-changed
 
@@ -49,7 +50,9 @@ jobs:
           melos bootstrap
 
       - name: Run Unit tests
-        run: melos tests:ci
+        run: |
+          dart pub global activate coverage
+          melos tests:ci
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v3

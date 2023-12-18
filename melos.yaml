@@ -13,12 +13,12 @@ command:
   bootstrap:
     runPubGetInParallel: false
     hooks:
-      pre: dart pub global activate coverage
+      pre: |
+        melos exec -- "dart run build_runner build"
 
 scripts:
   tests:
     run: |
-      melos exec -- "dart run build_runner build"
       melos exec -c 1  -- "dart test" --fail-fast
 
   tests:ci:
