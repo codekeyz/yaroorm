@@ -22,18 +22,13 @@ class UserController extends BaseController {
       );
     }
 
-    final result = await DB
-        .query('users')
-        .insert(User(reqBody['firstname'], reqBody['lastname'], 22));
+    final result = await DB.query('users').insert(User(reqBody['firstname'], reqBody['lastname'], 22));
 
     return res.json(result);
   }
 
   Future<Response> show(Request req, Response res) async {
-    final user = await DB
-        .query('users')
-        .where('id', '=', req.params['userId']!)
-        .findOne<User>();
+    final user = await DB.query('users').where('id', '=', req.params['userId']!).findOne<User>();
     if (user == null) return res.notFound();
 
     return res.json(user);

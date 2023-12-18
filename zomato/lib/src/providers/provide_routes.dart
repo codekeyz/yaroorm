@@ -20,8 +20,7 @@ class RouteServiceProvider extends ServiceProvider {
     | API Routes
     |--------------------------------------------------------------------------
     */
-        Route.group('api', middlewares: api.routes.middlewares)
-            .routes(api.routes.reqHandlers),
+        Route.group('api', middlewares: api.routes.middlewares).routes(api.routes.reqHandlers),
 
         /*
     |--------------------------------------------------------------------------
@@ -29,8 +28,7 @@ class RouteServiceProvider extends ServiceProvider {
     |--------------------------------------------------------------------------
     */
 
-        Route.group('/', middlewares: web.routes.middlewares)
-            .routes(web.routes.reqHandlers),
+        Route.group('/', middlewares: web.routes.middlewares).routes(web.routes.reqHandlers),
       ],
     );
   }
