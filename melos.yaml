@@ -18,6 +18,7 @@ command:
 scripts:
   tests:
     run: |
+      melos exec -- "dart run build_runner build"
       melos exec -c 1  -- "dart test" --fail-fast
 
   tests:ci:
