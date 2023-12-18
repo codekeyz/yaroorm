@@ -72,8 +72,7 @@ abstract class Query extends QueryBase
         whereClauses = [],
         _limit = null;
 
-  factory Query.make(String tableName, DatabaseDriver driver) =>
-      _QueryImpl(tableName, driver);
+  factory Query.make(String tableName, DatabaseDriver driver) => _QueryImpl(tableName, driver);
 
   int? get limit => _limit;
 

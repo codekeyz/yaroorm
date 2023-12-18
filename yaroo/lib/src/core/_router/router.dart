@@ -77,8 +77,7 @@ abstract interface class Route {
     String prefix, {
     List<MiddlewareDefinition> middlewares = const [],
   }) =>
-      RouteGroupDefinition('/$prefix',
-          controllerDefns: const [], middlewares: middlewares);
+      RouteGroupDefinition('/$prefix', controllerDefns: const [], middlewares: middlewares);
 
   static RouteGroupDefinition resource(
     String resource,

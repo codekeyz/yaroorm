@@ -17,8 +17,7 @@ class SqliteDriver implements DatabaseDriver {
   Future<DatabaseDriver> connect() async {
     sqfliteFfiInit();
     var databaseFactory = databaseFactoryFfi;
-    _database = await databaseFactory.openDatabase(config.database,
-        options: OpenDatabaseOptions(onOpen: (db) async {
+    _database = await databaseFactory.openDatabase(config.database, options: OpenDatabaseOptions(onOpen: (db) async {
       if (config.dbForeignKeys) {
         await db.execute('PRAGMA foreign_keys = ON;');
       }
@@ -98,8 +97,7 @@ class _SqliteSerializer implements PrimitiveSerializer {
     if (clauses.isNotEmpty) {
       final sb = StringBuffer();
 
-      final differentOperators =
-          clauses.map((e) => e.operator).toSet().length > 1;
+      final differentOperators = clauses.map((e) => e.operator).toSet().length > 1;
 
       for (final clause in clauses) {
         final result = acceptWhereClause(clause, canGroup: differentOperators);
@@ -134,9 +132,7 @@ class _SqliteSerializer implements PrimitiveSerializer {
 
     queryBuilder.write('UPDATE ${query.tableName}');
 
-    final values = query.values.entries
-        .map((e) => '${e.key} = ${acceptDartValue(e.value)}')
-        .join(', ');
+    final values = query.values.entries.map((e) => '${e.key} = ${acceptDartValue(e.value)}').join(', ');
 
     queryBuilder
       ..write(' SET $values')
@@ -186,11 +182,8 @@ class _SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptOrderBy(List<OrderBy> orderBys) {
-    direction(OrderByDirection dir) =>
-        dir == OrderByDirection.asc ? 'ASC' : 'DESC';
-    return orderBys
-        .map((e) => '${e.field} ${direction(e.direction)}')
-        .join(', ');
+    direction(OrderByDirection dir) => dir == OrderByDirection.asc ? 'ASC' : 'DESC';
+    return orderBys.map((e) => '${e.field} ${direction(e.direction)}').join(', ');
   }
 
   @override
@@ -203,10 +196,7 @@ class _SqliteSerializer implements PrimitiveSerializer {
   dynamic acceptDartValue(dartValue) => switch (dartValue.runtimeType) {
         const (int) || const (double) => dartValue,
         const (List<String>) => '(${dartValue.map((e) => "'$e'").join(', ')})',
-        const (List<int>) ||
-        const (List<num>) ||
-        const (List<double>) =>
-          '(${dartValue.join(', ')})',
+        const (List<int>) || const (List<num>) || const (List<double>) => '(${dartValue.join(', ')})',
         _ => "'$dartValue'"
       };
 
@@ -234,10 +224,8 @@ class _SqliteSerializer implements PrimitiveSerializer {
       Operator.NULL => '$field IS NULL',
       Operator.NOT_NULL => '$field IS NOT NULL',
       //
-      Operator.BETWEEN =>
-        '$field BETWEEN ${acceptDartValue(value[0])} AND ${acceptDartValue(value[1])}',
-      Operator.NOT_BETWEEN =>
-        '$field NOT BETWEEN ${acceptDartValue(value[0])} AND ${acceptDartValue(value[1])}',
+      Operator.BETWEEN => '$field BETWEEN ${acceptDartValue(value[0])} AND ${acceptDartValue(value[1])}',
+      Operator.NOT_BETWEEN => '$field NOT BETWEEN ${acceptDartValue(value[0])} AND ${acceptDartValue(value[1])}',
     };
   }
 
@@ -331,8 +319,7 @@ class _SqliteTableBlueprint implements TableBlueprint {
   String renameScript(String oldName, String toName) {
     final StringBuffer renameScript = StringBuffer();
     renameScript
-      ..writeln(
-          'CREATE TABLE temp_info AS SELECT * FROM PRAGMA table_info(\'$oldName\');')
+      ..writeln('CREATE TABLE temp_info AS SELECT * FROM PRAGMA table_info(\'$oldName\');')
       ..writeln('CREATE TABLE temp_data AS SELECT * FROM $oldName;')
       ..writeln('CREATE TABLE $toName AS SELECT * FROM temp_data WHERE 1 = 0;')
       ..writeln('INSERT INTO $toName SELECT * FROM temp_data;')

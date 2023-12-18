@@ -20,7 +20,6 @@ r.ClassMirror reflectType(Type type) {
   try {
     return entity.reflectType(type) as r.ClassMirror;
   } catch (e) {
-    throw EntityValidationException(
-        'Unable to reflect on $type. Re-run your build command');
+    throw EntityValidationException('Unable to reflect on $type. Re-run your build command');
   }
 }

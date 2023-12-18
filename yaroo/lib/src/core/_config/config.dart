@@ -35,8 +35,7 @@ extension ConfigExt on YarooAppConfig {
   Uri get appUri {
     final url = this[ConfigExt.url];
     final port = getValue<int>(ConfigExt.port);
-    final uri = Uri.tryParse(url) ??
-        (throw ArgumentError.value(url, null, 'APP_URL is not a valid url'));
+    final uri = Uri.tryParse(url) ?? (throw ArgumentError.value(url, null, 'APP_URL is not a valid url'));
     if (port == null) return uri;
     return uri.replace(port: port);
   }

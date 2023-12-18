@@ -57,8 +57,7 @@ DatabaseDriverType _getDriverType(Map<String, dynamic> connInfo) {
     'pgsql' => DatabaseDriverType.pgsql,
     'mongo' => DatabaseDriverType.mongo,
     null => throw ArgumentError.notNull('Database Driver'),
-    _ => throw ArgumentError.value(
-        value, null, 'Invalid Database Driver provided in configuration')
+    _ => throw ArgumentError.value(value, null, 'Invalid Database Driver provided in configuration')
   };
 }
 

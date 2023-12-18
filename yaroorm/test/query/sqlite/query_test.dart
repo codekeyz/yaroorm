@@ -19,21 +19,14 @@ void main() {
 
       test(' of level 2', () {
         expect(
-          Query.make('users', driver)
-              .orderByAsc('firstname')
-              .orderByAsc('lastname')
-              .statement,
+          Query.make('users', driver).orderByAsc('firstname').orderByAsc('lastname').statement,
           'SELECT * FROM users ORDER BY firstname ASC, lastname ASC;',
         );
       });
 
       test(' of level 3', () {
         expect(
-          Query.make('users', driver)
-              .orderByAsc('firstname')
-              .orderByDesc('lastname')
-              .orderByAsc('age')
-              .statement,
+          Query.make('users', driver).orderByAsc('firstname').orderByDesc('lastname').orderByAsc('age').statement,
           'SELECT * FROM users ORDER BY firstname ASC, lastname DESC, age ASC;',
         );
       });
@@ -49,10 +42,7 @@ void main() {
 
       test(' of level 2', () {
         expect(
-          Query.make('users', driver)
-              .orderByDesc('firstname')
-              .orderByDesc('lastname')
-              .statement,
+          Query.make('users', driver).orderByDesc('firstname').orderByDesc('lastname').statement,
           'SELECT * FROM users ORDER BY firstname DESC, lastname DESC;',
         );
       });

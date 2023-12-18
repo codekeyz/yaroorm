@@ -126,8 +126,7 @@ extension RouteDefinitionExtension on Iterable<RouteDefinition> {
     return compressedList;
   }
 
-  List<MiddlewareDefinition> get middlewares =>
-      compressed.whereType<MiddlewareDefinition>().toList();
+  List<MiddlewareDefinition> get middlewares => compressed.whereType<MiddlewareDefinition>().toList();
 
   List<RouteDefinition> get reqHandlers {
     return compressed.where((e) => e is! MiddlewareDefinition).toList();
@@ -139,8 +138,7 @@ class FunctionalRouteDefinition extends RouteDefinition {
   final HTTPMethod method;
   final String path;
 
-  const FunctionalRouteDefinition(this.method, this.path, this.handler)
-      : super(RouteDefinitionType.route);
+  const FunctionalRouteDefinition(this.method, this.path, this.handler) : super(RouteDefinitionType.route);
 
   @override
   void commit(Spanner spanner) {

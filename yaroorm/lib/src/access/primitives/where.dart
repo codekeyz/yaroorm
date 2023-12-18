@@ -78,8 +78,8 @@ Operator _strToOperator(String condition) => switch (condition) {
       //
       'between' => Operator.BETWEEN,
       'not between' => Operator.NOT_BETWEEN,
-      _ => throw ArgumentError.value(condition, null,
-          'Either condition is not known or Use one of the defined functions')
+      _ =>
+        throw ArgumentError.value(condition, null, 'Either condition is not known or Use one of the defined functions')
     };
 
 class WhereClauseValue<A> {
@@ -103,11 +103,7 @@ class WhereClauseValue<A> {
 }
 
 abstract class WhereClause extends Clause
-    with
-        WhereOperation,
-        FindOperation,
-        LimitOperation,
-        OrderByOperation<WhereClause> {
+    with WhereOperation, FindOperation, LimitOperation, OrderByOperation<WhereClause> {
   final Query _query;
   final LogicalOperator operator;
 
@@ -145,8 +141,7 @@ abstract class WhereClause extends Clause
 
   Future<void> delete() => _query._delete(this);
 
-  Future<void> update(Map<String, dynamic> values) =>
-      _query._update(this, values);
+  Future<void> update(Map<String, dynamic> values) => _query._update(this, values);
 
   String get statement => _query.statement;
 }

@@ -15,24 +15,20 @@ class EntityValidationException implements Exception {
 
 ClassMirror reflectEntity<Model>() {
   if (Model == dynamic) {
-    throw EntityValidationException(
-        'Static Type required for `reflectEntity` call');
+    throw EntityValidationException('Static Type required for `reflectEntity` call');
   }
 
   late ClassMirror mirror;
 
   try {
     mirror = (reflectType(Model));
-    final fromJson = mirror.staticMembers.entries
-        .firstWhereOrNull((d) => d.key == entityToJsonStaticFuncName);
+    final fromJson = mirror.staticMembers.entries.firstWhereOrNull((d) => d.key == entityToJsonStaticFuncName);
     if (fromJson == null) {
-      throw EntityValidationException(
-          "$Model.$entityToJsonStaticFuncName static method not found.");
+      throw EntityValidationException("$Model.$entityToJsonStaticFuncName static method not found.");
     }
   } catch (e) {
     if (e is EntityValidationException) rethrow;
-    throw EntityValidationException(
-        "Either $Model is not a subtype of Entity or re-run your build_runner command");
+    throw EntityValidationException("Either $Model is not a subtype of Entity or re-run your build_runner command");
   }
 
   return mirror;
