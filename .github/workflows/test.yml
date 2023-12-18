@@ -46,7 +46,6 @@ jobs:
       - name: Bootstrap
         run: |
           dart pub global activate melos
-          dart pub global activate coverage
           melos bootstrap
 
       - name: Run Unit tests
