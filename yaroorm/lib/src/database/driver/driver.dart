@@ -1,3 +1,5 @@
+import 'package:yaroorm/src/database/driver/pgsql_driver.dart';
+
 import '../../access/access.dart';
 import '../../access/primitives/serializer.dart';
 import '../database.dart';
@@ -57,7 +59,8 @@ DatabaseDriverType _getDriverType(Map<String, dynamic> connInfo) {
     'pgsql' => DatabaseDriverType.pgsql,
     'mongo' => DatabaseDriverType.mongo,
     null => throw ArgumentError.notNull('Database Driver'),
-    _ => throw ArgumentError.value(value, null, 'Invalid Database Driver provided in configuration')
+    _ => throw ArgumentError.value(
+        value, null, 'Invalid Database Driver provided in configuration')
   };
 }
 
@@ -67,6 +70,8 @@ abstract interface class DatabaseDriver {
     switch (driver) {
       case DatabaseDriverType.sqlite:
         return SqliteDriver(dbConn);
+      case DatabaseDriverType.pgsql:
+        return PostgreSqlDriver(dbConn);
       default:
         throw ArgumentError.value(driver, null, 'Driver not yet supported');
     }
