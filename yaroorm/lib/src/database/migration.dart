@@ -50,11 +50,9 @@ class Schema {
 
   Schema._(this.tableName, this._bluePrintFunc);
 
-  String toScript(TableBlueprint $table) =>
-      _bluePrintFunc!.call($table).createScript(tableName);
+  String toScript(TableBlueprint $table) => _bluePrintFunc!.call($table).createScript(tableName);
 
-  static Schema create(String name, TableBluePrintFunc func) =>
-      Schema._(name, func);
+  static Schema create(String name, TableBluePrintFunc func) => Schema._(name, func);
 
   static Schema dropIfExists(String name) => _DropSchema(name);
 
@@ -74,8 +72,7 @@ class _RenameSchema extends Schema {
   _RenameSchema(String from, this.newName) : super._(from, null);
 
   @override
-  String toScript(TableBlueprint $table) =>
-      $table.renameScript(tableName, newName);
+  String toScript(TableBlueprint $table) => $table.renameScript(tableName, newName);
 }
 
 abstract class Migration {

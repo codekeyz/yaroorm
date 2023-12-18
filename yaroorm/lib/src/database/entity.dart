@@ -22,8 +22,7 @@ class PrimaryKey<T> {
   PrimaryKey({this.value}) {
     if (value == null) return;
     if (!(value is String || value is int)) {
-      throw Exception(
-          'Primary Key value must be either `String` or `int` Type');
+      throw Exception('Primary Key value must be either `String` or `int` Type');
     }
   }
 
@@ -45,8 +44,7 @@ class PrimaryKey<T> {
 abstract class Entity<T> {
   Entity() {
     if (T == dynamic) {
-      throw Exception(
-          'Entity Primary Key Data Type is required. Use either `int` or `String`');
+      throw Exception('Entity Primary Key Data Type is required. Use either `int` or `String`');
     }
   }
 

@@ -11,17 +11,20 @@ command:
 
   bootstrap:
     runPubGetInParallel: false
+    hooks:
+      pre: dart pub global activate coverage
 
 scripts:
   tests:
     run: |
-      melos exec -c 1  -- "dart test ." --fail-fast
-    description: Run all static analysis checks.
+      melos exec -c 1  -- "dart test" --fail-fast
 
-  analyze:
+  tests:ci:
     run: |
-      melos exec -c 1 -- \
-        dart analyze . --fatal-infos
-    description: |
-      Run `dart analyze` in all packages.
-       - Note: you can also rely on your IDEs Dart Analysis / Issues window.
+      melos exec -c 1  -- "dart test --coverage=coverage" --fail-fast
+      melos exec -- "dart pub global run coverage:format_coverage --check-ignore --report-on=lib --lcov -o "$MELOS_ROOT_PATH/coverage/$(echo "\$MELOS_PACKAGE_NAME")_lcov.info" -i ./coverage"
+      find $MELOS_ROOT_PATH/coverage -type f -empty -print -delete
+
+  format: melos exec -- "dart format . --line-length=120"
+
+  analyze: melos exec -- "dart analyze . --fatal-infos"

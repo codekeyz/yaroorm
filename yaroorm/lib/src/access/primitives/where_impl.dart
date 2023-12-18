@@ -1,164 +1,99 @@
 part of '../access.dart';
 
 class WhereClauseImpl extends WhereClause {
-  WhereClauseImpl(super.value, super._query);
+  final List<CombineClause<WhereClauseValue>> subparts = [];
+
+  WhereClauseImpl(
+    Query query, {
+    LogicalOperator operator = LogicalOperator.AND,
+  }) : super(query, operator: operator);
 
   @override
-  WhereClause where<Value>(String field, String condition, [Value? val]) {
-    final clauseValue = WhereClauseValue.from(field, condition, val);
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClauseImpl(clauseValue, _query),
-      ));
+  WhereClauseImpl where<Value>(String field, String condition, [Value? value]) {
+    subparts.add((LogicalOperator.AND, WhereClauseValue.from(field, condition, value)));
+    return this;
   }
 
   @override
-  WhereClause whereIn<Value>(String field, List<Value> val) {
-    final clauseValue =
-        WhereClauseValue(field, (operator: Operator.IN, value: val));
-
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClauseImpl(clauseValue, _query),
-      ));
+  WhereClause whereIn<Value>(String field, List<Value> values) {
+    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.IN, value: values))));
+    return this;
   }
 
   @override
-  WhereClause whereNotIn<Value>(String field, List<Value> val) {
-    final clauseValue =
-        WhereClauseValue(field, (operator: Operator.NOT_IN, value: val));
+  WhereClause whereNotIn<Value>(String field, List<Value> values) {
+    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.NOT_IN, value: values))));
+    return this;
+  }
 
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClauseImpl(clauseValue, _query),
-      ));
+  @override
+  WhereClause whereBetween<Value>(String field, List<Value> args) {
+    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.BETWEEN, value: args))));
+    return this;
+  }
+
+  @override
+  WhereClause whereNotBetween<Value>(String field, List<Value> args) {
+    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.NOT_BETWEEN, value: args))));
+    return this;
   }
 
   @override
   WhereClause whereLike<Value>(String field, String pattern) {
-    final clauseValue =
-        WhereClauseValue(field, (operator: Operator.LIKE, value: pattern));
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClauseImpl(clauseValue, _query),
-      ));
+    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.LIKE, value: pattern))));
+    return this;
   }
 
   @override
   WhereClause whereNotLike<Value>(String field, String pattern) {
-    final clauseValue =
-        WhereClauseValue(field, (operator: Operator.NOT_LIKE, value: pattern));
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClauseImpl(clauseValue, _query),
-      ));
-  }
-
-  @override
-  WhereClause whereBetween<Value>(String field, WhereBetweenArgs<Value> args) {
-    final clauseValue = WhereClauseValue(
-      field,
-      (operator: Operator.BETWEEN, value: [args.$1, args.$2]),
-    );
-
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClauseImpl(clauseValue, _query),
-      ));
-  }
-
-  @override
-  WhereClause whereNotBetween<Value>(
-    String field,
-    WhereBetweenArgs<Value> args,
-  ) {
-    final clauseValue = WhereClauseValue(
-        field, (operator: Operator.NOT_BETWEEN, value: [args.$1, args.$2]));
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClauseImpl(clauseValue, _query),
-      ));
+    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.NOT_LIKE, value: pattern))));
+    return this;
   }
 
   @override
   WhereClause whereNull(String field) {
-    final clauseValue =
-        WhereClauseValue(field, (operator: Operator.NULL, value: null));
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClauseImpl(clauseValue, _query),
-      ));
+    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.NULL, value: null))));
+    return this;
   }
 
   @override
   WhereClause whereNotNull(String field) {
-    final clauseValue =
-        WhereClauseValue(field, (operator: Operator.NOT_NULL, value: null));
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.AND,
-        WhereClauseImpl(clauseValue, _query),
-      ));
-  }
-
-  @override
-  WhereClause orWhere<Value>(String field, String condition, [Value? val]) {
-    final clauseValue = WhereClauseValue.from(field, condition, val);
-    return _query._whereClause = CompositeWhereClause(this)
-      ..subparts.add((
-        LogicalOperator.OR,
-        WhereClauseImpl(clauseValue, _query),
-      ));
-  }
-}
-
-class CompositeWhereClause extends WhereClauseImpl {
-  final List<CombineClause<WhereClause>> subparts = [];
-
-  CompositeWhereClause(WhereClauseImpl parent)
-      : super(parent.value, parent._query);
-
-  @override
-  CompositeWhereClause where<Value>(String field, String condition,
-      [Value? val]) {
-    final clauseValue = WhereClauseValue.from(field, condition, val);
-    subparts.add((LogicalOperator.AND, WhereClauseImpl(clauseValue, _query)));
+    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.NOT_NULL, value: null))));
     return this;
   }
 
   @override
-  WhereClause whereIn<Value>(String field, List<Value> val) {
-    final clauseValue = WhereClauseValue(
-      field,
-      (operator: Operator.IN, value: val),
-    );
-    subparts.add((LogicalOperator.AND, WhereClauseImpl(clauseValue, _query)));
-    return this;
+  Query whereFunc(Function(WhereClauseImpl $query) function) {
+    function(this);
+    return _query;
   }
 
   @override
-  WhereClause whereBetween<Value>(String field, WhereBetweenArgs<Value> args) {
-    final clauseValue = WhereClauseValue(
-      field,
-      (operator: Operator.BETWEEN, value: [args.$1, args.$2]),
-    );
-    subparts.add((LogicalOperator.AND, WhereClauseImpl(clauseValue, _query)));
-    return this;
+  Query orWhereFunc(Function(WhereClauseImpl $query) function) {
+    function(_useWhereGroup(LogicalOperator.OR));
+    return _query;
   }
 
   @override
-  CompositeWhereClause orWhere<Value>(String field, String condition,
-      [Value? val]) {
-    final clauseValue = WhereClauseValue.from(field, condition, val);
-    subparts.add((LogicalOperator.OR, WhereClauseImpl(clauseValue, _query)));
-    return this;
+  WhereClauseImpl orWhere<Value>(String field, String condition, [Value? value]) {
+    final clauseVal = WhereClauseValue.from(field, condition, value);
+    return _useWhereGroup(LogicalOperator.OR, clauseVal);
+  }
+
+  WhereClauseImpl _useWhereGroup(
+    LogicalOperator operator, [
+    WhereClauseValue? value,
+  ]) {
+    /// if the current group is of the same operator, just add the new condition
+    /// to it.
+    if (this.operator == operator) {
+      if (value == null) return this;
+      return this..subparts.add((operator, value));
+    }
+
+    /// Create a new group and add the clause value
+    final group = WhereClauseImpl(_query, operator: operator)..clauseValue = value;
+    _query.whereClauses.add(group);
+    return group;
   }
 }

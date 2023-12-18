@@ -2,28 +2,20 @@
 
 part of '../access.dart';
 
-typedef WhereBetweenArgs<Value> = (Value var1, Value var2);
-
 mixin WhereOperation {
   WhereClause where<Value>(
     String field,
     String condition, [
-    Value? val,
-  ]);
-
-  WhereClause orWhere<Value>(
-    String field,
-    String condition, [
-    Value? val,
+    Value? value,
   ]);
 
   WhereClause whereNull(String field);
 
   WhereClause whereNotNull(String field);
 
-  WhereClause whereIn<Value>(String field, List<Value> val);
+  WhereClause whereIn<Value>(String field, List<Value> values);
 
-  WhereClause whereNotIn<Value>(String field, List<Value> val);
+  WhereClause whereNotIn<Value>(String field, List<Value> values);
 
   WhereClause whereLike<Value>(String field, String pattern);
 
@@ -31,24 +23,22 @@ mixin WhereOperation {
 
   WhereClause whereBetween<Value>(
     String field,
-    WhereBetweenArgs<Value> args,
+    List<Value> args,
   );
 
   WhereClause whereNotBetween<Value>(
     String field,
-    WhereBetweenArgs<Value> args,
+    List<Value> args,
   );
 }
 
-abstract class Clause<T> {
-  final T value;
-
-  const Clause(this.value);
+abstract class Clause {
+  WhereClauseValue? clauseValue;
 }
 
 enum LogicalOperator { AND, OR }
 
-typedef CombineClause<T extends Clause> = (LogicalOperator operator, T clause);
+typedef CombineClause<T> = (LogicalOperator operator, T clause);
 
 enum Operator {
   IN,
@@ -88,8 +78,8 @@ Operator _strToOperator(String condition) => switch (condition) {
       //
       'between' => Operator.BETWEEN,
       'not between' => Operator.NOT_BETWEEN,
-      _ => throw ArgumentError.value(condition, null,
-          'Either condition is not known or Use one of the defined functions')
+      _ =>
+        throw ArgumentError.value(condition, null, 'Either condition is not known or Use one of the defined functions')
     };
 
 class WhereClauseValue<A> {
@@ -98,30 +88,35 @@ class WhereClauseValue<A> {
 
   const WhereClauseValue(this.field, this.comparer);
 
-  factory WhereClauseValue.from(
-    String field,
-    String condition,
-    dynamic value,
-  ) =>
-      WhereClauseValue(
-          field, (operator: _strToOperator(condition), value: value));
+  factory WhereClauseValue.from(String field, String condition, value) {
+    final operator = _strToOperator(condition);
+    if ([Operator.BETWEEN, Operator.NOT_BETWEEN].contains(operator)) {
+      if (value is! List || value.length != 2) {
+        throw ArgumentError(
+          '${operator.name} requires a List with length 2 (val1, val2)',
+          '$field $condition $value',
+        );
+      }
+    }
+    return WhereClauseValue(field, (operator: operator, value: value));
+  }
 }
 
-abstract class WhereClause extends Clause<WhereClauseValue>
-    with
-        WhereOperation,
-        FindOperation,
-        LimitOperation,
-        OrderByOperation<WhereClause> {
+abstract class WhereClause extends Clause
+    with WhereOperation, FindOperation, LimitOperation, OrderByOperation<WhereClause> {
   final Query _query;
+  final LogicalOperator operator;
 
-  WhereClause(super.value, this._query);
+  WhereClause(
+    this._query, {
+    this.operator = LogicalOperator.AND,
+  });
 
-  @override
-  WhereClause where<Value>(String field, String condition, [Value? val]);
+  WhereClause orWhere<Value>(String field, String condition, [Value? value]);
 
-  @override
-  WhereClause orWhere<Value>(String field, String condition, [Value? val]);
+  Query whereFunc(Function(WhereClauseImpl $query) function);
+
+  Query orWhereFunc(Function(WhereClauseImpl $query) function);
 
   @override
   WhereClause orderByAsc(String field) {
@@ -136,7 +131,7 @@ abstract class WhereClause extends Clause<WhereClauseValue>
   }
 
   @override
-  Future<T?> findOne<T>() => _query.first<T>();
+  Future<T?> findOne<T>() => _query.get<T>();
 
   @override
   Future<List<T>> findMany<T>() => _query.all<T>();
@@ -146,8 +141,7 @@ abstract class WhereClause extends Clause<WhereClauseValue>
 
   Future<void> delete() => _query._delete(this);
 
-  Future<void> update(Map<String, dynamic> values) =>
-      _query._update(this, values);
+  Future<void> update(Map<String, dynamic> values) => _query._update(this, values);
 
   String get statement => _query.statement;
 }

@@ -46,18 +46,15 @@ extension ClassMirrorExtensions on r.ClassMirror {
 
 T createNewInstance<T extends Object>(Type classType) {
   final classMirror = reflectType(classType);
-  final constructorMethod = classMirror.declarations.entries
-      .firstWhereOrNull((e) => e.key == '$classType')
-      ?.value as r.MethodMirror?;
+  final constructorMethod =
+      classMirror.declarations.entries.firstWhereOrNull((e) => e.key == '$classType')?.value as r.MethodMirror?;
   final constructorParameters = constructorMethod?.parameters ?? [];
   if (constructorParameters.isEmpty) {
     return classMirror.newInstance(unnamedConstructor, const []) as T;
   }
 
-  final dependencies = constructorParameters
-      .map((e) => e.reflectedType)
-      .map((type) => instanceFromRegistry(type: type))
-      .toList();
+  final dependencies =
+      constructorParameters.map((e) => e.reflectedType).map((type) => instanceFromRegistry(type: type)).toList();
 
   return classMirror.newInstance(unnamedConstructor, dependencies) as T;
 }
@@ -72,8 +69,7 @@ ControllerMethod parseControllerMethod(ControllerMethodDefinition defn) {
   }
 
   final methods = ctrlMirror.instanceMembers.values.whereType<r.MethodMirror>();
-  final actualMethod =
-      methods.firstWhereOrNull((e) => e.simpleName == symbolToString(method));
+  final actualMethod = methods.firstWhereOrNull((e) => e.simpleName == symbolToString(method));
   if (actualMethod == null) {
     throw ArgumentError('$type does not have method  #${symbolToString(method)}');
   }

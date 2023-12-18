@@ -24,8 +24,7 @@ class DB {
 
   static Query query(String table) => defaultConnection.query(table);
 
-  static UseDatabaseConnection connection(String connName) =>
-      UseDatabaseConnection(connName);
+  static UseDatabaseConnection connection(String connName) => UseDatabaseConnection(connName);
 
   static DatabaseDriver driver(String connName) {
     final cached = _driverInstances[connName];
@@ -47,8 +46,7 @@ class DB {
     if (connInfos == null || connInfos.isEmpty) {
       throw ArgumentError('Database connection infos not provided');
     }
-    final connections =
-        connInfos.entries.map((e) => DatabaseConnection.from(e.key, e.value));
+    final connections = connInfos.entries.map((e) => DatabaseConnection.from(e.key, e.value));
     final defaultConnection = connections.firstWhereOrNull((e) => e.name == defaultConn);
     if (defaultConnection == null) {
       throw ArgumentError('Database connection info not found for $defaultConn');
