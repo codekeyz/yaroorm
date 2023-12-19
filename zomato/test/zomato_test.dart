@@ -14,7 +14,7 @@ void main() {
   setUpAll(() async {
     initializeReflectable();
 
-    await Future.sync(() => app.bootstrap(start_server: false));
+    await app.bootstrap(start_server: false);
   });
 
   group('Zomato API Tests', () {
@@ -22,9 +22,9 @@ void main() {
       test('should error when invalid params', () async {
         await (await app.tester)
             .post('/api/users', {})
+            .expectBody({'error': 'Request body cannot be empty'})
             .expectStatus(422)
             .expectHeader('content-type', 'application/json; charset=utf-8')
-            .expectBody({'error': 'Request body cannot be empty'})
             .test();
       });
 
@@ -33,8 +33,6 @@ void main() {
 
         await (await app.tester)
             .post('/api/users', newUserData)
-            .expectStatus(200)
-            .expectHeader('content-type', 'application/json; charset=utf-8')
             .expectBodyCustom(
               (body) => jsonDecode(body),
               allOf([
@@ -44,6 +42,8 @@ void main() {
                 containsPair('age', 100)
               ]),
             )
+            .expectStatus(200)
+            .expectHeader('content-type', 'application/json; charset=utf-8')
             .test();
       });
     });
