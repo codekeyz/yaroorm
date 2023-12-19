@@ -1,7 +1,7 @@
 name: yaroo
 description: Unleash the Full Power of Dart in Backend Development.
 version: 0.0.1
-repository: https://github.com/Pharaoh-Framework/pharaoh-turbo
+repository: https://github.com/codekeyz/yaroo.git
 
 publish_to: none
 
@@ -10,6 +10,9 @@ environment:
 
 dependencies:
   yaroorm:
+    git:
+      url: https://github.com/codekeyz/yaroo.git
+      path: yaroorm
   pharaoh:
     git:
       url: https://github.com/codekeyz/pharaoh.git
