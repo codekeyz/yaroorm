@@ -77,9 +77,152 @@ class PostgreSqlDriver implements DatabaseDriver {
   DatabaseDriverType get type => DatabaseDriverType.pgsql;
 
   @override
-  TableBlueprint get blueprint => throw UnimplementedError();
+  TableBlueprint get blueprint => _PgSqlTableBlueprint();
 }
 
 class PgSqlPrimitiveSerializer extends SqliteSerializer {
   const PgSqlPrimitiveSerializer();
+}
+
+class _PgSqlTableBlueprint implements TableBlueprint {
+  final List<String> _statements = [];
+
+  void char(String name, {String? defaultValue, bool nullable = false, int length = 10}) {
+    final sb = StringBuffer()..write('$name CHAR ($length)');
+    if (nullable) {
+      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
+    } else {
+      sb.write(' NOT NULL');
+    }
+
+    _statements.add(sb.toString());
+  }
+
+  void varChar(String name, {String? defaultValue, bool nullable = false, int length = 10}) {
+    final sb = StringBuffer()..write('$name VARCHAR ($length)');
+    if (nullable) {
+      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
+    } else {
+      sb.write(' NOT NULL');
+    }
+  }
+
+  @override
+  void blob(String name, {String? defaultValue, bool nullable = false}) {
+    final sb = StringBuffer()..write('$name BYTEA');
+    if (nullable) {
+      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
+    } else {
+      sb.write(' NOT NULL');
+    }
+    _statements.add(sb.toString());
+  }
+
+  @override
+  void boolean(String name, {bool? defaultValue, bool nullable = false}) {
+    final sb = StringBuffer()..write('$name BOOLEAN');
+    if (nullable) {
+      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
+    } else {
+      sb.write(' NOT NULL');
+    }
+
+    _statements.add(sb.toString());
+  }
+
+  @override
+  String createScript(String tableName) {
+    return 'CREATE TABLE $tableName (${_statements.join(', ')});';
+  }
+
+  @override
+  void datetime(String name, {bool? defaultValue, bool nullable = false}) {
+    final sb = StringBuffer()..write('$name TIMESTAMP');
+    if (nullable) {
+      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
+    } else {
+      sb.write(' NOT NULL');
+    }
+
+    _statements.add(sb.toString());
+  }
+
+  @override
+  void double(String name, {num? defaultValue, bool nullable = false}) {
+    String columnDefinition = "$name DOUBLE PRECISION";
+    if (defaultValue != null) {
+      columnDefinition += " DEFAULT $defaultValue";
+    }
+    if (!nullable) {
+      columnDefinition += " NOT NULL";
+    }
+    _statements.add(columnDefinition);
+  }
+
+  @override
+  String dropScript(String tableName) {
+    return 'DROP TABLE $tableName';
+  }
+
+  @override
+  void float(String name, {num? defaultValue, bool nullable = false}) {
+    final sb = StringBuffer()..write('$name REAL');
+    if (nullable) {
+      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
+    } else {
+      sb.write(' NOT NULL');
+    }
+    _statements.add(sb.toString());
+  }
+
+  @override
+  void id({bool autoIncrement = true}) {
+    final sb = StringBuffer()..write('id');
+    sb.write(autoIncrement ? "SERIAL PRIMARY KEY" : "INTEGER PRIMARY KEY");
+    _statements.add(sb.toString());
+  }
+
+  @override
+  void integer(String name, {Integer type = Integer.integer, num? defaultValue, bool nullable = false}) {
+    final sb = StringBuffer()..write('$name INTEGER');
+    if (nullable) {
+      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
+    } else {
+      sb.write(' NOT NULL');
+    }
+
+    _statements.add(sb.toString());
+  }
+
+  @override
+  String renameScript(String fromName, String toName) {
+    return 'ALTER TABLE $fromName RENAME TO $toName';
+  }
+
+  @override
+  void string(String name, {String? defaultValue, bool nullable = false}) {
+    final sb = StringBuffer()..write('$name TEXT');
+    if (nullable) {
+      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
+    } else {
+      sb.write(' NOT NULL');
+    }
+  }
+
+  @override
+  void timestamp(String name, {String? defaultValue, bool nullable = false}) {
+    final sb = StringBuffer()..write('$name TIMESTAMP');
+    if (nullable) {
+      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
+    } else {
+      sb.write(' NOT NULL');
+    }
+    _statements.add(sb.toString());
+  }
+
+  @override
+  void timestamps({String createdAt = entityCreatedAtColumnName, String updatedAt = entityUpdatedAtColumnName}) {
+    timestamp(createdAt);
+    timestamp(updatedAt);
+  }
 }
