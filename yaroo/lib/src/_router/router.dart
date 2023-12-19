@@ -1,5 +1,6 @@
 library router;
 
+import 'package:grammer/grammer.dart';
 import 'package:pharaoh/pharaoh.dart';
 
 import 'definition.dart';
@@ -46,15 +47,16 @@ abstract interface class Route {
 
   static RouteGroupDefinition resource(String resource, Type controller, {String? parameterName}) {
     resource = resource.toLowerCase();
-    final paramName = parameterName ?? resource;
+
+    final resourceId = '${(parameterName ?? resource).toSingular().toLowerCase()}Id';
 
     return Route.group(resource).routes([
       Route.get('/', (controller, #index)),
-      Route.get('/<$paramName>', (controller, #show)),
+      Route.get('/<$resourceId>', (controller, #show)),
       Route.post('/', (controller, #create)),
-      Route.put('/<$paramName>', (controller, #update)),
-      Route.patch('/<$paramName>', (controller, #update)),
-      Route.delete('/<$paramName>', (controller, #delete))
+      Route.put('/<$resourceId>', (controller, #update)),
+      Route.patch('/<$resourceId>', (controller, #update)),
+      Route.delete('/<$resourceId>', (controller, #delete))
     ]);
   }
 

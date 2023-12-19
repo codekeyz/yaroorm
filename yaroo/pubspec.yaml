@@ -18,6 +18,7 @@ dependencies:
   dotenv: ^4.2.0
   get_it: ^7.6.4
   uuid: ^4.2.1
+  grammer: ^1.0.3
   reflectable:
     git:
       url: https://github.com/codekeyz/reflectable.dart.git

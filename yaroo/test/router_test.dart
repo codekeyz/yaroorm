@@ -24,29 +24,35 @@ void main() {
   group('Router', () {
     group('when route group', () {
       test('with routes', () {
-        final routes = Route.group('merchants').routes([
+        final group = Route.group('merchants').routes([
           Route.get('/get', (TestController, #index)),
           Route.delete('/delete', (TestController, #delete)),
           Route.put('/update', (TestController, #update)),
         ]);
 
-        final routePaths = routes.definitions.map((e) => e.route.path).toList();
-        expect(routePaths, ['/merchants/get', '/merchants/delete', '/merchants/update']);
+        expect(group.paths, [
+          '[GET]: /merchants/get',
+          '[DELETE]: /merchants/delete',
+          '[PUT]: /merchants/update',
+        ]);
       });
 
       test('with prefix', () {
-        final routes = Route.group('Merchants', prefix: 'foo').routes([
+        final group = Route.group('Merchants', prefix: 'foo').routes([
           Route.get('/foo', (TestController, #index)),
           Route.delete('/bar', (TestController, #delete)),
           Route.put('/moo', (TestController, #update)),
         ]);
 
-        final routePaths = routes.definitions.map((e) => e.route.path).toList();
-        expect(routePaths, ['/foo/foo', '/foo/bar', '/foo/moo']);
+        expect(group.paths, [
+          '[GET]: /foo/foo',
+          '[DELETE]: /foo/bar',
+          '[PUT]: /foo/moo',
+        ]);
       });
 
       test('with sub groups', () {
-        final routes = Route.group('users').routes([
+        final group = Route.group('users').routes([
           Route.get('/get', (TestController, #index)),
           Route.delete('/delete', (TestController, #delete)),
           Route.put('/update', (TestController, #update)),
@@ -58,20 +64,19 @@ void main() {
           ]),
         ]);
 
-        final routePaths = routes.definitions.map((e) => e.route.path).toList();
-        expect(routePaths, [
-          '/users/get',
-          '/users/delete',
-          '/users/update',
-          '/users/customers/foo',
-          '/users/customers/bar',
-          '/users/customers/set'
+        expect(group.paths, [
+          '[GET]: /users/get',
+          '[DELETE]: /users/delete',
+          '[PUT]: /users/update',
+          '[GET]: /users/customers/foo',
+          '[DELETE]: /users/customers/bar',
+          '[PUT]: /users/customers/set',
         ]);
       });
 
       group('when middlewares used', () {
         test('should add to routes', () {
-          final routes = Route.group('users', middlewares: [_testMdw]).routes([
+          final group = Route.group('users', middlewares: [_testMdw]).routes([
             Route.get('/get', (TestController, #index)),
             Route.delete('/delete', (TestController, #delete)),
             Route.put('/update', (TestController, #update)),
@@ -83,20 +88,19 @@ void main() {
             ]),
           ]);
 
-          final routePaths = routes.definitions.map((e) => e.route.path).toList();
-          expect(routePaths, [
-            '/users', // middleware is here
-            '/users/get',
-            '/users/delete',
-            '/users/update',
-            '/users/customers/foo',
-            '/users/customers/bar',
-            '/users/customers/set'
+          expect(group.paths, [
+            '[ALL]: /users',
+            '[GET]: /users/get',
+            '[DELETE]: /users/delete',
+            '[PUT]: /users/update',
+            '[GET]: /users/customers/foo',
+            '[DELETE]: /users/customers/bar',
+            '[PUT]: /users/customers/set',
           ]);
         });
 
         test('should chain multiple into one', () {
-          final routes = Route.group('users', middlewares: [_testMdw, _testMdw, _testMdw]).routes([
+          final group = Route.group('users', middlewares: [_testMdw, _testMdw, _testMdw]).routes([
             Route.get('/get', (TestController, #index)),
             Route.delete('/delete', (TestController, #delete)),
             Route.put('/update', (TestController, #update)),
@@ -108,17 +112,31 @@ void main() {
             ]),
           ]);
 
-          final routePaths = routes.definitions.map((e) => e.route.path).toList();
-          expect(routePaths, [
-            '/users', // middleware is here
-            '/users/get',
-            '/users/delete',
-            '/users/update',
-            '/users/customers/foo',
-            '/users/customers/bar',
-            '/users/customers/set'
+          expect(group.paths, [
+            '[ALL]: /users',
+            '[GET]: /users/get',
+            '[DELETE]: /users/delete',
+            '[PUT]: /users/update',
+            '[GET]: /users/customers/foo',
+            '[DELETE]: /users/customers/bar',
+            '[PUT]: /users/customers/set',
           ]);
         });
+      });
+
+      test('when route resource is used', () {
+        final group = Route.group('merchants').routes([
+          Route.resource('photos', TestController),
+        ]);
+
+        expect(group.paths, [
+          '[GET]: /merchants/photos/',
+          '[GET]: /merchants/photos/<photoId>',
+          '[POST]: /merchants/photos/',
+          '[PUT]: /merchants/photos/<photoId>',
+          '[PATCH]: /merchants/photos/<photoId>',
+          '[DELETE]: /merchants/photos/<photoId>'
+        ]);
       });
     });
 

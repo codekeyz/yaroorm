@@ -1,3 +1,4 @@
+import 'package:meta/meta.dart';
 import 'package:pharaoh/pharaoh.dart';
 
 import '../../../http/http.dart';
@@ -9,6 +10,9 @@ enum RouteDefinitionType { route, group, middleware }
 class RouteMapping {
   final List<HTTPMethod> methods;
   final String _path;
+
+  @visibleForTesting
+  String get stringVal => '${methods.map((e) => e.name).toList()}: $_path';
 
   String get path => cleanRoute(_path);
 
@@ -72,6 +76,9 @@ class ControllerRouteMethodDefinition extends RouteDefinition {
 class RouteGroupDefinition extends RouteDefinition {
   final String name;
   final List<RouteDefinition> definitions = [];
+
+  @visibleForTesting
+  List<String> get paths => definitions.map((e) => e.route.stringVal).toList();
 
   RouteGroupDefinition(
     this.name, {
