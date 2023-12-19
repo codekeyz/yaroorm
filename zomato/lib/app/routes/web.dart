@@ -1,3 +1,4 @@
+import 'package:yaroo/http/http.dart';
 import 'package:yaroo/yaroo.dart';
 
 List<RouteDefinition> routes = [

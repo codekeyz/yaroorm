@@ -1,7 +1,7 @@
-import 'package:yaroo/yaroo.dart';
-
-import '../models/user.dart';
-import '../services/service_a.dart';
+import 'package:yaroo/http/http.dart';
+import 'package:yaroo/orm/orm.dart';
+import 'package:zomato/src/models/models.dart';
+import 'package:zomato/src/services/services.dart';
 
 class UserController extends BaseController {
   final UserService userSvc;
@@ -22,7 +22,7 @@ class UserController extends BaseController {
       );
     }
 
-    final result = await DB.query('users').insert(User(reqBody['firstname'], reqBody['lastname'], 22));
+    final result = await DB.query('users').insert<User>(User(reqBody['firstname'], reqBody['lastname'], 22));
 
     return res.json(result);
   }

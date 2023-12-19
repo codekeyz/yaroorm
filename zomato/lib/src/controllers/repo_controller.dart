@@ -1,5 +1,5 @@
-import 'package:yaroo/yaroo.dart';
+import 'package:yaroo/http/http.dart';
 
-class MerchantController extends BaseController {
+class RepositoryController extends BaseController {
   Future<void> index(Request request, Response response) async {}
 }

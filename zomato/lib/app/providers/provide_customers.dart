@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:yaroo/yaroo.dart';
+import 'package:yaroo/http/http.dart';
 
-import '../services/service_a.dart';
-import '../services/service_b.dart';
+import '../../src/services/service_a.dart';
+import '../../src/services/service_b.dart';
 
 class CustomerServiceProvider extends ServiceProvider {
   CustomerServiceProvider();

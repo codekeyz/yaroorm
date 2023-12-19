@@ -1,5 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:yaroo/yaroo.dart';
+import 'package:yaroo/orm/orm.dart';
 
 part 'user.g.dart';
 
