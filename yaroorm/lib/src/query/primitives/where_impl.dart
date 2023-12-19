@@ -1,4 +1,4 @@
-part of '../access.dart';
+part of '../query.dart';
 
 class WhereClauseImpl extends WhereClause {
   final List<CombineClause<WhereClauseValue>> subparts = [];

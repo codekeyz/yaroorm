@@ -1,10 +1,10 @@
 import 'package:collection/collection.dart';
 import 'package:yaroo/src/_config/config.dart';
+import 'package:yaroorm/migration/migration.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-export 'package:yaroorm/src/access/access.dart' show OrderByDirection;
 export 'package:yaroorm/src/database/entity.dart';
-export 'package:yaroorm/src/database/migration.dart';
+export 'package:yaroorm/src/query/query.dart' show OrderByDirection;
 
 class UseDatabaseConnection {
   final String name;
@@ -12,7 +12,7 @@ class UseDatabaseConnection {
 
   UseDatabaseConnection(this.name) : _driver = DB.driver(name);
 
-  Query query(String table) => Query.make(table, _driver);
+  Query query(String table) => Query.query(table, _driver);
 }
 
 class DB {

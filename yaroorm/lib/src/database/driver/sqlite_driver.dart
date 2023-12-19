@@ -1,8 +1,8 @@
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import '../../access/access.dart';
-import '../../access/primitives/serializer.dart';
-import '../migration.dart';
+import '../../../migration/migration.dart';
+import '../../query/primitives/serializer.dart';
+import '../../query/query.dart';
 import 'driver.dart';
 
 class SqliteDriver implements DatabaseDriver {
@@ -78,6 +78,13 @@ class SqliteDriver implements DatabaseDriver {
 
   @override
   PrimitiveSerializer get serializer => _serializer;
+
+  @override
+  Future<bool> hasTable(String tableName) async {
+    final result = await (await _getDatabase())
+        .rawQuery('SELECT * FROM sqlite_master WHERE type = "table" AND name = "$tableName" LIMIT 1;');
+    return result.isNotEmpty;
+  }
 }
 
 class _SqliteSerializer implements PrimitiveSerializer {
@@ -251,49 +258,93 @@ class _SqliteSerializer implements PrimitiveSerializer {
 class _SqliteTableBlueprint implements TableBlueprint {
   final List<String> _statements = [];
 
+  String _getColumn(String name, String type, {nullable = false, defaultValue}) {
+    final sb = StringBuffer()..write('$name $type');
+    if (!nullable) {
+      sb.write(' NOT NULL');
+      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
+    }
+    return sb.toString();
+  }
+
   @override
   void id() {
-    _statements.add('id INTEGER PRIMARY KEY');
+    _statements.add('id INTEGER NOT NULL PRIMARY KEY');
   }
 
   @override
-  void string(String name) {
-    _statements.add('$name TEXT');
+  void string(String name, {nullable = false, defaultValue}) {
+    _statements.add(_getColumn(
+      name,
+      'VARCHAR(255)',
+      nullable: nullable,
+      defaultValue: defaultValue,
+    ));
   }
 
   @override
-  void double(String name) {
-    _statements.add('$name REAL');
+  void double(String name, {nullable = false, defaultValue}) {
+    _statements.add(_getColumn(
+      name,
+      'REAL',
+      nullable: nullable,
+      defaultValue: defaultValue,
+    ));
   }
 
   @override
-  void float(String name) {
-    _statements.add('$name REAL');
+  void float(String name, {nullable = false, defaultValue}) {
+    _statements.add(_getColumn(
+      name,
+      'REAL',
+      nullable: nullable,
+      defaultValue: defaultValue,
+    ));
   }
 
   @override
-  void integer(String name) {
-    _statements.add('$name INTEGER');
+  void integer(String name, {nullable = false, defaultValue}) {
+    _statements.add(_getColumn(
+      name,
+      'INTEGER',
+      nullable: nullable,
+      defaultValue: defaultValue,
+    ));
   }
 
   @override
-  void blob(String name) {
-    _statements.add('$name BLOB');
+  void blob(String name, {nullable = false, defaultValue}) {
+    _statements.add(_getColumn(
+      name,
+      'BLOB',
+      nullable: nullable,
+      defaultValue: defaultValue,
+    ));
   }
 
   @override
-  void boolean(String name) {
-    _statements.add('$name INTEGER');
+  void boolean(String name, {nullable = false, defaultValue}) {
+    _statements.add(_getColumn(
+      name,
+      'INTEGER',
+      nullable: nullable,
+      defaultValue: defaultValue,
+    ));
   }
 
   @override
-  void datetime(String name) {
+  void datetime(String name, {nullable = false, defaultValue}) {
     _statements.add('$name DATETIME');
   }
 
   @override
-  void timestamp(String name) {
-    _statements.add('$name DATETIME');
+  void timestamp(String name, {nullable = false, defaultValue}) {
+    _statements.add(_getColumn(
+      name,
+      'DATETIME',
+      nullable: nullable,
+      defaultValue: defaultValue?.toIso8601String(),
+    ));
   }
 
   @override

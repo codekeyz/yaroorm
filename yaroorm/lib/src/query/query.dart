@@ -1,6 +1,6 @@
+import '../_reflection/entity_helpers.dart';
 import '../database/driver/driver.dart';
 import '../database/entity.dart';
-import '../reflection/entity_helpers.dart';
 
 part 'operations/query.dart';
 part 'primitives/where.dart';
@@ -72,7 +72,7 @@ abstract class Query extends QueryBase
         whereClauses = [],
         _limit = null;
 
-  factory Query.make(String tableName, DatabaseDriver driver) => _QueryImpl(tableName, driver);
+  factory Query.query(String tableName, DatabaseDriver driver) => _QueryImpl(tableName, driver);
 
   int? get limit => _limit;
 

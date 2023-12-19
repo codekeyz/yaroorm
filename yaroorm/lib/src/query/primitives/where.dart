@@ -1,6 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
-part of '../access.dart';
+part of '../query.dart';
 
 mixin WhereOperation {
   WhereClause where<Value>(
