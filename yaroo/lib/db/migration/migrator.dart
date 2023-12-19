@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_function_literals_in_foreach_calls
+
 import 'package:yaroo/db/db.dart';
 import 'package:yaroo/src/_config/config.dart';
 import 'package:yaroorm/yaroorm.dart';
