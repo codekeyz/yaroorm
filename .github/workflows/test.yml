@@ -57,9 +57,7 @@ jobs:
         run: cd zomato && dart run ./bin/tools/migrator.dart migrate
 
       - name: Run Unit tests
-        run: |
-          melos exec -- "dart run build_runner build"
-          melos tests:ci
+        run: melos tests:ci
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
