@@ -22,9 +22,9 @@ void main() {
       test('should error when invalid params', () async {
         await (await app.tester)
             .post('/api/users', {})
-            .expectBody({'error': 'Request body cannot be empty'})
             .expectStatus(422)
             .expectHeader('content-type', 'application/json; charset=utf-8')
+            .expectBody({'error': 'Request body cannot be empty'})
             .test();
       });
 

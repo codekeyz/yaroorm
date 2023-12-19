@@ -51,6 +51,9 @@ jobs:
           dart pub global activate melos
           melos bootstrap
 
+      - name: Setup Test Database
+        run: cd zomato && dart run ./bin/tools/migrator.dart migrate
+
       - name: Run Unit tests
         run: |
           dart pub global activate coverage
