@@ -1,6 +1,6 @@
-import '../../access/access.dart';
-import '../../access/primitives/serializer.dart';
-import '../database.dart';
+import '../../query/primitives/serializer.dart';
+import '../../query/query.dart';
+import '../migration.dart';
 import 'sqlite_driver.dart';
 
 typedef DatabaseConfig = Map<String, dynamic>;
@@ -100,6 +100,9 @@ abstract interface class DatabaseDriver {
 
   /// Perform delete on the database
   Future<List<Map<String, dynamic>>> delete(DeleteQuery query);
+
+  /// check if the table exists in the database
+  Future<bool> hasTable(String tableName);
 
   Future<dynamic> insert(String tableName, Map<String, dynamic> data);
 

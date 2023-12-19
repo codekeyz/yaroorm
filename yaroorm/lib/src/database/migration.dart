@@ -1,29 +1,26 @@
-// ignore_for_file: avoid_function_literals_in_foreach_calls
-
 import 'package:meta/meta.dart';
 import 'package:recase/recase.dart';
 
-import 'driver/driver.dart';
 import 'entity.dart';
 
 abstract interface class TableBlueprint {
   void id();
 
-  void string(String name);
+  void string(String name, {bool nullable = false, String? defaultValue});
 
-  void integer(String name);
+  void integer(String name, {bool nullable = false, int? defaultValue});
 
-  void double(String name);
+  void double(String name, {bool nullable = false, num? defaultValue});
 
-  void float(String name);
+  void float(String name, {bool nullable = false, num? defaultValue});
 
-  void boolean(String name);
+  void boolean(String name, {bool nullable = false, bool? defaultValue});
 
-  void timestamp(String name);
+  void timestamp(String name, {bool nullable = false, DateTime? defaultValue});
 
-  void datetime(String name);
+  void datetime(String name, {bool nullable = false, DateTime? defaultValue});
 
-  void blob(String name);
+  void blob(String name, {bool nullable = false, String? defaultValue});
 
   void timestamps({
     String createdAt = entityCreatedAtColumnName,
@@ -43,10 +40,9 @@ abstract interface class TableBlueprint {
 typedef TableBluePrintFunc = TableBlueprint Function(TableBlueprint $table);
 
 class Schema {
+  late final String scriptName;
   final String tableName;
   final TableBluePrintFunc? _bluePrintFunc;
-
-  String? _scriptname;
 
   Schema._(this.tableName, this._bluePrintFunc);
 
@@ -80,43 +76,9 @@ abstract class Migration {
 
   String get name => runtimeType.toString().snakeCase;
 
+  String get connection => 'default';
+
   void up(List<Schema> $actions);
 
   void down(List<Schema> $actions);
-}
-
-List<Schema> _accumulateSchemas(Function(List<Schema> schemas) func) {
-  final result = <Schema>[];
-  func(result);
-  return result;
-}
-
-Future<void> processMigrationCmd(
-  String cmd,
-  List<Migration> migrations,
-  DatabaseDriver driver, {
-  List<String>? cmdArguments,
-}) async {
-  cmd = cmd.toLowerCase();
-
-  final resultingSchemas = <Schema>[];
-
-  for (final migration in migrations) {
-    final result = switch (cmd) {
-      'migrate' => _accumulateSchemas(migration.up),
-      'migrate:reset' => _accumulateSchemas(migration.down),
-      _ => throw UnsupportedError(cmd),
-    };
-    result.forEach((schema) => schema._scriptname = migration.name);
-    resultingSchemas.addAll(result);
-  }
-
-  print('------- Starting database migration --\n');
-  for (final schema in resultingSchemas) {
-    print('-x executing ${schema._scriptname}');
-
-    final script = schema.toScript(driver.blueprint);
-    await driver.execute(script);
-  }
-  print('------- Completed migration  ✅ ------\n');
 }
