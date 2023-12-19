@@ -127,4 +127,10 @@ void main() {
       });
     });
   });
+
+  group('Zomato Web Tests', () {
+    test('should show homepage', () async {
+      await (await app.tester).get('/').expectStatus(200).expectBody(contains('Welcome to Yaroo 🚀')).test();
+    });
+  });
 }
