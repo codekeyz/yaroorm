@@ -1,8 +1,8 @@
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import '../../../migration/migration.dart';
 import '../../query/primitives/serializer.dart';
 import '../../query/query.dart';
+import '../migration.dart';
 import 'driver.dart';
 
 class SqliteDriver implements DatabaseDriver {

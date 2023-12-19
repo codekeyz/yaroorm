@@ -6,7 +6,7 @@ import 'package:meta/meta.dart';
 import 'package:pharaoh/pharaoh.dart';
 import 'package:reflectable/reflectable.dart' as r;
 import 'package:spookie/spookie.dart';
-import 'package:yaroo/orm/orm.dart';
+import 'package:yaroo/db/db.dart';
 
 import '../../http/http.dart';
 import '../../http/kernel.dart';
@@ -88,20 +88,16 @@ abstract class ApplicationFactory {
   List<Middleware> get globalMiddlewares => [bodyParser];
 
   Future<void> bootstrap({
-    bool bootstap_pharaoh = true,
-    bool bootstrap_database = true,
     bool start_server = true,
   }) async {
-    if (bootstrap_database && dbConfig != null) {
+    if (dbConfig != null) {
       DB.init(dbConfig!);
       await DB.defaultDriver.connect();
     }
 
-    if (bootstap_pharaoh) {
-      await _bootstrapComponents(appConfig.call());
+    await _bootstrapComponents(appConfig.call());
 
-      if (start_server) await startServer();
-    }
+    if (start_server) await startServer();
   }
 
   Future<void> startServer() async {

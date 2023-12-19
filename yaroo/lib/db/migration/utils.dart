@@ -1,8 +1,8 @@
-import 'package:yaroorm/src/database/driver/driver.dart';
+import 'package:yaroorm/yaroorm.dart';
 
 import 'migrator.dart';
 
-Future<bool> migrationsTableReady(DatabaseDriver driver, {String migrationsTable = 'migrations'}) async {
+Future<bool> isMigrationsTableReady(DatabaseDriver driver, {String migrationsTable = 'migrations'}) async {
   final hasTable = await driver.hasTable(migrationsTable);
   if (hasTable) return true;
 

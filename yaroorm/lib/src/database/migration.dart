@@ -1,9 +1,7 @@
-// ignore_for_file: avoid_function_literals_in_foreach_calls
-
 import 'package:meta/meta.dart';
 import 'package:recase/recase.dart';
 
-import '../src/database/entity.dart';
+import 'entity.dart';
 
 abstract interface class TableBlueprint {
   void id();

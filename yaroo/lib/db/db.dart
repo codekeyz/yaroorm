@@ -1,10 +1,8 @@
 import 'package:collection/collection.dart';
 import 'package:yaroo/src/_config/config.dart';
-import 'package:yaroorm/migration/migration.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 export 'package:yaroorm/src/database/entity.dart';
-export 'package:yaroorm/src/query/query.dart' show OrderByDirection;
 
 class UseDatabaseConnection {
   final String name;

@@ -1,7 +1,6 @@
-import 'package:yaroorm/migration/migration.dart';
-
 import '../../query/primitives/serializer.dart';
 import '../../query/query.dart';
+import '../migration.dart';
 import 'sqlite_driver.dart';
 
 typedef DatabaseConfig = Map<String, dynamic>;
