@@ -51,6 +51,13 @@ void main() {
         ]);
       });
 
+      test('with handler', () {
+        final group = Route.group('users').routes([
+          Route.handler(HTTPMethod.GET, '/my-name', (req, res) => null),
+        ]);
+        expect(group.paths, ['[GET]: /users/my-name']);
+      });
+
       test('with sub groups', () {
         final group = Route.group('users').routes([
           Route.get('/get', (TestController, #index)),
