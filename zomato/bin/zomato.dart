@@ -4,7 +4,7 @@ import '../config/app.dart' as a1;
 import '../config/database.dart' as db;
 import 'zomato.reflectable.dart';
 
-final zomatoApp = App(a1.appConfig, dbConfig: db.config);
+final zomatoApp = App(a1.config, dbConfig: db.config);
 
 void main(List<String> arguments) async {
   initializeReflectable();

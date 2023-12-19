@@ -3,7 +3,7 @@ import 'package:yaroo/http/http.dart';
 import 'package:yaroo/yaroo.dart';
 import 'package:zomato/app/app.dart';
 
-ConfigResolver appConfig = () => {
+ConfigResolver config = () => {
       /*
     |--------------------------------------------------------------------------
     | Application Name

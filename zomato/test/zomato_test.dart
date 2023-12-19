@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 import 'package:zomato/app/app.dart';
@@ -9,7 +7,7 @@ import '../config/app.dart' as a1;
 import '../config/database.dart' as db;
 
 void main() {
-  late final App app = App(a1.appConfig, dbConfig: db.config);
+  late final App app = App(a1.config, dbConfig: db.config);
 
   setUpAll(() async {
     initializeReflectable();
@@ -23,8 +21,7 @@ void main() {
         await (await app.tester)
             .post('/api/users', {})
             .expectStatus(422)
-            .expectHeader('content-type', 'application/json; charset=utf-8')
-            .expectBody({'error': 'Request body cannot be empty'})
+            .expectJsonBody({'error': 'Request body cannot be empty'})
             .test();
       });
 
@@ -33,8 +30,7 @@ void main() {
 
         await (await app.tester)
             .post('/api/users', newUserData)
-            .expectBodyCustom(
-              (body) => jsonDecode(body),
+            .expectJsonBody(
               allOf([
                 contains('id'),
                 containsPair('firstname', 'Foo'),
@@ -45,6 +41,15 @@ void main() {
             .expectStatus(200)
             .expectHeader('content-type', 'application/json; charset=utf-8')
             .test();
+      });
+    });
+
+    group('when `show` user', () {
+      test('should error when invalid params', () async {
+        await (await app.tester)
+            .get('/api/users/asdf')
+            .expectStatus(422)
+            .expectJsonBody({'error': "Invalid argument: Invalid parameter value: \"asdf\""}).test();
       });
     });
   });

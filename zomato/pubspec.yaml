@@ -11,11 +11,9 @@ dependencies:
   uuid: ^4.2.1
   path: ^1.9.0
   yaroo:
-  pharaoh_jwt_auth: ^1.0.0+1
 
   # data
   json_annotation: ^4.8.1
-
 
 
 dev_dependencies:
