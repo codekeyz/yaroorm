@@ -65,7 +65,12 @@ class UserController extends BaseController {
   Future<Response> delete(Request req, Response res) async {
     final userId = req.params['userId']!;
 
-    await DB.query('users').where('id', '=', userId).delete();
+    final query = DB.query('users').where('id', '=', userId);
+    if (await query.findOne() == null) {
+      return res.notFound();
+    }
+
+    await query.delete();
 
     return res.json('User $userId deleted successfully');
   }
