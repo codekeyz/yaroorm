@@ -46,11 +46,12 @@ jobs:
       - uses: dart-lang/setup-dart@v1.3
       - uses: bluefireteam/melos-action@v3
 
-      - name: Bootstrap
+      - name: Prepare Workspace
         run: |
           dart pub global activate melos
-          melos bootstrap
           dart pub global activate coverage
+          melos bootstrap
+          melos exec -- "dart run build_runner build"
 
       - name: Setup Test Database
         run: cd zomato && dart run ./bin/tools/migrator.dart migrate
