@@ -18,7 +18,7 @@ void main() {
   });
 
   group('Zomato API Tests', () {
-    group('when `create` user', () {
+    group('when `create user`', () {
       test('should error when invalid params', () async {
         await (await app.tester)
             .post('/api/users', {})
@@ -46,7 +46,7 @@ void main() {
       });
     });
 
-    group('when `show` user', () {
+    group('when `show user`', () {
       test('should error when invalid params', () async {
         await (await app.tester)
             .get('/api/users/asdf')
@@ -69,7 +69,7 @@ void main() {
       });
     });
 
-    group('when `update` user', () {
+    group('when `update user`', () {
       test('should error when invalid params', () async {
         await (await app.tester)
             .put('/api/users/asdf')
