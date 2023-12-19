@@ -1,6 +1,6 @@
 import 'package:get_it/get_it.dart';
 
-import '../core.dart';
+import '../../../http/http.dart';
 
 typedef ObjectRegistry<T extends Object> = Map<Type, T>;
 

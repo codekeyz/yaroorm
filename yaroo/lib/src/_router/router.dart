@@ -4,7 +4,7 @@ import 'package:pharaoh/pharaoh.dart';
 
 import 'definition.dart';
 
-export '../_router/definition.dart' show RouteDefinition;
+export 'definition.dart' show RouteDefinition;
 
 abstract interface class Route {
   static ControllerRouteMethodDefinition get(String path, ControllerMethodDefinition defn) =>

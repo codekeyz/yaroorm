@@ -1,7 +1,7 @@
 import 'package:pharaoh/pharaoh.dart';
 
+import '../../../http/http.dart';
 import '../_reflector/reflector.dart';
-import '../core.dart';
 import 'utils.dart';
 
 enum RouteDefinitionType { route, group, middleware }
