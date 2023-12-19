@@ -53,9 +53,6 @@ jobs:
           melos bootstrap
           melos exec -- "dart run build_runner build"
 
-      - name: Setup Test Database
-        run: cd zomato && dart run ./bin/tools/migrator.dart migrate
-
       - name: Run Unit tests
         run: melos tests:ci
 
