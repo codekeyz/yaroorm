@@ -1,4 +1,4 @@
-import 'package:yaroo/yaroo.dart';
+import 'package:yaroo/orm/orm.dart';
 
 import '../../config/database.dart' as db;
 import '../zomato.dart';

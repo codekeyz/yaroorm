@@ -1,6 +1,7 @@
-import 'package:yaroo/yaroo.dart';
 import 'package:uuid/v4.dart';
-import 'package:zomato/zomato.dart';
+import 'package:yaroo/http/http.dart';
+import 'package:yaroo/yaroo.dart';
+import 'package:zomato/app/app.dart';
 
 ConfigResolver appConfig = () => {
       /*
@@ -56,10 +57,10 @@ ConfigResolver appConfig = () => {
 
       /*
     |--------------------------------------------------------------------------
-    | Application Port 
+    | Application Port
     |--------------------------------------------------------------------------
     |
-    | The port your app will run on. If you don't provide this, the port 
+    | The port your app will run on. If you don't provide this, the port
     | in URL will be used.
     |
     */

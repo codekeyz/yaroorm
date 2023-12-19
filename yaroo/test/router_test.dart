@@ -1,4 +1,5 @@
 import 'package:test/test.dart';
+import 'package:yaroo/http/http.dart';
 import 'package:yaroo/yaroo.dart';
 
 import './router_test.reflectable.dart';
@@ -22,7 +23,6 @@ void main() {
 
   group('Router', () {
     group('when route group', () {
-      //
       test('with routes', () {
         final routes = Route.group('merchants').routes([
           Route.get('/get', (TestController, #index)),
@@ -33,7 +33,7 @@ void main() {
         final routePaths = routes.definitions.map((e) => e.route.path).toList();
         expect(routePaths, ['/merchants/get', '/merchants/delete', '/merchants/update']);
       });
-      //
+
       test('with prefix', () {
         final routes = Route.group('Merchants', prefix: 'foo').routes([
           Route.get('/foo', (TestController, #index)),
@@ -44,7 +44,7 @@ void main() {
         final routePaths = routes.definitions.map((e) => e.route.path).toList();
         expect(routePaths, ['/foo/foo', '/foo/bar', '/foo/moo']);
       });
-      //
+
       test('with sub groups', () {
         final routes = Route.group('users').routes([
           Route.get('/get', (TestController, #index)),
@@ -68,7 +68,7 @@ void main() {
           '/users/customers/set'
         ]);
       });
-      //
+
       group('when middlewares used', () {
         test('should add to routes', () {
           final routes = Route.group('users', middlewares: [_testMdw]).routes([
@@ -120,6 +120,13 @@ void main() {
           ]);
         });
       });
+    });
+
+    test('should error when controller method not found', () {
+      expect(
+        () => Route.group('Merchants', prefix: 'foo').routes([Route.get('/foo', (TestController, #foobar))]),
+        throwsA(isA<ArgumentError>().having((p0) => p0.message, '', 'TestController does not have method  #foobar')),
+      );
     });
   });
 }

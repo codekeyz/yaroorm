@@ -22,7 +22,11 @@ class UserController extends BaseController {
       );
     }
 
-    final result = await DB.query('users').insert<User>(User(reqBody['firstname'], reqBody['lastname'], 22));
+    final result = await DB.query('users').insert<User>(User(
+          reqBody['firstname'],
+          reqBody['lastname'],
+          reqBody['age'],
+        ));
 
     return res.json(result);
   }

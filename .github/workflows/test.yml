@@ -54,6 +54,7 @@ jobs:
       - name: Run Unit tests
         run: |
           dart pub global activate coverage
+          melos exec -- "dart run build_runner build"
           melos tests:ci
 
       - name: Upload Coverage
