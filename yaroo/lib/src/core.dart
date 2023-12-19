@@ -5,17 +5,17 @@ import 'dart:async';
 import 'package:meta/meta.dart';
 import 'package:pharaoh/pharaoh.dart';
 import 'package:reflectable/reflectable.dart' as r;
-import 'package:meta/meta_meta.dart';
 import 'package:spookie/spookie.dart';
+import 'package:yaroo/orm/orm.dart';
 
-import '../database/manager.dart';
+import '../../http/http.dart';
+import '../../http/kernel.dart';
 import '_config/config.dart';
 import '_container/container.dart';
 import '_reflector/reflector.dart';
-import '_router/router.dart';
+import '_router/definition.dart';
 import '_router/utils.dart';
 
-part '_http/http.dart';
 part './core_impl.dart';
 
 class Injectable extends r.Reflectable {
@@ -33,6 +33,10 @@ class Injectable extends r.Reflectable {
 }
 
 typedef RoutesResolver = List<RouteDefinition> Function();
+
+abstract class AppInstance {
+  Application get app => Application._instance;
+}
 
 abstract interface class Application {
   static final Application _instance = instanceFromRegistry<Application>();
@@ -73,8 +77,13 @@ class AppServiceProvider extends ServiceProvider {
 abstract class ApplicationFactory {
   final ConfigResolver appConfig;
   final ConfigResolver? dbConfig;
+  final Kernel _kernel;
 
-  ApplicationFactory(this.appConfig, {this.dbConfig});
+  ApplicationFactory(
+    this._kernel,
+    this.appConfig, {
+    this.dbConfig,
+  });
 
   List<Middleware> get globalMiddlewares => [bodyParser];
 
@@ -105,8 +114,10 @@ abstract class ApplicationFactory {
 
   Future<void> _bootstrapComponents(YarooAppConfig appConfig) async {
     final application = registerSingleton<Application>(_YarooAppImpl(Spanner()));
+
     application
       .._useConfig(appConfig)
+      ..singleton<Kernel>(_kernel)
       ..useMiddlewares(globalMiddlewares);
 
     /// boostrap providers

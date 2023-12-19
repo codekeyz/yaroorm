@@ -3,6 +3,7 @@ name: yaroodev
 packages:
   - yaroo
   - yaroorm
+  - zomato
 
 command:
   version:
@@ -11,8 +12,8 @@ command:
 
   bootstrap:
     runPubGetInParallel: false
-    hooks:
-      pre: dart pub global activate coverage
+   
+
 
 scripts:
   tests:

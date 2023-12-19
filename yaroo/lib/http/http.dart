@@ -1,10 +1,23 @@
 // ignore_for_file: camel_case_types
 
-part of '../core.dart';
+import 'dart:async';
 
-abstract interface class AppInstance {
-  Application get app => Application._instance;
-}
+import 'package:meta/meta_meta.dart';
+import 'package:yaroo/src/_reflector/reflector.dart';
+import 'package:yaroo/src/core.dart';
+
+export 'package:pharaoh/pharaoh.dart'
+    show
+        Request,
+        Response,
+        Session,
+        Middleware,
+        HTTPMethod,
+        CookieOpts,
+        session,
+        cookieParser,
+        useRequestHandler,
+        useShelfMiddleware;
 
 @inject
 abstract class BaseController extends AppInstance {}
@@ -24,5 +37,6 @@ class Param {
 @Target({TargetKind.parameter})
 class Body {
   final String? param;
+
   const Body({this.param});
 }
