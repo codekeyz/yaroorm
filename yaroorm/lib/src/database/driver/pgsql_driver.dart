@@ -1,10 +1,8 @@
 import 'package:postgres/postgres.dart' as pg;
+import 'package:yaroorm/src/query/primitives/serializer.dart';
+import 'package:yaroorm/yaroorm.dart';
 
 import 'sqlite_driver.dart' show SqliteSerializer;
-
-import '../../access/access.dart';
-import '../../access/primitives/serializer.dart';
-import '../database.dart';
 
 class PostgreSqlDriver implements DatabaseDriver {
   final DatabaseConnection config;
@@ -28,8 +26,8 @@ class PostgreSqlDriver implements DatabaseDriver {
 
   @override
   Future<List<Map<String, dynamic>>> delete(DeleteQuery query) {
-    // TODO: implement delete
-    throw UnimplementedError();
+    final sqlScript = serializer.acceptDeleteQuery(query);
+    return _execRawQuery(sqlScript);
   }
 
   @override
@@ -50,8 +48,15 @@ class PostgreSqlDriver implements DatabaseDriver {
   }
 
   @override
-  Future insert(String tableName, Map<String, dynamic> data) async{
-    final result = await db?.execute("SELECT 'foo'");
+  Future<int> insert(String tableName, Map<String, dynamic> data) async {
+    final queryBuilder = StringBuffer();
+
+    queryBuilder.write('INSERT INTO  $tableName');
+    queryBuilder.write(' (${data.keys.join(', ')})');
+    queryBuilder.write(' VALUES (${data.values.join(', ')})');
+
+    final result = await db?.execute(queryBuilder.toString());
+    return result?.affectedRows ?? 0;
   }
 
   @override
@@ -77,6 +82,29 @@ class PostgreSqlDriver implements DatabaseDriver {
 
   @override
   TableBlueprint get blueprint => _PgSqlTableBlueprint();
+
+  @override
+  Future<bool> hasTable(String tableName) async {
+    final result = await db?.execute(
+        '''SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='$tableName')''');
+    if (result == null || result.isEmpty) return false;
+    return true;
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> rawQuery(String script) {
+    return _execRawQuery(script);
+  }
+
+  @override
+  Future<void> transaction(void Function(DriverTransactor transactor) transaction) async {
+    db?.runTx(
+      (session) {
+        _execRawQuery('QUERY');
+        return Future.value();
+      },
+    );
+  }
 }
 
 class PgSqlPrimitiveSerializer extends SqliteSerializer {
@@ -87,46 +115,25 @@ class _PgSqlTableBlueprint implements TableBlueprint {
   final List<String> _statements = [];
 
   void char(String name, {String? defaultValue, bool nullable = false, int length = 10}) {
-    final sb = StringBuffer()..write('$name CHAR ($length)');
-    if (nullable) {
-      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
-    } else {
-      sb.write(' NOT NULL');
-    }
-
-    _statements.add(sb.toString());
+    String charColumn = _getColumn(name, 'CHAR ($length)', nullable: nullable, defaultValue: defaultValue);
+    _statements.add(charColumn);
   }
 
   void varChar(String name, {String? defaultValue, bool nullable = false, int length = 10}) {
-    final sb = StringBuffer()..write('$name VARCHAR ($length)');
-    if (nullable) {
-      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
-    } else {
-      sb.write(' NOT NULL');
-    }
+    String varCharColumn = _getColumn(name, 'VARCHAR ($length)', nullable: nullable, defaultValue: defaultValue);
+    _statements.add(varCharColumn);
   }
 
   @override
   void blob(String name, {String? defaultValue, bool nullable = false}) {
-    final sb = StringBuffer()..write('$name BYTEA');
-    if (nullable) {
-      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
-    } else {
-      sb.write(' NOT NULL');
-    }
-    _statements.add(sb.toString());
+    String blobColumn = _getColumn(name, 'BYTEA', nullable: nullable, defaultValue: defaultValue);
+    _statements.add(blobColumn);
   }
 
   @override
   void boolean(String name, {bool? defaultValue, bool nullable = false}) {
-    final sb = StringBuffer()..write('$name BOOLEAN');
-    if (nullable) {
-      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
-    } else {
-      sb.write(' NOT NULL');
-    }
-
-    _statements.add(sb.toString());
+    String booleanColumn = _getColumn(name, 'BOOLEAN', nullable: nullable, defaultValue: defaultValue);
+    _statements.add(booleanColumn);
   }
 
   @override
@@ -135,27 +142,15 @@ class _PgSqlTableBlueprint implements TableBlueprint {
   }
 
   @override
-  void datetime(String name, {bool? defaultValue, bool nullable = false}) {
-    final sb = StringBuffer()..write('$name TIMESTAMP');
-    if (nullable) {
-      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
-    } else {
-      sb.write(' NOT NULL');
-    }
-
-    _statements.add(sb.toString());
+  void datetime(String name, {nullable = false, defaultValue}) {
+    String dateTimeColumn = _getColumn(name, 'TIMESTAMP', nullable: nullable, defaultValue: defaultValue);
+    _statements.add(dateTimeColumn);
   }
 
   @override
   void double(String name, {num? defaultValue, bool nullable = false}) {
-    String columnDefinition = "$name DOUBLE PRECISION";
-    if (defaultValue != null) {
-      columnDefinition += " DEFAULT $defaultValue";
-    }
-    if (!nullable) {
-      columnDefinition += " NOT NULL";
-    }
-    _statements.add(columnDefinition);
+    String doubleColumn = _getColumn(name, 'DOUBLE PRECISION', nullable: nullable, defaultValue: defaultValue);
+    _statements.add(doubleColumn);
   }
 
   @override
@@ -165,17 +160,12 @@ class _PgSqlTableBlueprint implements TableBlueprint {
 
   @override
   void float(String name, {num? defaultValue, bool nullable = false}) {
-    final sb = StringBuffer()..write('$name REAL');
-    if (nullable) {
-      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
-    } else {
-      sb.write(' NOT NULL');
-    }
-    _statements.add(sb.toString());
+    String floatColumn = _getColumn(name, 'REAL', nullable: nullable, defaultValue: defaultValue);
+    _statements.add(floatColumn);
   }
 
   @override
-  void id({bool autoIncrement = true}) {
+  void id({name = 'id', autoIncrement = true}) {
     final sb = StringBuffer()..write('id');
     sb.write(autoIncrement ? "SERIAL PRIMARY KEY" : "INTEGER PRIMARY KEY");
     _statements.add(sb.toString());
@@ -183,14 +173,8 @@ class _PgSqlTableBlueprint implements TableBlueprint {
 
   @override
   void integer(String name, {Integer type = Integer.integer, num? defaultValue, bool nullable = false}) {
-    final sb = StringBuffer()..write('$name INTEGER');
-    if (nullable) {
-      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
-    } else {
-      sb.write(' NOT NULL');
-    }
-
-    _statements.add(sb.toString());
+    String integerColumn = _getColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue);
+    _statements.add(integerColumn);
   }
 
   @override
@@ -200,28 +184,28 @@ class _PgSqlTableBlueprint implements TableBlueprint {
 
   @override
   void string(String name, {String? defaultValue, bool nullable = false}) {
-    final sb = StringBuffer()..write('$name TEXT');
-    if (nullable) {
-      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
-    } else {
-      sb.write(' NOT NULL');
-    }
+    String stringColumn = _getColumn(name, 'TEXT', nullable: nullable, defaultValue: defaultValue);
+    _statements.add(stringColumn);
   }
 
   @override
-  void timestamp(String name, {String? defaultValue, bool nullable = false}) {
-    final sb = StringBuffer()..write('$name TIMESTAMP');
-    if (nullable) {
-      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
-    } else {
-      sb.write(' NOT NULL');
-    }
-    _statements.add(sb.toString());
+  void timestamp(String name, {nullable = false, defaultValue}) {
+    String timeStampColumn = _getColumn(name, 'TIMESTAMP', nullable: nullable, defaultValue: defaultValue);
+    _statements.add(timeStampColumn);
   }
 
   @override
   void timestamps({String createdAt = entityCreatedAtColumnName, String updatedAt = entityUpdatedAtColumnName}) {
     timestamp(createdAt);
     timestamp(updatedAt);
+  }
+
+  String _getColumn(String name, String type, {nullable = false, defaultValue}) {
+    final sb = StringBuffer()..write('$name $type');
+    if (!nullable) {
+      sb.write(' NOT NULL');
+      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
+    }
+    return sb.toString();
   }
 }

@@ -1,9 +1,8 @@
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:yaroorm/yaroorm.dart';
 import '../../query/primitives/serializer.dart';
-import '../../query/query.dart';
-import '../database.dart';
 
-final _serializer = const _SqliteSerializer();
+final _serializer = const SqliteSerializer();
 
 class SqliteDriver implements DatabaseDriver {
   final DatabaseConnection config;
@@ -424,62 +423,5 @@ class _SqliteTableBlueprint implements TableBlueprint {
       ..writeln('INSERT INTO $toName SELECT * FROM temp_data;')
       ..writeln('DROP TABLE temp_info; DROP TABLE temp_data;');
     return renameScript.toString();
-  }
-
-  @override
-  void blob(String name, {defaultValue, nullable = false}) {
-    final sb = StringBuffer()..write('$name TEXT');
-    if (nullable) {
-      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
-    } else {
-      sb.write(' NOT NULL');
-    }
-
-    _statements.add(sb.toString());
-  }
-
-  @override
-  void boolean(String name, {defaultValue, nullable = false}) {
-    _statements.add('$name INTEGER');
-  }
-
-  @override
-  void datetime(String name, {defaultValue, nullable = false}) {
-    _statements.add('$name DATETIME');
-  }
-
-  @override
-  void timestamp(String name, {defaultValue, nullable = false}) {
-    _statements.add('$name DATETIME');
-  }
-
-  @override
-  void double(String name, {defaultValue, nullable = false}) {
-    _statements.add('$name REAL');
-  }
-
-  @override
-  void float(String name, {defaultValue, nullable = false}) {
-    _statements.add('$name REAL');
-  }
-
-  @override
-  void id({autoIncrement = true}) {
-    _statements.add('id INTEGER PRIMARY KEY');
-  }
-
-  @override
-  void string(String name, {defaultValue, nullable = false}) {
-    _statements.add('$name TEXT');
-  }
-
-  @override
-  void integer(
-    String name, {
-    type = Integer.integer,
-    defaultValue,
-    nullable = false,
-  }) {
-    _statements.add('$name INTEGER');
   }
 }

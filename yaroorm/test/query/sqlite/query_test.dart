@@ -5,11 +5,9 @@ import '../../helpers/drivers.dart';
 
 void main() {
   late DatabaseDriver driver;
-  late DatabaseDriver postgresDriver;
 
   setUpAll(() {
-     driver = DatabaseDriver.init(sqliteConnection);
-     postgresDriver = DatabaseDriver.init(postgresSqlConnection);
+    driver = DatabaseDriver.init(sqliteConnection);
   });
 
   group('Query.query', () {
@@ -59,17 +57,6 @@ void main() {
               .orderByDesc('age')
               .statement,
           'SELECT * FROM users WHERE firstname IS NOT NULL ORDER BY lastname DESC, age DESC;',
-        );
-      });
-    });
-  });
-
-  group('Postgres Driver Table Blueprint', () {
-    group('CreateTable', ()  {
-      test('create table', () {
-        expect(
-          Query.make('users', postgresDriver).,
-          'SELECT * FROM users ORDER BY firstname DESC, lastname DESC;',
         );
       });
     });
