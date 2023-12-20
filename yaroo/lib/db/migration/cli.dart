@@ -2,18 +2,20 @@ import 'dart:isolate';
 
 import 'package:yaroo/db/db.dart';
 import 'package:yaroo/db/migration/_migrator.dart';
+import 'package:yaroo/db/migration/_utils.dart';
 import 'package:yaroo/src/_config/config.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-typedef MigrationTask = ({String name, DatabaseDriver driver, List<Schema> schemas});
+typedef MigrationTask = ({String name, List<Schema> schemas});
+
+typedef MigratorAction = Future<void> Function(DatabaseDriver driver);
 
 class _Task {
   late final MigrationTask up, down;
-  late final DatabaseDriver driver;
 
-  _Task(Migration migration) : driver = DB.driver(migration.connection) {
-    up = (name: migration.name, driver: driver, schemas: _accumulate(migration.name, migration.up));
-    down = (name: migration.name, driver: driver, schemas: _accumulate(migration.name, migration.down));
+  _Task(Migration migration) {
+    up = (name: migration.name, schemas: _accumulate(migration.name, migration.up));
+    down = (name: migration.name, schemas: _accumulate(migration.name, migration.down));
   }
 
   List<Schema> _accumulate(String scriptName, Function(List<Schema> schemas) func) {
@@ -27,6 +29,7 @@ class MigratorCLI {
   /// commands
   static const String migrate = 'migrate';
   static const String migrateReset = 'migrate:reset';
+  static const String migrateRollback = 'migrate:rollback';
 
   static final migrationsSchema = Schema.create('migrations', ($table) {
     return $table
@@ -35,29 +38,38 @@ class MigratorCLI {
       ..integer('batch');
   });
 
-  static Future<void> processCmd(String cmd, ConfigResolver dbConfig, {List<String>? cmdArguments}) async {
+  static Future<void> processCmd(String cmd, ConfigResolver dbConfig, {List<String> cmdArguments = const []}) async {
     /// validate config
     final config = dbConfig.call();
-    final mgts = config[Migrator.migrationsKeyInConfig];
+    var classes = config[Migrator.migrationsKeyInConfig];
+    final connection = getValueFromCLIArs('database', cmdArguments) ?? config['default'];
+    assert(connection.isNotEmpty, 'Database connection must be provided');
     if (config.containsKey(Migrator.migrationsTableNameKeyInConfig)) {
       final mgtsTableName = config[Migrator.migrationsTableNameKeyInConfig];
       assert(mgtsTableName, '${Migrator.migrationsTableNameKeyInConfig} value must be a String');
       Migrator.tableName = mgtsTableName!;
     }
-    assert(mgts is Iterable<Migration>, 'Migrations must be an Iterable<Migration>');
-    final files = (mgts as Iterable<Migration>).map((e) => _Task(e));
+    assert(classes is Iterable<Migration>, 'Migrations must be an Iterable<Migration>');
 
-    /// resolve action for command
+    final Iterable<Migration> migrationsForConnection =
+        (classes).where((e) => getDBConnection(e, config) == connection);
+    if (migrationsForConnection.isEmpty) {
+      print('No migrations found for connection: $connection');
+      return;
+    }
+
+    final tasks = migrationsForConnection.map((e) => _Task(e));
+
     cmd = cmd.toLowerCase();
-    final cmdAction = switch (cmd) {
-      MigratorCLI.migrate => () => Migrator.runMigrations(files.map((e) => e.up)),
-      MigratorCLI.migrateReset => () => Migrator.resetMigrations(files.map((e) => e.down)),
+    final MigratorAction cmdAction = switch (cmd) {
+      MigratorCLI.migrate => (driver) => Migrator.runMigrations(driver, tasks.map((e) => e.up)),
+      MigratorCLI.migrateReset => (driver) => Migrator.resetMigrations(driver, tasks.map((e) => e.down)),
       _ => throw UnsupportedError(cmd),
     };
 
     isolatedTask() async {
       DB.init(() => config);
-      await cmdAction.call();
+      await cmdAction.call(DB.driver(connection));
     }
 
     await Isolate.run(isolatedTask);

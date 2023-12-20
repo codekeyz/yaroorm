@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import '_migrator.dart';
@@ -20,4 +21,16 @@ Future<int> getLastBatchNumber(DatabaseDriver driver, String migrationsTable) as
   /// TODO:(codekeyz) rewrite this with the ORM.
   final result = await driver.rawQuery('SELECT MAX(batch) as max_batch FROM $migrationsTable');
   return result.first['max_batch'] ?? 0;
+}
+
+String? getValueFromCLIArs(String key, List<String> args) {
+  final argument = args.firstWhereOrNull((arg) => arg.split('=').first == '--$key');
+  if (argument == null) return null;
+  return argument.split('=').last;
+}
+
+String? getDBConnection(Migration migration, Map<String, dynamic> config) {
+  var connection = migration.connection;
+  if (connection == 'default') connection = config['default'];
+  return connection;
 }
