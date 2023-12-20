@@ -5,17 +5,17 @@ import 'dart:async';
 import 'package:meta/meta.dart';
 import 'package:pharaoh/pharaoh.dart';
 import 'package:reflectable/reflectable.dart' as r;
-import 'package:meta/meta_meta.dart';
 import 'package:spookie/spookie.dart';
+import 'package:yaroo/db/db.dart';
 
-import '../database/manager.dart';
+import '../../http/http.dart';
+import '../../http/kernel.dart';
 import '_config/config.dart';
 import '_container/container.dart';
 import '_reflector/reflector.dart';
-import '_router/router.dart';
+import '_router/definition.dart';
 import '_router/utils.dart';
 
-part '_http/http.dart';
 part './core_impl.dart';
 
 class Injectable extends r.Reflectable {
@@ -33,6 +33,10 @@ class Injectable extends r.Reflectable {
 }
 
 typedef RoutesResolver = List<RouteDefinition> Function();
+
+abstract class AppInstance {
+  Application get app => Application._instance;
+}
 
 abstract interface class Application {
   static final Application _instance = instanceFromRegistry<Application>();
@@ -73,26 +77,27 @@ class AppServiceProvider extends ServiceProvider {
 abstract class ApplicationFactory {
   final ConfigResolver appConfig;
   final ConfigResolver? dbConfig;
+  final Kernel _kernel;
 
-  ApplicationFactory(this.appConfig, {this.dbConfig});
+  ApplicationFactory(
+    this._kernel,
+    this.appConfig, {
+    this.dbConfig,
+  });
 
   List<Middleware> get globalMiddlewares => [bodyParser];
 
   Future<void> bootstrap({
-    bool bootstap_pharaoh = true,
-    bool bootstrap_database = true,
     bool start_server = true,
   }) async {
-    if (bootstrap_database && dbConfig != null) {
+    if (dbConfig != null) {
       DB.init(dbConfig!);
       await DB.defaultDriver.connect();
     }
 
-    if (bootstap_pharaoh) {
-      await _bootstrapComponents(appConfig.call());
+    await _bootstrapComponents(appConfig.call());
 
-      if (start_server) await startServer();
-    }
+    if (start_server) await startServer();
   }
 
   Future<void> startServer() async {
@@ -105,8 +110,10 @@ abstract class ApplicationFactory {
 
   Future<void> _bootstrapComponents(YarooAppConfig appConfig) async {
     final application = registerSingleton<Application>(_YarooAppImpl(Spanner()));
+
     application
       .._useConfig(appConfig)
+      ..singleton<Kernel>(_kernel)
       ..useMiddlewares(globalMiddlewares);
 
     /// boostrap providers

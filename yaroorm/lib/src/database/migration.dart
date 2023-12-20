@@ -1,9 +1,6 @@
-// ignore_for_file: avoid_function_literals_in_foreach_calls
-
 import 'package:meta/meta.dart';
 import 'package:recase/recase.dart';
 
-import 'driver/driver.dart';
 import 'entity.dart';
 
 class Id {}
@@ -11,56 +8,23 @@ class Id {}
 enum Integer { smallint, integer, bigint }
 
 abstract interface class TableBlueprint {
-  void id({bool autoIncrement = true});
+  void id({String name = 'id', bool autoIncrement = true});
 
-  void string(
-    String name, {
-    String? defaultValue,
-    bool nullable = false,
-  });
+  void string(String name, {bool nullable = false, String? defaultValue});
 
-  void integer(
-    String name, {
-    Integer type = Integer.integer,
-    num? defaultValue,
-    bool nullable = false,
-  });
+  void integer(String name, {bool nullable = false, int? defaultValue});
 
-  void double(
-    String name, {
-    num? defaultValue,
-    bool nullable = false,
-  });
+  void double(String name, {bool nullable = false, num? defaultValue});
 
-  void float(
-    String name, {
-    num? defaultValue,
-    bool nullable = false,
-  });
+  void float(String name, {bool nullable = false, num? defaultValue});
 
-  void boolean(
-    String name, {
-    bool? defaultValue,
-    bool nullable = false,
-  });
+  void boolean(String name, {bool nullable = false, bool? defaultValue});
 
-  void timestamp(
-    String name, {
-    String? defaultValue,
-    bool nullable = false,
-  });
+  void timestamp(String name, {bool nullable = false, DateTime? defaultValue});
 
-  void datetime(
-    String name, {
-    bool? defaultValue,
-    bool nullable = false,
-  });
+  void datetime(String name, {bool nullable = false, DateTime? defaultValue});
 
-  void blob(
-    String name, {
-    String? defaultValue,
-    bool nullable = false,
-  });
+  void blob(String name, {bool nullable = false, String? defaultValue});
 
   void timestamps({
     String createdAt = entityCreatedAtColumnName,
@@ -83,8 +47,6 @@ class Schema {
   final String tableName;
   final TableBluePrintFunc? _bluePrintFunc;
 
-  String? _scriptname;
-
   Schema._(this.tableName, this._bluePrintFunc);
 
   String toScript(TableBlueprint $table) => _bluePrintFunc!.call($table).createScript(tableName);
@@ -100,7 +62,7 @@ class _DropSchema extends Schema {
   _DropSchema(String name) : super._(name, null);
 
   @override
-  String toScript(TableBlueprint $table) => $table.dropScript(tableName);
+  String toScript(TableBlueprint table) => table.dropScript(tableName);
 }
 
 class _RenameSchema extends Schema {
@@ -109,7 +71,7 @@ class _RenameSchema extends Schema {
   _RenameSchema(String from, this.newName) : super._(from, null);
 
   @override
-  String toScript(TableBlueprint $table) => $table.renameScript(tableName, newName);
+  String toScript(TableBlueprint table) => table.renameScript(tableName, newName);
 }
 
 abstract class Migration {
@@ -117,43 +79,9 @@ abstract class Migration {
 
   String get name => runtimeType.toString().snakeCase;
 
-  void up(List<Schema> $actions);
+  String get connection => 'default';
 
-  void down(List<Schema> $actions);
-}
+  void up(List<Schema> schemas);
 
-List<Schema> _accumulateSchemas(Function(List<Schema> schemas) func) {
-  final result = <Schema>[];
-  func(result);
-  return result;
-}
-
-Future<void> processMigrationCmd(
-  String cmd,
-  List<Migration> migrations,
-  DatabaseDriver driver, {
-  List<String>? cmdArguments,
-}) async {
-  cmd = cmd.toLowerCase();
-
-  final resultingSchemas = <Schema>[];
-
-  for (final migration in migrations) {
-    final result = switch (cmd) {
-      'migrate' => _accumulateSchemas(migration.up),
-      'migrate:reset' => _accumulateSchemas(migration.down),
-      _ => throw UnsupportedError(cmd),
-    };
-    result.forEach((schema) => schema._scriptname = migration.name);
-    resultingSchemas.addAll(result);
-  }
-
-  print('------- Starting database migration --\n');
-  for (final schema in resultingSchemas) {
-    print('-x executing ${schema._scriptname}');
-
-    final script = schema.toScript(driver.blueprint);
-    await driver.execute(script);
-  }
-  print('------- Completed migration  ✅ ------\n');
+  void down(List<Schema> schemas);
 }

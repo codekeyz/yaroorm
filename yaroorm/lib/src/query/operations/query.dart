@@ -1,4 +1,4 @@
-part of '../access.dart';
+part of '../query.dart';
 
 enum OrderByDirection { asc, desc }
 

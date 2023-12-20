@@ -11,8 +11,8 @@ command:
 
   bootstrap:
     runPubGetInParallel: false
-    hooks:
-      pre: dart pub global activate coverage
+
+
 
 scripts:
   tests:
