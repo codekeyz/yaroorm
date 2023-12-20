@@ -5,10 +5,11 @@ import '../../query/query.dart';
 import '../migration.dart';
 import 'driver.dart';
 
+final _serializer = const _SqliteSerializer();
+
 class SqliteDriver implements DatabaseDriver {
   final DatabaseConnection config;
 
-  final _serializer = const _SqliteSerializer();
   Database? _database;
 
   SqliteDriver(this.config);
@@ -42,9 +43,7 @@ class SqliteDriver implements DatabaseDriver {
   TableBlueprint get blueprint => _SqliteTableBlueprint();
 
   Future<Database> _getDatabase() async {
-    final db = _database;
-    if (db == null) throw Exception('Database is not open');
-    if (!db.isOpen) await connect();
+    if (!isOpen) await connect();
     return _database!;
   }
 
@@ -54,9 +53,14 @@ class SqliteDriver implements DatabaseDriver {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> rawQuery(String script) async {
+    return (await _getDatabase()).rawQuery(script);
+  }
+
+  @override
   Future<List<Map<String, dynamic>>> query(Query query) async {
     final sql = _serializer.acceptReadQuery(query);
-    return (await _getDatabase()).rawQuery(sql);
+    return rawQuery(sql);
   }
 
   @override
@@ -85,6 +89,50 @@ class SqliteDriver implements DatabaseDriver {
         .rawQuery('SELECT * FROM sqlite_master WHERE type = "table" AND name = "$tableName" LIMIT 1;');
     return result.isNotEmpty;
   }
+
+  @override
+  Future<void> transaction(Function(DriverTransactor transactor) func) async {
+    return (await _getDatabase()).transaction((txn) => func(_SqliteTransactor(txn)));
+  }
+}
+
+class _SqliteTransactor implements DriverTransactor {
+  final Transaction _txn;
+  final Batch _batch;
+
+  _SqliteTransactor(this._txn) : _batch = _txn.batch();
+
+  @override
+  Future<void> execute(String script) => _txn.execute(script);
+
+  @override
+  Future<List<Map<String, dynamic>>> rawQuery(String script) => _txn.rawQuery(script);
+
+  @override
+  Future<List<Map<String, dynamic>>> query(Query query) async {
+    final sql = _serializer.acceptReadQuery(query);
+    return rawQuery(sql);
+  }
+
+  @override
+  void update(UpdateQuery query) {
+    final sql = _serializer.acceptUpdateQuery(query);
+    return _batch.rawUpdate(sql);
+  }
+
+  @override
+  void delete(DeleteQuery query) async {
+    final sql = _serializer.acceptDeleteQuery(query);
+    return _batch.rawDelete(sql);
+  }
+
+  @override
+  void insert(String tableName, Map<String, dynamic> data) {
+    _batch.insert(tableName, data);
+  }
+
+  @override
+  Future<List<Object?>> commit() => _batch.commit();
 }
 
 class _SqliteSerializer implements PrimitiveSerializer {
@@ -268,15 +316,17 @@ class _SqliteTableBlueprint implements TableBlueprint {
   }
 
   @override
-  void id() {
-    _statements.add('id INTEGER NOT NULL PRIMARY KEY');
+  void id({name = 'id', autoIncrement = true}) {
+    final sb = StringBuffer()..write('$name INTEGER NOT NULL PRIMARY KEY');
+    if (autoIncrement) sb.write(' AUTOINCREMENT');
+    _statements.add(sb.toString());
   }
 
   @override
   void string(String name, {nullable = false, defaultValue}) {
     _statements.add(_getColumn(
       name,
-      'VARCHAR(255)',
+      'VARCHAR',
       nullable: nullable,
       defaultValue: defaultValue,
     ));

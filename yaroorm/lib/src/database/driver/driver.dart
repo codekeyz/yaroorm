@@ -61,7 +61,41 @@ DatabaseDriverType _getDriverType(Map<String, dynamic> connInfo) {
   };
 }
 
-abstract interface class DatabaseDriver {
+mixin DriverAble {
+  /// Perform query on the database
+  Future<List<Map<String, dynamic>>> query(Query query);
+
+  /// Perform raw query on the database.
+  Future<List<Map<String, dynamic>>> rawQuery(String script);
+
+  /// Execute scripts on the database.
+  ///
+  /// Execution varies across drivers
+  Future<void> execute(String script);
+
+  /// Perform update on the database
+  update(UpdateQuery query);
+
+  /// Perform delete on the database
+  delete(DeleteQuery query);
+
+  insert(String tableName, Map<String, dynamic> data);
+}
+
+abstract class DriverTransactor with DriverAble {
+  Future<List<Object?>> commit();
+
+  @override
+  void insert(String tableName, Map<String, dynamic> data);
+
+  @override
+  void update(UpdateQuery query);
+
+  @override
+  void delete(DeleteQuery query);
+}
+
+abstract interface class DatabaseDriver with DriverAble {
   factory DatabaseDriver.init(DatabaseConnection dbConn) {
     final driver = dbConn.driver;
     switch (driver) {
@@ -88,26 +122,21 @@ abstract interface class DatabaseDriver {
   /// Depend on driver type it may create a connection pool.
   Future<void> disconnect();
 
+  /// check if the table exists in the database
+  Future<bool> hasTable(String tableName);
+
+  @override
+  Future<int> insert(String tableName, Map<String, dynamic> data);
+
+  @override
+  Future<List<Map<String, dynamic>>> update(UpdateQuery query);
+
+  @override
+  Future<List<Map<String, dynamic>>> delete(DeleteQuery query);
+
   TableBlueprint get blueprint;
 
   PrimitiveSerializer get serializer;
 
-  /// Perform query on the database
-  Future<List<Map<String, dynamic>>> query(Query query);
-
-  /// Perform update on the database
-  Future<List<Map<String, dynamic>>> update(UpdateQuery query);
-
-  /// Perform delete on the database
-  Future<List<Map<String, dynamic>>> delete(DeleteQuery query);
-
-  /// check if the table exists in the database
-  Future<bool> hasTable(String tableName);
-
-  Future<dynamic> insert(String tableName, Map<String, dynamic> data);
-
-  /// Execute scripts on the database.
-  ///
-  /// Execution varies across drivers
-  Future<dynamic> execute(String script);
+  Future<void> transaction(void Function(DriverTransactor transactor) transaction);
 }
