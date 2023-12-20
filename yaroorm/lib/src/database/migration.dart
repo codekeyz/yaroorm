@@ -4,7 +4,7 @@ import 'package:recase/recase.dart';
 import 'entity.dart';
 
 abstract interface class TableBlueprint {
-  void id();
+  void id({String name = 'id', bool autoIncrement = true});
 
   void string(String name, {bool nullable = false, String? defaultValue});
 
@@ -40,7 +40,6 @@ abstract interface class TableBlueprint {
 typedef TableBluePrintFunc = TableBlueprint Function(TableBlueprint $table);
 
 class Schema {
-  late final String scriptName;
   final String tableName;
   final TableBluePrintFunc? _bluePrintFunc;
 
@@ -59,7 +58,7 @@ class _DropSchema extends Schema {
   _DropSchema(String name) : super._(name, null);
 
   @override
-  String toScript(TableBlueprint $table) => $table.dropScript(tableName);
+  String toScript(TableBlueprint table) => table.dropScript(tableName);
 }
 
 class _RenameSchema extends Schema {
@@ -68,7 +67,7 @@ class _RenameSchema extends Schema {
   _RenameSchema(String from, this.newName) : super._(from, null);
 
   @override
-  String toScript(TableBlueprint $table) => $table.renameScript(tableName, newName);
+  String toScript(TableBlueprint table) => table.renameScript(tableName, newName);
 }
 
 abstract class Migration {
@@ -78,7 +77,7 @@ abstract class Migration {
 
   String get connection => 'default';
 
-  void up(List<Schema> $actions);
+  void up(List<Schema> schemas);
 
-  void down(List<Schema> $actions);
+  void down(List<Schema> schemas);
 }

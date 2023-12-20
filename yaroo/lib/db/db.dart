@@ -19,6 +19,7 @@ class DB {
 
   static late final UseDatabaseConnection defaultConnection;
   static late final List<Migration> migrations;
+  static final String _defaultDatabaseValue = 'default';
 
   DB._();
 
@@ -29,6 +30,7 @@ class DB {
   static UseDatabaseConnection connection(String connName) => UseDatabaseConnection(connName);
 
   static DatabaseDriver driver(String connName) {
+    if (connName == _defaultDatabaseValue) return defaultDriver;
     final cached = _driverInstances[connName];
     if (cached != null) return cached;
     final connInfo = _connections.firstWhereOrNull((e) => e.name == connName);
@@ -40,7 +42,7 @@ class DB {
 
   static void init(ConfigResolver dbConfig) {
     final configuration = dbConfig.call();
-    final defaultConn = configuration.getValue<String>('default');
+    final defaultConn = configuration.getValue<String>(_defaultDatabaseValue);
     if (defaultConn == null) {
       throw ArgumentError.notNull('Default database connection');
     }

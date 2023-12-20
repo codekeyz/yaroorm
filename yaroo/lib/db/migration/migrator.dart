@@ -1,20 +1,43 @@
 // ignore_for_file: avoid_function_literals_in_foreach_calls
 
+import 'dart:isolate';
+
 import 'package:yaroo/db/db.dart';
 import 'package:yaroo/src/_config/config.dart';
 import 'package:yaroorm/yaroorm.dart';
 
+import '_actions.dart';
+
 export 'package:yaroorm/src/database/migration.dart';
 
-List<Schema> _accumulateSchemas(Function(List<Schema> schemas) func) {
-  final result = <Schema>[];
-  func(result);
-  return result;
+class _Task {
+  late final MigrationTask up, down;
+  late final DatabaseDriver driver;
+
+  _Task(Migration migration) : driver = DB.driver(migration.connection) {
+    up = (name: migration.name, driver: driver, schemas: _accumulate(migration.name, migration.up));
+    down = (name: migration.name, driver: driver, schemas: _accumulate(migration.name, migration.down));
+  }
+
+  List<Schema> _accumulate(String scriptName, Function(List<Schema> schemas) func) {
+    final result = <Schema>[];
+    func(result);
+    return result;
+  }
 }
 
 class Migrator {
+  /// commands
   static const String migrate = 'migrate';
   static const String migrateReset = 'migrate:reset';
+
+  /// config keys for migrations
+  static const migrationsTableNameKeyInConfig = 'migrationsTableName';
+  static const migrationsKeyInConfig = 'migrations';
+
+  static String _tableName = 'migrations';
+
+  static String get tableName => _tableName;
 
   static final migrationsSchema = Schema.create('migrations', ($table) {
     return $table
@@ -24,37 +47,29 @@ class Migrator {
   });
 
   static Future<void> processCmd(String cmd, ConfigResolver dbConfig, {List<String>? cmdArguments}) async {
-    cmd = cmd.toLowerCase();
-
+    /// validate config
     final config = dbConfig.call();
-    DB.init(() => config);
+    final mgts = config[migrationsKeyInConfig];
+    if (config.containsKey(migrationsTableNameKeyInConfig)) {
+      final mgtsTableName = config[migrationsTableNameKeyInConfig];
+      assert(mgtsTableName, '$migrationsTableNameKeyInConfig must be a String');
+      Migrator._tableName = mgtsTableName!;
+    }
+    assert(mgts is Iterable<Migration>, 'Migrations must be an Iterable<Migration>');
+    final migrations = (mgts as Iterable<Migration>).map((e) => _Task(e));
 
-    final migrations = List<Migration>.from(config['migrations']);
+    /// resolve action for command
+    final cmdAction = switch (cmd.toLowerCase()) {
+      Migrator.migrate => () => doMigrateAction(migrations.map((e) => e.up)),
+      Migrator.migrateReset => () => doResetMigrationAction(migrations.map((e) => e.down)),
+      _ => throw UnsupportedError(cmd),
+    };
 
-    final resultingSchemas = <Schema>[];
-    for (final migration in migrations) {
-      final result = switch (cmd) {
-        Migrator.migrate => _accumulateSchemas(migration.up),
-        Migrator.migrateReset => _accumulateSchemas(migration.down),
-        _ => throw UnsupportedError(cmd),
-      };
-      result.forEach((schema) => schema.scriptName = migration.name);
-      resultingSchemas.addAll(result);
+    actualCb() async {
+      DB.init(() => config);
+      await cmdAction.call();
     }
 
-    // if (!await (isMigrationsTableReady(driver))) {
-    //   throw Exception('Unable to setup migrations table');
-    // }
-
-    print('------- Starting database migration --\n');
-
-    // print('------- Starting database migration --\n');
-    // for (final schema in resultingSchemas) {
-    //   print('-x executing ${schema._scriptname}');
-    //
-    //   final script = schema.toScript(driver.blueprint);
-    //   await driver.execute(script);
-    // }
-    // print('------- Completed migration  ✅ ------\n');
+    await Isolate.run(actualCb);
   }
 }
