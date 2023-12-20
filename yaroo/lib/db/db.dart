@@ -3,6 +3,7 @@ import 'package:yaroo/src/_config/config.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 export 'package:yaroorm/src/database/entity.dart';
+export 'package:yaroorm/src/database/migration.dart';
 
 class UseDatabaseConnection {
   final String name;

@@ -1,12 +1,13 @@
 import 'package:yaroorm/yaroorm.dart';
 
-import 'migrator.dart';
+import '_migrator.dart';
+import 'cli.dart';
 
 Future<void> ensureMigrationsTableReady(DatabaseDriver driver) async {
   final hasTable = await driver.hasTable(Migrator.tableName);
   if (hasTable) return;
 
-  final script = Migrator.migrationsSchema.toScript(driver.blueprint);
+  final script = MigratorCLI.migrationsSchema.toScript(driver.blueprint);
   await driver.execute(script);
 }
 

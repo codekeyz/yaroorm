@@ -1,14 +1,11 @@
-// ignore_for_file: avoid_function_literals_in_foreach_calls
-
 import 'dart:isolate';
 
 import 'package:yaroo/db/db.dart';
+import 'package:yaroo/db/migration/_migrator.dart';
 import 'package:yaroo/src/_config/config.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import '_actions.dart';
-
-export 'package:yaroorm/src/database/migration.dart';
+typedef MigrationTask = ({String name, DatabaseDriver driver, List<Schema> schemas});
 
 class _Task {
   late final MigrationTask up, down;
@@ -26,18 +23,10 @@ class _Task {
   }
 }
 
-class Migrator {
+class MigratorCLI {
   /// commands
   static const String migrate = 'migrate';
   static const String migrateReset = 'migrate:reset';
-
-  /// config keys for migrations
-  static const migrationsTableNameKeyInConfig = 'migrationsTableName';
-  static const migrationsKeyInConfig = 'migrations';
-
-  static String _tableName = 'migrations';
-
-  static String get tableName => _tableName;
 
   static final migrationsSchema = Schema.create('migrations', ($table) {
     return $table
@@ -49,27 +38,28 @@ class Migrator {
   static Future<void> processCmd(String cmd, ConfigResolver dbConfig, {List<String>? cmdArguments}) async {
     /// validate config
     final config = dbConfig.call();
-    final mgts = config[migrationsKeyInConfig];
-    if (config.containsKey(migrationsTableNameKeyInConfig)) {
-      final mgtsTableName = config[migrationsTableNameKeyInConfig];
-      assert(mgtsTableName, '$migrationsTableNameKeyInConfig must be a String');
-      Migrator._tableName = mgtsTableName!;
+    final mgts = config[Migrator.migrationsKeyInConfig];
+    if (config.containsKey(Migrator.migrationsTableNameKeyInConfig)) {
+      final mgtsTableName = config[Migrator.migrationsTableNameKeyInConfig];
+      assert(mgtsTableName, '${Migrator.migrationsTableNameKeyInConfig} value must be a String');
+      Migrator.tableName = mgtsTableName!;
     }
     assert(mgts is Iterable<Migration>, 'Migrations must be an Iterable<Migration>');
-    final migrations = (mgts as Iterable<Migration>).map((e) => _Task(e));
+    final files = (mgts as Iterable<Migration>).map((e) => _Task(e));
 
     /// resolve action for command
-    final cmdAction = switch (cmd.toLowerCase()) {
-      Migrator.migrate => () => doMigrateAction(migrations.map((e) => e.up)),
-      Migrator.migrateReset => () => doResetMigrationAction(migrations.map((e) => e.down)),
+    cmd = cmd.toLowerCase();
+    final cmdAction = switch (cmd) {
+      MigratorCLI.migrate => () => Migrator.runMigrations(files.map((e) => e.up)),
+      MigratorCLI.migrateReset => () => Migrator.resetMigrations(files.map((e) => e.down)),
       _ => throw UnsupportedError(cmd),
     };
 
-    actualCb() async {
+    isolatedTask() async {
       DB.init(() => config);
       await cmdAction.call();
     }
 
-    await Isolate.run(actualCb);
+    await Isolate.run(isolatedTask);
   }
 }
