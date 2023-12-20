@@ -16,6 +16,8 @@ class _MigrationDbData {
   }
 }
 
+typedef Rollback = ({int batch, String name, MigrationTask? migration});
+
 class Migrator {
   /// config keys for migrations
   static const migrationsTableNameKeyInConfig = 'migrationsTableName';
@@ -59,38 +61,62 @@ class Migrator {
   static Future<void> resetMigrations(DatabaseDriver driver, Iterable<MigrationTask> allTasks) async {
     await ensureMigrationsTableReady(driver);
 
-    print('------- Resetting migrations  📦 -------\n');
-
     final migrationInfoFromDB = await Query.query(Migrator.tableName, driver).orderByDesc('batch').all();
-    if (migrationInfoFromDB.isNotEmpty) {
-      final rollbacks = migrationInfoFromDB.map((e) => _MigrationDbData.from(e)).map((e) {
-        final found = allTasks.firstWhereOrNull((m) => m.name == e.migration);
-        return (batch: e.batch, name: e.migration, migration: found);
-      }).whereNotNull();
-
-      for (final rollback in rollbacks) {
-        await driver.transaction((transactor) async {
-          final schemas = rollback.migration?.schemas ?? [];
-          if (schemas.isNotEmpty) {
-            schemas.forEach((e) => transactor.execute(e.toScript(driver.blueprint)));
-          }
-
-          final deleteSql = DeleteQuery(
-            Migrator.tableName,
-            driver,
-            whereClause: Query.query(Migrator.tableName, driver).where('migration', '=', rollback.name),
-          ).statement;
-          transactor.execute(deleteSql);
-
-          await transactor.commit();
-        });
-
-        print('✔ rolled back: ${rollback.name}');
-      }
-    } else {
-      print('𐄂 skipped: reason:     no migrations to rollback');
+    if (migrationInfoFromDB.isEmpty) {
+      print('𐄂 skipped: reason:     no migrations to reset');
+      return;
     }
 
+    print('------- Resetting migrations  📦 -------\n');
+
+    final Iterable<Rollback> rollbacks = migrationInfoFromDB.map((e) => _MigrationDbData.from(e)).map((e) {
+      final found = allTasks.firstWhereOrNull((m) => m.name == e.migration);
+      return (batch: e.batch, name: e.migration, migration: found);
+    }).whereNotNull();
+
+    await _processRollbacks(driver, rollbacks);
+
     print('\n------- Reset migrations done 🚀 -------\n');
+  }
+
+  static Future<void> rollBackMigration(DatabaseDriver driver, Iterable<MigrationTask> allTasks) async {
+    final lastBatch = await Query.query(Migrator.tableName, driver).orderByDesc('batch').get();
+    if (lastBatch == null) {
+      print('𐄂 skipped: reason:     no migration to rollback');
+      return;
+    }
+
+    final migrationDbData = _MigrationDbData.from(lastBatch);
+    final rollbacks = allTasks
+        .where((e) => e.name == migrationDbData.migration)
+        .map((e) => (name: e.name, migration: e, batch: migrationDbData.batch));
+
+    print('------- Rolling back ${migrationDbData.migration}  📦 -------\n');
+
+    await _processRollbacks(driver, rollbacks);
+
+    print('\n------- Rollback done 🚀 -------\n');
+  }
+
+  static Future<void> _processRollbacks(DatabaseDriver driver, Iterable<Rollback> rollbacks) async {
+    for (final rollback in rollbacks) {
+      await driver.transaction((transactor) async {
+        final schemas = rollback.migration?.schemas ?? [];
+        if (schemas.isNotEmpty) {
+          schemas.forEach((e) => transactor.execute(e.toScript(driver.blueprint)));
+        }
+
+        final deleteSql = DeleteQuery(
+          Migrator.tableName,
+          driver,
+          whereClause: Query.query(Migrator.tableName, driver).where('migration', '=', rollback.name),
+        ).statement;
+        transactor.execute(deleteSql);
+
+        await transactor.commit();
+      });
+
+      print('✔ rolled back: ${rollback.name}');
+    }
   }
 }

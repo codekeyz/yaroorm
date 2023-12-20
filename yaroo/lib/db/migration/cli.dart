@@ -64,6 +64,7 @@ class MigratorCLI {
     final MigratorAction cmdAction = switch (cmd) {
       MigratorCLI.migrate => (driver) => Migrator.runMigrations(driver, tasks.map((e) => e.up)),
       MigratorCLI.migrateReset => (driver) => Migrator.resetMigrations(driver, tasks.map((e) => e.down)),
+      MigratorCLI.migrateRollback => (driver) => Migrator.rollBackMigration(driver, tasks.map((e) => e.down)),
       _ => throw UnsupportedError(cmd),
     };
 
