@@ -50,9 +50,8 @@ class PostgreSqlDriver implements DatabaseDriver {
   }
 
   @override
-  Future insert(String tableName, Map<String, dynamic> data) {
-    // TODO: implement insert
-    throw UnimplementedError();
+  Future insert(String tableName, Map<String, dynamic> data) async{
+    final result = await db?.execute("SELECT 'foo'");
   }
 
   @override

@@ -5,3 +5,9 @@ final sqliteConnection = DatabaseConnection(
   'sqlite',
   DatabaseDriverType.sqlite,
 );
+
+final postgresSqlConnection = DatabaseConnection(
+  'db',
+  'pgsql',
+  DatabaseDriverType.pgsql,
+);
