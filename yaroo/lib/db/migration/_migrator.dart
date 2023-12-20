@@ -103,6 +103,7 @@ class Migrator {
       await driver.transaction((transactor) async {
         final schemas = rollback.migration?.schemas ?? [];
         if (schemas.isNotEmpty) {
+          // ignore: avoid_function_literals_in_foreach_calls
           schemas.forEach((e) => transactor.execute(e.toScript(driver.blueprint)));
         }
 
