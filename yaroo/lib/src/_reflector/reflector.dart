@@ -64,7 +64,7 @@ ControllerMethod parseControllerMethod(ControllerMethodDefinition defn) {
   final method = defn.$2;
 
   final ctrlMirror = inject.reflectType(type) as r.ClassMirror;
-  if (ctrlMirror.superclass?.reflectedType != BaseController) {
+  if (ctrlMirror.superclass?.reflectedType != ApplicationController) {
     throw ArgumentError('$type must extend BaseController');
   }
 
@@ -74,8 +74,9 @@ ControllerMethod parseControllerMethod(ControllerMethodDefinition defn) {
     throw ArgumentError('$type does not have method  #${symbolToString(method)}');
   }
 
-  // final parameters = actualMethod.parameters.map((e) => e.reflectedType);
-  // print(parameters);
+  if (actualMethod.parameters.isNotEmpty) {
+    throw ArgumentError.value('$type.${actualMethod.simpleName}', null, 'Controller methods cannot have parameters');
+  }
 
   return ControllerMethod(defn);
 }
