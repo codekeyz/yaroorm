@@ -43,7 +43,7 @@ class DatabaseConnection {
       password: connInfo['password'],
       username: connInfo['username'],
       url: connInfo['url'],
-      dbForeignKeys: connInfo['foreign_key_constraints'],
+      dbForeignKeys: connInfo['foreign_key_constraints'] ?? true,
     );
   }
 }

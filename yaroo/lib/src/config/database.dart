@@ -20,7 +20,7 @@ class DatabaseConfig {
   factory DatabaseConfig.from(Map<String, dynamic> config) {
     final defaultConnName = config.getValue<String?>('default');
     if (defaultConnName == null) {
-      throw ArgumentError.notNull('Default database connection');
+      throw ArgumentError('Default database connection not provided');
     }
 
     final connInfos = config.getValue<Map<String, dynamic>>('connections', defaultValue: {});

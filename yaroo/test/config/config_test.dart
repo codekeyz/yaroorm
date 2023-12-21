@@ -90,4 +90,37 @@ void main() {
       expect(config.providers, [AppServiceProvider]);
     });
   });
+
+  group('Database Config Test', () {
+    test('should require default connection', () {
+      expect(() => DatabaseConfig.from({}), throwsArgumentErrorWithMessage('Default database connection not provided'));
+    });
+
+    test('should require connection infos', () {
+      expect(() => DatabaseConfig.from({'default': 'sqlite'}),
+          throwsArgumentErrorWithMessage('Database connection infos not provided'));
+    });
+
+    test('should error when default connection info not found ', () {
+      expect(
+          () => DatabaseConfig.from({
+                'default': 'sqlite',
+                'connections': {
+                  'mysql': {'driver': 'sqlite', 'database': 'foo.db'}
+                }
+              }),
+          throwsArgumentErrorWithMessage('Database connection info not found for sqlite'));
+    });
+
+    test(
+        'should initialize correctly',
+        () => expect(
+            DatabaseConfig.from({
+              'default': 'sqlite',
+              'connections': {
+                'sqlite': {'driver': 'sqlite', 'database': 'foo.db'}
+              }
+            }),
+            isA<DatabaseConfig>()));
+  });
 }
