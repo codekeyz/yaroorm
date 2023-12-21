@@ -24,10 +24,13 @@ T? env<T>(String name, [T? defaultValue]) {
 }
 
 extension ConfigExtension on Map<String, dynamic> {
-  T getValue<T>(String name, {T? defaultValue}) {
+  T getValue<T>(String name, {T? defaultValue, bool allowEmpty = false}) {
     final value = this[name] ?? defaultValue;
     if (value is! T) {
-      throw ArgumentError.value(value, null, 'Invalid value provided for config type $T');
+      throw ArgumentError.value(value, null, 'Invalid value provided for $name');
+    }
+    if (value != null && value.toString().trim().isEmpty && !allowEmpty) {
+      throw ArgumentError.value(value, null, 'Empty value not allowed for $name');
     }
     return value;
   }

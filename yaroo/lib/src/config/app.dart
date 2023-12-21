@@ -28,14 +28,19 @@ class AppConfig {
     final providers = config.getValue<List<Type>>('providers', defaultValue: const []);
     if (providers.isNotEmpty) providers.forEach(_validateProvider);
 
-    final Uri appUri = _validateAppUrl(config.getValue<String>('url'));
+    final name = config.getValue<String>('name');
+    Uri appUri = _validateAppUrl(config.getValue<String>('url'));
+    final port = config.getValue<int?>('port');
+    if (port != null) appUri = appUri.replace(port: port);
+
+    final environment = config.getValue<String>('environment', defaultValue: 'production');
 
     return AppConfig(
-      name: config.getValue<String>('name'),
-      environment: config.getValue<String>('env'),
-      isDebug: config.getValue<bool>('debug'),
+      name: name,
       url: appUri.toString(),
       port: config.getValue<int>('port', defaultValue: appUri.port),
+      environment: environment,
+      isDebug: config.getValue<bool>('debug', defaultValue: true),
       key: config.getValue('key'),
       timezone: config.getValue('timezone', defaultValue: 'UTC'),
       locale: config.getValue<String>('locale', defaultValue: 'env'),
