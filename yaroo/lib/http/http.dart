@@ -2,9 +2,10 @@
 
 import 'dart:async';
 
-import 'package:meta/meta_meta.dart';
 import 'package:yaroo/src/_reflector/reflector.dart';
 import 'package:yaroo/src/core.dart';
+
+import 'http.dart';
 
 export 'package:pharaoh/pharaoh.dart'
     show
@@ -20,23 +21,43 @@ export 'package:pharaoh/pharaoh.dart'
         useShelfMiddleware;
 
 @inject
-abstract class BaseController extends AppInstance {}
+abstract class ApplicationController extends AppInstance {
+  late final Request request;
+
+  late final Response response;
+
+  Map<String, dynamic> get params => request.params;
+
+  Map<String, dynamic> get query => request.query;
+
+  Map<String, dynamic> get headers => request.headers;
+
+  get body => request.body;
+
+  Response badRequest([String? message]) {
+    const status = 422;
+    if (message == null) return response.status(status);
+    return response.json({'message': message}, statusCode: status);
+  }
+
+  Response notFound([String? message]) {
+    const status = 404;
+    if (message == null) return response.status(status);
+    return response.json({'message': message}, statusCode: status);
+  }
+
+  Response jsonResponse(data, {int statusCode = 200}) {
+    return response.json(data, statusCode: statusCode);
+  }
+
+  Response redirectTo(String url, {int statusCode = 302}) {
+    return response.redirect(url, statusCode);
+  }
+}
 
 @inject
 abstract class ServiceProvider extends AppInstance {
   static List<Type> get defaultProviders => [AppServiceProvider];
 
   FutureOr<void> boot();
-}
-
-@Target({TargetKind.parameter})
-class Param {
-  const Param(String name);
-}
-
-@Target({TargetKind.parameter})
-class Body {
-  final String? param;
-
-  const Body({this.param});
 }

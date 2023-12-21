@@ -87,9 +87,7 @@ abstract class ApplicationFactory {
 
   List<Middleware> get globalMiddlewares => [bodyParser];
 
-  Future<void> bootstrap({
-    bool start_server = true,
-  }) async {
+  Future<void> bootstrap({bool listen = true}) async {
     if (dbConfig != null) {
       DB.init(dbConfig!);
       await DB.defaultDriver.connect();
@@ -97,7 +95,7 @@ abstract class ApplicationFactory {
 
     await _bootstrapComponents(appConfig);
 
-    if (start_server) await startServer();
+    if (listen) await startServer();
   }
 
   Future<void> startServer() async {
@@ -127,5 +125,23 @@ abstract class ApplicationFactory {
   Future<Spookie> get tester {
     final application = (instanceFromRegistry<Application>() as _YarooAppImpl);
     return request(application._createPharaohInstance());
+  }
+
+  static RequestHandler buildControllerMethod(ControllerMethod method) {
+    return (req, res) async {
+      final methodName = method.methodName;
+      final instance = createNewInstance<ApplicationController>(method.controller);
+      final mirror = inject.reflect(instance);
+
+      mirror
+        ..invokeSetter('request', req)
+        ..invokeSetter('response', res);
+
+      methodCall() => mirror.invoke(methodName, []);
+
+      final result = await Future.sync(methodCall);
+
+      return result;
+    };
   }
 }
