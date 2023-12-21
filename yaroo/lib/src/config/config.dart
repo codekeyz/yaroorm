@@ -5,8 +5,6 @@ import 'package:dotenv/dotenv.dart';
 export 'app.dart';
 export 'database.dart';
 
-typedef ConfigResolver<T extends Map<String, dynamic>> = T Function();
-
 DotEnv? _env;
 
 T? env<T>(String name, [T? defaultValue]) {
