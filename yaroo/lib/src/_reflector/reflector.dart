@@ -5,21 +5,29 @@ import '../../../http/http.dart';
 import '../_container/container.dart';
 import '../_router/definition.dart';
 import '../_router/utils.dart';
-import '../core.dart';
+
+class Injectable extends r.Reflectable {
+  const Injectable()
+      : super(
+          r.invokingCapability,
+          r.metadataCapability,
+          r.newInstanceCapability,
+          r.declarationsCapability,
+          r.reflectedTypeCapability,
+          r.typeRelationsCapability,
+          const r.InstanceInvokeCapability('^[^_]'),
+          r.subtypeQuantifyCapability,
+        );
+}
 
 const unnamedConstructor = '';
 
 const inject = Injectable();
 
-List<X> filteredDeclarationsOf<X extends r.DeclarationMirror>(
-  r.ClassMirror cm,
-  predicate,
-) {
+List<X> filteredDeclarationsOf<X extends r.DeclarationMirror>(r.ClassMirror cm, predicate) {
   var result = <X>[];
   cm.declarations.forEach((k, v) {
-    if (predicate(v)) {
-      result.add(v as X);
-    }
+    if (predicate(v)) result.add(v as X);
   });
   return result;
 }
@@ -64,7 +72,7 @@ ControllerMethod parseControllerMethod(ControllerMethodDefinition defn) {
   final method = defn.$2;
 
   final ctrlMirror = inject.reflectType(type) as r.ClassMirror;
-  if (ctrlMirror.superclass?.reflectedType != ApplicationController) {
+  if (ctrlMirror.superclass?.reflectedType != HTTPController) {
     throw ArgumentError('$type must extend BaseController');
   }
 

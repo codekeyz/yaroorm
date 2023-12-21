@@ -4,7 +4,6 @@ import 'dart:async';
 
 import 'package:meta/meta.dart';
 import 'package:pharaoh/pharaoh.dart';
-import 'package:reflectable/reflectable.dart' as r;
 import 'package:spookie/spookie.dart';
 import 'package:yaroo/db/db.dart';
 
@@ -18,22 +17,10 @@ import 'config/config.dart';
 
 part './core_impl.dart';
 
-class Injectable extends r.Reflectable {
-  const Injectable()
-      : super(
-          r.invokingCapability,
-          r.metadataCapability,
-          r.newInstanceCapability,
-          r.declarationsCapability,
-          r.reflectedTypeCapability,
-          r.typeRelationsCapability,
-          r.instanceInvokeCapability,
-          r.subtypeQuantifyCapability,
-        );
-}
-
 typedef RoutesResolver = List<RouteDefinition> Function();
 
+/// This should really be a mixin but due to a bug in reflectable.dart#324
+/// TODO:(codekeyz) make this a mixin when reflectable.dart#324 is fixed
 abstract class AppInstance {
   Application get app => Application._instance;
 }
@@ -130,7 +117,7 @@ abstract class ApplicationFactory {
   static RequestHandler buildControllerMethod(ControllerMethod method) {
     return (req, res) async {
       final methodName = method.methodName;
-      final instance = createNewInstance<ApplicationController>(method.controller);
+      final instance = createNewInstance<HTTPController>(method.controller);
       final mirror = inject.reflect(instance);
 
       mirror
