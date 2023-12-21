@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:yaroo/src/_reflector/reflector.dart';
 import 'package:yaroo/src/core.dart';
@@ -7,20 +6,10 @@ import 'package:yaroo/src/core.dart';
 import 'http.dart';
 
 export 'package:pharaoh/pharaoh.dart'
-    show
-        Request,
-        Response,
-        Session,
-        Middleware,
-        HTTPMethod,
-        CookieOpts,
-        session,
-        cookieParser,
-        useRequestHandler,
-        useShelfMiddleware;
+    show Request, Response, Session, Middleware, HTTPMethod, CookieOpts, session, cookieParser, useRequestHandler;
 
 @inject
-abstract class ApplicationController extends AppInstance {
+abstract class HTTPController extends AppInstance {
   late final Request request;
 
   late final Response response;
@@ -32,10 +21,6 @@ abstract class ApplicationController extends AppInstance {
   Map<String, dynamic> get headers => request.headers;
 
   Session? get session => request.session;
-
-  List<Cookie> get cookies => request.cookies;
-
-  List<Cookie> get signedCookies => request.signedCookies;
 
   get body => request.body;
 
@@ -65,4 +50,6 @@ abstract class ServiceProvider extends AppInstance {
   static List<Type> get defaultProviders => [AppServiceProvider];
 
   FutureOr<void> boot();
+
+  bool isAugmentation = false;
 }
