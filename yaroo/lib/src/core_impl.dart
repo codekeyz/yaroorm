@@ -3,7 +3,7 @@
 part of 'core.dart';
 
 class _YarooAppImpl implements Application {
-  late final YarooAppConfig _appConfig;
+  late final AppConfig _appConfig;
   late final Spanner _spanner;
   late final ViewEngine _viewEngine;
 
@@ -15,7 +15,7 @@ class _YarooAppImpl implements Application {
   }
 
   @override
-  void _useConfig(YarooAppConfig appConfig) {
+  void _useConfig(AppConfig appConfig) {
     _appConfig = appConfig;
   }
 
@@ -36,16 +36,16 @@ class _YarooAppImpl implements Application {
   }
 
   @override
-  YarooAppConfig get config => _appConfig;
+  AppConfig get config => _appConfig;
 
   @override
-  String get name => config.appName;
+  String get name => config.name;
 
   @override
-  String get url => config.appUri.toString();
+  String get url => config.url;
 
   @override
-  int get port => config.appPort;
+  int get port => config.port;
 
   Pharaoh _createPharaohInstance() => Pharaoh()
     ..useSpanner(_spanner)

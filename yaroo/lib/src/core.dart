@@ -10,11 +10,11 @@ import 'package:yaroo/db/db.dart';
 
 import '../../http/http.dart';
 import '../../http/kernel.dart';
-import '_config/config.dart';
 import '_container/container.dart';
 import '_reflector/reflector.dart';
 import '_router/definition.dart';
 import '_router/utils.dart';
+import 'config/config.dart';
 
 part './core_impl.dart';
 
@@ -47,7 +47,7 @@ abstract interface class Application {
 
   int get port;
 
-  YarooAppConfig get config;
+  AppConfig get config;
 
   T singleton<T extends Object>(T instance);
 
@@ -57,7 +57,7 @@ abstract interface class Application {
 
   void useViewEngine(ViewEngine viewEngine);
 
-  void _useConfig(YarooAppConfig appConfig);
+  void _useConfig(AppConfig config);
 }
 
 class AppServiceProvider extends ServiceProvider {
@@ -75,8 +75,8 @@ class AppServiceProvider extends ServiceProvider {
 }
 
 abstract class ApplicationFactory {
-  final ConfigResolver appConfig;
-  final ConfigResolver? dbConfig;
+  final AppConfig appConfig;
+  final DatabaseConfig? dbConfig;
   final Kernel _kernel;
 
   ApplicationFactory(
@@ -95,7 +95,7 @@ abstract class ApplicationFactory {
       await DB.defaultDriver.connect();
     }
 
-    await _bootstrapComponents(appConfig.call());
+    await _bootstrapComponents(appConfig);
 
     if (start_server) await startServer();
   }
@@ -108,17 +108,16 @@ abstract class ApplicationFactory {
     await launchUrl(Application._instance.url);
   }
 
-  Future<void> _bootstrapComponents(YarooAppConfig appConfig) async {
+  Future<void> _bootstrapComponents(AppConfig config) async {
     final application = registerSingleton<Application>(_YarooAppImpl(Spanner()));
 
     application
-      .._useConfig(appConfig)
+      .._useConfig(config)
       ..singleton<Kernel>(_kernel)
       ..useMiddlewares(globalMiddlewares);
 
     /// boostrap providers
-    final providers = appConfig.getValue<List<Type>>(ConfigExt.providers)!;
-    for (final type in providers) {
+    for (final type in appConfig.providers) {
       final provider = createNewInstance<ServiceProvider>(type);
       await registerSingleton(provider).boot();
     }

@@ -3,8 +3,6 @@ import '../../query/query.dart';
 import '../migration.dart';
 import 'sqlite_driver.dart';
 
-typedef DatabaseConfig = Map<String, dynamic>;
-
 enum DatabaseDriverType { sqlite, pgsql, mongo }
 
 class DatabaseConnection {
