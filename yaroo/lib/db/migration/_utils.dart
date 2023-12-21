@@ -28,9 +28,3 @@ String? getValueFromCLIArs(String key, List<String> args) {
   if (argument == null) return null;
   return argument.split('=').last;
 }
-
-String? getDBConnection(Migration migration, Map<String, dynamic> config) {
-  var connection = migration.connection;
-  if (connection == 'default') connection = config['default'];
-  return connection;
-}
