@@ -107,11 +107,7 @@ class Migrator {
           schemas.forEach((e) => transactor.execute(e.toScript(driver.blueprint)));
         }
 
-        final deleteSql = DeleteQuery(
-          Migrator.tableName,
-          whereClause: Query.query(Migrator.tableName).where('migration', '=', rollback.name),
-        ).driver(driver).statement;
-        transactor.execute(deleteSql);
+        await Query.query(Migrator.tableName).driver(transactor).where('migration', '=', rollback.name).delete();
 
         await transactor.commit();
       });
