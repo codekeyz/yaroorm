@@ -20,7 +20,10 @@ class SqliteDriver implements DatabaseDriver {
   SqliteDriver(this.config);
 
   @override
-  Future<DatabaseDriver> connect() async {
+  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection}) async {
+    assert(maxConnections == null, 'Sqlite does not support max connections');
+    assert(singleConnection == null, 'Sqlite does not support single connection');
+
     sqfliteFfiInit();
     var databaseFactory = databaseFactoryFfi;
     _database = await databaseFactory.openDatabase(config.database, options: OpenDatabaseOptions(onOpen: (db) async {
@@ -90,8 +93,8 @@ class SqliteDriver implements DatabaseDriver {
 
   @override
   Future<bool> hasTable(String tableName) async {
-    final result = await (await _getDatabase())
-        .rawQuery('SELECT * FROM sqlite_master WHERE type = "table" AND name = "$tableName" LIMIT 1;');
+    final result = await (await _getDatabase()).rawQuery(
+        'SELECT 1 FROM sqlite_master WHERE type = ${wrapString('table')} AND name = ${wrapString(tableName)} LIMIT 1;');
     return result.isNotEmpty;
   }
 
@@ -120,20 +123,20 @@ class _SqliteTransactor implements DriverTransactor {
   }
 
   @override
-  void update(UpdateQuery query) {
+  Future<void> update(UpdateQuery query) {
     final sql = _serializer.acceptUpdateQuery(query);
-    return _batch.rawUpdate(sql);
+    return Future.sync(() => _batch.rawUpdate(sql));
   }
 
   @override
-  void delete(DeleteQuery query) async {
+  Future<void> delete(DeleteQuery query) {
     final sql = _serializer.acceptDeleteQuery(query);
-    return _batch.rawDelete(sql);
+    return Future.sync(() => _batch.rawDelete(sql));
   }
 
   @override
-  void insert(String tableName, Map<String, dynamic> data) {
-    _batch.insert(tableName, data);
+  Future<void> insert(String tableName, Map<String, dynamic> data) {
+    return Future.sync(() => _batch.insert(tableName, data));
   }
 
   @override
@@ -304,6 +307,13 @@ class SqliteSerializer implements PrimitiveSerializer {
     }
 
     return group.toString();
+  }
+
+  @override
+  String acceptInsertQuery(String tableName, Map<String, dynamic> data) {
+    final fields = data.keys.join(', ');
+    final values = data.values.map((e) => acceptDartValue(e)).join(', ');
+    return 'INSERT INTO $tableName ($fields) VALUES ($values)$terminator';
   }
 }
 

@@ -1,4 +1,5 @@
 import 'package:meta/meta.dart';
+import 'package:mysql_client/mysql_client.dart';
 import 'package:yaroorm/src/database/migration.dart';
 import 'package:yaroorm/src/query/primitives/serializer.dart';
 import 'package:yaroorm/src/query/query.dart';
@@ -14,65 +15,86 @@ class MySqlDriver implements DatabaseDriver {
   final DatabaseConnection config;
   final DatabaseDriverType _type;
 
-  MySqlDriver(this.config, this._type)
-      : assert([DatabaseDriverType.mysql, DatabaseDriverType.mariadb].contains(config.driver));
+  late MySQLConnection _dbConnection;
 
-  @override
-  Future<DatabaseDriver> connect() {
-    // TODO: implement connect
-    throw UnimplementedError();
+  int get portToUse => config.port ?? 3306;
+
+  MySqlDriver(this.config, this._type) {
+    assert([DatabaseDriverType.mysql, DatabaseDriverType.mariadb].contains(config.driver));
+    assert(config.host != null, 'Host is required');
+    assert(config.username != null, 'Username is required');
+    assert(config.password != null, 'Password is required');
   }
 
   @override
-  Future<List<Map<String, dynamic>>> delete(DeleteQuery query) {
-    // TODO: implement delete
-    throw UnimplementedError();
+  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection}) async {
+    assert(maxConnections == null, 'MySQL max connections not yet supported');
+
+    _dbConnection = await MySQLConnection.createConnection(
+      host: config.host!,
+      port: portToUse,
+      userName: config.username!,
+      password: config.password!,
+      databaseName: config.database,
+    );
+    await _dbConnection.connect();
+    return this;
   }
 
   @override
-  Future<void> disconnect() {
-    // TODO: implement disconnect
-    throw UnimplementedError();
+  Future<void> disconnect() async {
+    if (!_dbConnection.connected) return;
+    return _dbConnection.close();
   }
 
   @override
-  Future<void> execute(String script) {
-    // TODO: implement execute
-    throw UnimplementedError();
+  bool get isOpen => _dbConnection.connected;
+
+  @override
+  Future<List<Map<String, dynamic>>> rawQuery(String script) async {
+    if (!isOpen) await connect();
+    final result = await _dbConnection.execute(script);
+    return result.rows.map((e) => e.assoc()).toList();
   }
 
   @override
-  Future<bool> hasTable(String tableName) {
-    // TODO: implement hasTable
-    throw UnimplementedError();
+  Future<dynamic> execute(String script) => rawQuery(script);
+
+  @override
+  Future<List<Map<String, dynamic>>> query(Query query) {
+    final sql = _primitiveSerializer.acceptReadQuery(query);
+    return rawQuery(sql);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> delete(DeleteQuery query) async {
+    final sql = _primitiveSerializer.acceptDeleteQuery(query);
+    return rawQuery(sql);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> update(UpdateQuery query) {
+    final sql = _primitiveSerializer.acceptUpdateQuery(query);
+    return rawQuery(sql);
   }
 
   @override
   Future<int> insert(String tableName, Map<String, dynamic> data) {
-    // TODO: implement insert
-    throw UnimplementedError();
+    final sql = _primitiveSerializer.acceptInsertQuery(tableName, data);
+    return rawQuery(sql).then((value) => value.first['id'] as int);
   }
 
   @override
-  // TODO: implement isOpen
-  bool get isOpen => throw UnimplementedError();
-
-  @override
-  Future<List<Map<String, dynamic>>> query(Query query) {
-    // TODO: implement query
-    throw UnimplementedError();
+  Future<bool> hasTable(String tableName) async {
+    final sql =
+        'SELECT 1 FROM information_schema.tables WHERE table_schema = ${wrapString(config.database)} AND table_name = ${wrapString(tableName)} LIMIT 1';
+    final result = await rawQuery(sql);
+    return result.isNotEmpty;
   }
 
   @override
-  Future<List<Map<String, dynamic>>> rawQuery(String script) {
-    // TODO: implement rawQuery
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> transaction(void Function(DriverTransactor transactor) transaction) {
-    // TODO: implement transaction
-    throw UnimplementedError();
+  Future<void> transaction(void Function(DriverTransactor transactor) func) {
+    return _dbConnection.transactional((txn) => func(_MysqlTransactor(txn)));
   }
 
   @override
@@ -83,11 +105,49 @@ class MySqlDriver implements DatabaseDriver {
 
   @override
   PrimitiveSerializer get serializer => _primitiveSerializer;
+}
+
+class _MysqlTransactor extends DriverTransactor {
+  final MySQLConnection _dbConn;
+
+  _MysqlTransactor(this._dbConn);
 
   @override
-  Future<List<Map<String, dynamic>>> update(UpdateQuery query) {
-    // TODO: implement update
-    throw UnimplementedError();
+  Future<dynamic> execute(String script) => rawQuery(script);
+
+  @override
+  Future<List<Map<String, dynamic>>> rawQuery(String script) async {
+    final result = await _dbConn.execute(script);
+    return result.rows.map((e) => e.assoc()).toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> query(Query query) {
+    final sql = _primitiveSerializer.acceptReadQuery(query);
+    return rawQuery(sql);
+  }
+
+  @override
+  Future<void> delete(DeleteQuery query) async {
+    final sql = _primitiveSerializer.acceptDeleteQuery(query);
+    await rawQuery(sql);
+  }
+
+  @override
+  Future<void> update(UpdateQuery query) async {
+    final sql = _primitiveSerializer.acceptUpdateQuery(query);
+    await rawQuery(sql);
+  }
+
+  @override
+  Future<int> insert(String tableName, Map<String, dynamic> data) {
+    final sql = _primitiveSerializer.acceptInsertQuery(tableName, data);
+    return rawQuery(sql).then((value) => value.first['id'] as int);
+  }
+
+  @override
+  Future<List<Object?>> commit() {
+    throw UnsupportedError('Commit not supported for MariaDB & MySQL Driver');
   }
 }
 
@@ -261,10 +321,4 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
 }
 
 @protected
-class MySqlPrimitiveSerializer extends SqliteSerializer {
-  @override
-  acceptDartValue(dartValue) {
-    // TODO: implement acceptDartValue
-    return super.acceptDartValue(dartValue);
-  }
-}
+class MySqlPrimitiveSerializer extends SqliteSerializer {}

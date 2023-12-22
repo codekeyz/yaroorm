@@ -7,6 +7,8 @@ abstract class PrimitiveSerializer {
 
   String acceptDeleteQuery(DeleteQuery query);
 
+  String acceptInsertQuery(String tableName, Map<String, dynamic> data);
+
   String acceptWhereClause(WhereClause clause);
 
   String acceptSelect(List<String> fields);

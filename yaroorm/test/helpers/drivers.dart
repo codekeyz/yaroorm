@@ -10,10 +10,14 @@ final mysqlConnection = DatabaseConnection.from('maria_connection', {
   'database': 'mysql_test_db',
   'driver': 'mysql',
   'host': 'localhost',
+  'username': 'foo-bar',
+  'password': 'sassy',
 });
 
 final mariadbConnection = DatabaseConnection.from('maria_connection', {
   'database': 'maria_test_db',
   'driver': 'mariadb',
   'host': 'localhost',
+  'username': 'foo-bar',
+  'password': 'sassy',
 });

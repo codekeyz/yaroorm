@@ -7,11 +7,13 @@ import 'sqlite_driver.dart';
 
 enum DatabaseDriverType { sqlite, pgsql, mysql, mariadb }
 
+String wrapString(String value) => "'$value'";
+
 class DatabaseConnection {
   final String name;
   final String? url;
   final String? host;
-  final String? port;
+  final int? port;
   final String? username;
   final String? password;
   final String database;
@@ -41,7 +43,7 @@ class DatabaseConnection {
       charset: connInfo['charset'],
       collation: connInfo['collation'],
       host: connInfo['host'],
-      port: connInfo['port'],
+      port: connInfo['port'] == null ? null : int.parse(connInfo['port']),
       password: connInfo['password'],
       username: connInfo['username'],
       url: connInfo['url'],
@@ -72,28 +74,19 @@ mixin DriverAble {
   /// Execute scripts on the database.
   ///
   /// Execution varies across drivers
-  Future<void> execute(String script);
+  Future<dynamic> execute(String script);
 
   /// Perform update on the database
-  update(UpdateQuery query);
+  Future<void> update(UpdateQuery query);
 
   /// Perform delete on the database
-  delete(DeleteQuery query);
+  Future<void> delete(DeleteQuery query);
 
-  insert(String tableName, Map<String, dynamic> data);
+  Future<dynamic> insert(String tableName, Map<String, dynamic> data);
 }
 
 abstract class DriverTransactor with DriverAble {
   Future<List<Object?>> commit();
-
-  @override
-  void insert(String tableName, Map<String, dynamic> data);
-
-  @override
-  void update(UpdateQuery query);
-
-  @override
-  void delete(DeleteQuery query);
 }
 
 abstract interface class DatabaseDriver with DriverAble {
@@ -119,7 +112,7 @@ abstract interface class DatabaseDriver with DriverAble {
   /// Performs connection to the database.
   ///
   /// Depend on driver type it may create a connection pool.
-  Future<DatabaseDriver> connect();
+  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection});
 
   /// Performs connection to the database.
   ///
@@ -131,12 +124,6 @@ abstract interface class DatabaseDriver with DriverAble {
 
   @override
   Future<int> insert(String tableName, Map<String, dynamic> data);
-
-  @override
-  Future<List<Map<String, dynamic>>> update(UpdateQuery query);
-
-  @override
-  Future<List<Map<String, dynamic>>> delete(DeleteQuery query);
 
   TableBlueprint get blueprint;
 
