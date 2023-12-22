@@ -103,6 +103,21 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
     return sb.toString();
   }
 
+  /// BLOB typs cannot have default values see here: https://dev.mysql.com/doc/refman/8.0/en/blob.html
+  @override
+  void blob(String name, {bool nullable = false, defaultValue}) {
+    final type = _getStringType('BLOB');
+    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: null));
+  }
+
+  /// TEXT type cannot have default values see here: https://dev.mysql.com/doc/refman/8.0/en/blob.html
+  @override
+  void text(String name,
+      {bool nullable = false, String? defaultValue, String? charset, String? collate, int length = 1}) {
+    final type = _getStringType('TEXT($length)', charset: charset, collate: collate);
+    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: null));
+  }
+
   @override
   void longText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
     final type = _getStringType('LONGTEXT', charset: charset, collate: collate);
@@ -118,12 +133,6 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
   @override
   void tinyText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
     final type = _getStringType('TINYTEXT', charset: charset, collate: collate);
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
-  }
-
-  @override
-  void text(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
-    final type = _getStringType('TEXT', charset: charset, collate: collate);
     statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 

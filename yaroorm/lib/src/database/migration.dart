@@ -29,6 +29,7 @@ abstract interface class TableBlueprint {
 
   void text(
     String name, {
+    int length = 1,
     bool nullable = false,
     String? defaultValue,
     String? charset,
