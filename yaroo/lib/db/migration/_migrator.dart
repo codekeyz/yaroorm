@@ -69,7 +69,7 @@ class Migrator {
 
     print('------- Resetting migrations  📦 -------\n');
 
-    final Iterable<Rollback> rollbacks = migrationInfoFromDB.map((e) => _MigrationDbData.from(e)).map((e) {
+    final rollbacks = migrationInfoFromDB.map((e) => _MigrationDbData.from(e)).map<Rollback>((e) {
       final found = allTasks.firstWhereOrNull((m) => m.name == e.migration);
       return (batch: e.batch, name: e.migration, migration: found);
     }).whereNotNull();
