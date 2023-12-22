@@ -93,6 +93,58 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
     return sb.toString();
   }
 
+  /// NUMERIC TYPES
+  /// ----------------------------------------------------------------
+
+  @override
+  void float(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+    final type = 'FLOAT(${precision ?? 10}, ${scale ?? 0})';
+    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void double(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+    final type = 'DOUBLE(${precision ?? 10}, ${scale ?? 0})';
+    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void tinyInt(String name, {bool nullable = false, num? defaultValue}) {
+    statements.add(_getColumn(name, 'TINYINT', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void smallInteger(String name, {bool nullable = false, num? defaultValue}) {
+    statements.add(_getColumn(name, 'SMALLINT', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void mediumInteger(String name, {bool nullable = false, num? defaultValue}) {
+    statements.add(_getColumn(name, 'MEDIUMINT', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void bigInteger(String name, {bool nullable = false, num? defaultValue}) {
+    statements.add(_getColumn(name, 'BIGINT', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void decimal(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+    final type = 'DECIMAL(${precision ?? 10}, ${scale ?? 0})';
+    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void numeric(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+    final type = 'NUMERIC(${precision ?? 10}, ${scale ?? 0})';
+    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void bit(String name, {bool nullable = false, int? defaultValue}) {
+    statements.add(_getColumn(name, 'BIT', nullable: nullable, defaultValue: defaultValue));
+  }
+
   /// STRING TYPES
   /// ----------------------------------------------------------------
 

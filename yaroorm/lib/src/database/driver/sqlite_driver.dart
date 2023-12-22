@@ -335,68 +335,38 @@ class SqliteTableBlueprint implements TableBlueprint {
   }
 
   @override
-  void double(String name, {nullable = false, defaultValue}) {
-    statements.add(_getColumn(
-      name,
-      'REAL',
-      nullable: nullable,
-      defaultValue: defaultValue,
-    ));
+  void double(String name, {nullable = false, defaultValue, int? precision, int? scale}) {
+    statements.add(_getColumn(name, 'REAL', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
-  void float(String name, {nullable = false, defaultValue}) {
-    statements.add(_getColumn(
-      name,
-      'REAL',
-      nullable: nullable,
-      defaultValue: defaultValue,
-    ));
+  void float(String name, {nullable = false, defaultValue, int? precision, int? scale}) {
+    statements.add(_getColumn(name, 'REAL', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void integer(String name, {nullable = false, defaultValue}) {
-    statements.add(_getColumn(
-      name,
-      'INTEGER',
-      nullable: nullable,
-      defaultValue: defaultValue,
-    ));
+    statements.add(_getColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void blob(String name, {nullable = false, defaultValue}) {
-    statements.add(_getColumn(
-      name,
-      'BLOB',
-      nullable: nullable,
-      defaultValue: defaultValue,
-    ));
+    statements.add(_getColumn(name, 'BLOB', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void boolean(String name, {nullable = false, defaultValue}) {
-    statements.add(_getColumn(
-      name,
-      'INTEGER',
-      nullable: nullable,
-      defaultValue: defaultValue,
-    ));
+    statements.add(_getColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void datetime(String name, {nullable = false, defaultValue}) {
-    statements.add('$name DATETIME');
+    statements.add(_getColumn(name, 'DATETIME', nullable: nullable, defaultValue: defaultValue?.toIso8601String()));
   }
 
   @override
   void timestamp(String name, {nullable = false, defaultValue}) {
-    statements.add(_getColumn(
-      name,
-      'DATETIME',
-      nullable: nullable,
-      defaultValue: defaultValue?.toIso8601String(),
-    ));
+    statements.add(_getColumn(name, 'DATETIME', nullable: nullable, defaultValue: defaultValue?.toIso8601String()));
   }
 
   @override
@@ -404,8 +374,101 @@ class SqliteTableBlueprint implements TableBlueprint {
     String createdAt = 'created_at',
     String updatedAt = 'updated_at',
   }) {
-    statements.add('$createdAt DATETIME');
-    statements.add('$updatedAt DATETIME');
+    timestamp(createdAt);
+    timestamp(updatedAt);
+  }
+
+  @override
+  void bigInteger(String name, {bool nullable = false, num? defaultValue}) {
+    statements.add(_getColumn(name, 'BIGINT', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void binary(String name,
+      {bool nullable = false, int length = 1, String? defaultValue, String? charset, String? collate}) {
+    statements.add(_getColumn(name, 'BLOB', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void bit(String name, {bool nullable = false, int? defaultValue}) {
+    statements.add(_getColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void char(String name,
+      {bool nullable = false, int length = 1, String? defaultValue, String? charset, String? collate}) {
+    statements.add(_getColumn(name, 'CHAR($length)', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void decimal(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+    statements.add(_getColumn(name, 'DECIMAL($precision, $scale)', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void enums(String name, List<String> values,
+      {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+    statements.add(_getColumn(name, 'TEXT CHECK ($name IN (${values.map((e) => "'$e'").join(', ')}))',
+        nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void mediumText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+    string(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void longText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+    string(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void mediumInteger(String name, {bool nullable = false, num? defaultValue}) {
+    integer(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void numeric(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+    integer(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void set(String name, List<String> values,
+      {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+    // TODO: implement set
+  }
+
+  @override
+  void smallInteger(String name, {bool nullable = false, num? defaultValue}) {
+    integer(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void text(String name,
+      {int length = 1, bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+    string(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void tinyInt(String name, {bool nullable = false, num? defaultValue}) {
+    integer(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void tinyText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+    string(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void varbinary(String name,
+      {bool nullable = false, int length = 1, String? defaultValue, String? charset, String? collate}) {
+    binary(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void varchar(String name,
+      {bool nullable = false, String? defaultValue, int size = 255, String? charset, String? collate}) {
+    string(name, nullable: nullable, defaultValue: defaultValue);
   }
 
   @override
