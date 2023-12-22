@@ -22,9 +22,95 @@ abstract interface class TableBlueprint {
 
   void blob(String name, {bool nullable = false, String? defaultValue});
 
-  void timestamps({
-    String createdAt = entityCreatedAtColumnName,
-    String updatedAt = entityUpdatedAtColumnName,
+  void timestamps({String createdAt = entityCreatedAtColumnName, String updatedAt = entityUpdatedAtColumnName});
+
+  /// STRING TYPES
+  /// ----------------------------------------------------------------
+
+  void text(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+  });
+
+  void char(
+    String name, {
+    bool nullable = false,
+    int length = 1,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+  });
+
+  void varchar(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    int size = 255,
+    String? charset,
+    String? collate,
+  });
+
+  void tinyText(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+  });
+
+  void mediumText(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+  });
+
+  void longText(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+  });
+
+  void binary(
+    String name, {
+    bool nullable = false,
+    int length = 1,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+  });
+
+  void varbinary(
+    String name, {
+    bool nullable = false,
+    int length = 1,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+  });
+
+  void enums(
+    String name,
+    List<String> values, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+  });
+
+  void set(
+    String name,
+    List<String> values, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
   });
 
   @protected

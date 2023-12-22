@@ -7,6 +7,8 @@ import 'driver.dart';
 
 final _serializer = const _SqliteSerializer();
 
+final _sqliteTableBlueprint = SqliteTableBlueprint();
+
 class SqliteDriver implements DatabaseDriver {
   final DatabaseConnection config;
 
@@ -38,9 +40,6 @@ class SqliteDriver implements DatabaseDriver {
 
   @override
   DatabaseDriverType get type => DatabaseDriverType.sqlite;
-
-  @override
-  TableBlueprint get blueprint => _SqliteTableBlueprint();
 
   Future<Database> _getDatabase() async {
     if (!isOpen) await connect();
@@ -82,6 +81,9 @@ class SqliteDriver implements DatabaseDriver {
 
   @override
   PrimitiveSerializer get serializer => _serializer;
+
+  @override
+  TableBlueprint get blueprint => _sqliteTableBlueprint;
 
   @override
   Future<bool> hasTable(String tableName) async {
@@ -303,8 +305,8 @@ class _SqliteSerializer implements PrimitiveSerializer {
   }
 }
 
-class _SqliteTableBlueprint implements TableBlueprint {
-  final List<String> _statements = [];
+class SqliteTableBlueprint implements TableBlueprint {
+  final List<String> statements = [];
 
   String _getColumn(String name, String type, {nullable = false, defaultValue}) {
     final sb = StringBuffer()..write('$name $type');
@@ -319,12 +321,12 @@ class _SqliteTableBlueprint implements TableBlueprint {
   void id({name = 'id', autoIncrement = true}) {
     final sb = StringBuffer()..write('$name INTEGER NOT NULL PRIMARY KEY');
     if (autoIncrement) sb.write(' AUTOINCREMENT');
-    _statements.add(sb.toString());
+    statements.add(sb.toString());
   }
 
   @override
   void string(String name, {nullable = false, defaultValue}) {
-    _statements.add(_getColumn(
+    statements.add(_getColumn(
       name,
       'VARCHAR',
       nullable: nullable,
@@ -334,7 +336,7 @@ class _SqliteTableBlueprint implements TableBlueprint {
 
   @override
   void double(String name, {nullable = false, defaultValue}) {
-    _statements.add(_getColumn(
+    statements.add(_getColumn(
       name,
       'REAL',
       nullable: nullable,
@@ -344,7 +346,7 @@ class _SqliteTableBlueprint implements TableBlueprint {
 
   @override
   void float(String name, {nullable = false, defaultValue}) {
-    _statements.add(_getColumn(
+    statements.add(_getColumn(
       name,
       'REAL',
       nullable: nullable,
@@ -354,7 +356,7 @@ class _SqliteTableBlueprint implements TableBlueprint {
 
   @override
   void integer(String name, {nullable = false, defaultValue}) {
-    _statements.add(_getColumn(
+    statements.add(_getColumn(
       name,
       'INTEGER',
       nullable: nullable,
@@ -364,7 +366,7 @@ class _SqliteTableBlueprint implements TableBlueprint {
 
   @override
   void blob(String name, {nullable = false, defaultValue}) {
-    _statements.add(_getColumn(
+    statements.add(_getColumn(
       name,
       'BLOB',
       nullable: nullable,
@@ -374,7 +376,7 @@ class _SqliteTableBlueprint implements TableBlueprint {
 
   @override
   void boolean(String name, {nullable = false, defaultValue}) {
-    _statements.add(_getColumn(
+    statements.add(_getColumn(
       name,
       'INTEGER',
       nullable: nullable,
@@ -384,12 +386,12 @@ class _SqliteTableBlueprint implements TableBlueprint {
 
   @override
   void datetime(String name, {nullable = false, defaultValue}) {
-    _statements.add('$name DATETIME');
+    statements.add('$name DATETIME');
   }
 
   @override
   void timestamp(String name, {nullable = false, defaultValue}) {
-    _statements.add(_getColumn(
+    statements.add(_getColumn(
       name,
       'DATETIME',
       nullable: nullable,
@@ -402,13 +404,13 @@ class _SqliteTableBlueprint implements TableBlueprint {
     String createdAt = 'created_at',
     String updatedAt = 'updated_at',
   }) {
-    _statements.add('$createdAt DATETIME');
-    _statements.add('$updatedAt DATETIME');
+    statements.add('$createdAt DATETIME');
+    statements.add('$updatedAt DATETIME');
   }
 
   @override
   String createScript(String tableName) {
-    return 'CREATE TABLE $tableName (${_statements.join(', ')});';
+    return 'CREATE TABLE $tableName (${statements.join(', ')});';
   }
 
   @override
