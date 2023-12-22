@@ -5,7 +5,7 @@ import 'package:yaroorm/src/query/query.dart';
 void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Driver', () {
       group('when .where', () {
         test('of level 1', () {
-          final query = Query.query('users', driver).where('firstname', '=', 'Chima');
+          final query = Query.query('users').driver(driver).where('firstname', '=', 'Chima');
 
           expect(
             query.statement,
@@ -15,7 +15,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
 
         test('of level 2', () {
           final query =
-              Query.query('users', driver).where('firstname', '=', 'Chima').where('lastname', '=', 'Precious');
+              Query.query('users').driver(driver).where('firstname', '=', 'Chima').where('lastname', '=', 'Precious');
 
           expect(
             query.statement,
@@ -24,7 +24,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 3', () {
-          final query = Query.query('users', driver)
+          final query = Query.query('users')
+              .driver(driver)
               .where('firstname', '=', 'Chima')
               .where('lastname', '=', 'Precious')
               .where('age', '=', 22);
@@ -37,7 +38,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
 
         group('chained with `.orWhere`', () {
           test('of level 1', () {
-            final query = Query.query('users', driver).where('firstname', '=', 'Chima').orWhere('age', '=', 203);
+            final query = Query.query('users').driver(driver).where('firstname', '=', 'Chima').orWhere('age', '=', 203);
 
             expect(
               query.statement,
@@ -46,7 +47,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
           });
 
           test('of level 2', () {
-            final query = Query.query('users', driver)
+            final query = Query.query('users')
+                .driver(driver)
                 .where('firstname', '=', 'Chima')
                 .orWhere('age', '=', 203)
                 .where('city', '!=', 'Accra');
@@ -58,7 +60,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
           });
 
           test('of level 3', () {
-            final query = Query.query('users', driver)
+            final query = Query.query('users')
+                .driver(driver)
                 .where('votes', '>', 100)
                 .orWhere('name', '=', 'Abigail')
                 .where('votes', '>', 50);
@@ -70,7 +73,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
           });
 
           test('of level 4', () {
-            final query = Query.query('users', driver)
+            final query = Query.query('users')
+                .driver(driver)
                 .where('firstname', '=', 'Chima')
                 .orWhere('age', '=', 203)
                 .orWhere('city', '!=', 'Accra')
@@ -83,7 +87,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
           });
 
           test('of level 4', () {
-            final query = Query.query('users', driver)
+            final query = Query.query('users')
+                .driver(driver)
                 .where('firstname', '=', 'Chima')
                 .orWhere('age', '=', 203)
                 .orWhere('city', '!=', 'Accra')
@@ -99,7 +104,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
 
         group('chained with', () {
           test('.whereNull', () {
-            final query = Query.query('users', driver).where('firstname', '=', 'Chima').whereNull('age');
+            final query = Query.query('users').driver(driver).where('firstname', '=', 'Chima').whereNull('age');
 
             expect(
               query.statement,
@@ -108,7 +113,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
           });
 
           test('.whereNotNull', () {
-            final query = Query.query('users', driver).where('firstname', '=', 'Chima').whereNotNull('age');
+            final query = Query.query('users').driver(driver).where('firstname', '=', 'Chima').whereNotNull('age');
 
             expect(
               query.statement,
@@ -117,7 +122,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
           });
 
           test('.whereIn', () {
-            final query = Query.query('users', driver).where('firstname', '=', 'Chima').whereIn('age', [22, 24, 25]);
+            final query =
+                Query.query('users').driver(driver).where('firstname', '=', 'Chima').whereIn('age', [22, 24, 25]);
 
             expect(
               query.statement,
@@ -126,7 +132,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
           });
 
           test('.whereNotIn', () {
-            final query = Query.query('users', driver).where('firstname', '=', 'Chima').whereNotIn('age', [22, 24, 25]);
+            final query =
+                Query.query('users').driver(driver).where('firstname', '=', 'Chima').whereNotIn('age', [22, 24, 25]);
 
             expect(
               query.statement,
@@ -135,7 +142,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
           });
 
           test('.whereLike', () {
-            final query = Query.query('users', driver).where('firstname', '=', 'Chima').whereLike('lastname', 'hello%');
+            final query =
+                Query.query('users').driver(driver).where('firstname', '=', 'Chima').whereLike('lastname', 'hello%');
 
             expect(
               query.statement,
@@ -145,7 +153,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
 
           test('.whereNotLike', () {
             final query =
-                Query.query('users', driver).where('firstname', '=', 'Chima').whereNotLike('lastname', 'hello%');
+                Query.query('users').driver(driver).where('firstname', '=', 'Chima').whereNotLike('lastname', 'hello%');
 
             expect(
               query.statement,
@@ -154,8 +162,10 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
           });
 
           test('.whereBetween', () {
-            final query =
-                Query.query('users', driver).where('firstname', '=', 'Chima').whereBetween<int>('lastname', [22, 50]);
+            final query = Query.query('users')
+                .driver(driver)
+                .where('firstname', '=', 'Chima')
+                .whereBetween<int>('lastname', [22, 50]);
 
             expect(
               query.statement,
@@ -164,7 +174,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
           });
 
           test('.whereNotBetween', () {
-            final query = Query.query('users', driver)
+            final query = Query.query('users')
+                .driver(driver)
                 .where('firstname', '=', 'Chima')
                 .whereNotBetween<double>('lastname', [22.34, 50]);
 
@@ -178,7 +189,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
 
       group('when handwritten operator', () {
         test('=', () {
-          final query = Query.query('users', driver).where('firstname', '=', 'Chima');
+          final query = Query.query('users').driver(driver).where('firstname', '=', 'Chima');
 
           expect(
             query.statement,
@@ -187,37 +198,37 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('!=', () {
-          final query = Query.query('users', driver).where('firstname', '!=', 'Chima');
+          final query = Query.query('users').driver(driver).where('firstname', '!=', 'Chima');
 
           expect(query.statement, 'SELECT * FROM users WHERE firstname != \'Chima\';');
         });
 
         test('>', () {
-          final query = Query.query('users', driver).where('age', '>', 23);
+          final query = Query.query('users').driver(driver).where('age', '>', 23);
 
           expect(query.statement, 'SELECT * FROM users WHERE age > 23;');
         });
 
         test('<', () {
-          final query = Query.query('users', driver).where('age', '<', 23);
+          final query = Query.query('users').driver(driver).where('age', '<', 23);
 
           expect(query.statement, 'SELECT * FROM users WHERE age < 23;');
         });
 
         test('>=', () {
-          final query = Query.query('users', driver).where('age', '>=', 223);
+          final query = Query.query('users').driver(driver).where('age', '>=', 223);
 
           expect(query.statement, 'SELECT * FROM users WHERE age >= 223;');
         });
 
         test('<=', () {
-          final query = Query.query('users', driver).where('age', '<=', 34.3);
+          final query = Query.query('users').driver(driver).where('age', '<=', 34.3);
 
           expect(query.statement, 'SELECT * FROM users WHERE age <= 34.3;');
         });
 
         test('in', () {
-          final query = Query.query('users', driver).where('places', 'in', ['Accra', 'Tema']);
+          final query = Query.query('users').driver(driver).where('places', 'in', ['Accra', 'Tema']);
 
           expect(
             query.statement,
@@ -226,7 +237,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('not in', () {
-          final query = Query.query('users', driver).where('places', 'not in', ['Accra', 'Tema']);
+          final query = Query.query('users').driver(driver).where('places', 'not in', ['Accra', 'Tema']);
 
           expect(
             query.statement,
@@ -235,7 +246,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('null', () {
-          final query = Query.query('users', driver).where('places', 'null');
+          final query = Query.query('users').driver(driver).where('places', 'null');
 
           expect(
             query.statement,
@@ -244,7 +255,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('not null', () {
-          final query = Query.query('users', driver).where('places', 'not null');
+          final query = Query.query('users').driver(driver).where('places', 'not null');
 
           expect(
             query.statement,
@@ -253,7 +264,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('like', () {
-          final query = Query.query('users', driver).where('places', 'like', "MerryC");
+          final query = Query.query('users').driver(driver).where('places', 'like', "MerryC");
 
           expect(
             query.statement,
@@ -262,7 +273,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('not like', () {
-          final query = Query.query('users', driver).where('places', 'not like', "MerryC");
+          final query = Query.query('users').driver(driver).where('places', 'not like', "MerryC");
 
           expect(
             query.statement,
@@ -271,7 +282,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('between', () {
-          final query = Query.query('users', driver).where('age', 'between', [22, 30]);
+          final query = Query.query('users').driver(driver).where('age', 'between', [22, 30]);
 
           expect(
             query.statement,
@@ -280,7 +291,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('not between', () {
-          final query = Query.query('users', driver).where('age', 'not between', [22, 30]);
+          final query = Query.query('users').driver(driver).where('age', 'not between', [22, 30]);
 
           expect(
             query.statement,
@@ -291,7 +302,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
 
       group('when .whereIn', () {
         test('of level 1', () {
-          final query = Query.query('users', driver).whereIn('firstname', ['Accra', 'Tamale']);
+          final query = Query.query('users').driver(driver).whereIn('firstname', ['Accra', 'Tamale']);
 
           expect(
             query.statement,
@@ -300,8 +311,9 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 2', () {
-          final query =
-              Query.query('users', driver).whereIn('places', ['Accra', 'Tamale']).where('lastname', '=', 'Precious');
+          final query = Query.query('users')
+              .driver(driver)
+              .whereIn('places', ['Accra', 'Tamale']).where('lastname', '=', 'Precious');
 
           expect(
             query.statement,
@@ -310,7 +322,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 3', () {
-          final query = Query.query('users', driver)
+          final query = Query.query('users')
+              .driver(driver)
               .whereIn('places', ['Accra', 'Tamale'])
               .where('lastname', '=', 'Precious')
               .where('names', 'like', 'Hello%');
@@ -322,7 +335,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 4', () {
-          final query = Query.query('users', driver)
+          final query = Query.query('users')
+              .driver(driver)
               .whereIn('places', ['Accra', 'Tamale'])
               .where('lastname', '=', 'Precious')
               .where('names', 'like', 'Hello%')
@@ -337,7 +351,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
 
       group('when .whereNotIn', () {
         test('of level 1', () {
-          final query = Query.query('users', driver).whereNotIn('firstname', ['Accra', 'Tamale']);
+          final query = Query.query('users').driver(driver).whereNotIn('firstname', ['Accra', 'Tamale']);
 
           expect(
             query.statement,
@@ -346,8 +360,9 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 2', () {
-          final query =
-              Query.query('users', driver).whereNotIn('places', ['Accra', 'Tamale']).where('lastname', '=', 'Precious');
+          final query = Query.query('users')
+              .driver(driver)
+              .whereNotIn('places', ['Accra', 'Tamale']).where('lastname', '=', 'Precious');
 
           expect(
             query.statement,
@@ -356,7 +371,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 3', () {
-          final query = Query.query('users', driver)
+          final query = Query.query('users')
+              .driver(driver)
               .whereNotIn('places', ['Accra', 'Tamale'])
               .where('lastname', '=', 'Precious')
               .whereNotNull('names');
@@ -368,7 +384,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 4', () {
-          final query = Query.query('users', driver)
+          final query = Query.query('users')
+              .driver(driver)
               .whereNotIn('places', ['Accra', 'Tamale'])
               .where('lastname', '=', 'Precious')
               .where('names', 'like', 'Hello%')
@@ -383,7 +400,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
 
       group('when .whereBetween', () {
         test('of level 1', () {
-          final query = Query.query('users', driver).whereBetween('age', [22, 70]);
+          final query = Query.query('users').driver(driver).whereBetween('age', [22, 70]);
 
           expect(
             query.statement,
@@ -392,7 +409,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 2', () {
-          final query = Query.query('users', driver)
+          final query = Query.query('users')
+              .driver(driver)
               .whereBetween('places', ['Accra', 'Tamale']).where('lastname', 'between', [2, 100]);
 
           expect(
@@ -402,7 +420,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 3', () {
-          final query = Query.query('users', driver).whereIn('places', ['Accra', 'Tamale']).whereBetween(
+          final query = Query.query('users').driver(driver).whereIn('places', ['Accra', 'Tamale']).whereBetween(
               'lastname', [22, 48]).where('names', 'like', 'Hello%');
 
           expect(
@@ -412,7 +430,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 4', () {
-          final query = Query.query('users', driver)
+          final query = Query.query('users')
+              .driver(driver)
               .whereIn('places', ['Accra', 'Tamale'])
               .where('lastname', '=', 'Precious')
               .orWhere('age', 'in', [23, 34, 55])
@@ -427,7 +446,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
 
       group('when .whereNotBetween', () {
         test('of level 1', () {
-          final query = Query.query('users', driver).whereNotBetween('age', [22, 70]);
+          final query = Query.query('users').driver(driver).whereNotBetween('age', [22, 70]);
 
           expect(
             query.statement,
@@ -436,7 +455,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 2', () {
-          final query = Query.query('users', driver)
+          final query = Query.query('users')
+              .driver(driver)
               .whereNotBetween('places', ['Accra', 'Tamale']).where('lastname', 'between', [2, 100]);
 
           expect(
@@ -446,7 +466,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 3', () {
-          final query = Query.query('users', driver).whereIn('places', ['Accra', 'Tamale']).whereNotBetween(
+          final query = Query.query('users').driver(driver).whereIn('places', ['Accra', 'Tamale']).whereNotBetween(
               'lastname', [22, 48]).where('names', 'like', 'Hello%');
 
           expect(
@@ -456,7 +476,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 4', () {
-          final query = Query.query('users', driver)
+          final query = Query.query('users')
+              .driver(driver)
               .whereIn('places', ['Accra', 'Tamale'])
               .where('lastname', '=', 'Precious')
               .orWhere('age', 'in', [23, 34, 55])
@@ -471,7 +492,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
 
       group('when .whereLike', () {
         test('of level 1', () {
-          final query = Query.query('users', driver).whereLike('firstname', 'Names%%');
+          final query = Query.query('users').driver(driver).whereLike('firstname', 'Names%%');
 
           expect(
             query.statement,
@@ -480,7 +501,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 2', () {
-          final query = Query.query('users', driver).whereLike('places', 'Chima**').where('lastname', '=', 'Precious');
+          final query =
+              Query.query('users').driver(driver).whereLike('places', 'Chima**').where('lastname', '=', 'Precious');
 
           expect(
             query.statement,
@@ -489,7 +511,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 3', () {
-          final query = Query.query('users', driver)
+          final query = Query.query('users')
+              .driver(driver)
               .whereLike('places', 'Hello123')
               .where('lastname', '=', 'Precious')
               .where('names', 'like', 'Hello%');
@@ -501,7 +524,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 4', () {
-          final query = Query.query('users', driver)
+          final query = Query.query('users')
+              .driver(driver)
               .whereLike('places', 'Nems#')
               .where('lastname', '=', 'Precious')
               .where('names', 'like', 'Hello%')
@@ -516,7 +540,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
 
       group('when .whereNotLike', () {
         test('of level 1', () {
-          final query = Query.query('users', driver).whereNotLike('firstname', 'Names%%');
+          final query = Query.query('users').driver(driver).whereNotLike('firstname', 'Names%%');
 
           expect(
             query.statement,
@@ -526,7 +550,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
 
         test('of level 2', () {
           final query =
-              Query.query('users', driver).whereNotLike('places', 'Chima**').whereBetween('lastname', [12, 90]);
+              Query.query('users').driver(driver).whereNotLike('places', 'Chima**').whereBetween('lastname', [12, 90]);
 
           expect(
             query.statement,
@@ -535,7 +559,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 3', () {
-          final query = Query.query('users', driver)
+          final query = Query.query('users')
+              .driver(driver)
               .whereNotLike('places', 'Hello123')
               .where('lastname', '=', 'Precious')
               .where('names', 'like', 'Hello%');
@@ -547,7 +572,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 4', () {
-          final query = Query.query('users', driver)
+          final query = Query.query('users')
+              .driver(driver)
               .whereNotLike('places', 'Nems#')
               .where('lastname', '=', 'Precious')
               .orWhere('names', 'not like', 'Hello%')
@@ -562,7 +588,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
 
       group('when .whereNull', () {
         test('of level 1', () {
-          final query = Query.query('users', driver).whereNull('firstname');
+          final query = Query.query('users').driver(driver).whereNull('firstname');
 
           expect(
             query.statement,
@@ -571,7 +597,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 2', () {
-          final query = Query.query('users', driver).whereNull('places').where('lastname', '=', 'Precious');
+          final query = Query.query('users').driver(driver).whereNull('places').where('lastname', '=', 'Precious');
 
           expect(
             query.statement,
@@ -580,7 +606,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 3', () {
-          final query = Query.query('users', driver)
+          final query = Query.query('users')
+              .driver(driver)
               .whereNull('places')
               .where('lastname', '=', 'Precious')
               .where('names', 'like', 'Hello%');
@@ -592,7 +619,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 4', () {
-          final query = Query.query('users', driver)
+          final query = Query.query('users')
+              .driver(driver)
               .whereNull('places')
               .where('lastname', '=', 'Precious')
               .orWhere('names', 'null')
@@ -607,7 +635,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
 
       group('when .whereNotNull', () {
         test('of level 1', () {
-          final query = Query.query('users', driver).whereNotNull('firstname');
+          final query = Query.query('users').driver(driver).whereNotNull('firstname');
 
           expect(
             query.statement,
@@ -616,7 +644,7 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 2', () {
-          final query = Query.query('users', driver).whereNotNull('places').where('lastname', '=', 'Precious');
+          final query = Query.query('users').driver(driver).whereNotNull('places').where('lastname', '=', 'Precious');
 
           expect(
             query.statement,
@@ -625,7 +653,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 3', () {
-          final query = Query.query('users', driver)
+          final query = Query.query('users')
+              .driver(driver)
               .whereNotNull('places')
               .where('lastname', '=', 'Precious')
               .where('names', 'like', 'Hello%');
@@ -637,7 +666,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
         });
 
         test('of level 4', () {
-          final query = Query.query('users', driver)
+          final query = Query.query('users')
+              .driver(driver)
               .whereNotNull('places')
               .where('lastname', '=', 'Precious')
               .orWhere('names', 'not null')
@@ -651,7 +681,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
       });
 
       test('when .whereFunc', () {
-        final query = Query.query('users', driver)
+        final query = Query.query('users')
+            .driver(driver)
             .where('name', '=', 'John')
             .whereFunc(($query) => $query.where('votes', '>', 100).orWhere('title', '=', 'Admin'));
 
@@ -662,7 +693,8 @@ void whereTestGroup(DatabaseDriver driver) => group('with ${driver.type.name} Dr
       });
 
       test('when .orWhereFunc', () {
-        final query = Query.query('users', driver)
+        final query = Query.query('users')
+            .driver(driver)
             .where('votes', '>', 100)
             .orWhereFunc(($query) => $query.where('name', '=', 'Abigail').where('votes', '>', 50));
 

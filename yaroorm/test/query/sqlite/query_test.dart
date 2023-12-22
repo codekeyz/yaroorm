@@ -11,21 +11,26 @@ void main() {
     group('when `.orderByAsc`', () {
       test(' of level 1', () {
         expect(
-          Query.query('users', _driver).orderByAsc('firstname').statement,
+          Query.query('users').driver(_driver).orderByAsc('firstname').statement,
           'SELECT * FROM users ORDER BY firstname ASC;',
         );
       });
 
       test(' of level 2', () {
         expect(
-          Query.query('users', _driver).orderByAsc('firstname').orderByAsc('lastname').statement,
+          Query.query('users').driver(_driver).orderByAsc('firstname').orderByAsc('lastname').statement,
           'SELECT * FROM users ORDER BY firstname ASC, lastname ASC;',
         );
       });
 
       test(' of level 3', () {
         expect(
-          Query.query('users', _driver).orderByAsc('firstname').orderByDesc('lastname').orderByAsc('age').statement,
+          Query.query('users')
+              .driver(_driver)
+              .orderByAsc('firstname')
+              .orderByDesc('lastname')
+              .orderByAsc('age')
+              .statement,
           'SELECT * FROM users ORDER BY firstname ASC, lastname DESC, age ASC;',
         );
       });
@@ -34,21 +39,22 @@ void main() {
     group('when `.orderByDesc`', () {
       test(' of level 1', () {
         expect(
-          Query.query('users', _driver).orderByDesc('firstname').statement,
+          Query.query('users').driver(_driver).orderByDesc('firstname').statement,
           'SELECT * FROM users ORDER BY firstname DESC;',
         );
       });
 
       test(' of level 2', () {
         expect(
-          Query.query('users', _driver).orderByDesc('firstname').orderByDesc('lastname').statement,
+          Query.query('users').driver(_driver).orderByDesc('firstname').orderByDesc('lastname').statement,
           'SELECT * FROM users ORDER BY firstname DESC, lastname DESC;',
         );
       });
 
       test(' of level 3', () {
         expect(
-          Query.query('users', _driver)
+          Query.query('users')
+              .driver(_driver)
               .where('firstname', 'not null')
               .orderByDesc('lastname')
               .orderByDesc('age')

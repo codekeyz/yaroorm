@@ -13,7 +13,7 @@ Future<void> ensureMigrationsTableReady(DatabaseDriver driver) async {
 }
 
 Future<bool> hasAlreadyMigratedScript(String scriptName, DatabaseDriver driver) async {
-  final result = await Query.query(Migrator.tableName, driver).where('migration', '=', scriptName).findOne();
+  final result = await Query.query(Migrator.tableName).driver(driver).where('migration', '=', scriptName).findOne();
   return result != null;
 }
 

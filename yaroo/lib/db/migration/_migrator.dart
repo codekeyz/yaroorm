@@ -61,7 +61,7 @@ class Migrator {
   static Future<void> resetMigrations(DatabaseDriver driver, Iterable<MigrationTask> allTasks) async {
     await ensureMigrationsTableReady(driver);
 
-    final migrationInfoFromDB = await Query.query(Migrator.tableName, driver).orderByDesc('batch').all();
+    final migrationInfoFromDB = await Query.query(Migrator.tableName).driver(driver).orderByDesc('batch').all();
     if (migrationInfoFromDB.isEmpty) {
       print('𐄂 skipped: reason:     no migrations to reset');
       return;
@@ -80,7 +80,7 @@ class Migrator {
   }
 
   static Future<void> rollBackMigration(DatabaseDriver driver, Iterable<MigrationTask> allTasks) async {
-    final lastBatch = await Query.query(Migrator.tableName, driver).orderByDesc('batch').get();
+    final lastBatch = await Query.query(Migrator.tableName).driver(driver).orderByDesc('batch').get();
     if (lastBatch == null) {
       print('𐄂 skipped: reason:     no migration to rollback');
       return;
@@ -109,9 +109,8 @@ class Migrator {
 
         final deleteSql = DeleteQuery(
           Migrator.tableName,
-          driver,
-          whereClause: Query.query(Migrator.tableName, driver).where('migration', '=', rollback.name),
-        ).statement;
+          whereClause: Query.query(Migrator.tableName).where('migration', '=', rollback.name),
+        ).driver(driver).statement;
         transactor.execute(deleteSql);
 
         await transactor.commit();
