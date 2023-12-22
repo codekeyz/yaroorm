@@ -14,6 +14,10 @@ abstract interface class TableBlueprint {
 
   void datetime(String name, {bool nullable = false, DateTime? defaultValue});
 
+  void date(String name, {bool nullable = false, DateTime? defaultValue});
+
+  void time(String name, {bool nullable = false, DateTime? defaultValue});
+
   void blob(String name, {bool nullable = false, String? defaultValue});
 
   void timestamps({String createdAt = entityCreatedAtColumnName, String updatedAt = entityUpdatedAtColumnName});

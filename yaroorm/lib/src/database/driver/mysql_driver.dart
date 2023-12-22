@@ -93,6 +93,26 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
     return sb.toString();
   }
 
+  @override
+  void datetime(String name, {bool nullable = false, DateTime? defaultValue}) {
+    statements.add(_getColumn(name, 'DATETIME', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void timestamp(String name, {bool nullable = false, DateTime? defaultValue}) {
+    statements.add(_getColumn(name, 'TIMESTAMP', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void date(String name, {bool nullable = false, DateTime? defaultValue}) {
+    statements.add(_getColumn(name, 'DATE', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void time(String name, {bool nullable = false, DateTime? defaultValue}) {
+    statements.add(_getColumn(name, 'TIME', nullable: nullable, defaultValue: defaultValue));
+  }
+
   /// NUMERIC TYPES
   /// ----------------------------------------------------------------
 

@@ -366,7 +366,17 @@ class SqliteTableBlueprint implements TableBlueprint {
 
   @override
   void timestamp(String name, {nullable = false, defaultValue}) {
-    statements.add(_getColumn(name, 'DATETIME', nullable: nullable, defaultValue: defaultValue?.toIso8601String()));
+    datetime(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void date(String name, {bool nullable = false, DateTime? defaultValue}) {
+    datetime(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void time(String name, {bool nullable = false, DateTime? defaultValue}) {
+    datetime(name, nullable: nullable, defaultValue: defaultValue);
   }
 
   @override
