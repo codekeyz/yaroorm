@@ -8,12 +8,6 @@ abstract interface class TableBlueprint {
 
   void string(String name, {bool nullable = false, String? defaultValue});
 
-  void integer(String name, {bool nullable = false, int? defaultValue});
-
-  void double(String name, {bool nullable = false, num? defaultValue});
-
-  void float(String name, {bool nullable = false, num? defaultValue});
-
   void boolean(String name, {bool nullable = false, bool? defaultValue});
 
   void timestamp(String name, {bool nullable = false, DateTime? defaultValue});
@@ -23,6 +17,29 @@ abstract interface class TableBlueprint {
   void blob(String name, {bool nullable = false, String? defaultValue});
 
   void timestamps({String createdAt = entityCreatedAtColumnName, String updatedAt = entityUpdatedAtColumnName});
+
+  /// NUMBER TYPES
+  /// ----------------------------------------------------------------
+
+  void integer(String name, {bool nullable = false, num? defaultValue});
+
+  void double(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale});
+
+  void float(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale});
+
+  void tinyInt(String name, {bool nullable = false, num? defaultValue});
+
+  void smallInteger(String name, {bool nullable = false, num? defaultValue});
+
+  void mediumInteger(String name, {bool nullable = false, num? defaultValue});
+
+  void bigInteger(String name, {bool nullable = false, num? defaultValue});
+
+  void decimal(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale});
+
+  void numeric(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale});
+
+  void bit(String name, {bool nullable = false, int? defaultValue});
 
   /// STRING TYPES
   /// ----------------------------------------------------------------
