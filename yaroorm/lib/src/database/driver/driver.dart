@@ -1,9 +1,11 @@
+import 'package:yaroorm/src/database/driver/mysql_driver.dart';
+
 import '../../query/primitives/serializer.dart';
 import '../../query/query.dart';
 import '../migration.dart';
 import 'sqlite_driver.dart';
 
-enum DatabaseDriverType { sqlite, pgsql, mongo }
+enum DatabaseDriverType { sqlite, pgsql, mysql }
 
 class DatabaseConnection {
   final String name;
@@ -53,7 +55,7 @@ DatabaseDriverType _getDriverType(Map<String, dynamic> connInfo) {
   return switch (value) {
     'sqlite' => DatabaseDriverType.sqlite,
     'pgsql' => DatabaseDriverType.pgsql,
-    'mongo' => DatabaseDriverType.mongo,
+    'mysql' => DatabaseDriverType.mysql,
     null => throw ArgumentError.notNull('Database Driver'),
     _ => throw ArgumentError.value(value, null, 'Invalid Database Driver provided in configuration')
   };
@@ -99,6 +101,8 @@ abstract interface class DatabaseDriver with DriverAble {
     switch (driver) {
       case DatabaseDriverType.sqlite:
         return SqliteDriver(dbConn);
+      case DatabaseDriverType.mysql:
+        return MySqlDriver(dbConn);
       default:
         throw ArgumentError.value(driver, null, 'Driver not yet supported');
     }

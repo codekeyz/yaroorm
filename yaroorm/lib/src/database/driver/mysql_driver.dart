@@ -1,3 +1,4 @@
+import 'package:meta/meta.dart';
 import 'package:yaroorm/src/database/migration.dart';
 import 'package:yaroorm/src/query/primitives/serializer.dart';
 import 'package:yaroorm/src/query/query.dart';
@@ -5,10 +6,14 @@ import 'package:yaroorm/src/query/query.dart';
 import 'driver.dart';
 import 'sqlite_driver.dart';
 
+final _tableBlueprint = MySqlDriverTableBlueprint();
+
+final _primitiveSerializer = MySqlPrimitiveSerializer();
+
 class MySqlDriver implements DatabaseDriver {
-  @override
-  // TODO: implement blueprint
-  TableBlueprint get blueprint => throw UnimplementedError();
+  final DatabaseConnection config;
+
+  MySqlDriver(this.config);
 
   @override
   Future<DatabaseDriver> connect() {
@@ -63,18 +68,19 @@ class MySqlDriver implements DatabaseDriver {
   }
 
   @override
-  // TODO: implement serializer
-  PrimitiveSerializer get serializer => throw UnimplementedError();
-
-  @override
   Future<void> transaction(void Function(DriverTransactor transactor) transaction) {
     // TODO: implement transaction
     throw UnimplementedError();
   }
 
   @override
-  // TODO: implement type
-  DatabaseDriverType get type => throw UnimplementedError();
+  DatabaseDriverType get type => DatabaseDriverType.mysql;
+
+  @override
+  TableBlueprint get blueprint => _tableBlueprint;
+
+  @override
+  PrimitiveSerializer get serializer => _primitiveSerializer;
 
   @override
   Future<List<Map<String, dynamic>>> update(UpdateQuery query) {
@@ -83,6 +89,7 @@ class MySqlDriver implements DatabaseDriver {
   }
 }
 
+@protected
 class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
   String _getColumn(String name, String type, {nullable = false, defaultValue}) {
     final sb = StringBuffer()..write('$name $type');
@@ -248,5 +255,14 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
       {bool nullable = false, String? defaultValue, String? charset, String? collate, int length = 1}) {
     final type = _getStringType('VARBINARY($length)', charset: charset, collate: collate);
     statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+  }
+}
+
+@protected
+class MySqlPrimitiveSerializer extends SqliteSerializer {
+  @override
+  acceptDartValue(dartValue) {
+    // TODO: implement acceptDartValue
+    return super.acceptDartValue(dartValue);
   }
 }

@@ -4,7 +4,7 @@ import 'package:yaroorm/yaroorm.dart';
 import '../../helpers/drivers.dart';
 import '../where_query_base.dart';
 
-final _driver = DatabaseDriver.init(sqliteConnection);
+final _driver = DatabaseDriver.init(mysqlConnection);
 
 void main() {
   group('Query.query', () {

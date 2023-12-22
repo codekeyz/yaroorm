@@ -5,3 +5,9 @@ final sqliteConnection = DatabaseConnection(
   'sqlite',
   DatabaseDriverType.sqlite,
 );
+
+final mysqlConnection = DatabaseConnection(
+  'db',
+  'sqlite',
+  DatabaseDriverType.mysql,
+);

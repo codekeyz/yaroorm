@@ -1,14 +1,17 @@
+import 'package:meta/meta.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:yaroorm/src/database/migration.dart';
+import 'package:yaroorm/src/query/primitives/serializer.dart';
+import 'package:yaroorm/src/query/query.dart';
 
-import '../../query/primitives/serializer.dart';
-import '../../query/query.dart';
-import '../migration.dart';
 import 'driver.dart';
 
-final _serializer = const _SqliteSerializer();
+final _serializer = const SqliteSerializer();
 
 final _sqliteTableBlueprint = SqliteTableBlueprint();
 
+@visibleForTesting
+@protected
 class SqliteDriver implements DatabaseDriver {
   final DatabaseConnection config;
 
@@ -137,8 +140,9 @@ class _SqliteTransactor implements DriverTransactor {
   Future<List<Object?>> commit() => _batch.commit();
 }
 
-class _SqliteSerializer implements PrimitiveSerializer {
-  const _SqliteSerializer();
+@protected
+class SqliteSerializer implements PrimitiveSerializer {
+  const SqliteSerializer();
 
   @override
   String acceptReadQuery(Query query) {
@@ -286,9 +290,7 @@ class _SqliteSerializer implements PrimitiveSerializer {
     };
   }
 
-  String processClause(
-    List<(LogicalOperator operator, WhereClauseValue value)> subParts,
-  ) {
+  String processClause(List<(LogicalOperator operator, WhereClauseValue value)> subParts) {
     final group = StringBuffer();
 
     final firstPart = subParts.removeAt(0);
@@ -305,6 +307,7 @@ class _SqliteSerializer implements PrimitiveSerializer {
   }
 }
 
+@protected
 class SqliteTableBlueprint implements TableBlueprint {
   final List<String> statements = [];
 
