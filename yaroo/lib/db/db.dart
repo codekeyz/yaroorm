@@ -11,7 +11,7 @@ class UseDatabaseConnection {
 
   UseDatabaseConnection(this.name) : _driver = DB.driver(name);
 
-  Query query(String table) => Query.query(table, _driver);
+  Query query(String table) => Query.query(table).driver(_driver);
 }
 
 class DB {

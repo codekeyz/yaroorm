@@ -1,3 +1,5 @@
+import 'package:meta/meta.dart';
+
 import '../_reflection/entity_helpers.dart';
 import '../database/driver/driver.dart';
 import '../database/entity.dart';
@@ -42,16 +44,29 @@ mixin OrderByOperation<ReturnType> {
   ReturnType orderByDesc(String field);
 }
 
-abstract interface class QueryBase {
+abstract interface class QueryBase<Owner> {
   final String tableName;
-  final DatabaseDriver driver;
 
-  QueryBase(this.tableName, this.driver);
+  DatabaseDriver? _queryDriver;
+
+  DatabaseDriver get queryDriver {
+    if (_queryDriver == null) {
+      throw StateError('Driver not set for query. Make sure you supply a driver using .driver()');
+    }
+    return _queryDriver!;
+  }
+
+  Owner driver(DatabaseDriver driver) {
+    _queryDriver = driver;
+    return this as Owner;
+  }
+
+  QueryBase(this.tableName);
 
   String get statement;
 }
 
-abstract class Query extends QueryBase
+abstract class Query extends QueryBase<Query>
     with
         ReadOperation,
         WhereOperation,
@@ -66,13 +81,13 @@ abstract class Query extends QueryBase
 
   late int? _limit;
 
-  Query(super.tableName, super.driver)
+  Query(super.tableName)
       : fieldSelections = {},
         orderByProps = {},
         whereClauses = [],
         _limit = null;
 
-  factory Query.query(String tableName, DatabaseDriver driver) => _QueryImpl(tableName, driver);
+  factory Query.query(String tableName) => _QueryImpl(tableName);
 
   int? get limit => _limit;
 
@@ -80,33 +95,33 @@ abstract class Query extends QueryBase
   Future<List<T>> take<T>(int limit);
 
   @override
-  String get statement => driver.serializer.acceptReadQuery(this);
+  String get statement => queryDriver.serializer.acceptReadQuery(this);
 }
 
-class UpdateQuery extends QueryBase {
+@protected
+class UpdateQuery extends QueryBase<UpdateQuery> {
   final WhereClause whereClause;
   final Map<String, dynamic> values;
 
   UpdateQuery(
-    super.tableName,
-    super.driver, {
+    super.tableName, {
     required this.whereClause,
     required this.values,
   });
 
   @override
-  String get statement => driver.serializer.acceptUpdateQuery(this);
+  String get statement => queryDriver.serializer.acceptUpdateQuery(this);
 }
 
-class DeleteQuery extends QueryBase {
+@protected
+class DeleteQuery extends QueryBase<DeleteQuery> {
   final WhereClause whereClause;
 
   DeleteQuery(
-    super.tableName,
-    super.driver, {
+    super.tableName, {
     required this.whereClause,
   });
 
   @override
-  String get statement => driver.serializer.acceptDeleteQuery(this);
+  String get statement => queryDriver.serializer.acceptDeleteQuery(this);
 }
