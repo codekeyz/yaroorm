@@ -52,5 +52,28 @@ void main() {
         expect(driver.serializer, isA<MySqlPrimitiveSerializer>());
       });
     });
+
+    group('when mariadb connection', () {
+      test('should return MySql Driver', () {
+        final driver = DatabaseDriver.init(mariadbConnection);
+        expect(driver, isA<MySqlDriver>());
+
+        expect(driver.type, DatabaseDriverType.mariadb);
+      });
+
+      test('should have table blueprint', () {
+        final driver = DatabaseDriver.init(mariadbConnection);
+        expect(driver, isA<MySqlDriver>());
+
+        expect(driver.blueprint, isA<MySqlDriverTableBlueprint>());
+      });
+
+      test('should have primitive serializer', () {
+        final driver = DatabaseDriver.init(mariadbConnection);
+        expect(driver, isA<MySqlDriver>());
+
+        expect(driver.serializer, isA<MySqlPrimitiveSerializer>());
+      });
+    });
   });
 }

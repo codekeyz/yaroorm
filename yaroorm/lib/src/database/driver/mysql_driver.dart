@@ -12,8 +12,10 @@ final _primitiveSerializer = MySqlPrimitiveSerializer();
 
 class MySqlDriver implements DatabaseDriver {
   final DatabaseConnection config;
+  final DatabaseDriverType _type;
 
-  MySqlDriver(this.config);
+  MySqlDriver(this.config, this._type)
+      : assert([DatabaseDriverType.mysql, DatabaseDriverType.mariadb].contains(config.driver));
 
   @override
   Future<DatabaseDriver> connect() {
@@ -74,7 +76,7 @@ class MySqlDriver implements DatabaseDriver {
   }
 
   @override
-  DatabaseDriverType get type => DatabaseDriverType.mysql;
+  DatabaseDriverType get type => _type;
 
   @override
   TableBlueprint get blueprint => _tableBlueprint;

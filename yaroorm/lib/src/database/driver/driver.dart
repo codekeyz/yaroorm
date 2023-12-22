@@ -5,7 +5,7 @@ import '../../query/query.dart';
 import '../migration.dart';
 import 'sqlite_driver.dart';
 
-enum DatabaseDriverType { sqlite, pgsql, mysql }
+enum DatabaseDriverType { sqlite, pgsql, mysql, mariadb }
 
 class DatabaseConnection {
   final String name;
@@ -56,6 +56,7 @@ DatabaseDriverType _getDriverType(Map<String, dynamic> connInfo) {
     'sqlite' => DatabaseDriverType.sqlite,
     'pgsql' => DatabaseDriverType.pgsql,
     'mysql' => DatabaseDriverType.mysql,
+    'mariadb' => DatabaseDriverType.mariadb,
     null => throw ArgumentError.notNull('Database Driver'),
     _ => throw ArgumentError.value(value, null, 'Invalid Database Driver provided in configuration')
   };
@@ -101,8 +102,9 @@ abstract interface class DatabaseDriver with DriverAble {
     switch (driver) {
       case DatabaseDriverType.sqlite:
         return SqliteDriver(dbConn);
+      case DatabaseDriverType.mariadb:
       case DatabaseDriverType.mysql:
-        return MySqlDriver(dbConn);
+        return MySqlDriver(dbConn, driver);
       default:
         throw ArgumentError.value(driver, null, 'Driver not yet supported');
     }

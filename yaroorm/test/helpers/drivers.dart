@@ -6,8 +6,14 @@ final sqliteConnection = DatabaseConnection(
   DatabaseDriverType.sqlite,
 );
 
-final mysqlConnection = DatabaseConnection(
-  'db',
-  'sqlite',
-  DatabaseDriverType.mysql,
-);
+final mysqlConnection = DatabaseConnection.from('maria_connection', {
+  'database': 'mysql_test_db',
+  'driver': 'mysql',
+  'host': 'localhost',
+});
+
+final mariadbConnection = DatabaseConnection.from('maria_connection', {
+  'database': 'maria_test_db',
+  'driver': 'mariadb',
+  'host': 'localhost',
+});
