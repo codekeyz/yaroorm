@@ -4,7 +4,7 @@ import 'package:yaroo/yaroo.dart';
 
 import './router_test.reflectable.dart';
 
-class TestController extends BaseController {
+class TestController extends HTTPController {
   void create() {}
 
   void index() {}

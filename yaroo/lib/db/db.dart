@@ -1,8 +1,9 @@
 import 'package:collection/collection.dart';
-import 'package:yaroo/src/_config/config.dart';
+import 'package:yaroo/src/config/database.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 export 'package:yaroorm/src/database/entity.dart';
+export 'package:yaroorm/src/database/migration.dart';
 
 class UseDatabaseConnection {
   final String name;
@@ -19,7 +20,6 @@ class DB {
 
   static late final UseDatabaseConnection defaultConnection;
   static late final List<Migration> migrations;
-  static final String _defaultDatabaseValue = 'default';
 
   DB._();
 
@@ -30,37 +30,21 @@ class DB {
   static UseDatabaseConnection connection(String connName) => UseDatabaseConnection(connName);
 
   static DatabaseDriver driver(String connName) {
-    if (connName == _defaultDatabaseValue) return defaultDriver;
-    final cached = _driverInstances[connName];
-    if (cached != null) return cached;
+    if (connName == 'default') return defaultDriver;
+    final instance = _driverInstances[connName];
+    if (instance != null) return instance;
     final connInfo = _connections.firstWhereOrNull((e) => e.name == connName);
-    if (connInfo == null) {
-      throw Exception('No Database connection found with name: $connName');
-    }
+    if (connInfo == null) throw ArgumentError.value(connName, 'No Database connection found with name: $connName');
     return _driverInstances[connName] = DatabaseDriver.init(connInfo);
   }
 
-  static void init(ConfigResolver dbConfig) {
-    final configuration = dbConfig.call();
-    final defaultConn = configuration.getValue<String>(_defaultDatabaseValue);
-    if (defaultConn == null) {
-      throw ArgumentError.notNull('Default database connection');
-    }
-    final connInfos = configuration.getValue<Map<String, dynamic>>('connections');
-    if (connInfos == null || connInfos.isEmpty) {
-      throw ArgumentError('Database connection infos not provided');
-    }
-    final connections = connInfos.entries.map((e) => DatabaseConnection.from(e.key, e.value));
-    final defaultConnection = connections.firstWhereOrNull((e) => e.name == defaultConn);
-    if (defaultConnection == null) {
-      throw ArgumentError('Database connection info not found for $defaultConn');
-    }
-
+  static void init(DatabaseConfig config) {
     DB._connections
       ..clear()
-      ..addAll(connections);
+      ..addAll(config.connections);
 
+    final defaultConn = config.defaultConnName;
+    DB._driverInstances[defaultConn] = DatabaseDriver.init(config.defaultDBConn);
     DB.defaultConnection = UseDatabaseConnection(defaultConn);
-    DB._driverInstances[defaultConn] = DatabaseDriver.init(defaultConnection);
   }
 }

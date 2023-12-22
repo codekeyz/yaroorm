@@ -4,36 +4,23 @@ import 'dart:async';
 
 import 'package:meta/meta.dart';
 import 'package:pharaoh/pharaoh.dart';
-import 'package:reflectable/reflectable.dart' as r;
 import 'package:spookie/spookie.dart';
 import 'package:yaroo/db/db.dart';
 
 import '../../http/http.dart';
 import '../../http/kernel.dart';
-import '_config/config.dart';
 import '_container/container.dart';
 import '_reflector/reflector.dart';
 import '_router/definition.dart';
 import '_router/utils.dart';
+import 'config/config.dart';
 
 part './core_impl.dart';
 
-class Injectable extends r.Reflectable {
-  const Injectable()
-      : super(
-          r.invokingCapability,
-          r.metadataCapability,
-          r.newInstanceCapability,
-          r.declarationsCapability,
-          r.reflectedTypeCapability,
-          r.typeRelationsCapability,
-          r.instanceInvokeCapability,
-          r.subtypeQuantifyCapability,
-        );
-}
-
 typedef RoutesResolver = List<RouteDefinition> Function();
 
+/// This should really be a mixin but due to a bug in reflectable.dart#324
+/// TODO:(codekeyz) make this a mixin when reflectable.dart#324 is fixed
 abstract class AppInstance {
   Application get app => Application._instance;
 }
@@ -47,7 +34,7 @@ abstract interface class Application {
 
   int get port;
 
-  YarooAppConfig get config;
+  AppConfig get config;
 
   T singleton<T extends Object>(T instance);
 
@@ -57,7 +44,7 @@ abstract interface class Application {
 
   void useViewEngine(ViewEngine viewEngine);
 
-  void _useConfig(YarooAppConfig appConfig);
+  void _useConfig(AppConfig config);
 }
 
 class AppServiceProvider extends ServiceProvider {
@@ -68,15 +55,15 @@ class AppServiceProvider extends ServiceProvider {
       autoReload: false,
       trimBlocks: true,
       leftStripBlocks: true,
-      loader: FileSystemLoader(paths: ['public']),
+      loader: FileSystemLoader(paths: ['public', 'templates'], extensions: {'j2'}),
     );
-    app.useViewEngine(JinjaViewEngine(environment));
+    app.useViewEngine(JinjaViewEngine(environment, fileExt: 'j2'));
   }
 }
 
 abstract class ApplicationFactory {
-  final ConfigResolver appConfig;
-  final ConfigResolver? dbConfig;
+  final AppConfig appConfig;
+  final DatabaseConfig? dbConfig;
   final Kernel _kernel;
 
   ApplicationFactory(
@@ -87,17 +74,15 @@ abstract class ApplicationFactory {
 
   List<Middleware> get globalMiddlewares => [bodyParser];
 
-  Future<void> bootstrap({
-    bool start_server = true,
-  }) async {
+  Future<void> bootstrap({bool listen = true}) async {
     if (dbConfig != null) {
       DB.init(dbConfig!);
       await DB.defaultDriver.connect();
     }
 
-    await _bootstrapComponents(appConfig.call());
+    await _bootstrapComponents(appConfig);
 
-    if (start_server) await startServer();
+    if (listen) await startServer();
   }
 
   Future<void> startServer() async {
@@ -108,17 +93,16 @@ abstract class ApplicationFactory {
     await launchUrl(Application._instance.url);
   }
 
-  Future<void> _bootstrapComponents(YarooAppConfig appConfig) async {
+  Future<void> _bootstrapComponents(AppConfig config) async {
     final application = registerSingleton<Application>(_YarooAppImpl(Spanner()));
 
     application
-      .._useConfig(appConfig)
+      .._useConfig(config)
       ..singleton<Kernel>(_kernel)
       ..useMiddlewares(globalMiddlewares);
 
     /// boostrap providers
-    final providers = appConfig.getValue<List<Type>>(ConfigExt.providers)!;
-    for (final type in providers) {
+    for (final type in appConfig.providers) {
       final provider = createNewInstance<ServiceProvider>(type);
       await registerSingleton(provider).boot();
     }
@@ -128,5 +112,23 @@ abstract class ApplicationFactory {
   Future<Spookie> get tester {
     final application = (instanceFromRegistry<Application>() as _YarooAppImpl);
     return request(application._createPharaohInstance());
+  }
+
+  static RequestHandler buildControllerMethod(ControllerMethod method) {
+    return (req, res) async {
+      final methodName = method.methodName;
+      final instance = createNewInstance<HTTPController>(method.controller);
+      final mirror = inject.reflect(instance);
+
+      mirror
+        ..invokeSetter('request', req)
+        ..invokeSetter('response', res);
+
+      methodCall() => mirror.invoke(methodName, []);
+
+      final result = await Future.sync(methodCall);
+
+      return result;
+    };
   }
 }
