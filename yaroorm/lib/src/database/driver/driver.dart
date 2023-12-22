@@ -83,6 +83,8 @@ mixin DriverAble {
   Future<void> delete(DeleteQuery query);
 
   Future<dynamic> insert(String tableName, Map<String, dynamic> data);
+
+  PrimitiveSerializer get serializer;
 }
 
 abstract class DriverTransactor with DriverAble {
@@ -126,8 +128,6 @@ abstract interface class DatabaseDriver with DriverAble {
   Future<int> insert(String tableName, Map<String, dynamic> data);
 
   TableBlueprint get blueprint;
-
-  PrimitiveSerializer get serializer;
 
   Future<void> transaction(void Function(DriverTransactor transactor) transaction);
 }

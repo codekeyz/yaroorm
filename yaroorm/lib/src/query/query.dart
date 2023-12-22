@@ -47,16 +47,16 @@ mixin OrderByOperation<ReturnType> {
 abstract interface class QueryBase<Owner> {
   final String tableName;
 
-  DatabaseDriver? _queryDriver;
+  DriverAble? _queryDriver;
 
-  DatabaseDriver get queryDriver {
+  DriverAble get queryDriver {
     if (_queryDriver == null) {
       throw StateError('Driver not set for query. Make sure you supply a driver using .driver()');
     }
     return _queryDriver!;
   }
 
-  Owner driver(DatabaseDriver driver) {
+  Owner driver(DriverAble driver) {
     _queryDriver = driver;
     return this as Owner;
   }

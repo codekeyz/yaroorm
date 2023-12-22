@@ -23,6 +23,7 @@ final class _QueryImpl extends Query {
       model.createdAt = model.updatedAt = DateTime.now().toUtc();
     }
     final dataMap = model.toJson()..remove('id');
+
     final recordId = await queryDriver.insert(tableName, dataMap);
     return model..id = model.id.withKey(recordId);
   }

@@ -141,6 +141,9 @@ class _SqliteTransactor implements DriverTransactor {
 
   @override
   Future<List<Object?>> commit() => _batch.commit();
+
+  @override
+  PrimitiveSerializer get serializer => _serializer;
 }
 
 @protected
