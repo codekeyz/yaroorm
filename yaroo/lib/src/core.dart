@@ -55,9 +55,9 @@ class AppServiceProvider extends ServiceProvider {
       autoReload: false,
       trimBlocks: true,
       leftStripBlocks: true,
-      loader: FileSystemLoader(paths: ['public']),
+      loader: FileSystemLoader(paths: ['public', 'templates'], extensions: {'j2'}),
     );
-    app.useViewEngine(JinjaViewEngine(environment));
+    app.useViewEngine(JinjaViewEngine(environment, fileExt: 'j2'));
   }
 }
 
