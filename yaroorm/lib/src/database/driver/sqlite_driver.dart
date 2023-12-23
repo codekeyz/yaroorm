@@ -81,8 +81,8 @@ class SqliteDriver implements DatabaseDriver {
   }
 
   @override
-  Future<int> insert(String tableName, Map<String, dynamic> data) async {
-    return (await _getDatabase()).insert(tableName, data);
+  Future<int> insert(InsertQuery query) async {
+    return (await _getDatabase()).insert(query.tableName, query.values);
   }
 
   @override
@@ -135,8 +135,8 @@ class _SqliteTransactor implements DriverTransactor {
   }
 
   @override
-  Future<void> insert(String tableName, Map<String, dynamic> data) {
-    return Future.sync(() => _batch.insert(tableName, data));
+  Future<void> insert(InsertQuery query) {
+    return Future.sync(() => _batch.insert(query.tableName, query.values));
   }
 
   @override
@@ -207,6 +207,22 @@ class SqliteSerializer implements PrimitiveSerializer {
       ..write(terminator);
 
     return queryBuilder.toString();
+  }
+
+  @override
+  String acceptInsertQuery(InsertQuery query) {
+    final data = query.values;
+    final fields = data.keys.join(', ');
+    final values = data.values.map((e) => acceptDartValue(e)).join(', ');
+    return 'INSERT INTO ${query.tableName} ($fields) VALUES ($values)$terminator';
+  }
+
+  @override
+  String acceptInsertAllQuery(InsertManyQuery query) {
+    final data = query.values;
+    final fields = data.first.keys.join(', ');
+    final values = data.map((e) => '(${e.values.map((e) => acceptDartValue(e)).join(', ')})').join(', ');
+    return 'INSERT INTO ${query.tableName} ($fields) VALUES $values$terminator';
   }
 
   @override
@@ -310,13 +326,6 @@ class SqliteSerializer implements PrimitiveSerializer {
     }
 
     return group.toString();
-  }
-
-  @override
-  String acceptInsertQuery(String tableName, Map<String, dynamic> data) {
-    final fields = data.keys.join(', ');
-    final values = data.values.map((e) => acceptDartValue(e)).join(', ');
-    return 'INSERT INTO $tableName ($fields) VALUES ($values)$terminator';
   }
 }
 

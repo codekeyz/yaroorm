@@ -47,7 +47,9 @@ class Migrator {
           transactor.execute(serialized);
         }
 
-        transactor.insert(Migrator.tableName, {'migration': fileName, 'batch': batchNos});
+        await Query.table(Migrator.tableName)
+            .driver(transactor)
+            .insert({'migration': fileName, 'batch': batchNos}).exec();
 
         await transactor.commit();
 
@@ -61,7 +63,7 @@ class Migrator {
   static Future<void> resetMigrations(DatabaseDriver driver, Iterable<MigrationTask> allTasks) async {
     await ensureMigrationsTableReady(driver);
 
-    final migrationInfoFromDB = await Query.query(Migrator.tableName).driver(driver).orderByDesc('batch').all();
+    final migrationInfoFromDB = await Query.table(Migrator.tableName).driver(driver).orderByDesc('batch').all();
     if (migrationInfoFromDB.isEmpty) {
       print('𐄂 skipped: reason:     no migrations to reset');
       return;
@@ -80,7 +82,7 @@ class Migrator {
   }
 
   static Future<void> rollBackMigration(DatabaseDriver driver, Iterable<MigrationTask> allTasks) async {
-    final lastBatch = await Query.query(Migrator.tableName).driver(driver).orderByDesc('batch').get();
+    final lastBatch = await Query.table(Migrator.tableName).driver(driver).orderByDesc('batch').get();
     if (lastBatch == null) {
       print('𐄂 skipped: reason:     no migration to rollback');
       return;
@@ -107,7 +109,7 @@ class Migrator {
           schemas.forEach((e) => transactor.execute(e.toScript(driver.blueprint)));
         }
 
-        await Query.query(Migrator.tableName).driver(transactor).where('migration', '=', rollback.name).delete();
+        await Query.table(Migrator.tableName).driver(transactor).where('migration', '=', rollback.name).delete();
 
         await transactor.commit();
       });

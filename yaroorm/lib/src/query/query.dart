@@ -2,7 +2,6 @@ import 'package:meta/meta.dart';
 
 import '../_reflection/entity_helpers.dart';
 import '../database/driver/driver.dart';
-import '../database/entity.dart';
 
 part 'operations/query.dart';
 part 'primitives/where.dart';
@@ -21,7 +20,9 @@ mixin FindOperation {
 }
 
 mixin InsertOperation {
-  Future<T> insert<T extends Entity>(T model);
+  InsertQuery insert(Map<String, dynamic> values);
+
+  InsertManyQuery insertAll(List<Map<String, dynamic>> values);
 }
 
 mixin LimitOperation<ReturnType> {
@@ -87,7 +88,7 @@ abstract class Query extends QueryBase<Query>
         whereClauses = [],
         _limit = null;
 
-  factory Query.query(String tableName) => _QueryImpl(tableName);
+  factory Query.table(String tableName) => _QueryImpl(tableName);
 
   int? get limit => _limit;
 
@@ -103,24 +104,37 @@ class UpdateQuery extends QueryBase<UpdateQuery> {
   final WhereClause whereClause;
   final Map<String, dynamic> values;
 
-  UpdateQuery(
-    super.tableName, {
-    required this.whereClause,
-    required this.values,
-  });
+  UpdateQuery(super.tableName, {required this.whereClause, required this.values});
 
   @override
   String get statement => queryDriver.serializer.acceptUpdateQuery(this);
+}
+
+class InsertQuery extends QueryBase<InsertQuery> {
+  final Map<String, dynamic> values;
+
+  InsertQuery(super.tableName, {required this.values});
+
+  Future<dynamic> exec() => queryDriver.insert(this);
+
+  @override
+  String get statement => queryDriver.serializer.acceptInsertQuery(this);
+}
+
+class InsertManyQuery extends QueryBase<InsertManyQuery> {
+  final List<Map<String, dynamic>> values;
+
+  InsertManyQuery(super.tableName, {required this.values});
+
+  @override
+  String get statement => queryDriver.serializer.acceptInsertAllQuery(this);
 }
 
 @protected
 class DeleteQuery extends QueryBase<DeleteQuery> {
   final WhereClause whereClause;
 
-  DeleteQuery(
-    super.tableName, {
-    required this.whereClause,
-  });
+  DeleteQuery(super.tableName, {required this.whereClause});
 
   @override
   String get statement => queryDriver.serializer.acceptDeleteQuery(this);

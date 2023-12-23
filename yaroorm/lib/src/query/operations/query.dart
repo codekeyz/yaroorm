@@ -18,14 +18,13 @@ final class _QueryImpl extends Query {
   }
 
   @override
-  Future<T> insert<T extends Entity>(T model) async {
-    if (model.enableTimestamps) {
-      model.createdAt = model.updatedAt = DateTime.now().toUtc();
-    }
-    final dataMap = model.toJson()..remove('id');
+  InsertQuery insert(Map<String, dynamic> values) {
+    return InsertQuery(tableName, values: values).driver(queryDriver);
+  }
 
-    final recordId = await queryDriver.insert(tableName, dataMap);
-    return model..id = model.id.withKey(recordId);
+  @override
+  InsertManyQuery insertAll(List<Map<String, dynamic>> values) {
+    return InsertManyQuery(tableName, values: values).driver(queryDriver);
   }
 
   @override

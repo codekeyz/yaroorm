@@ -79,8 +79,8 @@ class MySqlDriver implements DatabaseDriver {
   }
 
   @override
-  Future<int> insert(String tableName, Map<String, dynamic> data) {
-    final sql = _primitiveSerializer.acceptInsertQuery(tableName, data);
+  Future<int> insert(InsertQuery query) {
+    final sql = _primitiveSerializer.acceptInsertQuery(query);
     return rawQuery(sql).then((value) => value.first['id'] as int);
   }
 
@@ -140,8 +140,8 @@ class _MysqlTransactor extends DriverTransactor {
   }
 
   @override
-  Future<int> insert(String tableName, Map<String, dynamic> data) {
-    final sql = _primitiveSerializer.acceptInsertQuery(tableName, data);
+  Future<int> insert(InsertQuery query) {
+    final sql = _primitiveSerializer.acceptInsertQuery(query);
     return rawQuery(sql).then((value) => value.first['id'] as int);
   }
 

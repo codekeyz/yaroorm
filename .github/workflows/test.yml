@@ -56,6 +56,11 @@ jobs:
       - name: Run Unit tests
         run: melos tests:ci
 
+      - name: Test SQLite
+        run: |
+          cd yaroorm
+          melos exec -- "dart run test --platform vm --tags sqlite"
+
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
         env:

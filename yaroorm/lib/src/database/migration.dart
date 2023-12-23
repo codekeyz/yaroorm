@@ -153,7 +153,7 @@ class Schema {
 
   Schema._(this.tableName, this._bluePrintFunc);
 
-  String toScript(TableBlueprint $table) => _bluePrintFunc!.call($table).createScript(tableName);
+  String toScript(TableBlueprint table) => _bluePrintFunc!.call(table).createScript(tableName);
 
   static Schema create(String name, TableBluePrintFunc func) => Schema._(name, func);
 

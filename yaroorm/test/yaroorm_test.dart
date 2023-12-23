@@ -3,7 +3,7 @@ import 'package:yaroorm/src/database/driver/driver.dart';
 import 'package:yaroorm/src/database/driver/mysql_driver.dart';
 import 'package:yaroorm/src/database/driver/sqlite_driver.dart';
 
-import 'helpers/drivers.dart';
+import 'unit/helpers/drivers.dart';
 
 void main() {
   group('DatabaseDriver.init', () {
