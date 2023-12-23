@@ -82,9 +82,13 @@ class MySqlDriver implements DatabaseDriver {
   }
 
   @override
-  Future<int> insert(InsertQuery query) {
+  Future<int> insert(InsertQuery query) async {
     final sql = _primitiveSerializer.acceptInsertQuery(query);
-    return rawQuery(sql).then((value) => value.first['id'] as int);
+    final result = await rawQuery(sql);
+
+    print(result);
+
+    return result.first['id'] as int;
   }
 
   @override
