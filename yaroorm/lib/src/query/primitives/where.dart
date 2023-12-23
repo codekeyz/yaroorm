@@ -109,6 +109,7 @@ abstract class WhereClause extends Clause
     with WhereOperation, FindOperation, LimitOperation, OrderByOperation<WhereClause> {
   final Query _query;
   final LogicalOperator operator;
+  final List<CombineClause<WhereClauseValue>> subparts = [];
 
   WhereClause(
     this._query, {

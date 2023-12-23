@@ -254,10 +254,6 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptWhereClause(WhereClause clause, {bool canGroup = false}) {
-    if (clause is! WhereClauseImpl) {
-      return _acceptWhereClauseValue(clause.clauseValue!);
-    }
-
     final value = clause.clauseValue;
     final subParts = <(LogicalOperator operator, WhereClauseValue value)>[
       if (value != null) (clause.operator, value),

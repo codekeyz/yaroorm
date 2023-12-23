@@ -1,8 +1,6 @@
 part of '../query.dart';
 
 class WhereClauseImpl extends WhereClause {
-  final List<CombineClause<WhereClauseValue>> subparts = [];
-
   WhereClauseImpl(
     Query query, {
     LogicalOperator operator = LogicalOperator.AND,
