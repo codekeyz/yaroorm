@@ -20,8 +20,6 @@ class MySqlDriver implements DatabaseDriver {
   MySqlDriver(this.config, this._type) {
     assert([DatabaseDriverType.mysql, DatabaseDriverType.mariadb].contains(config.driver));
     assert(config.host != null, 'Host is required');
-    assert(config.username != null, 'Username is required');
-    assert(config.password != null, 'Password is required');
   }
 
   @override
