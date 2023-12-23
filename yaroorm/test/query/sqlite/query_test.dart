@@ -65,6 +65,32 @@ void main() {
   });
 
   group('Postgre Query.query', () {
+
+    group('Create tables', () {
+      test('Check for users table', () async {
+        // Generate the SQL command for creating the table
+        postgresSqlDriver.connect();
+        var blueprint = postgresSqlDriver.blueprint;
+        blueprint.id(name: 'id');
+        blueprint.string('username');
+        blueprint.string('email');
+        blueprint.string('password');
+        String createTableCommand = blueprint.createScript('users');
+
+        // Execute the SQL command
+       // await postgresSqlDriver.execute(createTableCommand);
+
+        print(createTableCommand);
+
+        // Check if the table was created successfully
+        bool tableExists = await postgresSqlDriver.hasTable('users');
+        expect(tableExists, isTrue);
+        //expect(createTableCommand, isTrue);
+      });
+
+      // Add more test cases for other tables...
+    });
+
     group('when `.orderByAsc`', () {
       test(' of level 1', () {
         expect(
