@@ -78,26 +78,29 @@ Operator _strToOperator(String condition) => switch (condition) {
       //
       'between' => Operator.BETWEEN,
       'not between' => Operator.NOT_BETWEEN,
-      _ =>
-        throw ArgumentError.value(condition, null, 'Either condition is not known or Use one of the defined functions')
+      _ => throw ArgumentError.value(condition, null, 'Condition $condition is not known')
     };
 
 class WhereClauseValue<A> {
   final String field;
   final CompareWithValue comparer;
 
-  const WhereClauseValue(this.field, this.comparer);
-
-  factory WhereClauseValue.from(String field, String condition, value) {
-    final operator = _strToOperator(condition);
+  WhereClauseValue(this.field, this.comparer) {
+    final operator = comparer.operator;
+    final value = comparer.value;
     if ([Operator.BETWEEN, Operator.NOT_BETWEEN].contains(operator)) {
       if (value is! List || value.length != 2) {
         throw ArgumentError(
           '${operator.name} requires a List with length 2 (val1, val2)',
-          '$field $condition $value',
+          '$field ${operator.name} $value',
         );
       }
     }
+  }
+
+  factory WhereClauseValue.from(String field, String condition, value) {
+    final operator = _strToOperator(condition);
+
     return WhereClauseValue(field, (operator: operator, value: value));
   }
 }
@@ -106,6 +109,7 @@ abstract class WhereClause extends Clause
     with WhereOperation, FindOperation, LimitOperation, OrderByOperation<WhereClause> {
   final Query _query;
   final LogicalOperator operator;
+  final List<CombineClause<WhereClauseValue>> subparts = [];
 
   WhereClause(
     this._query, {
@@ -139,9 +143,9 @@ abstract class WhereClause extends Clause
   @override
   Future<List<T>> take<T>(int limit) => _query.take<T>(limit);
 
-  Future<void> delete() => _query._delete(this);
-
-  Future<void> update(Map<String, dynamic> values) => _query._update(this, values);
+  Future<void> delete() {
+    return DeleteQuery(_query.tableName, whereClause: this).driver(_query.queryDriver).exec();
+  }
 
   String get statement => _query.statement;
 }

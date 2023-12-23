@@ -3,7 +3,7 @@ part of '../query.dart';
 enum OrderByDirection { asc, desc }
 
 final class _QueryImpl extends Query {
-  _QueryImpl(String tableName, DatabaseDriver driver) : super(tableName, driver);
+  _QueryImpl(String tableName) : super(tableName);
 
   @override
   Query orderByAsc(String field) {
@@ -18,30 +18,18 @@ final class _QueryImpl extends Query {
   }
 
   @override
-  Future<T> insert<T extends Entity>(T model) async {
-    if (model.enableTimestamps) {
-      model.createdAt = model.updatedAt = DateTime.now().toUtc();
-    }
-    final dataMap = model.toJson()..remove('id');
-    final recordId = await driver.insert(tableName, dataMap);
-    return model..id = model.id.withKey(recordId);
+  InsertQuery insert(Map<String, dynamic> values) {
+    return InsertQuery(tableName, values: values).driver(queryDriver);
   }
 
   @override
-  Future<void> _update(WhereClause where, Map<String, dynamic> values) async {
-    final query = UpdateQuery(tableName, driver, whereClause: where, values: values);
-    await driver.update(query);
-  }
-
-  @override
-  Future<void> _delete(WhereClause where) async {
-    final query = DeleteQuery(tableName, driver, whereClause: where);
-    await driver.delete(query);
+  InsertManyQuery insertAll(List<Map<String, dynamic>> values) {
+    return InsertManyQuery(tableName, values: values).driver(queryDriver);
   }
 
   @override
   Future<List<T>> all<T>() async {
-    final results = await driver.query(this);
+    final results = await queryDriver.query(this);
     if (results.isEmpty) return <T>[];
     if (T == dynamic) return results as dynamic;
     return results.map(jsonToEntity<T>).toList();
@@ -50,7 +38,7 @@ final class _QueryImpl extends Query {
   @override
   Future<List<T>> take<T>(int limit) async {
     _limit = limit;
-    final results = await driver.query(this);
+    final results = await queryDriver.query(this);
     if (results.isEmpty) return <T>[];
     if (T == dynamic) return results as dynamic;
     return results.map(jsonToEntity<T>).toList();
@@ -132,4 +120,7 @@ final class _QueryImpl extends Query {
     whereClauses.add(newClause);
     return newClause;
   }
+
+  @override
+  Future<void> exec() => queryDriver.execute(statement);
 }

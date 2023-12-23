@@ -19,9 +19,16 @@ scripts:
     run: |
       melos exec -c 1  -- "dart test" --fail-fast
 
-  tests:ci:
+  tests:unit:
     run: |
-      melos exec -c 1  -- "dart test --coverage=coverage" --fail-fast
+      melos exec -c 1  -- "dart test --coverage=coverage --exclude-tags integration" --fail-fast
+
+  tests:integration:
+    run: |
+      melos exec -c 1  -- "dart test --coverage=coverage --tags integration" --fail-fast
+
+  coverage:
+    run: |
       melos exec -- "dart pub global run coverage:format_coverage --check-ignore --report-on=lib --lcov -o "$MELOS_ROOT_PATH/coverage/$(echo "\$MELOS_PACKAGE_NAME")_lcov.info" -i ./coverage"
       find $MELOS_ROOT_PATH/coverage -type f -empty -print -delete
 

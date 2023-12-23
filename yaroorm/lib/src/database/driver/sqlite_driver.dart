@@ -1,12 +1,15 @@
+import 'package:meta/meta.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:yaroorm/src/database/migration.dart';
+import 'package:yaroorm/src/query/primitives/serializer.dart';
+import 'package:yaroorm/src/query/query.dart';
 
-import '../../query/primitives/serializer.dart';
-import '../../query/query.dart';
-import '../migration.dart';
 import 'driver.dart';
 
-final _serializer = const _SqliteSerializer();
+final _serializer = const SqliteSerializer();
 
+@visibleForTesting
+@protected
 class SqliteDriver implements DatabaseDriver {
   final DatabaseConnection config;
 
@@ -15,7 +18,11 @@ class SqliteDriver implements DatabaseDriver {
   SqliteDriver(this.config);
 
   @override
-  Future<DatabaseDriver> connect() async {
+  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection, bool? secure}) async {
+    assert(secure == null, 'Sqlite does not support secure connection');
+    assert(maxConnections == null, 'Sqlite does not support max connections');
+    assert(singleConnection == null, 'Sqlite does not support single connection');
+
     sqfliteFfiInit();
     var databaseFactory = databaseFactoryFfi;
     _database = await databaseFactory.openDatabase(config.database, options: OpenDatabaseOptions(onOpen: (db) async {
@@ -39,9 +46,6 @@ class SqliteDriver implements DatabaseDriver {
   @override
   DatabaseDriverType get type => DatabaseDriverType.sqlite;
 
-  @override
-  TableBlueprint get blueprint => _SqliteTableBlueprint();
-
   Future<Database> _getDatabase() async {
     if (!isOpen) await connect();
     return _database!;
@@ -64,9 +68,20 @@ class SqliteDriver implements DatabaseDriver {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> update(UpdateQuery query) async {
+  Future<int> update(UpdateQuery query) async {
     final sql = _serializer.acceptUpdateQuery(query);
-    return (await _getDatabase()).rawQuery(sql);
+    return (await _getDatabase()).rawUpdate(sql);
+  }
+
+  @override
+  Future insertMany(InsertManyQuery query) async {
+    final sql = _serializer.acceptInsertManyQuery(query);
+    return (await _getDatabase()).execute(sql);
+  }
+
+  @override
+  Future<int> insert(InsertQuery query) async {
+    return (await _getDatabase()).insert(query.tableName, query.values);
   }
 
   @override
@@ -76,17 +91,15 @@ class SqliteDriver implements DatabaseDriver {
   }
 
   @override
-  Future<int> insert(String tableName, Map<String, dynamic> data) async {
-    return (await _getDatabase()).insert(tableName, data);
-  }
-
-  @override
   PrimitiveSerializer get serializer => _serializer;
 
   @override
+  TableBlueprint get blueprint => SqliteTableBlueprint();
+
+  @override
   Future<bool> hasTable(String tableName) async {
-    final result = await (await _getDatabase())
-        .rawQuery('SELECT * FROM sqlite_master WHERE type = "table" AND name = "$tableName" LIMIT 1;');
+    final result = await (await _getDatabase()).rawQuery(
+        'SELECT 1 FROM sqlite_master WHERE type = ${wrapString('table')} AND name = ${wrapString(tableName)} LIMIT 1;');
     return result.isNotEmpty;
   }
 
@@ -115,28 +128,38 @@ class _SqliteTransactor implements DriverTransactor {
   }
 
   @override
-  void update(UpdateQuery query) {
+  Future<void> update(UpdateQuery query) {
     final sql = _serializer.acceptUpdateQuery(query);
-    return _batch.rawUpdate(sql);
+    return Future.sync(() => _batch.execute(sql));
   }
 
   @override
-  void delete(DeleteQuery query) async {
+  Future<void> delete(DeleteQuery query) {
     final sql = _serializer.acceptDeleteQuery(query);
-    return _batch.rawDelete(sql);
+    return Future.sync(() => _batch.execute(sql));
   }
 
   @override
-  void insert(String tableName, Map<String, dynamic> data) {
-    _batch.insert(tableName, data);
+  Future<void> insert(InsertQuery query) {
+    return Future.sync(() => _batch.insert(query.tableName, query.values));
+  }
+
+  @override
+  Future insertMany(InsertManyQuery query) {
+    final sql = _serializer.acceptInsertManyQuery(query);
+    return Future.sync(() => _batch.rawInsert(sql));
   }
 
   @override
   Future<List<Object?>> commit() => _batch.commit();
+
+  @override
+  PrimitiveSerializer get serializer => _serializer;
 }
 
-class _SqliteSerializer implements PrimitiveSerializer {
-  const _SqliteSerializer();
+@protected
+class SqliteSerializer implements PrimitiveSerializer {
+  const SqliteSerializer();
 
   @override
   String acceptReadQuery(Query query) {
@@ -198,6 +221,22 @@ class _SqliteSerializer implements PrimitiveSerializer {
   }
 
   @override
+  String acceptInsertQuery(InsertQuery query) {
+    final data = query.values;
+    final fields = data.keys.join(', ');
+    final values = data.values.map((e) => acceptDartValue(e)).join(', ');
+    return 'INSERT INTO ${query.tableName} ($fields) VALUES ($values)$terminator';
+  }
+
+  @override
+  String acceptInsertManyQuery(InsertManyQuery query) {
+    final data = query.values;
+    final fields = data.first.keys.join(', ');
+    final values = data.map((e) => '(${e.values.map((e) => acceptDartValue(e)).join(', ')})').join(', ');
+    return 'INSERT INTO ${query.tableName} ($fields) VALUES $values$terminator';
+  }
+
+  @override
   String acceptDeleteQuery(DeleteQuery query) {
     final queryBuilder = StringBuffer();
 
@@ -216,10 +255,6 @@ class _SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptWhereClause(WhereClause clause, {bool canGroup = false}) {
-    if (clause is! WhereClauseImpl) {
-      return _acceptWhereClauseValue(clause.clauseValue!);
-    }
-
     final value = clause.clauseValue;
     final subParts = <(LogicalOperator operator, WhereClauseValue value)>[
       if (value != null) (clause.operator, value),
@@ -284,9 +319,7 @@ class _SqliteSerializer implements PrimitiveSerializer {
     };
   }
 
-  String processClause(
-    List<(LogicalOperator operator, WhereClauseValue value)> subParts,
-  ) {
+  String processClause(List<(LogicalOperator operator, WhereClauseValue value)> subParts) {
     final group = StringBuffer();
 
     final firstPart = subParts.removeAt(0);
@@ -303,8 +336,9 @@ class _SqliteSerializer implements PrimitiveSerializer {
   }
 }
 
-class _SqliteTableBlueprint implements TableBlueprint {
-  final List<String> _statements = [];
+@protected
+class SqliteTableBlueprint implements TableBlueprint {
+  final List<String> statements = [];
 
   String _getColumn(String name, String type, {nullable = false, defaultValue}) {
     final sb = StringBuffer()..write('$name $type');
@@ -319,12 +353,12 @@ class _SqliteTableBlueprint implements TableBlueprint {
   void id({name = 'id', autoIncrement = true}) {
     final sb = StringBuffer()..write('$name INTEGER NOT NULL PRIMARY KEY');
     if (autoIncrement) sb.write(' AUTOINCREMENT');
-    _statements.add(sb.toString());
+    statements.add(sb.toString());
   }
 
   @override
   void string(String name, {nullable = false, defaultValue}) {
-    _statements.add(_getColumn(
+    statements.add(_getColumn(
       name,
       'VARCHAR',
       nullable: nullable,
@@ -333,68 +367,48 @@ class _SqliteTableBlueprint implements TableBlueprint {
   }
 
   @override
-  void double(String name, {nullable = false, defaultValue}) {
-    _statements.add(_getColumn(
-      name,
-      'REAL',
-      nullable: nullable,
-      defaultValue: defaultValue,
-    ));
+  void double(String name, {nullable = false, defaultValue, int? precision, int? scale}) {
+    statements.add(_getColumn(name, 'REAL', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
-  void float(String name, {nullable = false, defaultValue}) {
-    _statements.add(_getColumn(
-      name,
-      'REAL',
-      nullable: nullable,
-      defaultValue: defaultValue,
-    ));
+  void float(String name, {nullable = false, defaultValue, int? precision, int? scale}) {
+    statements.add(_getColumn(name, 'REAL', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void integer(String name, {nullable = false, defaultValue}) {
-    _statements.add(_getColumn(
-      name,
-      'INTEGER',
-      nullable: nullable,
-      defaultValue: defaultValue,
-    ));
+    statements.add(_getColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void blob(String name, {nullable = false, defaultValue}) {
-    _statements.add(_getColumn(
-      name,
-      'BLOB',
-      nullable: nullable,
-      defaultValue: defaultValue,
-    ));
+    statements.add(_getColumn(name, 'BLOB', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void boolean(String name, {nullable = false, defaultValue}) {
-    _statements.add(_getColumn(
-      name,
-      'INTEGER',
-      nullable: nullable,
-      defaultValue: defaultValue,
-    ));
+    statements.add(_getColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void datetime(String name, {nullable = false, defaultValue}) {
-    _statements.add('$name DATETIME');
+    statements.add(_getColumn(name, 'DATETIME', nullable: nullable, defaultValue: defaultValue?.toIso8601String()));
   }
 
   @override
   void timestamp(String name, {nullable = false, defaultValue}) {
-    _statements.add(_getColumn(
-      name,
-      'DATETIME',
-      nullable: nullable,
-      defaultValue: defaultValue?.toIso8601String(),
-    ));
+    datetime(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void date(String name, {bool nullable = false, DateTime? defaultValue}) {
+    datetime(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void time(String name, {bool nullable = false, DateTime? defaultValue}) {
+    datetime(name, nullable: nullable, defaultValue: defaultValue);
   }
 
   @override
@@ -402,13 +416,106 @@ class _SqliteTableBlueprint implements TableBlueprint {
     String createdAt = 'created_at',
     String updatedAt = 'updated_at',
   }) {
-    _statements.add('$createdAt DATETIME');
-    _statements.add('$updatedAt DATETIME');
+    timestamp(createdAt);
+    timestamp(updatedAt);
+  }
+
+  @override
+  void bigInteger(String name, {bool nullable = false, num? defaultValue}) {
+    statements.add(_getColumn(name, 'BIGINT', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void binary(String name,
+      {bool nullable = false, int length = 1, String? defaultValue, String? charset, String? collate}) {
+    statements.add(_getColumn(name, 'BLOB', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void bit(String name, {bool nullable = false, int? defaultValue}) {
+    statements.add(_getColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void char(String name,
+      {bool nullable = false, int length = 1, String? defaultValue, String? charset, String? collate}) {
+    statements.add(_getColumn(name, 'CHAR($length)', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void decimal(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+    statements.add(_getColumn(name, 'DECIMAL($precision, $scale)', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void enums(String name, List<String> values,
+      {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+    statements.add(_getColumn(name, 'TEXT CHECK ($name IN (${values.map((e) => "'$e'").join(', ')}))',
+        nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void mediumText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+    string(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void longText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+    string(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void mediumInteger(String name, {bool nullable = false, num? defaultValue}) {
+    integer(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void numeric(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+    integer(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void set(String name, List<String> values,
+      {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+    // TODO: implement set
+  }
+
+  @override
+  void smallInteger(String name, {bool nullable = false, num? defaultValue}) {
+    integer(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void text(String name,
+      {int length = 1, bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+    string(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void tinyInt(String name, {bool nullable = false, num? defaultValue}) {
+    integer(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void tinyText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+    string(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void varbinary(String name,
+      {bool nullable = false, int length = 1, String? defaultValue, String? charset, String? collate}) {
+    binary(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void varchar(String name,
+      {bool nullable = false, String? defaultValue, int size = 255, String? charset, String? collate}) {
+    string(name, nullable: nullable, defaultValue: defaultValue);
   }
 
   @override
   String createScript(String tableName) {
-    return 'CREATE TABLE $tableName (${_statements.join(', ')});';
+    return 'CREATE TABLE $tableName (${statements.join(', ')});';
   }
 
   @override
