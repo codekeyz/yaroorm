@@ -1,8 +1,6 @@
 part of '../query.dart';
 
 class WhereClauseImpl extends WhereClause {
-  final List<CombineClause<WhereClauseValue>> subparts = [];
-
   WhereClauseImpl(
     Query query, {
     LogicalOperator operator = LogicalOperator.AND,
@@ -80,12 +78,8 @@ class WhereClauseImpl extends WhereClause {
     return _useWhereGroup(LogicalOperator.OR, clauseVal);
   }
 
-  WhereClauseImpl _useWhereGroup(
-    LogicalOperator operator, [
-    WhereClauseValue? value,
-  ]) {
-    /// if the current group is of the same operator, just add the new condition
-    /// to it.
+  WhereClauseImpl _useWhereGroup(LogicalOperator operator, [WhereClauseValue? value]) {
+    /// if the current group is of the same operator, just add the new condition to it.
     if (this.operator == operator) {
       if (value == null) return this;
       return this..subparts.add((operator, value));

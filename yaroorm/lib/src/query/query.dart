@@ -1,6 +1,7 @@
+import 'package:meta/meta.dart';
+
 import '../_reflection/entity_helpers.dart';
 import '../database/driver/driver.dart';
-import '../database/entity.dart';
 
 part 'operations/query.dart';
 part 'primitives/where.dart';
@@ -19,7 +20,9 @@ mixin FindOperation {
 }
 
 mixin InsertOperation {
-  Future<T> insert<T extends Entity>(T model);
+  InsertQuery insert(Map<String, dynamic> values);
+
+  InsertManyQuery insertAll(List<Map<String, dynamic>> values);
 }
 
 mixin LimitOperation<ReturnType> {
@@ -27,11 +30,11 @@ mixin LimitOperation<ReturnType> {
 }
 
 mixin UpdateOperation {
-  Future<void> _update(WhereClause where, Map<String, dynamic> values);
+  UpdateQuery update({required WhereClause Function(WhereClause builder) where, required Map<String, dynamic> values});
 }
 
 mixin DeleteOperation {
-  Future<void> _delete(WhereClause where);
+  DeleteQuery delete(WhereClause Function(WhereClause builder) whereFunc);
 }
 
 typedef OrderBy = ({String field, OrderByDirection direction});
@@ -42,23 +45,38 @@ mixin OrderByOperation<ReturnType> {
   ReturnType orderByDesc(String field);
 }
 
-abstract interface class QueryBase {
+abstract interface class QueryBase<Owner> {
   final String tableName;
-  final DatabaseDriver driver;
 
-  QueryBase(this.tableName, this.driver);
+  DriverAble? _queryDriver;
+
+  DriverAble get queryDriver {
+    if (_queryDriver == null) {
+      throw StateError('Driver not set for query. Make sure you supply a driver using .driver()');
+    }
+    return _queryDriver!;
+  }
+
+  Owner driver(DriverAble driver) {
+    _queryDriver = driver;
+    return this as Owner;
+  }
+
+  Future<void> exec();
+
+  QueryBase(this.tableName);
 
   String get statement;
 }
 
-abstract class Query extends QueryBase
+abstract class Query extends QueryBase<Query>
     with
         ReadOperation,
         WhereOperation,
         LimitOperation,
-        UpdateOperation,
-        DeleteOperation,
         InsertOperation,
+        DeleteOperation,
+        UpdateOperation,
         OrderByOperation<Query> {
   late final Set<String> fieldSelections;
   late final Set<OrderBy> orderByProps;
@@ -66,47 +84,80 @@ abstract class Query extends QueryBase
 
   late int? _limit;
 
-  Query(super.tableName, super.driver)
+  Query(super.tableName)
       : fieldSelections = {},
         orderByProps = {},
         whereClauses = [],
         _limit = null;
 
-  factory Query.query(String tableName, DatabaseDriver driver) => _QueryImpl(tableName, driver);
+  factory Query.table(String tableName) => _QueryImpl(tableName);
 
   int? get limit => _limit;
+
+  @override
+  DeleteQuery delete(WhereClause Function(WhereClause builder) whereFunc) {
+    return DeleteQuery(tableName, whereClause: whereFunc(WhereClauseImpl(this))).driver(queryDriver);
+  }
+
+  @override
+  UpdateQuery update({required WhereClause Function(WhereClause builder) where, required Map<String, dynamic> values}) {
+    return UpdateQuery(tableName, whereClause: where(WhereClauseImpl(this)), values: values).driver(queryDriver);
+  }
 
   @override
   Future<List<T>> take<T>(int limit);
 
   @override
-  String get statement => driver.serializer.acceptReadQuery(this);
+  String get statement => queryDriver.serializer.acceptReadQuery(this);
 }
 
-class UpdateQuery extends QueryBase {
+@protected
+class UpdateQuery extends QueryBase<UpdateQuery> {
   final WhereClause whereClause;
   final Map<String, dynamic> values;
 
-  UpdateQuery(
-    super.tableName,
-    super.driver, {
-    required this.whereClause,
-    required this.values,
-  });
+  UpdateQuery(super.tableName, {required this.whereClause, required this.values});
 
   @override
-  String get statement => driver.serializer.acceptUpdateQuery(this);
+  String get statement => queryDriver.serializer.acceptUpdateQuery(this);
+
+  @override
+  Future<void> exec() => queryDriver.update(this);
 }
 
-class DeleteQuery extends QueryBase {
-  final WhereClause whereClause;
+class InsertQuery extends QueryBase<InsertQuery> {
+  final Map<String, dynamic> values;
 
-  DeleteQuery(
-    super.tableName,
-    super.driver, {
-    required this.whereClause,
-  });
+  InsertQuery(super.tableName, {required this.values});
 
   @override
-  String get statement => driver.serializer.acceptDeleteQuery(this);
+  Future<dynamic> exec() => queryDriver.insert(this);
+
+  @override
+  String get statement => queryDriver.serializer.acceptInsertQuery(this);
+}
+
+class InsertManyQuery extends QueryBase<InsertManyQuery> {
+  final List<Map<String, dynamic>> values;
+
+  InsertManyQuery(super.tableName, {required this.values});
+
+  @override
+  String get statement => queryDriver.serializer.acceptInsertManyQuery(this);
+
+  @override
+  Future<dynamic> exec() => queryDriver.insertMany(this);
+}
+
+@protected
+class DeleteQuery extends QueryBase<DeleteQuery> {
+  final WhereClause whereClause;
+
+  DeleteQuery(super.tableName, {required this.whereClause});
+
+  @override
+  String get statement => queryDriver.serializer.acceptDeleteQuery(this);
+
+  @override
+  Future<void> exec() => queryDriver.delete(this);
 }

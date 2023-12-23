@@ -47,7 +47,9 @@ class Migrator {
           transactor.execute(serialized);
         }
 
-        transactor.insert(Migrator.tableName, {'migration': fileName, 'batch': batchNos});
+        await Query.table(Migrator.tableName)
+            .driver(transactor)
+            .insert({'migration': fileName, 'batch': batchNos}).exec();
 
         await transactor.commit();
 
@@ -61,7 +63,7 @@ class Migrator {
   static Future<void> resetMigrations(DatabaseDriver driver, Iterable<MigrationTask> allTasks) async {
     await ensureMigrationsTableReady(driver);
 
-    final migrationInfoFromDB = await Query.query(Migrator.tableName, driver).orderByDesc('batch').all();
+    final migrationInfoFromDB = await Query.table(Migrator.tableName).driver(driver).orderByDesc('batch').all();
     if (migrationInfoFromDB.isEmpty) {
       print('𐄂 skipped: reason:     no migrations to reset');
       return;
@@ -69,7 +71,7 @@ class Migrator {
 
     print('------- Resetting migrations  📦 -------\n');
 
-    final Iterable<Rollback> rollbacks = migrationInfoFromDB.map((e) => _MigrationDbData.from(e)).map((e) {
+    final rollbacks = migrationInfoFromDB.map((e) => _MigrationDbData.from(e)).map<Rollback>((e) {
       final found = allTasks.firstWhereOrNull((m) => m.name == e.migration);
       return (batch: e.batch, name: e.migration, migration: found);
     }).whereNotNull();
@@ -80,7 +82,7 @@ class Migrator {
   }
 
   static Future<void> rollBackMigration(DatabaseDriver driver, Iterable<MigrationTask> allTasks) async {
-    final lastBatch = await Query.query(Migrator.tableName, driver).orderByDesc('batch').get();
+    final lastBatch = await Query.table(Migrator.tableName).driver(driver).orderByDesc('batch').get();
     if (lastBatch == null) {
       print('𐄂 skipped: reason:     no migration to rollback');
       return;
@@ -107,12 +109,10 @@ class Migrator {
           schemas.forEach((e) => transactor.execute(e.toScript(driver.blueprint)));
         }
 
-        final deleteSql = DeleteQuery(
-          Migrator.tableName,
-          driver,
-          whereClause: Query.query(Migrator.tableName, driver).where('migration', '=', rollback.name),
-        ).statement;
-        transactor.execute(deleteSql);
+        await Query.table(Migrator.tableName)
+            .driver(transactor)
+            .delete((where) => where.where('migration', '=', rollback.name))
+            .exec();
 
         await transactor.commit();
       });
