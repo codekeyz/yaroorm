@@ -59,11 +59,11 @@ jobs:
 
       - name: Setup Databases For Integration Tests
         uses: ankane/setup-mariadb@v1
-
-      - name: Run MariaDB E2E tests
         with:
           mariadb-version: "10.11"
           database: "maria_test_db"
+
+      - name: Run MariaDB E2E tests
         run: |
           melos exec -c 1  -- "dart test --coverage=coverage --tags=mariadb" --fail-fast
           melos coverage
