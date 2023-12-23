@@ -109,7 +109,10 @@ class Migrator {
           schemas.forEach((e) => transactor.execute(e.toScript(driver.blueprint)));
         }
 
-        await Query.table(Migrator.tableName).driver(transactor).where('migration', '=', rollback.name).delete();
+        await Query.table(Migrator.tableName)
+            .driver(transactor)
+            .delete((where) => where.where('migration', '=', rollback.name))
+            .exec();
 
         await transactor.commit();
       });
