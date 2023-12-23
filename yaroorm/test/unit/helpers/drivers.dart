@@ -22,3 +22,11 @@ final mariadbConnection = DatabaseConnection.from('maria_connection', {
   'username': 'runner',
   'password': 'password',
 });
+
+final postGresConnection = DatabaseConnection.from('postgres_connection', {
+  'database': 'postgres_db',
+  'driver': 'pgsql',
+  'host': 'localhost',
+  'username': 'runner',
+  'password': 'password',
+});

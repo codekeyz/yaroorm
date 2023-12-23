@@ -1,12 +1,8 @@
 import 'package:meta/meta.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:yaroorm/src/database/migration.dart';
 import 'package:yaroorm/src/query/primitives/serializer.dart';
-import 'package:yaroorm/src/query/query.dart';
 
-import 'driver.dart';
 import 'package:yaroorm/yaroorm.dart';
-import '../../query/primitives/serializer.dart';
 
 final _serializer = const SqliteSerializer();
 

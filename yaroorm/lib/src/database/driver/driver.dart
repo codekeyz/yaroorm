@@ -1,4 +1,5 @@
 import 'package:yaroorm/src/database/driver/mysql_driver.dart';
+import 'package:yaroorm/src/database/driver/pgsql_driver.dart';
 
 import '../../query/primitives/serializer.dart';
 import '../../query/query.dart';

@@ -4,10 +4,11 @@ import 'package:yaroorm/src/query/query.dart';
 
 import '../helpers/drivers.dart';
 
-final driver = DatabaseDriver.init(mysqlConnection);
+final driver = DatabaseDriver.init(postGresConnection);
+
 
 void main() {
-  group('MYSQL Query Builder', () {
+  group('Postgres Query Builder', () {
     test('when query', () {
       final query = Query.table('users').driver(driver);
 
@@ -68,7 +69,7 @@ void main() {
 
       test('of level 2', () {
         final query =
-            Query.table('users').driver(driver).where('firstname', '=', 'Chima').where('lastname', '=', 'Precious');
+        Query.table('users').driver(driver).where('firstname', '=', 'Chima').where('lastname', '=', 'Precious');
 
         expect(query.statement, 'SELECT * FROM users WHERE firstname = \'Chima\' AND lastname = \'Precious\';');
       });
@@ -161,7 +162,7 @@ void main() {
 
         test('.whereIn', () {
           final query =
-              Query.table('users').driver(driver).where('firstname', '=', 'Chima').whereIn('age', [22, 24, 25]);
+          Query.table('users').driver(driver).where('firstname', '=', 'Chima').whereIn('age', [22, 24, 25]);
 
           expect(
             query.statement,
@@ -171,7 +172,7 @@ void main() {
 
         test('.whereNotIn', () {
           final query =
-              Query.table('users').driver(driver).where('firstname', '=', 'Chima').whereNotIn('age', [22, 24, 25]);
+          Query.table('users').driver(driver).where('firstname', '=', 'Chima').whereNotIn('age', [22, 24, 25]);
 
           expect(
             query.statement,
@@ -181,7 +182,7 @@ void main() {
 
         test('.whereLike', () {
           final query =
-              Query.table('users').driver(driver).where('firstname', '=', 'Chima').whereLike('lastname', 'hello%');
+          Query.table('users').driver(driver).where('firstname', '=', 'Chima').whereLike('lastname', 'hello%');
 
           expect(
             query.statement,
@@ -191,7 +192,7 @@ void main() {
 
         test('.whereNotLike', () {
           final query =
-              Query.table('users').driver(driver).where('firstname', '=', 'Chima').whereNotLike('lastname', 'hello%');
+          Query.table('users').driver(driver).where('firstname', '=', 'Chima').whereNotLike('lastname', 'hello%');
 
           expect(
             query.statement,
@@ -226,7 +227,7 @@ void main() {
 
       test('with orderBy', () {
         final query =
-            Query.table('users').driver(driver).where('name', '=', 'Chima').orderByDesc('names').orderByAsc('ages');
+        Query.table('users').driver(driver).where('name', '=', 'Chima').orderByDesc('names').orderByAsc('ages');
 
         expect(query.statement, 'SELECT * FROM users WHERE name = \'Chima\' ORDER BY names DESC, ages ASC;');
       });
@@ -451,7 +452,7 @@ void main() {
     group('when .whereBetween', () {
       test('should error if not supplied List with length 2', () {
         expect(
-            () => Query.table('users').driver(driver).whereBetween('age', [22]).statement,
+                () => Query.table('users').driver(driver).whereBetween('age', [22]).statement,
             throwsA(isA<ArgumentError>()
                 .having((p0) => p0.message, '', 'BETWEEN requires a List with length 2 (val1, val2)')));
       });
@@ -505,7 +506,7 @@ void main() {
     group('when .whereNotBetween', () {
       test('should error if not supplied List with length 2', () {
         expect(
-            () => Query.table('users').driver(driver).whereNotBetween('age', [22]).statement,
+                () => Query.table('users').driver(driver).whereNotBetween('age', [22]).statement,
             throwsA(isA<ArgumentError>()
                 .having((p0) => p0.message, '', 'NOT_BETWEEN requires a List with length 2 (val1, val2)')));
       });
@@ -567,7 +568,7 @@ void main() {
 
       test('of level 2', () {
         final query =
-            Query.table('users').driver(driver).whereLike('places', 'Chima**').where('lastname', '=', 'Precious');
+        Query.table('users').driver(driver).whereLike('places', 'Chima**').where('lastname', '=', 'Precious');
 
         expect(
           query.statement,
@@ -615,7 +616,7 @@ void main() {
 
       test('of level 2', () {
         final query =
-            Query.table('users').driver(driver).whereNotLike('places', 'Chima**').whereBetween('lastname', [12, 90]);
+        Query.table('users').driver(driver).whereNotLike('places', 'Chima**').whereBetween('lastname', [12, 90]);
 
         expect(
           query.statement,
