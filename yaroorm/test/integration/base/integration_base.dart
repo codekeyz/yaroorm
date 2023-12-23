@@ -70,6 +70,9 @@ void runIntegrationTest(DatabaseDriver driver) {
     test('should insert users', () async {
       final result = await Query.table('users').driver(driver).insert(usersTestData.first).exec();
       expect(result, 1);
+
+      final users = await Query.table('users').driver(driver).all();
+      expect(users.length, 1);
     });
 
     test('should insert many users', () async {
@@ -111,14 +114,6 @@ void runIntegrationTest(DatabaseDriver driver) {
       expect(updatedResult.length, 4);
       expect(updatedResult.every((e) => e['age'] == 50), isTrue);
       expect(updatedResult.every((e) => e['home_address'] == 'Keta Lagoon'), isTrue);
-    });
-
-    test('should get all users between age 35 and 50', () async {
-      final age50Users =
-          await Query.table('users').driver(driver).whereBetween('age', [35, 50]).orderByDesc('age').findMany();
-      expect(age50Users.length, 19);
-      expect(age50Users.first['age'], 50);
-      expect(age50Users.last['age'], 35);
     });
 
     test('should get all users between age 35 and 50', () async {
