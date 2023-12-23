@@ -173,5 +173,13 @@ void runIntegrationTest(DatabaseDriver driver) {
       final hasTodosTable = await driver.hasTable('tasks');
       expect(hasTodosTable, isFalse);
     });
+
+    test('should disconnect', () async {
+      expect(driver.isOpen, isTrue);
+
+      await driver.disconnect();
+
+      expect(driver.isOpen, isFalse);
+    });
   });
 }
