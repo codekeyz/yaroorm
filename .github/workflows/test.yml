@@ -56,6 +56,14 @@ jobs:
       - name: Run Unit tests
         run: melos tests:ci
 
+      - uses: ankane/setup-mysql@v1
+        name: Run MySQL Integration tests
+        run: |
+          melos exec -c 1  -- "dart test --coverage=coverage --tags=mysql" --fail-fast
+          melos coverage
+
+
+
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
         env:
