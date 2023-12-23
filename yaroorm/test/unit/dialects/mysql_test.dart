@@ -50,7 +50,7 @@ void main() {
     });
 
     test('when delete', () {
-      final query = Query.table('users').driver(driver).where('name', '=', 'Chima').delete();
+      final query = Query.table('users').driver(driver).delete((where) => where.where('name', '=', 'Chima'));
 
       expect(query.statement, 'DELETE FROM users WHERE name = \'Chima\';');
     });

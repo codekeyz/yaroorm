@@ -44,13 +44,17 @@ void main() {
     });
 
     test('when update', () {
-      final query = Query.table('users').driver(driver).insert({'firstname': 'Chima', 'lastname': 'Precious'});
+      final query = Query.table('users').driver(driver).update(
+        where: (where) => where.where('name', '=', 'Chima'),
+        values: {'firstname': 'Chima', 'lastname': 'Precious'},
+      );
 
-      expect(query.statement, 'INSERT INTO users (firstname, lastname) VALUES (\'Chima\', \'Precious\');');
+      expect(
+          query.statement, 'UPDATE users SET firstname = \'Chima\', lastname = \'Precious\' WHERE name = \'Chima\';');
     });
 
     test('when delete', () {
-      final query = Query.table('users').driver(driver).where('name', '=', 'Chima').delete();
+      final query = Query.table('users').driver(driver).delete((where) => where.where('name', '=', 'Chima'));
 
       expect(query.statement, 'DELETE FROM users WHERE name = \'Chima\';');
     });

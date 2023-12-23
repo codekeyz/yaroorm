@@ -30,11 +30,11 @@ mixin LimitOperation<ReturnType> {
 }
 
 mixin UpdateOperation {
-  UpdateQuery update(Map<String, dynamic> values);
+  UpdateQuery update({required WhereClause Function(WhereClause builder) where, required Map<String, dynamic> values});
 }
 
 mixin DeleteOperation {
-  DeleteQuery delete();
+  DeleteQuery delete(WhereClause Function(WhereClause builder) whereFunc);
 }
 
 typedef OrderBy = ({String field, OrderByDirection direction});
@@ -70,7 +70,14 @@ abstract interface class QueryBase<Owner> {
 }
 
 abstract class Query extends QueryBase<Query>
-    with ReadOperation, WhereOperation, LimitOperation, InsertOperation, OrderByOperation<Query> {
+    with
+        ReadOperation,
+        WhereOperation,
+        LimitOperation,
+        InsertOperation,
+        DeleteOperation,
+        UpdateOperation,
+        OrderByOperation<Query> {
   late final Set<String> fieldSelections;
   late final Set<OrderBy> orderByProps;
   late final List<WhereClause> whereClauses;
@@ -86,6 +93,16 @@ abstract class Query extends QueryBase<Query>
   factory Query.table(String tableName) => _QueryImpl(tableName);
 
   int? get limit => _limit;
+
+  @override
+  DeleteQuery delete(WhereClause Function(WhereClause builder) whereFunc) {
+    return DeleteQuery(tableName, whereClause: whereFunc(WhereClauseImpl(this))).driver(queryDriver);
+  }
+
+  @override
+  UpdateQuery update({required WhereClause Function(WhereClause builder) where, required Map<String, dynamic> values}) {
+    return UpdateQuery(tableName, whereClause: where(WhereClauseImpl(this)), values: values).driver(queryDriver);
+  }
 
   @override
   Future<List<T>> take<T>(int limit);

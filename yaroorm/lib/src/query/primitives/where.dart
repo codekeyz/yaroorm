@@ -103,13 +103,7 @@ class WhereClauseValue<A> {
 }
 
 abstract class WhereClause extends Clause
-    with
-        WhereOperation,
-        FindOperation,
-        LimitOperation,
-        DeleteOperation,
-        UpdateOperation,
-        OrderByOperation<WhereClause> {
+    with WhereOperation, FindOperation, LimitOperation, OrderByOperation<WhereClause> {
   final Query _query;
   final LogicalOperator operator;
 
@@ -144,16 +138,6 @@ abstract class WhereClause extends Clause
 
   @override
   Future<List<T>> take<T>(int limit) => _query.take<T>(limit);
-
-  @override
-  DeleteQuery delete() {
-    return DeleteQuery(_query.tableName, whereClause: this).driver(_query.queryDriver);
-  }
-
-  @override
-  UpdateQuery update(Map<String, dynamic> values) {
-    return UpdateQuery(_query.tableName, whereClause: this, values: values).driver(_query.queryDriver);
-  }
 
   String get statement => _query.statement;
 }
