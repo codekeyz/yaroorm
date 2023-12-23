@@ -26,14 +26,20 @@ class MySqlDriver implements DatabaseDriver {
 
   @override
   Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection, bool? secure}) async {
-    assert(maxConnections == null, 'MySQL max connections not yet supported');
+    assert(maxConnections == null, '${_type.name} max connections not yet supported');
+    secure ??= false;
+
+    if (secure == true) {
+      assert(config.username != null, 'Username is required when :secure true');
+      assert(config.password != null, 'Password is required when :secure true');
+    }
 
     _dbConnection = await MySQLConnection.createConnection(
       host: config.host!,
       port: portToUse,
-      secure: secure ?? true,
-      userName: config.username!,
-      password: config.password!,
+      secure: secure,
+      userName: config.username ?? '',
+      password: config.password ?? '',
       databaseName: config.database,
     );
     await _dbConnection.connect();
