@@ -7,7 +7,7 @@ import '../helpers/drivers.dart';
 final driver = DatabaseDriver.init(mysqlConnection);
 
 void main() {
-  group('MYSQL Query Generator', () {
+  group('MYSQL Query Builder', () {
     test('when query', () {
       final query = Query.table('users').driver(driver);
 
@@ -43,16 +43,16 @@ void main() {
           'INSERT INTO users (firstname, lastname) VALUES (\'Pookie\', \'ReyRey\'), (\'Foo\', \'Boo\'), (\'Mee\', \'Moo\');');
     });
 
-    test('when delete', () {
+    test('when update', () {
       final query = Query.table('users').driver(driver).insert({'firstname': 'Chima', 'lastname': 'Precious'});
 
       expect(query.statement, 'INSERT INTO users (firstname, lastname) VALUES (\'Chima\', \'Precious\');');
     });
 
-    test('when update', () {
-      final query = Query.table('users').driver(driver).insert({'firstname': 'Chima', 'lastname': 'Precious'});
+    test('when delete', () {
+      final query = Query.table('users').driver(driver).where('name', '=', 'Chima').delete();
 
-      expect(query.statement, 'INSERT INTO users (firstname, lastname) VALUES (\'Chima\', \'Precious\');');
+      expect(query.statement, 'DELETE FROM users WHERE name = \'Chima\';');
     });
 
     group('when .where', () {

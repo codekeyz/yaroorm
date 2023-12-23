@@ -7,7 +7,7 @@ import '../helpers/drivers.dart';
 final driver = DatabaseDriver.init(sqliteConnection);
 
 void main() {
-  group('SQLITE Query Generator', () {
+  group('SQLITE Query Builder', () {
     test('when query', () {
       final query = Query.table('users').driver(driver);
 
