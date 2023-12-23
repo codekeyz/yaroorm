@@ -19,6 +19,6 @@ final mariadbConnection = DatabaseConnection.from('maria_connection', {
   'database': 'maria_test_db',
   'driver': 'mariadb',
   'host': 'localhost',
-  'username': 'foo-bar',
-  'password': 'sassy',
+  'username': 'test_user',
+  'password': 'password',
 });
