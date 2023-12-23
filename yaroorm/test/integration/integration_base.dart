@@ -3,7 +3,7 @@ import 'package:yaroorm/src/database/driver/driver.dart';
 import 'package:yaroorm/src/database/migration.dart';
 import 'package:yaroorm/src/query/query.dart';
 
-import 'test_data.dart';
+import '../fixtures/test_data.dart';
 
 class AddUsersTable extends Migration {
   @override
@@ -38,6 +38,21 @@ class AddUsersTable extends Migration {
 
 void runIntegrationTest(DatabaseDriver driver) {
   return group('Integration Test with ${driver.type.name} driver', () {
+    test('should drop tables', () async {
+      final schemas = <Schema>[];
+      AddUsersTable().down(schemas);
+
+      final dropTableScripts = schemas.map((schema) => schema.toScript(driver.blueprint)).join('\n');
+
+      await driver.execute(dropTableScripts);
+
+      final hasUsersTable = await driver.hasTable('users');
+      expect(hasUsersTable, isFalse);
+
+      final hasTodosTable = await driver.hasTable('tasks');
+      expect(hasTodosTable, isFalse);
+    });
+
     test('should execute migrations', () async {
       final schemas = <Schema>[];
       AddUsersTable().up(schemas);

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:path/path.dart' as path;
 import 'package:yaroorm/yaroorm.dart';
 
@@ -7,18 +9,20 @@ final sqliteConnection = DatabaseConnection(
   DatabaseDriverType.sqlite,
 );
 
-final mysqlConnection = DatabaseConnection.from('maria_connection', {
-  'database': 'mysql_test_db',
-  'driver': 'mysql',
-  'host': 'localhost',
-  'username': 'foo-bar',
-  'password': 'sassy',
-});
-
 final mariadbConnection = DatabaseConnection.from('maria_connection', {
   'database': 'maria_test_db',
   'driver': 'mariadb',
   'host': 'localhost',
-  'username': 'runner',
+  'port': 3306,
+  'username': Platform.environment['USER'],
+  'password': 'password',
+});
+
+final mysqlConnection = DatabaseConnection.from('mysql_connection', {
+  'database': 'mysql_test_db',
+  'driver': 'mysql',
+  'host': 'localhost',
+  'port': 3307,
+  'username': Platform.environment['USER'],
   'password': 'password',
 });
