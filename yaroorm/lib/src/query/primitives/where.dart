@@ -78,26 +78,29 @@ Operator _strToOperator(String condition) => switch (condition) {
       //
       'between' => Operator.BETWEEN,
       'not between' => Operator.NOT_BETWEEN,
-      _ =>
-        throw ArgumentError.value(condition, null, 'Either condition is not known or Use one of the defined functions')
+      _ => throw ArgumentError.value(condition, null, 'Condition $condition is not known')
     };
 
 class WhereClauseValue<A> {
   final String field;
   final CompareWithValue comparer;
 
-  const WhereClauseValue(this.field, this.comparer);
-
-  factory WhereClauseValue.from(String field, String condition, value) {
-    final operator = _strToOperator(condition);
+  WhereClauseValue(this.field, this.comparer) {
+    final operator = comparer.operator;
+    final value = comparer.value;
     if ([Operator.BETWEEN, Operator.NOT_BETWEEN].contains(operator)) {
       if (value is! List || value.length != 2) {
         throw ArgumentError(
           '${operator.name} requires a List with length 2 (val1, val2)',
-          '$field $condition $value',
+          '$field ${operator.name} $value',
         );
       }
     }
+  }
+
+  factory WhereClauseValue.from(String field, String condition, value) {
+    final operator = _strToOperator(condition);
+
     return WhereClauseValue(field, (operator: operator, value: value));
   }
 }

@@ -226,6 +226,11 @@ void main() {
     });
 
     group('when handwritten operator', () {
+      test('should error if unknown operator', () {
+        expect(() => Query.table('users').driver(driver).where('age', 'foo-bar', '23').statement,
+            throwsA(isA<ArgumentError>().having((p0) => p0.message, '', 'Condition foo-bar is not known')));
+      });
+
       test('=', () {
         final query = Query.table('users').driver(driver).where('firstname', '=', 'Chima');
 
@@ -437,6 +442,13 @@ void main() {
     });
 
     group('when .whereBetween', () {
+      test('should error if not supplied List with length 2', () {
+        expect(
+            () => Query.table('users').driver(driver).whereBetween('age', [22]).statement,
+            throwsA(isA<ArgumentError>()
+                .having((p0) => p0.message, '', 'BETWEEN requires a List with length 2 (val1, val2)')));
+      });
+
       test('of level 1', () {
         final query = Query.table('users').driver(driver).whereBetween('age', [22, 70]);
 
@@ -484,6 +496,13 @@ void main() {
     });
 
     group('when .whereNotBetween', () {
+      test('should error if not supplied List with length 2', () {
+        expect(
+            () => Query.table('users').driver(driver).whereNotBetween('age', [22]).statement,
+            throwsA(isA<ArgumentError>()
+                .having((p0) => p0.message, '', 'NOT_BETWEEN requires a List with length 2 (val1, val2)')));
+      });
+
       test('of level 1', () {
         final query = Query.table('users').driver(driver).whereNotBetween('age', [22, 70]);
 
