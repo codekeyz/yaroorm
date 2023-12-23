@@ -37,13 +37,7 @@ class AddUsersTable extends Migration {
 }
 
 void runIntegrationTest(DatabaseDriver driver) {
-  return group('Integration Test with ${driver.type.name}', () {
-    test('driver should connect', () async {
-      await driver.connect();
-
-      expect(driver.isOpen, isTrue);
-    });
-
+  return group('Integration Test with ${driver.type.name} driver', () {
     test('should execute migrations', () async {
       final schemas = <Schema>[];
       AddUsersTable().up(schemas);

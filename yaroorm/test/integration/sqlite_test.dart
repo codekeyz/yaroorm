@@ -16,5 +16,13 @@ void main() {
     if (await dbFile.exists()) await dbFile.delete();
   });
 
-  runIntegrationTest(driver);
+  group('SQLite', () {
+    test('driver should connect', () async {
+      await driver.connect();
+
+      expect(driver.isOpen, isTrue);
+    });
+
+    runIntegrationTest(driver);
+  });
 }

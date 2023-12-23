@@ -118,7 +118,7 @@ abstract interface class DatabaseDriver with DriverAble {
   /// Performs connection to the database.
   ///
   /// Depend on driver type it may create a connection pool.
-  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection});
+  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection, bool? secure});
 
   /// Performs connection to the database.
   ///

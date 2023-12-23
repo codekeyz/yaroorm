@@ -25,12 +25,13 @@ class MySqlDriver implements DatabaseDriver {
   }
 
   @override
-  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection}) async {
+  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection, bool? secure}) async {
     assert(maxConnections == null, 'MySQL max connections not yet supported');
 
     _dbConnection = await MySQLConnection.createConnection(
       host: config.host!,
       port: portToUse,
+      secure: secure ?? true,
       userName: config.username!,
       password: config.password!,
       databaseName: config.database,
