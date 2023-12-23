@@ -223,6 +223,13 @@ void main() {
           );
         });
       });
+
+      test('with orderBy', () {
+        final query =
+            Query.table('users').driver(driver).where('name', '=', 'Chima').orderByDesc('names').orderByAsc('ages');
+
+        expect(query.statement, 'SELECT * FROM users WHERE name = \'Chima\' ORDER BY names DESC, ages ASC;');
+      });
     });
 
     group('when handwritten operator', () {
