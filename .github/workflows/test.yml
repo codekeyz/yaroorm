@@ -54,24 +54,23 @@ jobs:
           melos exec -- "dart run build_runner build"
 
       - name: Run Unit tests
-        run: melos tests:ci
+        run: melos tests:unit
 
 
-      - name: Display GitHub Actor
-        run: |
-          echo "GitHub Actor: $USER"
-
-      - name: Setup Databases For Integration Tests
+      - name: Setup MariaDB For Integration Test
         uses: ankane/setup-mariadb@v1
         with:
           mariadb-version: "10.11"
           database: "maria_test_db"
 
 
-      - name: Run MariaDB E2E tests
+      - name: Run Integration tests
         run: |
           sudo mysql -e "ALTER USER '$USER'@'localhost' IDENTIFIED BY 'password'; FLUSH PRIVILEGES;"
           melos exec -c 1  -- "dart test --coverage=coverage --tags=mariadb" --fail-fast
+
+      - name: Combine Coverage
+        run: melos coverage
 
 
       - name: Upload Coverage

@@ -1,4 +1,4 @@
-@Tags(['mariadb'])
+@Tags(['integration'])
 import 'package:test/test.dart';
 import 'package:yaroorm/src/database/driver/driver.dart';
 

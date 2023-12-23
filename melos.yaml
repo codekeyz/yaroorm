@@ -19,10 +19,13 @@ scripts:
     run: |
       melos exec -c 1  -- "dart test" --fail-fast
 
-  tests:ci:
+  tests:unit:
     run: |
-      melos exec -c 1  -- "dart test --coverage=coverage --exclude-tags mariadb" --fail-fast
-      melos coverage
+      melos exec -c 1  -- "dart test --coverage=coverage --exclude-tags integration" --fail-fast
+
+  tests:integration:
+    run: |
+      melos exec -c 1  -- "dart test --coverage=coverage --tags integration" --fail-fast
 
   coverage:
     run: |
