@@ -181,6 +181,18 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
   }
 
   @override
+  void id({String name = 'id', bool autoIncrement = true}) {
+    final sb = StringBuffer()..write('$name INTEGER NOT NULL PRIMARY KEY');
+    if (autoIncrement) sb.write(' AUTO_INCREMENT');
+    statements.add(sb.toString());
+  }
+
+  @override
+  void string(String name, {bool nullable = false, String? defaultValue}) {
+    statements.add(_getColumn(name, 'VARCHAR(255)', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
   void datetime(String name, {bool nullable = false, DateTime? defaultValue}) {
     statements.add(_getColumn(name, 'DATETIME', nullable: nullable, defaultValue: defaultValue));
   }
