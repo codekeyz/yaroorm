@@ -57,11 +57,16 @@ jobs:
         run: melos tests:ci
 
 
+      - name: Display GitHub Actor
+        run: |
+          echo "GitHub Actor: $USER"
+
       - name: Setup Databases For Integration Tests
         uses: ankane/setup-mariadb@v1
         with:
           mariadb-version: "10.11"
           database: "maria_test_db"
+          
 
       - name: Run MariaDB E2E tests
         run: |
