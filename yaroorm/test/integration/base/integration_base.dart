@@ -164,5 +164,20 @@ void runIntegrationTest(DatabaseDriver driver) {
       final usersAfterDelete = await query.findMany();
       expect(usersAfterDelete, isEmpty);
     });
+
+    test('should drop tables', () async {
+      final schemas = <Schema>[];
+      AddUsersTable().down(schemas);
+
+      final dropTableScripts = schemas.map((schema) => schema.toScript(driver.blueprint)).join('\n');
+
+      await driver.execute(dropTableScripts);
+
+      final hasUsersTable = await driver.hasTable('users');
+      expect(hasUsersTable, isFalse);
+
+      final hasTodosTable = await driver.hasTable('tasks');
+      expect(hasTodosTable, isFalse);
+    });
   });
 }
