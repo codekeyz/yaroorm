@@ -72,8 +72,6 @@ jobs:
         run: |
           sudo mysql -e "ALTER USER '$USER'@'localhost' IDENTIFIED BY 'password'; FLUSH PRIVILEGES;"
           melos exec -c 1  -- "dart test --coverage=coverage --tags=mariadb" --fail-fast
-          melos coverage
-
 
 
       - name: Upload Coverage
