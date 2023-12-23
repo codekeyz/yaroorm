@@ -56,14 +56,14 @@ jobs:
       - name: Run Unit tests
         run: melos tests:ci
 
-      - uses: ankane/setup-mariadb@v1
+
+      - name: Run MariaDB Integration tests
+        uses: ankane/setup-mariadb@v1
         with:
           mariadb-version: "10.11"
           database: "maria_test_db"
- 
-      - name: Run MySQL Integration tests
         run: |
-          melos exec -c 1  -- "dart test --coverage=coverage --tags=mysql" --fail-fast
+          melos exec -c 1  -- "dart test --coverage=coverage --tags=mariadb" --fail-fast
           melos coverage
 
 
