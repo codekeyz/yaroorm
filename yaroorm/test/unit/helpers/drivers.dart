@@ -1,8 +1,9 @@
+import 'package:path/path.dart' as path;
 import 'package:yaroorm/yaroorm.dart';
 
 final sqliteConnection = DatabaseConnection(
   'db',
-  'sqlite',
+  path.absolute('test/integration', 'db.sqlite'),
   DatabaseDriverType.sqlite,
 );
 

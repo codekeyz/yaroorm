@@ -8,8 +8,6 @@ import 'driver.dart';
 
 final _serializer = const SqliteSerializer();
 
-final _sqliteTableBlueprint = SqliteTableBlueprint();
-
 @visibleForTesting
 @protected
 class SqliteDriver implements DatabaseDriver {
@@ -95,7 +93,7 @@ class SqliteDriver implements DatabaseDriver {
   PrimitiveSerializer get serializer => _serializer;
 
   @override
-  TableBlueprint get blueprint => _sqliteTableBlueprint;
+  TableBlueprint get blueprint => SqliteTableBlueprint();
 
   @override
   Future<bool> hasTable(String tableName) async {
@@ -148,7 +146,7 @@ class _SqliteTransactor implements DriverTransactor {
   @override
   Future insertMany(InsertManyQuery query) {
     final sql = _serializer.acceptInsertManyQuery(query);
-    return Future.sync(() => _batch.execute(sql));
+    return Future.sync(() => _batch.rawInsert(sql));
   }
 
   @override

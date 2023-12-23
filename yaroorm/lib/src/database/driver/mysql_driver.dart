@@ -7,8 +7,6 @@ import 'package:yaroorm/src/query/query.dart';
 import 'driver.dart';
 import 'sqlite_driver.dart';
 
-final _tableBlueprint = MySqlDriverTableBlueprint();
-
 final _primitiveSerializer = MySqlPrimitiveSerializer();
 
 class MySqlDriver implements DatabaseDriver {
@@ -107,7 +105,7 @@ class MySqlDriver implements DatabaseDriver {
   DatabaseDriverType get type => _type;
 
   @override
-  TableBlueprint get blueprint => _tableBlueprint;
+  TableBlueprint get blueprint => MySqlDriverTableBlueprint();
 
   @override
   PrimitiveSerializer get serializer => _primitiveSerializer;

@@ -145,7 +145,7 @@ abstract interface class TableBlueprint {
   String renameScript(String fromName, String toName);
 }
 
-typedef TableBluePrintFunc = TableBlueprint Function(TableBlueprint $table);
+typedef TableBluePrintFunc = TableBlueprint Function(TableBlueprint table);
 
 class Schema {
   final String tableName;
