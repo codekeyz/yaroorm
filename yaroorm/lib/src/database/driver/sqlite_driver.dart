@@ -69,20 +69,27 @@ class SqliteDriver implements DatabaseDriver {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> update(UpdateQuery query) async {
+  Future<int> update(UpdateQuery query) async {
     final sql = _serializer.acceptUpdateQuery(query);
-    return (await _getDatabase()).rawQuery(sql);
+    return (await _getDatabase()).rawUpdate(sql);
+  }
+
+  @override
+  Future insertMany(InsertManyQuery query) async {
+    final sql = _serializer.acceptInsertManyQuery(query);
+    return (await _getDatabase()).execute(sql);
+  }
+
+  @override
+  Future<int> insert(InsertQuery query) async {
+    final sql = _serializer.acceptDartValue(query);
+    return (await _getDatabase()).insert(query.tableName, query.values);
   }
 
   @override
   Future<List<Map<String, dynamic>>> delete(DeleteQuery query) async {
     final sql = _serializer.acceptDeleteQuery(query);
     return (await _getDatabase()).rawQuery(sql);
-  }
-
-  @override
-  Future<int> insert(InsertQuery query) async {
-    return (await _getDatabase()).insert(query.tableName, query.values);
   }
 
   @override
@@ -125,18 +132,24 @@ class _SqliteTransactor implements DriverTransactor {
   @override
   Future<void> update(UpdateQuery query) {
     final sql = _serializer.acceptUpdateQuery(query);
-    return Future.sync(() => _batch.rawUpdate(sql));
+    return Future.sync(() => _batch.execute(sql));
   }
 
   @override
   Future<void> delete(DeleteQuery query) {
     final sql = _serializer.acceptDeleteQuery(query);
-    return Future.sync(() => _batch.rawDelete(sql));
+    return Future.sync(() => _batch.execute(sql));
   }
 
   @override
   Future<void> insert(InsertQuery query) {
     return Future.sync(() => _batch.insert(query.tableName, query.values));
+  }
+
+  @override
+  Future insertMany(InsertManyQuery query) {
+    final sql = _serializer.acceptInsertManyQuery(query);
+    return Future.sync(() => _batch.execute(sql));
   }
 
   @override
@@ -218,7 +231,7 @@ class SqliteSerializer implements PrimitiveSerializer {
   }
 
   @override
-  String acceptInsertAllQuery(InsertManyQuery query) {
+  String acceptInsertManyQuery(InsertManyQuery query) {
     final data = query.values;
     final fields = data.first.keys.join(', ');
     final values = data.map((e) => '(${e.values.map((e) => acceptDartValue(e)).join(', ')})').join(', ');

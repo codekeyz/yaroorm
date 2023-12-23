@@ -9,7 +9,7 @@ abstract class PrimitiveSerializer {
 
   String acceptInsertQuery(InsertQuery query);
 
-  String acceptInsertAllQuery(InsertManyQuery query);
+  String acceptInsertManyQuery(InsertManyQuery query);
 
   String acceptWhereClause(WhereClause clause);
 

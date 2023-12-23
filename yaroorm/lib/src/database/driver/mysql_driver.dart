@@ -85,6 +85,12 @@ class MySqlDriver implements DatabaseDriver {
   }
 
   @override
+  Future<dynamic> insertMany(InsertManyQuery query) {
+    final sql = _primitiveSerializer.acceptInsertManyQuery(query);
+    return rawQuery(sql);
+  }
+
+  @override
   Future<bool> hasTable(String tableName) async {
     final sql =
         'SELECT 1 FROM information_schema.tables WHERE table_schema = ${wrapString(config.database)} AND table_name = ${wrapString(tableName)} LIMIT 1';
@@ -143,6 +149,12 @@ class _MysqlTransactor extends DriverTransactor {
   Future<int> insert(InsertQuery query) {
     final sql = _primitiveSerializer.acceptInsertQuery(query);
     return rawQuery(sql).then((value) => value.first['id'] as int);
+  }
+
+  @override
+  Future<dynamic> insertMany(InsertManyQuery query) {
+    final sql = _primitiveSerializer.acceptInsertManyQuery(query);
+    return rawQuery(sql);
   }
 
   @override

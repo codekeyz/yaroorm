@@ -82,7 +82,11 @@ mixin DriverAble {
   /// Perform delete on the database
   Future<void> delete(DeleteQuery query);
 
+  /// Perform insert on the database
   Future<dynamic> insert(InsertQuery query);
+
+  /// Perform insert on the database
+  Future<dynamic> insertMany(InsertManyQuery query);
 
   PrimitiveSerializer get serializer;
 }

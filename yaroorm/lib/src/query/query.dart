@@ -30,11 +30,11 @@ mixin LimitOperation<ReturnType> {
 }
 
 mixin UpdateOperation {
-  Future<void> _update(WhereClause where, Map<String, dynamic> values);
+  UpdateQuery update(Map<String, dynamic> values);
 }
 
 mixin DeleteOperation {
-  Future<void> _delete(WhereClause where);
+  DeleteQuery delete();
 }
 
 typedef OrderBy = ({String field, OrderByDirection direction});
@@ -62,20 +62,15 @@ abstract interface class QueryBase<Owner> {
     return this as Owner;
   }
 
+  Future<void> exec();
+
   QueryBase(this.tableName);
 
   String get statement;
 }
 
 abstract class Query extends QueryBase<Query>
-    with
-        ReadOperation,
-        WhereOperation,
-        LimitOperation,
-        UpdateOperation,
-        DeleteOperation,
-        InsertOperation,
-        OrderByOperation<Query> {
+    with ReadOperation, WhereOperation, LimitOperation, InsertOperation, OrderByOperation<Query> {
   late final Set<String> fieldSelections;
   late final Set<OrderBy> orderByProps;
   late final List<WhereClause> whereClauses;
@@ -108,6 +103,9 @@ class UpdateQuery extends QueryBase<UpdateQuery> {
 
   @override
   String get statement => queryDriver.serializer.acceptUpdateQuery(this);
+
+  @override
+  Future<void> exec() => queryDriver.update(this);
 }
 
 class InsertQuery extends QueryBase<InsertQuery> {
@@ -115,6 +113,7 @@ class InsertQuery extends QueryBase<InsertQuery> {
 
   InsertQuery(super.tableName, {required this.values});
 
+  @override
   Future<dynamic> exec() => queryDriver.insert(this);
 
   @override
@@ -127,7 +126,10 @@ class InsertManyQuery extends QueryBase<InsertManyQuery> {
   InsertManyQuery(super.tableName, {required this.values});
 
   @override
-  String get statement => queryDriver.serializer.acceptInsertAllQuery(this);
+  String get statement => queryDriver.serializer.acceptInsertManyQuery(this);
+
+  @override
+  Future<dynamic> exec() => queryDriver.insertMany(this);
 }
 
 @protected
@@ -138,4 +140,7 @@ class DeleteQuery extends QueryBase<DeleteQuery> {
 
   @override
   String get statement => queryDriver.serializer.acceptDeleteQuery(this);
+
+  @override
+  Future<void> exec() => queryDriver.delete(this);
 }

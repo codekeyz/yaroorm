@@ -28,18 +28,6 @@ final class _QueryImpl extends Query {
   }
 
   @override
-  Future<void> _update(WhereClause where, Map<String, dynamic> values) async {
-    final query = UpdateQuery(tableName, whereClause: where, values: values);
-    await queryDriver.update(query);
-  }
-
-  @override
-  Future<void> _delete(WhereClause where) async {
-    final query = DeleteQuery(tableName, whereClause: where);
-    await queryDriver.delete(query);
-  }
-
-  @override
   Future<List<T>> all<T>() async {
     final results = await queryDriver.query(this);
     if (results.isEmpty) return <T>[];
@@ -132,4 +120,7 @@ final class _QueryImpl extends Query {
     whereClauses.add(newClause);
     return newClause;
   }
+
+  @override
+  Future<void> exec() => queryDriver.execute(statement);
 }
