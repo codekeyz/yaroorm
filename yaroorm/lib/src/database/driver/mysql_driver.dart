@@ -57,7 +57,7 @@ class MySqlDriver implements DatabaseDriver {
   Future<List<Map<String, dynamic>>> rawQuery(String script) async {
     if (!isOpen) await connect();
     final result = await _dbConnection.execute(script);
-    return result.rows.map((e) => e.assoc()).toList();
+    return result.rows.map((e) => e.typedAssoc()).toList();
   }
 
   @override
@@ -84,11 +84,9 @@ class MySqlDriver implements DatabaseDriver {
   @override
   Future<int> insert(InsertQuery query) async {
     final sql = _primitiveSerializer.acceptInsertQuery(query);
-    final result = await rawQuery(sql);
-
-    print(result);
-
-    return result.first['id'] as int;
+    if (!isOpen) await connect();
+    final result = await _dbConnection.execute(sql);
+    return result.lastInsertID.toInt();
   }
 
   @override
