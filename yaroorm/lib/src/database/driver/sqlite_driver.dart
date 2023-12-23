@@ -82,7 +82,6 @@ class SqliteDriver implements DatabaseDriver {
 
   @override
   Future<int> insert(InsertQuery query) async {
-    final sql = _serializer.acceptDartValue(query);
     return (await _getDatabase()).insert(query.tableName, query.values);
   }
 
