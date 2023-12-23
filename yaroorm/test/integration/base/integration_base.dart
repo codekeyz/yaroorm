@@ -140,5 +140,29 @@ void runIntegrationTest(DatabaseDriver driver) {
       final users = await Query.table('users').driver(driver).where('age', '=', 30).orWhere('age', '=', 52).findMany();
       expect(users.every((e) => [30, 52].contains(e['age'])), isTrue);
     });
+
+    test('should delete user', () async {
+      final query = Query.table('users').driver(driver);
+
+      final userOne = await query.get();
+      expect(userOne, isNotNull);
+
+      await query.delete((builder) => builder.where('id', '=', userOne['id'])).exec();
+
+      final usersAfterDelete = await query.all();
+      expect(usersAfterDelete.any((e) => e['id'] == userOne['id']), isFalse);
+    });
+
+    test('should delete many users', () async {
+      final query = Query.table('users').driver(driver).whereIn('home_address', ['Lagos, Nigeria']);
+
+      final users = await query.findMany();
+      expect(users, isNotEmpty);
+
+      await query.delete();
+
+      final usersAfterDelete = await query.findMany();
+      expect(usersAfterDelete, isEmpty);
+    });
   });
 }

@@ -143,5 +143,9 @@ abstract class WhereClause extends Clause
   @override
   Future<List<T>> take<T>(int limit) => _query.take<T>(limit);
 
+  Future<void> delete() {
+    return DeleteQuery(_query.tableName, whereClause: this).driver(_query.queryDriver).exec();
+  }
+
   String get statement => _query.statement;
 }
