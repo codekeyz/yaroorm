@@ -62,7 +62,8 @@ jobs:
           database: "maria_test_db"
           root-password: 'password'
           username: 'test_user'
-        name: Run MySQL Integration tests
+
+      - name: Run MySQL Integration tests
         run: |
           melos exec -c 1  -- "dart test --coverage=coverage --tags=mysql" --fail-fast
           melos coverage
