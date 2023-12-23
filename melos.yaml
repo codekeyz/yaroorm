@@ -21,7 +21,7 @@ scripts:
 
   tests:ci:
     run: |
-      melos exec -c 1  -- "dart test --coverage=coverage" --fail-fast
+      melos exec -c 1  -- "dart test --coverage=coverage --exclude-tags mariadb" --fail-fast
       melos coverage
 
   coverage:
