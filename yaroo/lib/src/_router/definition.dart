@@ -1,8 +1,8 @@
 import 'package:meta/meta.dart';
 import 'package:pharaoh/pharaoh.dart';
 
-import '../../../http/http.dart';
 import '../_reflector/reflector.dart';
+import '../core.dart';
 import 'utils.dart';
 
 enum RouteDefinitionType { route, group, middleware }
@@ -46,10 +46,27 @@ class _MiddlewareDefinition extends RouteDefinition {
 typedef ControllerMethodDefinition = (Type controller, Symbol symbol);
 
 class ControllerMethod {
-  final ControllerMethodDefinition classMethod;
-  final List<Type> parameters = [];
+  final ControllerMethodDefinition method;
 
-  ControllerMethod(this.classMethod);
+  String get methodName => symbolToString(method.$2);
+
+  Type get controller => method.$1;
+
+  ControllerMethod(this.method);
+}
+
+class ControllerMethodParam {
+  final String name;
+  final Type type;
+  final bool required;
+  final List<Object> metadata;
+
+  const ControllerMethodParam(
+    this.name,
+    this.type, {
+    this.metadata = const [],
+    this.required = true,
+  });
 }
 
 class ControllerRouteMethodDefinition extends RouteDefinition {
@@ -63,12 +80,9 @@ class ControllerRouteMethodDefinition extends RouteDefinition {
 
   @override
   void commit(Spanner spanner) {
+    final handler = ApplicationFactory.buildControllerMethod(method);
     for (final routeMethod in route.methods) {
-      spanner.addRoute(
-        routeMethod,
-        route.path,
-        useRequestHandler(_controllerHandler(method)),
-      );
+      spanner.addRoute(routeMethod, route.path, useRequestHandler(handler));
     }
   }
 }
@@ -133,19 +147,4 @@ class FunctionalRouteDefinition extends RouteDefinition {
   void commit(Spanner spanner) {
     spanner.addRoute(method, path, useRequestHandler(handler));
   }
-}
-
-RequestHandler _controllerHandler(ControllerMethod method) {
-  final defn = method.classMethod;
-
-  return (req, res) async {
-    final instance = createNewInstance<BaseController>(defn.$1);
-    final mirror = inject.reflect(instance);
-
-    final result = await Future.sync(
-      () => mirror.invoke(symbolToString(defn.$2), [req, res]),
-    );
-
-    return result;
-  };
 }

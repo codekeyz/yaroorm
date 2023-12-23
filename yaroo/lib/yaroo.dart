@@ -1,5 +1,5 @@
 library;
 
-export 'src/_config/config.dart' show env, ConfigResolver;
 export 'src/_router/router.dart';
+export 'src/config/config.dart';
 export 'src/core.dart';

@@ -5,8 +5,6 @@ import '../../query/query.dart';
 import '../migration.dart';
 import 'sqlite_driver.dart';
 
-typedef DatabaseConfig = Map<String, dynamic>;
-
 enum DatabaseDriverType { sqlite, pgsql, mongo }
 
 class DatabaseConnection {
@@ -47,7 +45,7 @@ class DatabaseConnection {
       password: connInfo['password'],
       username: connInfo['username'],
       url: connInfo['url'],
-      dbForeignKeys: connInfo['foreign_key_constraints'],
+      dbForeignKeys: connInfo['foreign_key_constraints'] ?? true,
     );
   }
 }
