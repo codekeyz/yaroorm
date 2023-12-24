@@ -40,15 +40,15 @@ jobs:
     name: Test Packages
     runs-on: ubuntu-latest
     services:
-      #      mariadb:
-      #        image: mariadb
-      #        env:
-      #          MARIADB_ALLOW_EMPTY_PASSWORD: yes
-      #          MARIADB_DATABASE: mariadb_test_db
-      #          MARIADB_USER: tester
-      #          MARIADB_PASSWORD: password
-      #        ports:
-      #          - 3306:3306
+      mariadb:
+        image: mariadb
+        env:
+          MARIADB_ALLOW_EMPTY_PASSWORD: yes
+          MARIADB_DATABASE: mariadb_test_db
+          MARIADB_USER: tester
+          MARIADB_PASSWORD: password
+        ports:
+          - 3306:3306
       mysql:
         image: mysql
         env:
