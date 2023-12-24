@@ -53,7 +53,7 @@ void runIntegrationTest(DatabaseDriver driver) {
       expect(hasTodosTable, isFalse);
     });
 
-    test('should create execute migration', () async {
+    test('should execute migration', () async {
       final schemas = <Schema>[];
       AddUsersTable().up(schemas);
 
