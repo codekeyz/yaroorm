@@ -59,14 +59,16 @@ jobs:
       - uses: ankane/setup-mariadb@v1
         with:
           database: "maria_test_db"
-      - uses: ankane/setup-mysql@v1
-        with:
-          database: "mysql_test_db"
 
       - name: Run Integration tests
         run: |
           sudo mysql -e "ALTER USER '$USER'@'localhost' IDENTIFIED BY 'password'; FLUSH PRIVILEGES;"
           cd yaroorm && "./e2e_test.sh"
+      
+
+      #      - uses: ankane/setup-mysql@v1
+      #        with:
+      #          database: "mysql_test_db"
 
       - name: Combine Coverage
         run: melos coverage
