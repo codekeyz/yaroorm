@@ -17,7 +17,9 @@ void main() {
     ];
 
     for (final command in commands) {
-      await Process.run('sudo', ['mysql', '-e', command]);
+      final result = await Process.run('sudo', ['mysql', '-e', command]);
+      stdout.write(result.stdout);
+      stderr.write(result.stderr);
     }
 
     await _driver.connect(secure: false);
