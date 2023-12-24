@@ -54,8 +54,7 @@ jobs:
           melos exec -- "dart run build_runner build"
 
       - name: Run Unit tests
-        run: melos tests:unit
-
+        run: melos tests:ci
 
       - name: Setup MariaDB For Integration Test
         uses: ankane/setup-mariadb@v1
@@ -67,7 +66,7 @@ jobs:
       - name: Run Integration tests
         run: |
           sudo mysql -e "ALTER USER '$USER'@'localhost' IDENTIFIED BY 'password'; FLUSH PRIVILEGES;"
-          melos tests:integration
+          melos exec -- "./yaroorm/e2e_test.sh"
 
       - name: Combine Coverage
         run: melos coverage

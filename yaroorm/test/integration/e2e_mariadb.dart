@@ -1,9 +1,8 @@
-@Tags(['integration'])
 import 'package:test/test.dart';
 import 'package:yaroorm/src/database/driver/driver.dart';
 
 import '../fixtures/test_connections.dart';
-import 'integration_base.dart';
+import 'base.dart';
 
 final driver = DatabaseDriver.init(mariadbConnection);
 

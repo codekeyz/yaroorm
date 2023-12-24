@@ -1,4 +1,3 @@
-@Tags(['integration'])
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
@@ -6,7 +5,7 @@ import 'package:test/test.dart';
 import 'package:yaroorm/src/database/driver/driver.dart';
 
 import '../fixtures/test_connections.dart';
-import 'integration_base.dart';
+import 'base.dart';
 
 final driver = DatabaseDriver.init(sqliteConnection);
 

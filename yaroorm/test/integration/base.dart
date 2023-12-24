@@ -38,7 +38,7 @@ class AddUsersTable extends Migration {
 
 void runIntegrationTest(DatabaseDriver driver) {
   return group('Integration Test with ${driver.type.name} driver', () {
-    test('should drop tables', () async {
+    setUpAll(() async {
       final schemas = <Schema>[];
       AddUsersTable().down(schemas);
 
@@ -53,7 +53,7 @@ void runIntegrationTest(DatabaseDriver driver) {
       expect(hasTodosTable, isFalse);
     });
 
-    test('should execute migrations', () async {
+    test('should create execute migration', () async {
       final schemas = <Schema>[];
       AddUsersTable().up(schemas);
 
