@@ -1,7 +1,7 @@
 import 'package:test/test.dart';
 import 'package:yaroorm/src/database/driver/driver.dart';
 
-import '../fixtures/test_connections.dart';
+import '../fixtures/connections.dart';
 import 'base.dart';
 
 final _driver = DatabaseDriver.init(mysqlConnection);

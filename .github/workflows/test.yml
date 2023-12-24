@@ -59,13 +59,13 @@ jobs:
       - uses: ankane/setup-mariadb@v1
         with:
           database: "maria_test_db"
-      - uses: mirromutth/mysql-action@v1.1
-        with:
-          mysql database: 'mysql_test_db'
-          mysql user: 'runner'
-          mysql password: 'password'
-          host port: 3307
-          container port: 3307
+      #      - uses: mirromutth/mysql-action@v1.1
+      #        with:
+      #          mysql database: 'mysql_test_db'
+      #          mysql user: 'runner'
+      #          mysql password: 'password'
+      #          host port: 3307
+      #          container port: 3307
 
       - name: Run Integration tests
         run: |

@@ -2,7 +2,7 @@ import 'package:test/test.dart';
 import 'package:yaroorm/src/database/driver/driver.dart';
 import 'package:yaroorm/src/query/query.dart';
 
-import '../../fixtures/test_connections.dart';
+import '../../fixtures/connections.dart';
 
 final driver = DatabaseDriver.init(sqliteConnection);
 

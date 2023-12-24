@@ -23,6 +23,6 @@ final mysqlConnection = DatabaseConnection.from('mysql_connection', {
   'driver': 'mysql',
   'host': 'localhost',
   'port': 3307,
-  'username': Platform.environment['USER'],
+  'username': 'runner',
   'password': 'password',
 });
