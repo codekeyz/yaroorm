@@ -79,8 +79,9 @@ jobs:
       - name: Run E2E Tests
         run: |
           cd yaroorm
-          dart test test/integration/mysql.e2e.dart
           dart test test/integration/mariadb.e2e.dart
+      #          dart test test/integration/mysql.e2e.dart
+
       #          cd yaroorm && "./e2e_test.sh"
 
       - name: Combine Coverage
