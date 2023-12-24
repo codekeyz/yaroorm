@@ -8,7 +8,7 @@ final sqliteConnection = DatabaseConnection(
 );
 
 final mariadbConnection = DatabaseConnection.from('maria_connection', {
-  'database': 'maria_test_db',
+  'database': 'test_db',
   'driver': 'mariadb',
   'host': 'localhost',
   'port': 4000,
