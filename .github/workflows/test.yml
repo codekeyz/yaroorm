@@ -48,7 +48,7 @@ jobs:
           MARIADB_USER: tester
           MARIADB_PASSWORD: password
         ports:
-          - 4000:5000
+          - 4000:3306
       mysql:
         image: mysql
         env:
