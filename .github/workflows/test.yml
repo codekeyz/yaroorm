@@ -79,7 +79,6 @@ jobs:
       - name: Run E2E Tests
         run: |
           cd yaroorm
-          sudo mysql -e "ALTER USER 'tester'@'localhost' IDENTIFIED BY 'password'; FLUSH PRIVILEGES;"
           dart test test/integration/mariadb.e2e.dart
       #          dart test test/integration/mysql.e2e.dart
 

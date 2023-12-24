@@ -10,11 +10,15 @@ final _driver = DatabaseDriver.init(mariadbConnection);
 
 void main() {
   setUpAll(() async {
-    await Process.run('sudo', [
-      'mysql',
-      '-e',
-      "ALTER USER '${mariadbConnection.username}'@'${mariadbConnection.host}' IDENTIFIED BY '${mariadbConnection.password}'; FLUSH PRIVILEGES;"
-    ]);
+    final commands = [
+      "CREATE USER '${mariadbConnection.username}'@'localhost' IDENTIFIED BY '${mariadbConnection.password}'",
+      "GRANT ALL PRIVILEGES ON *.* TO '${mariadbConnection.username}'@'localhost'",
+      "FLUSH PRIVILEGES"
+    ];
+
+    for (final command in commands) {
+      await Process.run('sudo', ['mysql', '-e', command]);
+    }
 
     await _driver.connect(secure: false);
   });
