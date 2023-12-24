@@ -11,16 +11,16 @@ final mariadbConnection = DatabaseConnection.from('maria_connection', {
   'database': 'test_db',
   'driver': 'mariadb',
   'host': 'localhost',
-  'port': 4000,
+  'port': 3000,
   'username': 'root',
   'password': 'password',
 });
 
 final mysqlConnection = DatabaseConnection.from('mysql_connection', {
-  'database': 'mysql_test_db',
+  'database': 'test_db',
   'driver': 'mysql',
   'host': 'localhost',
-  'port': 3307,
-  'username': 'tester',
+  'port': 3001,
+  'username': 'root',
   'password': 'password',
 });

@@ -46,16 +46,14 @@ jobs:
           MYSQL_ROOT_PASSWORD: password
           MARIADB_DATABASE: test_db
         ports:
-          - 4000:3306
+          - 3000:3306
       mysql:
         image: mysql
         env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: yes
-          MYSQL_DATABASE: mysql_test_db
-          MYSQL_USER: tester
-          MYSQL_PASSWORD: password
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: test_db
         ports:
-          - 3307:3306
+          - 3001:3306
 
     steps:
       - name: Checkout Repository
