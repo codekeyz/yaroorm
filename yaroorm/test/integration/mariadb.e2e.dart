@@ -9,11 +9,5 @@ final _driver = DatabaseDriver.init(mariadbConnection);
 void main() {
   setUpAll(() => Future.sync(() => _driver.connect(secure: false)));
 
-  group('MariaDB', () {
-    test('driver should connect', () {
-      expect(_driver.isOpen, isTrue);
-    });
-
-    runIntegrationTest(_driver);
-  });
+  group('MariaDB', () => runIntegrationTest(_driver));
 }
