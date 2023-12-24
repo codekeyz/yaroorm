@@ -129,6 +129,17 @@ void runIntegrationTest(DatabaseDriver driver) {
       expect(updatedResult.every((e) => e['home_address'] == 'Keta Lagoon'), isTrue);
     });
 
+    test('should fetch only 23 users in Lagos Nigeria', () async {
+      final age50Users = await Query.table('users')
+          .driver(driver)
+          .whereIn('home_address', ['Lagos, Nigeria'])
+          .orderByDesc('age')
+          .take(23);
+
+      expect(age50Users.length, 23);
+      expect(age50Users.every((e) => e['home_address'] == 'Lagos, Nigeria'), isTrue);
+    });
+
     test('should get all users between age 35 and 50', () async {
       final age50Users =
           await Query.table('users').driver(driver).whereBetween('age', [35, 50]).orderByDesc('age').findMany();
