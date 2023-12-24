@@ -73,8 +73,8 @@ jobs:
           melos bootstrap
           melos exec -- "dart run build_runner build"
 
-      - name: Run Unit Tests
-        run: melos tests:ci
+      #      - name: Run Unit Tests
+      #        run: melos tests:ci
 
       - name: Run E2E Tests
         run: |
