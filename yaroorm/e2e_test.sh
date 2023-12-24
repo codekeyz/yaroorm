@@ -8,7 +8,7 @@ TEST_DIRECTORY="test/integration"
 
 # Function to find and run tests
 run_tests() {
-  local pattern="e2e_*.dart"
+  local pattern="*.e2e.dart"
 
   # Find and run tests for each file
   find "$TEST_DIRECTORY" -type f -name "$pattern" -exec bash -c \
