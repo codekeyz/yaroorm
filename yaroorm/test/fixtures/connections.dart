@@ -10,11 +10,10 @@ final sqliteConnection = DatabaseConnection(
 const _baseConfig = {
   'database': 'test_db',
   'host': 'localhost',
-  'port': 3000,
   'username': 'root',
   'password': 'password',
 };
 
-final mariadbConnection = DatabaseConnection.from('mariadb', {'driver': 'mariadb', ..._baseConfig});
+final mariadbConnection = DatabaseConnection.from('mariadb', {'driver': 'mariadb', 'port': 3000, ..._baseConfig});
 
-final mysqlConnection = DatabaseConnection.from('mysql', {'driver': 'mysql', ..._baseConfig});
+final mysqlConnection = DatabaseConnection.from('mysql', {'driver': 'mysql', 'port': 3001, ..._baseConfig});
