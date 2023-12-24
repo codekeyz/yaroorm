@@ -11,7 +11,7 @@ void main() {
 
   group('MySQL', () {
     test('driver should connect', () async {
-      await _driver.connect(secure: true);
+      await _driver.connect(secure: false);
 
       expect(_driver.isOpen, isTrue);
     });
