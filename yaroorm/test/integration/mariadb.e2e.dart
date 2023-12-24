@@ -10,7 +10,8 @@ final _driver = DatabaseDriver.init(mariadbConnection);
 
 void main() {
   setUpAll(() async {
-    await Process.run('sudo mysql', [
+    await Process.run('sudo', [
+      'mysql',
       '-e',
       "ALTER USER '${mariadbConnection.username}'@'${mariadbConnection.host}' IDENTIFIED BY '${mariadbConnection.password}'; FLUSH PRIVILEGES;"
     ]);
