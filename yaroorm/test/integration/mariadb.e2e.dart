@@ -7,7 +7,7 @@ import 'base.dart';
 final _driver = DatabaseDriver.init(mariadbConnection);
 
 void main() {
-  setUpAll(() => _driver.connect(secure: true));
+  setUpAll(() => _driver.connect(secure: false));
 
   group('MariaDB', () {
     test('driver should connect', () {
