@@ -7,20 +7,14 @@ final sqliteConnection = DatabaseConnection(
   DatabaseDriverType.sqlite,
 );
 
-final mariadbConnection = DatabaseConnection.from('maria_connection', {
+const _baseConfig = {
   'database': 'test_db',
-  'driver': 'mariadb',
   'host': 'localhost',
   'port': 3000,
   'username': 'root',
   'password': 'password',
-});
+};
 
-final mysqlConnection = DatabaseConnection.from('mysql_connection', {
-  'database': 'test_db',
-  'driver': 'mysql',
-  'host': 'localhost',
-  'port': 3001,
-  'username': 'root',
-  'password': 'password',
-});
+final mariadbConnection = DatabaseConnection.from('mariadb', {'driver': 'mariadb', ..._baseConfig});
+
+final mysqlConnection = DatabaseConnection.from('mysql', {'driver': 'mysql', ..._baseConfig});
