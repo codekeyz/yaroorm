@@ -11,7 +11,7 @@ final mariadbConnection = DatabaseConnection.from('maria_connection', {
   'database': 'maria_test_db',
   'driver': 'mariadb',
   'host': 'localhost',
-  'port': 3306,
+  'port': 4000,
   'username': 'tester',
   'password': 'password',
 });
