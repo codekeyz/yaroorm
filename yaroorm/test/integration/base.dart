@@ -45,12 +45,15 @@ void runIntegrationTest(DatabaseDriver driver) {
       final dropTableScripts = schemas.map((schema) => schema.toScript(driver.blueprint)).join('\n');
 
       await driver.execute(dropTableScripts);
+    });
 
-      final hasUsersTable = await driver.hasTable('users');
-      expect(hasUsersTable, isFalse);
+    test('should have no tables', () async {
+      final result = await Future.wait([
+        driver.hasTable('users'),
+        driver.hasTable('tasks'),
+      ]);
 
-      final hasTodosTable = await driver.hasTable('tasks');
-      expect(hasTodosTable, isFalse);
+      expect(result.every((e) => e), isFalse);
     });
 
     test('should execute migration', () async {
@@ -69,11 +72,12 @@ void runIntegrationTest(DatabaseDriver driver) {
         }
       });
 
-      final hasUsersTable = await driver.hasTable('users');
-      expect(hasUsersTable, isTrue);
+      final result = await Future.wait([
+        driver.hasTable('users'),
+        driver.hasTable('tasks'),
+      ]);
 
-      final hasTodosTable = await driver.hasTable('tasks');
-      expect(hasTodosTable, isTrue);
+      expect(result.every((e) => e), isTrue);
     });
 
     test('should insert users', () async {
