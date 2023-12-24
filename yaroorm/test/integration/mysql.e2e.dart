@@ -7,10 +7,10 @@ import 'base.dart';
 final _driver = DatabaseDriver.init(mysqlConnection);
 
 void main() {
-  group('MySQL', () {
-    test('driver should connect', () async {
-      await _driver.connect(secure: false);
+  setUpAll(() async => _driver.connect(secure: false));
 
+  group('MySQL', () {
+    test('driver should connect', () {
       expect(_driver.isOpen, isTrue);
     });
 
