@@ -13,6 +13,7 @@ final mariadbConnection = DatabaseConnection.from('maria_connection', {
   'host': 'localhost',
   'port': 4000,
   'username': 'root',
+  'password': 'password',
 });
 
 final mysqlConnection = DatabaseConnection.from('mysql_connection', {

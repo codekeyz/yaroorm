@@ -43,7 +43,7 @@ jobs:
       mariadb:
         image: mariadb
         env:
-          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 1
+          MYSQL_ROOT_PASSWORD: password
           MARIADB_DATABASE: mariadb_test_db
         ports:
           - 4000:3306
