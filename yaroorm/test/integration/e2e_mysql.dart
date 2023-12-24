@@ -16,10 +16,6 @@ void main() {
       expect(_driver.isOpen, isTrue);
     });
 
-    try {
-      runIntegrationTest(_driver);
-    } catch (e) {
-      print('Error: $e');
-    }
+    runIntegrationTest(_driver);
   });
 }
