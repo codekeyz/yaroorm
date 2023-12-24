@@ -19,13 +19,9 @@ scripts:
     run: |
       melos exec -c 1  -- "dart test" --fail-fast
 
-  tests:unit:
+  tests:ci:
     run: |
-      melos exec -c 1  -- "dart test --coverage=coverage --exclude-tags integration" --fail-fast
-
-  tests:integration:
-    run: |
-      melos exec -c 1  -- "dart test --coverage=coverage --tags integration" --fail-fast
+      melos exec -c 1  -- "dart test --coverage=coverage" --fail-fast
 
   coverage:
     run: |

@@ -2,8 +2,9 @@ import 'package:test/test.dart';
 import 'package:yaroorm/src/database/driver/driver.dart';
 import 'package:yaroorm/src/database/driver/mysql_driver.dart';
 import 'package:yaroorm/src/database/driver/sqlite_driver.dart';
+import 'package:yaroorm/src/query/query.dart';
 
-import 'unit/helpers/drivers.dart';
+import 'fixtures/connections.dart';
 
 void main() {
   group('DatabaseDriver.init', () {
@@ -75,5 +76,20 @@ void main() {
         expect(driver.serializer, isA<MySqlPrimitiveSerializer>());
       });
     });
+  });
+
+  test('should err when Query without driver', () async {
+    late Object error;
+    try {
+      await Query.table('users').all();
+    } catch (e) {
+      error = e;
+    }
+
+    expect(
+      error,
+      isA<StateError>()
+          .having((p0) => p0.message, '', 'Driver not set for query. Make sure you supply a driver using .driver()'),
+    );
   });
 }
