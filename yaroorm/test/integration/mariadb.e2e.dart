@@ -4,16 +4,16 @@ import 'package:yaroorm/src/database/driver/driver.dart';
 import '../fixtures/connections.dart';
 import 'base.dart';
 
-final driver = DatabaseDriver.init(mariadbConnection);
+final _driver = DatabaseDriver.init(mariadbConnection);
 
 void main() {
-  group('MariaDB', () {
-    test('driver should connect', () async {
-      await driver.connect(secure: false);
+  setUpAll(() async => _driver.connect(secure: true));
 
-      expect(driver.isOpen, isTrue);
+  group('MariaDB', () {
+    test('driver should connect', () {
+      expect(_driver.isOpen, isTrue);
     });
 
-    runIntegrationTest(driver);
+    runIntegrationTest(_driver);
   });
 }
