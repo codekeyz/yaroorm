@@ -43,7 +43,7 @@ jobs:
       mariadb:
         image: mariadb
         env:
-          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: yes
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 1
           MARIADB_DATABASE: mariadb_test_db
           MARIADB_USER: tester
           MARIADB_PASSWORD: password
