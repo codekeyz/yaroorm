@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:path/path.dart' as path;
 import 'package:yaroorm/yaroorm.dart';
 
@@ -14,7 +12,7 @@ final mariadbConnection = DatabaseConnection.from('maria_connection', {
   'driver': 'mariadb',
   'host': 'localhost',
   'port': 3306,
-  'username': Platform.environment['USER'],
+  'username': 'tester',
   'password': 'password',
 });
 
@@ -22,7 +20,7 @@ final mysqlConnection = DatabaseConnection.from('mysql_connection', {
   'database': 'mysql_test_db',
   'driver': 'mysql',
   'host': 'localhost',
-  'port': 3306,
-  'username': Platform.environment['USER'],
+  'port': 3307,
+  'username': 'tester',
   'password': 'password',
 });
