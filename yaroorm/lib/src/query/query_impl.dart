@@ -18,17 +18,36 @@ final class _QueryImpl extends Query {
   }
 
   @override
-  Future insert(Map<String, dynamic> values) {
-    return InsertQuery(tableName, values: values).driver(queryDriver).exec();
+  Future<T> insert<T extends Entity>(T entity) async {
+    if (entity.enableTimestamps) entity.createdAt = entity.updatedAt = DateTime.now().toUtc();
+    final query = InsertQuery(tableName, values: entity.toJson()..remove('id'));
+    final recordId = await queryDriver.insert(query);
+    return entity..id = entity.id.withKey(recordId);
   }
 
   @override
-  Future<void> insertAll(List<Map<String, dynamic>> values) {
-    return InsertManyQuery(tableName, values: values).driver(queryDriver).exec();
+  Future insertRaw(Map<String, dynamic> values) {
+    final query = InsertQuery(tableName, values: values);
+    return queryDriver.insert(query);
   }
 
   @override
-  Future<List<T>> all<T>() async {
+  Future insertRawMany(List<Map<String, dynamic>> values) {
+    final query = InsertManyQuery(tableName, values: values);
+    return queryDriver.insertMany(query);
+  }
+
+  @override
+  Future<void> insertMany<T extends Entity>(List<T> entities) async {
+    final jsonData = entities.map((e) {
+      if (e.enableTimestamps) e.createdAt = e.updatedAt = DateTime.now().toUtc();
+      return e.toJson()..remove('id');
+    }).toList();
+    return queryDriver.insertMany(InsertManyQuery(tableName, values: jsonData));
+  }
+
+  @override
+  Future<List<T>> all<T extends Entity>() async {
     final results = await queryDriver.query(this);
     if (results.isEmpty) return <T>[];
     if (T == dynamic) return results as dynamic;
@@ -36,7 +55,7 @@ final class _QueryImpl extends Query {
   }
 
   @override
-  Future<List<T>> take<T>(int limit) async {
+  Future<List<T>> take<T extends Entity>(int limit) async {
     _limit = limit;
     final results = await queryDriver.query(this);
     if (results.isEmpty) return <T>[];
@@ -45,7 +64,8 @@ final class _QueryImpl extends Query {
   }
 
   @override
-  Future<T?> get<T>() async {
+  Future<T?> get<T extends Entity>([dynamic id]) async {
+    if (id != null) return whereEqual('id', id).findOne<T>();
     final results = await take<T>(1);
     return results.firstOrNull;
   }

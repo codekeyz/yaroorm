@@ -1,4 +1,5 @@
 import 'package:meta/meta.dart';
+import 'package:yaroorm/src/database/entity.dart';
 
 import '../_reflection/entity_helpers.dart';
 import '../database/driver/driver.dart';
@@ -8,25 +9,29 @@ part 'primitives/where_impl.dart';
 part 'query_impl.dart';
 
 mixin ReadOperation {
-  Future<T?> get<T>();
+  Future<T?> get<T extends Entity>([dynamic id]);
 
-  Future<List<T>> all<T>();
+  Future<List<T>> all<T extends Entity>();
 }
 
 mixin FindOperation {
-  Future<T?> findOne<T>();
+  Future<T?> findOne<T extends Entity>();
 
-  Future<List<T>> findMany<T>();
+  Future<List<T>> findMany<T extends Entity>();
 }
 
 mixin InsertOperation {
-  Future insert(Map<String, dynamic> values);
+  Future insert<T extends Entity>(T entity);
 
-  Future insertAll(List<Map<String, dynamic>> values);
+  Future insertRaw(Map<String, dynamic> values);
+
+  Future insertRawMany(List<Map<String, dynamic>> values);
+
+  Future insertMany<T extends Entity>(List<T> entities);
 }
 
 mixin LimitOperation<ReturnType> {
-  ReturnType take<T>(int limit);
+  ReturnType take<T extends Entity>(int limit);
 }
 
 mixin UpdateOperation {
@@ -105,7 +110,7 @@ abstract class Query extends QueryBase<Query>
   }
 
   @override
-  Future<List<T>> take<T>(int limit);
+  Future<List<T>> take<T extends Entity>(int limit);
 
   @override
   String get statement => queryDriver.serializer.acceptReadQuery(this);
