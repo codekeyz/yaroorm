@@ -102,4 +102,38 @@ class WhereClauseImpl extends WhereClause {
     _query.whereClauses.add(group);
     return group;
   }
+
+  @override
+  Future<void> update(Map<String, dynamic> values) {
+    return UpdateQuery(_query.tableName, whereClause: this, values: values).driver(_query.queryDriver).exec();
+  }
+
+  @override
+  Future<void> delete() {
+    return DeleteQuery(_query.tableName, whereClause: this).driver(_query.queryDriver).exec();
+  }
+
+  @override
+  Future<T?> findOne<T extends Entity>() => _query.get<T>();
+
+  @override
+  Future<List<T>> findMany<T extends Entity>() => _query.all<T>();
+
+  @override
+  Future<List<T>> take<T extends Entity>(int limit) => _query.take<T>(limit);
+
+  @override
+  WhereClause orderByAsc(String field) {
+    _query.orderByProps.add((field: field, direction: OrderByDirection.asc));
+    return this;
+  }
+
+  @override
+  WhereClause orderByDesc(String field) {
+    _query.orderByProps.add((field: field, direction: OrderByDirection.desc));
+    return this;
+  }
+
+  @override
+  String get statement => _query.statement;
 }

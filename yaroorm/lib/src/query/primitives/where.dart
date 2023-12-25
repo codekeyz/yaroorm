@@ -123,34 +123,9 @@ abstract class WhereClause extends Clause
 
   Query orWhereFunc(Function(WhereClauseImpl $query) function);
 
-  @override
-  WhereClause orderByAsc(String field) {
-    _query.orderByProps.add((field: field, direction: OrderByDirection.asc));
-    return this;
-  }
+  Future<void> update(Map<String, dynamic> values);
 
-  @override
-  WhereClause orderByDesc(String field) {
-    _query.orderByProps.add((field: field, direction: OrderByDirection.desc));
-    return this;
-  }
+  Future<void> delete();
 
-  @override
-  Future<T?> findOne<T>() => _query.get<T>();
-
-  @override
-  Future<List<T>> findMany<T>() => _query.all<T>();
-
-  @override
-  Future<List<T>> take<T>(int limit) => _query.take<T>(limit);
-
-  Future<void> update(Map<String, dynamic> values) {
-    return UpdateQuery(_query.tableName, whereClause: this, values: values).driver(_query.queryDriver).exec();
-  }
-
-  Future<void> delete() {
-    return DeleteQuery(_query.tableName, whereClause: this).driver(_query.queryDriver).exec();
-  }
-
-  String get statement => _query.statement;
+  String get statement;
 }

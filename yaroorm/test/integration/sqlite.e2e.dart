@@ -6,14 +6,19 @@ import 'package:yaroorm/src/database/driver/driver.dart';
 
 import '../fixtures/connections.dart';
 import 'base.dart';
+import 'sqlite.e2e.reflectable.dart';
 
 final driver = DatabaseDriver.init(sqliteConnection);
 
 void main() {
   setUpAll(() async {
+    initializeReflectable();
+
     final dbPath = path.absolute(sqliteConnection.database);
     final dbFile = File(dbPath);
     if (await dbFile.exists()) await dbFile.delete();
+
+    await driver.connect();
   });
 
   group('SQLite', () => runIntegrationTest(driver));
