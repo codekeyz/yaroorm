@@ -71,14 +71,14 @@ class WhereClauseImpl<Result> extends WhereClause<Result> {
   }
 
   @override
-  Query<Result> whereFunc(Function(WhereClause<Result> $query) function) {
-    function(this);
+  Query<Result> whereFunc(Function(WhereClause<Result> $query) builder) {
+    builder(this);
     return _query;
   }
 
   @override
-  Query<Result> orWhereFunc(Function(WhereClause<Result> $query) function) {
-    function(_useWhereGroup(LogicalOperator.OR));
+  Query<Result> orWhereFunc(Function(WhereClause<Result> $query) builder) {
+    builder(_useWhereGroup(LogicalOperator.OR));
     return _query;
   }
 
