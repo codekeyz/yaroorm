@@ -16,16 +16,11 @@ class User extends Entity<int> {
         lastname: json['lastname'] as String,
         age: json['age'] as int,
         homeAddress: json['home_address'] as String,
-      )
-        ..id = PrimaryKey.thisFromJson(json['id'])
-        ..createdAt = DateTime.parse(json['created_at'] as String)
-        ..updatedAt = DateTime.parse(json['updated_at'] as String);
+      )..id = PrimaryKey.thisFromJson(json['id']);
 
   @override
   Map<String, dynamic> toJson() => {
         'id': PrimaryKey.thisToJson(id),
-        'created_at': createdAt.toIso8601String(),
-        'updated_at': updatedAt.toIso8601String(),
         'firstname': firstname,
         'lastname': lastname,
         'age': age,
