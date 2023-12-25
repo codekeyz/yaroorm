@@ -3,11 +3,14 @@ import 'package:yaroorm/src/database/driver/driver.dart';
 
 import '../fixtures/connections.dart';
 import 'base.dart';
+import 'mysql.e2e.reflectable.dart';
 
 final _driver = DatabaseDriver.init(mysqlConnection);
 
 void main() {
   setUpAll(() async {
+    initializeReflectable();
+
     final driver = await _driver.connect(secure: true);
     print('We completed');
 
