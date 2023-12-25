@@ -2,38 +2,32 @@
 
 part of '../query.dart';
 
-mixin WhereOperation {
+mixin WhereOperation<Result> {
   WhereClause where<Value>(
     String field,
     String condition, [
     Value? value,
   ]);
 
-  WhereClause whereEqual<Value>(String field, Value value);
+  WhereClause<Result> whereEqual<Value>(String field, Value value);
 
-  WhereClause whereNotEqual<Value>(String field, Value value);
+  WhereClause<Result> whereNotEqual<Value>(String field, Value value);
 
-  WhereClause whereNull(String field);
+  WhereClause<Result> whereNull(String field);
 
-  WhereClause whereNotNull(String field);
+  WhereClause<Result> whereNotNull(String field);
 
-  WhereClause whereIn<Value>(String field, List<Value> values);
+  WhereClause<Result> whereIn<Value>(String field, List<Value> values);
 
-  WhereClause whereNotIn<Value>(String field, List<Value> values);
+  WhereClause<Result> whereNotIn<Value>(String field, List<Value> values);
 
-  WhereClause whereLike<Value>(String field, String pattern);
+  WhereClause<Result> whereLike<Value>(String field, String pattern);
 
-  WhereClause whereNotLike<Value>(String field, String pattern);
+  WhereClause<Result> whereNotLike<Value>(String field, String pattern);
 
-  WhereClause whereBetween<Value>(
-    String field,
-    List<Value> args,
-  );
+  WhereClause<Result> whereBetween<Value>(String field, List<Value> args);
 
-  WhereClause whereNotBetween<Value>(
-    String field,
-    List<Value> args,
-  );
+  WhereClause<Result> whereNotBetween<Value>(String field, List<Value> args);
 }
 
 abstract class Clause {
@@ -109,19 +103,20 @@ class WhereClauseValue<A> {
   }
 }
 
-abstract class WhereClause extends Clause
-    with WhereOperation, FindOperation, LimitOperation, OrderByOperation<WhereClause> {
-  final Query _query;
+abstract class WhereClause<Result> extends Clause
+    with WhereOperation<Result>, FindOperation<Result>, LimitOperation<Result>, OrderByOperation<WhereClause<Result>> {
+  final Query<Result> _query;
+
   final LogicalOperator operator;
   final List<CombineClause<WhereClauseValue>> subparts = [];
 
   WhereClause(this._query, {this.operator = LogicalOperator.AND});
 
-  WhereClause orWhere<Value>(String field, String condition, [Value? value]);
+  WhereClause<Result> orWhere<Value>(String field, String condition, [Value? value]);
 
-  Query whereFunc(Function(WhereClauseImpl $query) function);
+  Query<Result> whereFunc(Function(WhereClause<Result> query) builder);
 
-  Query orWhereFunc(Function(WhereClauseImpl $query) function);
+  Query<Result> orWhereFunc(Function(WhereClause<Result> query) builder);
 
   Future<void> update(Map<String, dynamic> values);
 
