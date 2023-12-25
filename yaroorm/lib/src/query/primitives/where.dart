@@ -9,6 +9,10 @@ mixin WhereOperation {
     Value? value,
   ]);
 
+  WhereClause whereEqual<Value>(String field, Value value);
+
+  WhereClause whereNotEqual<Value>(String field, Value value);
+
   WhereClause whereNull(String field);
 
   WhereClause whereNotNull(String field);
@@ -111,10 +115,7 @@ abstract class WhereClause extends Clause
   final LogicalOperator operator;
   final List<CombineClause<WhereClauseValue>> subparts = [];
 
-  WhereClause(
-    this._query, {
-    this.operator = LogicalOperator.AND,
-  });
+  WhereClause(this._query, {this.operator = LogicalOperator.AND});
 
   WhereClause orWhere<Value>(String field, String condition, [Value? value]);
 
@@ -142,6 +143,10 @@ abstract class WhereClause extends Clause
 
   @override
   Future<List<T>> take<T>(int limit) => _query.take<T>(limit);
+
+  Future<void> update(Map<String, dynamic> values) {
+    return UpdateQuery(_query.tableName, whereClause: this, values: values).driver(_query.queryDriver).exec();
+  }
 
   Future<void> delete() {
     return DeleteQuery(_query.tableName, whereClause: this).driver(_query.queryDriver).exec();

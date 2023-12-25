@@ -1,4 +1,4 @@
-part of '../query.dart';
+part of 'query.dart';
 
 enum OrderByDirection { asc, desc }
 
@@ -18,13 +18,13 @@ final class _QueryImpl extends Query {
   }
 
   @override
-  InsertQuery insert(Map<String, dynamic> values) {
-    return InsertQuery(tableName, values: values).driver(queryDriver);
+  Future insert(Map<String, dynamic> values) {
+    return InsertQuery(tableName, values: values).driver(queryDriver).exec();
   }
 
   @override
-  InsertManyQuery insertAll(List<Map<String, dynamic>> values) {
-    return InsertManyQuery(tableName, values: values).driver(queryDriver);
+  Future<void> insertAll(List<Map<String, dynamic>> values) {
+    return InsertManyQuery(tableName, values: values).driver(queryDriver).exec();
   }
 
   @override
@@ -53,6 +53,22 @@ final class _QueryImpl extends Query {
   @override
   WhereClause where<Value>(String field, String condition, [Value? value]) {
     final newClause = WhereClauseImpl(this)..clauseValue = WhereClauseValue.from(field, condition, value);
+    whereClauses.add(newClause);
+    return newClause;
+  }
+
+  @override
+  WhereClause whereEqual<Value>(String field, Value value) {
+    final newClause = WhereClauseImpl(this)
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.EQUAL, value: value));
+    whereClauses.add(newClause);
+    return newClause;
+  }
+
+  @override
+  WhereClause whereNotEqual<Value>(String field, Value value) {
+    final newClause = WhereClauseImpl(this)
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_EQUAL, value: value));
     whereClauses.add(newClause);
     return newClause;
   }

@@ -13,6 +13,18 @@ class WhereClauseImpl extends WhereClause {
   }
 
   @override
+  WhereClause whereEqual<Value>(String field, Value value) {
+    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.EQUAL, value: value))));
+    return this;
+  }
+
+  @override
+  WhereClause whereNotEqual<Value>(String field, Value value) {
+    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.NOT_EQUAL, value: value))));
+    return this;
+  }
+
+  @override
   WhereClause whereIn<Value>(String field, List<Value> values) {
     subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.IN, value: values))));
     return this;
