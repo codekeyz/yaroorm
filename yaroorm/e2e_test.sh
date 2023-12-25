@@ -1,6 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC2156
 
+set -e
 
 TEST_DIRECTORY="test/integration"
 
