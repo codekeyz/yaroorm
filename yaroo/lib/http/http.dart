@@ -6,7 +6,7 @@ import '_pharaoh.dart';
 export '_pharaoh.dart';
 
 @inject
-abstract class Middleware {
+abstract class Middleware extends AppInstance {
   handle(Request req, Response res, NextFunction next);
 }
 

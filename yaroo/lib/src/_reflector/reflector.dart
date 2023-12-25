@@ -32,7 +32,13 @@ List<X> filteredDeclarationsOf<X extends r.DeclarationMirror>(r.ClassMirror cm, 
   return result;
 }
 
-r.ClassMirror reflectType(Type type) => inject.reflectType(type) as r.ClassMirror;
+r.ClassMirror reflectType(Type type) {
+  try {
+    return inject.reflectType(type) as r.ClassMirror;
+  } catch (e) {
+    throw UnsupportedError('Unable to reflect on $type. Re-run your build command');
+  }
+}
 
 extension ClassMirrorExtensions on r.ClassMirror {
   List<r.VariableMirror> get variables {
