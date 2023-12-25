@@ -37,9 +37,9 @@ class UseRouteMiddlewareGroup {
 
   UseRouteMiddlewareGroup(this.alias);
 
-  RouteGroupDefinition group(String name, List<RouteDefinition> routes) {
+  RouteGroupDefinition group(String name) {
     final middlewares = ApplicationFactory.resolveMiddlewareForGroup(alias);
-    return RouteGroupDefinition(name, definitions: routes, middlewares: middlewares);
+    return RouteGroupDefinition(name, middlewares: middlewares);
   }
 }
 
@@ -100,10 +100,9 @@ class ControllerRouteMethodDefinition extends RouteDefinition {
 
 class RouteGroupDefinition extends RouteDefinition {
   final String name;
-  final List<RouteDefinition> definitions = [];
+  final List<RouteDefinition> defns = [];
 
-  @visibleForTesting
-  List<String> get paths => definitions.map((e) => e.route.stringVal).toList();
+  List<String> get paths => defns.map((e) => e.route.stringVal).toList();
 
   RouteGroupDefinition(
     this.name, {
@@ -116,30 +115,33 @@ class RouteGroupDefinition extends RouteDefinition {
     /// add middlewares
     if (middlewares.isNotEmpty) {
       final groupMdw = middlewares.reduce((value, e) => value.chain(e));
-      this.definitions.add(_MiddlewareDefinition(groupMdw, route));
+      defns.add(_MiddlewareDefinition(groupMdw, route));
     }
 
     /// add routes
-    this.definitions.addAll(definitions.map((e) => e._prefix(route.path)));
+    _unwrapRoutes(definitions);
   }
 
-  RouteGroupDefinition routes(List<RouteDefinition> subRoutes) {
-    for (final subRoute in subRoutes) {
+  void _unwrapRoutes(Iterable<RouteDefinition> routes) {
+    for (final subRoute in routes) {
       if (subRoute is! RouteGroupDefinition) {
-        definitions.add(subRoute._prefix(route.path));
+        defns.add(subRoute._prefix(route.path));
         continue;
       }
 
-      for (var e in subRoute.definitions) {
-        definitions.add(e._prefix(route.path));
+      for (var e in subRoute.defns) {
+        defns.add(e._prefix(route.path));
       }
     }
-    return this;
+  }
+
+  RouteGroupDefinition routes(List<RouteDefinition> subRoutes) {
+    return this.._unwrapRoutes(subRoutes);
   }
 
   @override
   void commit(Spanner spanner) {
-    for (final mdw in definitions) {
+    for (final mdw in defns) {
       mdw.commit(spanner);
     }
   }

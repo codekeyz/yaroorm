@@ -38,8 +38,8 @@ class TestAppKernel extends Kernel {
       };
 }
 
-class TestApp extends ApplicationFactory {
-  TestApp(Kernel kernel) : super(kernel, appConfig);
+class TestKidsApp extends ApplicationFactory {
+  TestKidsApp(Kernel kernel) : super(kernel, appConfig);
 }
 
 void main() {
@@ -48,7 +48,7 @@ void main() {
   group('Core', () {
     group('Kernel', () {
       setUpAll(() {
-        TestApp(TestAppKernel([TestMiddleware]));
+        TestKidsApp(TestAppKernel([TestMiddleware]));
       });
 
       test('should resolve global middleware', () {
@@ -57,7 +57,9 @@ void main() {
       });
 
       test('should resolve group middleware ', () {
-        final group = Route.middleware('api').group('Users', [Route.handler(HTTPMethod.GET, '/', (req, res) => null)]);
+        final group = Route.middleware('api').group('Users').routes([
+          Route.handler(HTTPMethod.GET, '/', (req, res) => null),
+        ]);
 
         expect(group.paths, ['[ALL]: /users', '[GET]: /users/']);
       });
