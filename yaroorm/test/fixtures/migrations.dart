@@ -9,8 +9,7 @@ class AddUsersTable extends Migration {
         ..string('firstname')
         ..string('lastname')
         ..integer('age')
-        ..string('home_address')
-        ..timestamps();
+        ..string('home_address');
     });
 
     final taskSchema = Schema.create('tasks', (table) {
