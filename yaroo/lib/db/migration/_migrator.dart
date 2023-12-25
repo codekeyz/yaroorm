@@ -60,6 +60,8 @@ class Migrator {
     print('------- Resetting migrations  📦 -------\n');
 
     final rollbacks = migrationInfoFromDB.map<Rollback>((e) {
+      e as MigrationDbData;
+
       final found = allTasks.firstWhereOrNull((m) => m.name == e.migration);
       return (batch: e.batch, name: e.migration, migration: found);
     }).whereNotNull();
@@ -70,7 +72,7 @@ class Migrator {
   }
 
   static Future<void> rollBackMigration(DatabaseDriver driver, Iterable<MigrationTask> allTasks) async {
-    final migrationDbData =
+    final MigrationDbData? migrationDbData =
         await Query.table(Migrator.tableName).driver(driver).orderByDesc('batch').get<MigrationDbData>();
     if (migrationDbData == null) {
       print('𐄂 skipped: reason:     no migration to rollback');

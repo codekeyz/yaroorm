@@ -114,13 +114,13 @@ class WhereClauseImpl extends WhereClause {
   }
 
   @override
-  Future<T?> findOne<T extends Entity>() => _query.get<T>();
+  Future<dynamic> findOne<T extends Entity>() => _query.get<T>();
 
   @override
-  Future<List<T>> findMany<T extends Entity>() => _query.all<T>();
+  Future<List<dynamic>> findMany<T extends Entity>() => _query.all<T>();
 
   @override
-  Future<List<T>> take<T extends Entity>(int limit) => _query.take<T>(limit);
+  Future<List<dynamic>> take<T extends Entity>(int limit) => _query.take<T>(limit);
 
   @override
   WhereClause orderByAsc(String field) {

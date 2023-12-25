@@ -47,24 +47,24 @@ final class _QueryImpl extends Query {
   }
 
   @override
-  Future<List<T>> all<T extends Entity>() async {
+  Future<List<dynamic>> all<T extends Entity>() async {
     final results = await queryDriver.query(this);
     if (results.isEmpty) return <T>[];
-    if (T == dynamic) return results as dynamic;
+    if (T == Entity) return results;
     return results.map(jsonToEntity<T>).toList();
   }
 
   @override
-  Future<List<T>> take<T extends Entity>(int limit) async {
+  Future<List<dynamic>> take<T extends Entity>(int limit) async {
     _limit = limit;
     final results = await queryDriver.query(this);
     if (results.isEmpty) return <T>[];
-    if (T == dynamic) return results as dynamic;
+    if (T == Entity) return results;
     return results.map(jsonToEntity<T>).toList();
   }
 
   @override
-  Future<T?> get<T extends Entity>([dynamic id]) async {
+  Future<dynamic> get<T extends Entity>([dynamic id]) async {
     if (id != null) return whereEqual('id', id).findOne<T>();
     final results = await take<T>(1);
     return results.firstOrNull;

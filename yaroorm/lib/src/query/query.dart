@@ -9,15 +9,15 @@ part 'primitives/where_impl.dart';
 part 'query_impl.dart';
 
 mixin ReadOperation {
-  Future<T?> get<T extends Entity>([dynamic id]);
+  Future<dynamic> get<T extends Entity>([dynamic id]);
 
-  Future<List<T>> all<T extends Entity>();
+  Future<List<dynamic>> all<T extends Entity>();
 }
 
 mixin FindOperation {
-  Future<T?> findOne<T extends Entity>();
+  Future<dynamic> findOne<T extends Entity>();
 
-  Future<List<T>> findMany<T extends Entity>();
+  Future<List<dynamic>> findMany<T extends Entity>();
 }
 
 mixin InsertOperation {
@@ -110,7 +110,7 @@ abstract class Query extends QueryBase<Query>
   }
 
   @override
-  Future<List<T>> take<T extends Entity>(int limit);
+  Future<List<dynamic>> take<T extends Entity>(int limit);
 
   @override
   String get statement => queryDriver.serializer.acceptReadQuery(this);
