@@ -23,10 +23,6 @@ mixin FindOperation<Result> {
 mixin InsertOperation {
   Future insert<T extends Entity>(T entity);
 
-  Future insertRaw(Map<String, dynamic> values);
-
-  Future insertRawMany(List<Map<String, dynamic>> values);
-
   Future insertMany<T extends Entity>(List<T> entities);
 }
 

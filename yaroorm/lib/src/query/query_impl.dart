@@ -26,18 +26,6 @@ class QueryImpl<Result> extends Query<Result> {
   }
 
   @override
-  Future insertRaw(Map<String, dynamic> values) {
-    final query = InsertQuery(tableName, values: values);
-    return queryDriver.insert(query);
-  }
-
-  @override
-  Future insertRawMany(List<Map<String, dynamic>> values) {
-    final query = InsertManyQuery(tableName, values: values);
-    return queryDriver.insertMany(query);
-  }
-
-  @override
   Future<void> insertMany<T extends Entity>(List<T> entities) async {
     final jsonData = entities.map((e) {
       if (e.enableTimestamps) e.createdAt = e.updatedAt = DateTime.now().toUtc();
