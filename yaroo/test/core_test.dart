@@ -1,8 +1,7 @@
 import 'package:spookie/spookie.dart';
 import 'package:yaroo/http/http.dart';
 import 'package:yaroo/http/kernel.dart';
-import 'package:yaroo/src/config/app.dart';
-import 'package:yaroo/src/core.dart';
+import 'package:yaroo/yaroo.dart';
 
 import 'core_test.reflectable.dart';
 
@@ -55,6 +54,12 @@ void main() {
       test('should resolve global middleware', () {
         final globalMiddleware = ApplicationFactory.globalMiddleware;
         expect(globalMiddleware, isA<HandlerFunc>());
+      });
+
+      test('should resolve group middleware ', () {
+        final group = Route.middleware('api').group('Users', [Route.handler(HTTPMethod.GET, '/', (req, res) => null)]);
+
+        expect(group.paths, ['[ALL]: /users', '[GET]: /users/']);
       });
 
       test('should throw if type is not subtype of Middleware', () {
