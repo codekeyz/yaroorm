@@ -3,9 +3,9 @@ import 'package:meta/meta.dart';
 import '../_reflection/entity_helpers.dart';
 import '../database/driver/driver.dart';
 
-part 'operations/query.dart';
 part 'primitives/where.dart';
 part 'primitives/where_impl.dart';
+part 'query_impl.dart';
 
 mixin ReadOperation {
   Future<T?> get<T>();
@@ -93,9 +93,6 @@ abstract class Query extends QueryBase<Query>
   factory Query.table(String tableName) => _QueryImpl(tableName);
 
   int? get limit => _limit;
-
-  @override
-  Future<int> insert(Map<String, dynamic> values);
 
   @override
   DeleteQuery delete(WhereClause Function(Query query) where) {

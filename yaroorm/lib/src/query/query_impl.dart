@@ -1,4 +1,4 @@
-part of '../query.dart';
+part of 'query.dart';
 
 enum OrderByDirection { asc, desc }
 
@@ -18,9 +18,8 @@ final class _QueryImpl extends Query {
   }
 
   @override
-  Future<int> insert(Map<String, dynamic> values) async {
-    final result = await InsertQuery(tableName, values: values).driver(queryDriver).exec();
-    return result as int;
+  Future insert(Map<String, dynamic> values) {
+    return InsertQuery(tableName, values: values).driver(queryDriver).exec();
   }
 
   @override
