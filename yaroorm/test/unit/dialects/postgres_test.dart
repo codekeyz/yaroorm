@@ -1,5 +1,6 @@
 import 'package:test/test.dart';
 import 'package:yaroorm/src/database/driver/driver.dart';
+import 'package:yaroorm/src/database/driver/pgsql_driver.dart';
 import 'package:yaroorm/src/query/query.dart';
 
 import '../helpers/drivers.dart';
@@ -769,6 +770,7 @@ void main() {
         'SELECT * FROM users WHERE votes > 100 OR (name = \'Abigail\' AND votes > 50);',
       );
     });
+
   });
 
 }

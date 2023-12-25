@@ -190,8 +190,8 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
   }
 
   @override
-  void string(String name, {bool nullable = false, String? defaultValue}) {
-    statements.add(_getColumn(name, 'VARCHAR(255)', nullable: nullable, defaultValue: defaultValue));
+  void string(String name, {bool nullable = false, String? defaultValue,int length = 255}) {
+    statements.add(_getColumn(name, 'VARCHAR($length)', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override

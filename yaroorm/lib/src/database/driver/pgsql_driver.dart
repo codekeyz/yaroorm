@@ -175,4 +175,41 @@ class PgSqlPrimitiveSerializer extends SqliteSerializer  {
 }
 
 @protected
-class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {}
+class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
+
+  String _getColumn(String name, String type, {nullable = false, defaultValue}) {
+    final sb = StringBuffer()..write('$name $type');
+    if (!nullable) {
+      sb.write(' NOT NULL');
+      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
+    }
+    return sb.toString();
+  }
+
+  @override
+  void datetime(String name, {bool nullable = false, DateTime? defaultValue}) {
+    statements.add(_getColumn(name, 'TIMESTAMP', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void blob(String name, {bool nullable = false, defaultValue}) {
+    statements.add(_getColumn(name, "BYTEA", nullable: nullable, defaultValue: null));
+  }
+
+  @override
+  void boolean(String name, {nullable = false, defaultValue}) {
+    statements.add(_getColumn(name, 'BOOLEAN', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void id({name = 'id', autoIncrement = true}) {
+    final sb = StringBuffer()..write(name);
+    sb.write(autoIncrement ? "SERIAL PRIMARY KEY" : "INTEGER PRIMARY KEY");
+    statements.add(sb.toString());
+  }
+
+  @override
+  String renameScript(String oldName, String toName) {
+    return 'ALTER TABLE $oldName RENAME TO $toName';
+  }
+}
