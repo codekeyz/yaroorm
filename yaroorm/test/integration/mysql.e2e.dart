@@ -10,7 +10,7 @@ final _driver = DatabaseDriver.init(mysqlConnection);
 void main() {
   setUpAll(() async {
     initializeReflectable();
-    
+
     await _driver.connect(secure: true).timeout(const Duration(seconds: 5));
   });
 
