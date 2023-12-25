@@ -37,9 +37,9 @@ class UseRouteMiddlewareGroup {
 
   UseRouteMiddlewareGroup(this.alias);
 
-  RouteGroupDefinition group(String name) {
+  RouteGroupDefinition group(String name, {String? prefix}) {
     final middlewares = ApplicationFactory.resolveMiddlewareForGroup(alias);
-    return RouteGroupDefinition(name, middlewares: middlewares);
+    return RouteGroupDefinition(name, prefix: prefix, middlewares: middlewares);
   }
 }
 
