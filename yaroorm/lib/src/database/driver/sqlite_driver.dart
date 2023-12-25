@@ -74,7 +74,7 @@ class SqliteDriver implements DatabaseDriver {
   }
 
   @override
-  Future insertMany(InsertManyQuery query) async {
+  Future<void> insertMany(InsertManyQuery query) async {
     final sql = _serializer.acceptInsertManyQuery(query);
     return (await _getDatabase()).execute(sql);
   }

@@ -18,13 +18,14 @@ final class _QueryImpl extends Query {
   }
 
   @override
-  InsertQuery insert(Map<String, dynamic> values) {
-    return InsertQuery(tableName, values: values).driver(queryDriver);
+  Future<int> insert(Map<String, dynamic> values) async {
+    final result = await InsertQuery(tableName, values: values).driver(queryDriver).exec();
+    return result as int;
   }
 
   @override
-  InsertManyQuery insertAll(List<Map<String, dynamic>> values) {
-    return InsertManyQuery(tableName, values: values).driver(queryDriver);
+  Future<void> insertAll(List<Map<String, dynamic>> values) {
+    return InsertManyQuery(tableName, values: values).driver(queryDriver).exec();
   }
 
   @override

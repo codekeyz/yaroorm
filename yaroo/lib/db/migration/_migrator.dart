@@ -47,9 +47,7 @@ class Migrator {
           transactor.execute(serialized);
         }
 
-        await Query.table(Migrator.tableName)
-            .driver(transactor)
-            .insert({'migration': fileName, 'batch': batchNos}).exec();
+        await Query.table(Migrator.tableName).driver(transactor).insert({'migration': fileName, 'batch': batchNos});
 
         await transactor.commit();
 

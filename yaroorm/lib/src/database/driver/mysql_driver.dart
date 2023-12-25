@@ -90,9 +90,9 @@ class MySqlDriver implements DatabaseDriver {
   }
 
   @override
-  Future<dynamic> insertMany(InsertManyQuery query) {
+  Future<void> insertMany(InsertManyQuery query) async {
     final sql = _primitiveSerializer.acceptInsertManyQuery(query);
-    return rawQuery(sql);
+    await rawQuery(sql);
   }
 
   @override

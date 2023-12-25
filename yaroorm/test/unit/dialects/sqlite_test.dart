@@ -26,23 +26,6 @@ void main() {
       expect(query.statement, 'SELECT * FROM users ORDER BY names DESC, ages ASC;');
     });
 
-    test('when insert', () {
-      final query = Query.table('users').driver(driver).insert({'firstname': 'Chima', 'lastname': 'Precious'});
-
-      expect(query.statement, 'INSERT INTO users (firstname, lastname) VALUES (\'Chima\', \'Precious\');');
-    });
-
-    test('when insert many', () {
-      final query = Query.table('users').driver(driver).insertAll([
-        {'firstname': 'Pookie', 'lastname': 'ReyRey'},
-        {'firstname': 'Foo', 'lastname': 'Boo'},
-        {'firstname': 'Mee', 'lastname': 'Moo'},
-      ]);
-
-      expect(query.statement,
-          'INSERT INTO users (firstname, lastname) VALUES (\'Pookie\', \'ReyRey\'), (\'Foo\', \'Boo\'), (\'Mee\', \'Moo\');');
-    });
-
     test('when update', () {
       final query = Query.table('users').driver(driver).update(
         where: (where) => where.where('name', '=', 'Chima'),

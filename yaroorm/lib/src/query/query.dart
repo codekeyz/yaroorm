@@ -20,9 +20,9 @@ mixin FindOperation {
 }
 
 mixin InsertOperation {
-  InsertQuery insert(Map<String, dynamic> values);
+  Future insert(Map<String, dynamic> values);
 
-  InsertManyQuery insertAll(List<Map<String, dynamic>> values);
+  Future insertAll(List<Map<String, dynamic>> values);
 }
 
 mixin LimitOperation<ReturnType> {
@@ -93,6 +93,9 @@ abstract class Query extends QueryBase<Query>
   factory Query.table(String tableName) => _QueryImpl(tableName);
 
   int? get limit => _limit;
+
+  @override
+  Future<int> insert(Map<String, dynamic> values);
 
   @override
   DeleteQuery delete(WhereClause Function(Query query) where) {

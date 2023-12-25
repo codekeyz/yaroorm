@@ -81,7 +81,7 @@ void runIntegrationTest(DatabaseDriver driver) {
     });
 
     test('should insert users', () async {
-      final result = await Query.table('users').driver(driver).insert(usersTestData.first).exec();
+      final result = await Query.table('users').driver(driver).insert(usersTestData.first);
       expect(result, 1);
 
       final users = await Query.table('users').driver(driver).all();
@@ -89,7 +89,7 @@ void runIntegrationTest(DatabaseDriver driver) {
     });
 
     test('should insert many users', () async {
-      await Query.table('users').driver(driver).insertAll(usersTestData.sublist(1)).exec();
+      await Query.table('users').driver(driver).insertAll(usersTestData.sublist(1));
 
       final users = await Query.table('users').driver(driver).all();
       expect(users, usersTestData.map((e) => {...e, 'id': usersTestData.indexOf(e) + 1}).toList());
