@@ -1,7 +1,7 @@
 library router;
 
 import 'package:grammer/grammer.dart';
-import 'package:pharaoh/pharaoh.dart';
+import 'package:yaroo/http/http.dart';
 
 import 'definition.dart';
 
@@ -42,8 +42,9 @@ abstract interface class Route {
     return ControllerRouteMethodDefinition(defn, mapping);
   }
 
-  static RouteGroupDefinition group(String name, {String? prefix, List<Middleware> middlewares = const []}) =>
-      RouteGroupDefinition(name, prefix: prefix, middlewares: middlewares);
+  static RouteGroupDefinition group(String name, {String? prefix}) => RouteGroupDefinition(name, prefix: prefix);
+
+  static UseRouteMiddlewareGroup middleware(String name) => UseRouteMiddlewareGroup(name);
 
   static RouteGroupDefinition resource(String resource, Type controller, {String? parameterName}) {
     resource = resource.toLowerCase();

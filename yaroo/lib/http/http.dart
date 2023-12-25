@@ -1,12 +1,14 @@
-import 'dart:async';
-
 import 'package:yaroo/src/_reflector/reflector.dart';
 import 'package:yaroo/src/core.dart';
 
-import 'http.dart';
+import '_pharaoh.dart';
 
-export 'package:pharaoh/pharaoh.dart'
-    show Request, Response, Session, Middleware, HTTPMethod, CookieOpts, session, cookieParser, useRequestHandler;
+export '_pharaoh.dart';
+
+@inject
+abstract class Middleware extends AppInstance {
+  handle(Request req, Response res, NextFunction next);
+}
 
 @inject
 abstract class HTTPController extends AppInstance {
@@ -49,7 +51,7 @@ abstract class HTTPController extends AppInstance {
 abstract class ServiceProvider extends AppInstance {
   static List<Type> get defaultProviders => [AppServiceProvider];
 
-  FutureOr<void> boot();
+  void boot() {}
 
-  bool isAugmentation = false;
+  void register() {}
 }
