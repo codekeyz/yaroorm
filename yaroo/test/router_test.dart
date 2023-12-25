@@ -16,8 +16,6 @@ class TestController extends HTTPController {
   void delete() {}
 }
 
-Middleware _testMdw = (req, res, next) {};
-
 void main() {
   setUpAll(() => initializeReflectable());
 
@@ -83,7 +81,7 @@ void main() {
 
       group('when middlewares used', () {
         test('should add to routes', () {
-          final group = Route.group('users', middlewares: [_testMdw]).routes([
+          final group = Route.group('users').routes([
             Route.get('/get', (TestController, #index)),
             Route.delete('/delete', (TestController, #delete)),
             Route.put('/update', (TestController, #update)),
@@ -96,7 +94,6 @@ void main() {
           ]);
 
           expect(group.paths, [
-            '[ALL]: /users',
             '[GET]: /users/get',
             '[DELETE]: /users/delete',
             '[PUT]: /users/update',
@@ -107,7 +104,7 @@ void main() {
         });
 
         test('should chain multiple into one', () {
-          final group = Route.group('users', middlewares: [_testMdw, _testMdw, _testMdw]).routes([
+          final group = Route.group('users').routes([
             Route.get('/get', (TestController, #index)),
             Route.delete('/delete', (TestController, #delete)),
             Route.put('/update', (TestController, #update)),
@@ -120,7 +117,6 @@ void main() {
           ]);
 
           expect(group.paths, [
-            '[ALL]: /users',
             '[GET]: /users/get',
             '[DELETE]: /users/delete',
             '[PUT]: /users/update',

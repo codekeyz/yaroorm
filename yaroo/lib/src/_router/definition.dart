@@ -1,5 +1,5 @@
 import 'package:meta/meta.dart';
-import 'package:pharaoh/pharaoh.dart';
+import 'package:yaroo/http/_pharaoh.dart';
 
 import '../_reflector/reflector.dart';
 import '../core.dart';
@@ -32,8 +32,19 @@ abstract class RouteDefinition {
   RouteDefinition _prefix(String prefix) => this..route = route.prefix(prefix);
 }
 
+class UseRouteMiddlewareGroup {
+  final String alias;
+
+  UseRouteMiddlewareGroup(this.alias);
+
+  RouteGroupDefinition group(String name, List<RouteDefinition> routes) {
+    final middlewares = ApplicationFactory.resolveMiddlewareForGroup(alias);
+    return RouteGroupDefinition(name, definitions: routes, middlewares: middlewares);
+  }
+}
+
 class _MiddlewareDefinition extends RouteDefinition {
-  final Middleware mdw;
+  final HandlerFunc mdw;
 
   _MiddlewareDefinition(this.mdw, RouteMapping route) : super(RouteDefinitionType.middleware) {
     this.route = route;
@@ -97,8 +108,8 @@ class RouteGroupDefinition extends RouteDefinition {
   RouteGroupDefinition(
     this.name, {
     String? prefix,
-    List<Middleware> middlewares = const [],
-    List<RouteDefinition> definitions = const [],
+    Iterable<HandlerFunc> middlewares = const [],
+    Iterable<RouteDefinition> definitions = const [],
   }) : super(RouteDefinitionType.group) {
     route = RouteMapping([HTTPMethod.ALL], '/${prefix ?? name.toLowerCase()}');
 

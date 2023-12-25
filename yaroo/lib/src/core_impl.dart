@@ -7,21 +7,11 @@ class _YarooAppImpl implements Application {
   late final Spanner _spanner;
   late final ViewEngine _viewEngine;
 
-  _YarooAppImpl(this._spanner);
+  _YarooAppImpl(this._appConfig, this._spanner);
 
   @override
   T singleton<T extends Object>(T instance) {
     return registerSingleton<T>(instance);
-  }
-
-  @override
-  void _useConfig(AppConfig appConfig) {
-    _appConfig = appConfig;
-  }
-
-  @override
-  void useMiddlewares(List<Middleware> middlewares) {
-    middlewares.forEach((mdw) => _spanner.addMiddleware<Middleware>('/', mdw));
   }
 
   @override
