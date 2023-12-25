@@ -58,6 +58,22 @@ final class _QueryImpl extends Query {
   }
 
   @override
+  WhereClause whereEqual<Value>(String field, Value value) {
+    final newClause = WhereClauseImpl(this)
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.EQUAL, value: value));
+    whereClauses.add(newClause);
+    return newClause;
+  }
+
+  @override
+  WhereClause whereNotEqual<Value>(String field, Value value) {
+    final newClause = WhereClauseImpl(this)
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_EQUAL, value: value));
+    whereClauses.add(newClause);
+    return newClause;
+  }
+
+  @override
   WhereClause whereIn<Value>(String field, List<Value> values) {
     final newClause = WhereClauseImpl(this)
       ..clauseValue = WhereClauseValue(field, (operator: Operator.IN, value: values));

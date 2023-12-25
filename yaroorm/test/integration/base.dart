@@ -103,7 +103,7 @@ void runIntegrationTest(DatabaseDriver driver) {
 
       await Query.table('users')
           .driver(driver)
-          .update(where: (where) => where.where('id', '=', userId), values: {'firstname': 'Red Oil'}).exec();
+          .update(where: (where) => where.whereEqual('id', userId), values: {'firstname': 'Red Oil'}).exec();
 
       user = await Query.table('users').driver(driver).where('id', '=', userId).findOne();
       expect(user, isNotNull);
@@ -112,7 +112,7 @@ void runIntegrationTest(DatabaseDriver driver) {
     });
 
     test('should update many users', () async {
-      final age50Users = Query.table('users').driver(driver).where('age', '=', 50);
+      final age50Users = Query.table('users').driver(driver).whereEqual('age', 50);
       final usersWithAge50 = await age50Users.findMany();
       expect(usersWithAge50.length, 4);
       expect(usersWithAge50.every((e) => e['age'] == 50), isTrue);
@@ -161,7 +161,7 @@ void runIntegrationTest(DatabaseDriver driver) {
     });
 
     test('should get all users where age is 30 or 52', () async {
-      final users = await Query.table('users').driver(driver).where('age', '=', 30).orWhere('age', '=', 52).findMany();
+      final users = await Query.table('users').driver(driver).whereEqual('age', 30).orWhere('age', '=', 52).findMany();
       expect(users.every((e) => [30, 52].contains(e['age'])), isTrue);
     });
 

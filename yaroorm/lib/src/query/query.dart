@@ -30,11 +30,11 @@ mixin LimitOperation<ReturnType> {
 }
 
 mixin UpdateOperation {
-  UpdateQuery update({required WhereClause Function(WhereClause builder) where, required Map<String, dynamic> values});
+  UpdateQuery update({required WhereClause Function(Query query) where, required Map<String, dynamic> values});
 }
 
 mixin DeleteOperation {
-  DeleteQuery delete(WhereClause Function(WhereClause builder) whereFunc);
+  DeleteQuery delete(WhereClause Function(Query query) where);
 }
 
 typedef OrderBy = ({String field, OrderByDirection direction});
@@ -95,13 +95,13 @@ abstract class Query extends QueryBase<Query>
   int? get limit => _limit;
 
   @override
-  DeleteQuery delete(WhereClause Function(WhereClause builder) whereFunc) {
-    return DeleteQuery(tableName, whereClause: whereFunc(WhereClauseImpl(this))).driver(queryDriver);
+  DeleteQuery delete(WhereClause Function(Query query) where) {
+    return DeleteQuery(tableName, whereClause: where(this)).driver(queryDriver);
   }
 
   @override
-  UpdateQuery update({required WhereClause Function(WhereClause builder) where, required Map<String, dynamic> values}) {
-    return UpdateQuery(tableName, whereClause: where(WhereClauseImpl(this)), values: values).driver(queryDriver);
+  UpdateQuery update({required WhereClause Function(Query query) where, required Map<String, dynamic> values}) {
+    return UpdateQuery(tableName, whereClause: where(this), values: values).driver(queryDriver);
   }
 
   @override
