@@ -11,6 +11,8 @@ void main() {
   setUpAll(() async {
     initializeReflectable();
 
+    print('Initializing mysql driver');
+
     final driver = await _driver.connect(secure: true);
     print('We completed');
 
