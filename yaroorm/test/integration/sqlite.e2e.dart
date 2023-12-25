@@ -17,6 +17,8 @@ void main() {
     final dbPath = path.absolute(sqliteConnection.database);
     final dbFile = File(dbPath);
     if (await dbFile.exists()) await dbFile.delete();
+
+    await driver.connect();
   });
 
   group('SQLite', () => runIntegrationTest(driver));

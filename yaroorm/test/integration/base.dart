@@ -8,14 +8,7 @@ import '../fixtures/test_data.dart';
 
 void runIntegrationTest(DatabaseDriver driver) {
   return group('Integration Test with ${driver.type.name} driver', () {
-    setUpAll(() async {
-      final schemas = <Schema>[];
-      AddUsersTable().down(schemas);
-
-      final dropTableScripts = schemas.map((schema) => schema.toScript(driver.blueprint)).join('\n');
-
-      await driver.execute(dropTableScripts);
-    });
+    test('driver should be connected', () => expect(driver.isOpen, isTrue));
 
     test('should have no tables', () async {
       final result = await Future.wait([
