@@ -306,6 +306,7 @@ class SqliteSerializer implements PrimitiveSerializer {
         _ => "'$dartValue'"
       };
 
+  @override
   String acceptWhereClauseValue(WhereClauseValue clauseVal) {
     final field = clauseVal.field;
     final value = clauseVal.comparer.value;
