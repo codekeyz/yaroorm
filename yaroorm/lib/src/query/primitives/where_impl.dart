@@ -1,106 +1,87 @@
 part of '../query.dart';
 
-class WhereClauseImpl extends WhereClause {
-  WhereClauseImpl(
-    Query query, {
-    LogicalOperator operator = LogicalOperator.AND,
-  }) : super(query, operator: operator);
+class WhereClauseImpl<Result> extends WhereClause<Result> {
+  WhereClauseImpl(Query<Result> query, {LogicalOperator operator = LogicalOperator.AND})
+      : super(query, operator: operator);
 
   @override
-  WhereClauseImpl where<Value>(String field, String condition, [Value? value]) {
-    subparts.add((LogicalOperator.AND, WhereClauseValue.from(field, condition, value)));
+  WhereClause<Result> whereEqual<Value>(String field, Value value) {
+    final newChild = WhereClauseImpl(_query)
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.EQUAL, value: value));
+    children.add((LogicalOperator.AND, newChild));
     return this;
   }
 
   @override
-  WhereClause whereEqual<Value>(String field, Value value) {
-    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.EQUAL, value: value))));
+  WhereClause<Result> whereNotEqual<Value>(String field, Value value) {
+    final newChild = WhereClauseImpl(_query)
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_EQUAL, value: value));
+    children.add((LogicalOperator.AND, newChild));
     return this;
   }
 
   @override
-  WhereClause whereNotEqual<Value>(String field, Value value) {
-    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.NOT_EQUAL, value: value))));
+  WhereClause<Result> whereIn<Value>(String field, List<Value> values) {
+    final newChild = WhereClauseImpl(_query)
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.IN, value: values));
+    children.add((LogicalOperator.AND, newChild));
     return this;
   }
 
   @override
-  WhereClause whereIn<Value>(String field, List<Value> values) {
-    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.IN, value: values))));
+  WhereClause<Result> whereNotIn<Value>(String field, List<Value> values) {
+    final newChild = WhereClauseImpl(_query)
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_IN, value: values));
+    children.add((LogicalOperator.AND, newChild));
     return this;
   }
 
   @override
-  WhereClause whereNotIn<Value>(String field, List<Value> values) {
-    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.NOT_IN, value: values))));
+  WhereClause<Result> whereBetween<Value>(String field, List<Value> values) {
+    final newChild = WhereClauseImpl(_query)
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.BETWEEN, value: values));
+    children.add((LogicalOperator.AND, newChild));
     return this;
   }
 
   @override
-  WhereClause whereBetween<Value>(String field, List<Value> args) {
-    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.BETWEEN, value: args))));
+  WhereClause<Result> whereNotBetween<Value>(String field, List<Value> values) {
+    final newChild = WhereClauseImpl(_query)
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_BETWEEN, value: values));
+    children.add((LogicalOperator.AND, newChild));
     return this;
   }
 
   @override
-  WhereClause whereNotBetween<Value>(String field, List<Value> args) {
-    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.NOT_BETWEEN, value: args))));
+  WhereClause<Result> whereLike<Value>(String field, String pattern) {
+    final newChild = WhereClauseImpl(_query)
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.LIKE, value: pattern));
+    children.add((LogicalOperator.AND, newChild));
     return this;
   }
 
   @override
-  WhereClause whereLike<Value>(String field, String pattern) {
-    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.LIKE, value: pattern))));
+  WhereClause<Result> whereNotLike<Value>(String field, String pattern) {
+    final newChild = WhereClauseImpl(_query)
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_LIKE, value: pattern));
+    children.add((LogicalOperator.AND, newChild));
     return this;
   }
 
   @override
-  WhereClause whereNotLike<Value>(String field, String pattern) {
-    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.NOT_LIKE, value: pattern))));
+  WhereClause<Result> whereNull(String field) {
+    final newChild = WhereClauseImpl(_query)
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.NULL, value: null));
+    children.add((LogicalOperator.AND, newChild));
     return this;
   }
 
   @override
-  WhereClause whereNull(String field) {
-    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.NULL, value: null))));
+  WhereClause<Result> whereNotNull(String field) {
+    final newChild = WhereClauseImpl(_query)
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_NULL, value: null));
+    children.add((LogicalOperator.AND, newChild));
     return this;
-  }
-
-  @override
-  WhereClause whereNotNull(String field) {
-    subparts.add((LogicalOperator.AND, WhereClauseValue(field, (operator: Operator.NOT_NULL, value: null))));
-    return this;
-  }
-
-  @override
-  Query whereFunc(Function(WhereClauseImpl $query) function) {
-    function(this);
-    return _query;
-  }
-
-  @override
-  Query orWhereFunc(Function(WhereClauseImpl $query) function) {
-    function(_useWhereGroup(LogicalOperator.OR));
-    return _query;
-  }
-
-  @override
-  WhereClauseImpl orWhere<Value>(String field, String condition, [Value? value]) {
-    final clauseVal = WhereClauseValue.from(field, condition, value);
-    return _useWhereGroup(LogicalOperator.OR, clauseVal);
-  }
-
-  WhereClauseImpl _useWhereGroup(LogicalOperator operator, [WhereClauseValue? value]) {
-    /// if the current group is of the same operator, just add the new condition to it.
-    if (this.operator == operator) {
-      if (value == null) return this;
-      return this..subparts.add((operator, value));
-    }
-
-    /// Create a new group and add the clause value
-    final group = WhereClauseImpl(_query, operator: operator)..clauseValue = value;
-    _query.whereClauses.add(group);
-    return group;
   }
 
   @override
@@ -114,26 +95,51 @@ class WhereClauseImpl extends WhereClause {
   }
 
   @override
-  Future<T?> findOne<T extends Entity>() => _query.get<T>();
+  Future<Result?> findOne() => _query.get();
 
   @override
-  Future<List<T>> findMany<T extends Entity>() => _query.all<T>();
+  Future<List<Result>> findMany() => _query.all();
 
   @override
-  Future<List<T>> take<T extends Entity>(int limit) => _query.take<T>(limit);
+  Future<List<Result>> take(int limit) => _query.take(limit);
 
   @override
-  WhereClause orderByAsc(String field) {
-    _query.orderByProps.add((field: field, direction: OrderByDirection.asc));
+  WhereClause<Result> orderByAsc(String field) {
+    _query.orderByAsc(field);
     return this;
   }
 
   @override
-  WhereClause orderByDesc(String field) {
-    _query.orderByProps.add((field: field, direction: OrderByDirection.desc));
+  WhereClause<Result> orderByDesc(String field) {
+    _query.orderByDesc(field);
     return this;
   }
 
   @override
   String get statement => _query.statement;
+
+  @override
+  WhereClause<Result> where<Value>(String field, String condition, [Value? value]) {
+    final newChild = WhereClauseImpl<Result>(_query)..clauseValue = WhereClauseValue.from(field, condition, value);
+    children.add((LogicalOperator.AND, newChild));
+    return this;
+  }
+
+  @override
+  WhereClause<Result> orWhere<Value>(String field, String condition, [Value? value]) {
+    final newChild = WhereClauseImpl<Result>(_query, operator: LogicalOperator.OR)
+      ..clauseValue = WhereClauseValue.from(field, condition, value);
+    _query.whereClauses.add(newChild);
+    return newChild;
+  }
+
+  @override
+  Query<Result> whereFunc(Function(Query<Result> query) builder) {
+    return _query.whereFunc(builder);
+  }
+
+  @override
+  Query<Result> orWhereFunc(Function(Query<Result> query) builder) {
+    return _query.orWhereFunc(builder);
+  }
 }

@@ -8,30 +8,26 @@ part 'primitives/where.dart';
 part 'primitives/where_impl.dart';
 part 'query_impl.dart';
 
-mixin ReadOperation {
-  Future<T?> get<T extends Entity>([dynamic id]);
+mixin ReadOperation<Result> {
+  Future<Result?> get([dynamic id]);
 
-  Future<List<T>> all<T extends Entity>();
+  Future<List<Result>> all();
 }
 
-mixin FindOperation {
-  Future<T?> findOne<T extends Entity>();
+mixin FindOperation<Result> {
+  Future<Result?> findOne();
 
-  Future<List<T>> findMany<T extends Entity>();
+  Future<List<Result>> findMany();
 }
 
 mixin InsertOperation {
   Future insert<T extends Entity>(T entity);
 
-  Future insertRaw(Map<String, dynamic> values);
-
-  Future insertRawMany(List<Map<String, dynamic>> values);
-
   Future insertMany<T extends Entity>(List<T> entities);
 }
 
 mixin LimitOperation<ReturnType> {
-  ReturnType take<T extends Entity>(int limit);
+  Future<List<ReturnType>> take(int limit);
 }
 
 mixin UpdateOperation {
@@ -74,18 +70,18 @@ abstract interface class QueryBase<Owner> {
   String get statement;
 }
 
-abstract class Query extends QueryBase<Query>
+abstract interface class Query<Result> extends QueryBase<Query<Result>>
     with
-        ReadOperation,
-        WhereOperation,
-        LimitOperation,
+        ReadOperation<Result>,
+        WhereOperation<Result>,
+        LimitOperation<Result>,
+        OrderByOperation<Query<Result>>,
         InsertOperation,
         DeleteOperation,
-        UpdateOperation,
-        OrderByOperation<Query> {
+        UpdateOperation {
   late final Set<String> fieldSelections;
   late final Set<OrderBy> orderByProps;
-  late final List<WhereClause> whereClauses;
+  late final List<WhereClause<Result>> whereClauses;
 
   late int? _limit;
 
@@ -95,7 +91,7 @@ abstract class Query extends QueryBase<Query>
         whereClauses = [],
         _limit = null;
 
-  factory Query.table(String tableName) => _QueryImpl(tableName);
+  static Query<Result> table<Result>(String tableName) => QueryImpl<Result>(tableName);
 
   int? get limit => _limit;
 
@@ -108,12 +104,6 @@ abstract class Query extends QueryBase<Query>
   UpdateQuery update({required WhereClause Function(Query query) where, required Map<String, dynamic> values}) {
     return UpdateQuery(tableName, whereClause: where(this), values: values).driver(queryDriver);
   }
-
-  @override
-  Future<List<T>> take<T extends Entity>(int limit);
-
-  @override
-  String get statement => queryDriver.serializer.acceptReadQuery(this);
 }
 
 @protected

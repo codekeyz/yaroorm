@@ -2,17 +2,17 @@ part of 'query.dart';
 
 enum OrderByDirection { asc, desc }
 
-final class _QueryImpl extends Query {
-  _QueryImpl(String tableName) : super(tableName);
+class QueryImpl<Result> extends Query<Result> {
+  QueryImpl(String tableName) : super(tableName);
 
   @override
-  Query orderByAsc(String field) {
+  Query<Result> orderByAsc(String field) {
     orderByProps.add((field: field, direction: OrderByDirection.asc));
     return this;
   }
 
   @override
-  Query orderByDesc(String field) {
+  Query<Result> orderByDesc(String field) {
     orderByProps.add((field: field, direction: OrderByDirection.desc));
     return this;
   }
@@ -26,18 +26,6 @@ final class _QueryImpl extends Query {
   }
 
   @override
-  Future insertRaw(Map<String, dynamic> values) {
-    final query = InsertQuery(tableName, values: values);
-    return queryDriver.insert(query);
-  }
-
-  @override
-  Future insertRawMany(List<Map<String, dynamic>> values) {
-    final query = InsertManyQuery(tableName, values: values);
-    return queryDriver.insertMany(query);
-  }
-
-  @override
   Future<void> insertMany<T extends Entity>(List<T> entities) async {
     final jsonData = entities.map((e) {
       if (e.enableTimestamps) e.createdAt = e.updatedAt = DateTime.now().toUtc();
@@ -47,116 +35,156 @@ final class _QueryImpl extends Query {
   }
 
   @override
-  Future<List<T>> all<T extends Entity>() async {
+  Future<List<Result>> all() async {
     final results = await queryDriver.query(this);
-    if (results.isEmpty) return <T>[];
-    if (T == dynamic) return results as dynamic;
-    return results.map(jsonToEntity<T>).toList();
+    if (results.isEmpty) return <Result>[];
+    if (Result == dynamic) return results as dynamic;
+    return results.map(jsonToEntity<Result>).toList();
   }
 
   @override
-  Future<List<T>> take<T extends Entity>(int limit) async {
+  Future<List<Result>> take(int limit) async {
     _limit = limit;
     final results = await queryDriver.query(this);
-    if (results.isEmpty) return <T>[];
-    if (T == dynamic) return results as dynamic;
-    return results.map(jsonToEntity<T>).toList();
+    if (results.isEmpty) return <Result>[];
+    if (Result == dynamic) return results as dynamic;
+    return results.map(jsonToEntity<Result>).toList();
   }
 
   @override
-  Future<T?> get<T extends Entity>([dynamic id]) async {
-    if (id != null) return whereEqual('id', id).findOne<T>();
-    final results = await take<T>(1);
+  Future<Result?> get([dynamic id]) async {
+    if (id != null) return whereEqual('id', id).findOne();
+    final results = await take(1);
     return results.firstOrNull;
   }
 
   @override
-  WhereClause where<Value>(String field, String condition, [Value? value]) {
-    final newClause = WhereClauseImpl(this)..clauseValue = WhereClauseValue.from(field, condition, value);
+  WhereClause<Result> orWhere<Value>(String field, String condition, [Value? value]) {
+    throw StateError('Cannot use `orWhere` directly on a Query you need a WHERE clause first');
+  }
+
+  @override
+  Query<Result> orWhereFunc(Function(Query<Result> query) builder) {
+    if (whereClauses.isEmpty) throw StateError('Cannot use `orWhereFunc` without a where clause');
+
+    final newQuery = QueryImpl<Result>(tableName);
+    builder(newQuery);
+
+    final newGroup = WhereClauseImpl(this, operator: LogicalOperator.OR);
+    for (final clause in newQuery.whereClauses) {
+      newGroup.children.add((clause.operator, clause));
+    }
+
+    whereClauses.add(newGroup);
+
+    return this;
+  }
+
+  @override
+  Query<Result> whereFunc(Function(Query<Result> query) builder) {
+    final newQuery = QueryImpl<Result>(tableName);
+    builder(newQuery);
+
+    final newGroup = WhereClauseImpl(this, operator: LogicalOperator.AND);
+    for (final clause in newQuery.whereClauses) {
+      newGroup.children.add((clause.operator, clause));
+    }
+
+    whereClauses.add(newGroup);
+
+    return this;
+  }
+
+  @override
+  WhereClause<Result> where<Value>(String field, String condition, [Value? value]) {
+    final newClause = WhereClauseImpl<Result>(this)..clauseValue = WhereClauseValue.from(field, condition, value);
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause whereEqual<Value>(String field, Value value) {
-    final newClause = WhereClauseImpl(this)
+  WhereClause<Result> whereEqual<Value>(String field, Value value) {
+    final newClause = WhereClauseImpl<Result>(this)
       ..clauseValue = WhereClauseValue(field, (operator: Operator.EQUAL, value: value));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause whereNotEqual<Value>(String field, Value value) {
-    final newClause = WhereClauseImpl(this)
+  WhereClause<Result> whereNotEqual<Value>(String field, Value value) {
+    final newClause = WhereClauseImpl<Result>(this)
       ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_EQUAL, value: value));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause whereIn<Value>(String field, List<Value> values) {
-    final newClause = WhereClauseImpl(this)
+  WhereClause<Result> whereIn<Value>(String field, List<Value> values) {
+    final newClause = WhereClauseImpl<Result>(this)
       ..clauseValue = WhereClauseValue(field, (operator: Operator.IN, value: values));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause whereNotIn<Value>(String field, List<Value> values) {
-    final newClause = WhereClauseImpl(this)
+  WhereClause<Result> whereNotIn<Value>(String field, List<Value> values) {
+    final newClause = WhereClauseImpl<Result>(this)
       ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_IN, value: values));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause whereLike<Value>(String field, String pattern) {
-    final newClause = WhereClauseImpl(this)
+  WhereClause<Result> whereLike<Value>(String field, String pattern) {
+    final newClause = WhereClauseImpl<Result>(this)
       ..clauseValue = WhereClauseValue(field, (operator: Operator.LIKE, value: pattern));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause whereNotLike<Value>(String field, String pattern) {
-    final newClause = WhereClauseImpl(this)
+  WhereClause<Result> whereNotLike<Value>(String field, String pattern) {
+    final newClause = WhereClauseImpl<Result>(this)
       ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_LIKE, value: pattern));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause whereNull(String field) {
-    final newClause = WhereClauseImpl(this)
+  WhereClause<Result> whereNull(String field) {
+    final newClause = WhereClauseImpl<Result>(this)
       ..clauseValue = WhereClauseValue(field, (operator: Operator.NULL, value: null));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause whereNotNull(String field) {
-    final newClause = WhereClauseImpl(this)
+  WhereClause<Result> whereNotNull(String field) {
+    final newClause = WhereClauseImpl<Result>(this)
       ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_NULL, value: null));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause whereBetween<Value>(String field, List<Value> args) {
-    final newClause = WhereClauseImpl(this)
-      ..clauseValue = WhereClauseValue(field, (operator: Operator.BETWEEN, value: args));
+  WhereClause<Result> whereBetween<Value>(String field, List<Value> values) {
+    final newClause = WhereClauseImpl<Result>(this)
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.BETWEEN, value: values));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause whereNotBetween<Value>(String field, List<Value> args) {
-    final newClause = WhereClauseImpl(this)
-      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_BETWEEN, value: args));
+  WhereClause<Result> whereNotBetween<Value>(String field, List<Value> values) {
+    final newClause = WhereClauseImpl<Result>(this)
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_BETWEEN, value: values));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   Future<void> exec() => queryDriver.execute(statement);
+
+  @override
+  String get statement => queryDriver.serializer.acceptReadQuery(this);
 }
