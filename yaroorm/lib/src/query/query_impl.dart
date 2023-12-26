@@ -59,6 +59,43 @@ class QueryImpl<Result> extends Query<Result> {
   }
 
   @override
+  WhereClause<Result> orWhere<Value>(String field, String condition, [Value? value]) {
+    throw StateError('Cannot use `orWhere` directly on a Query you need a WHERE clause first');
+  }
+
+  @override
+  Query<Result> orWhereFunc(Function(Query<Result> query) builder) {
+    if (whereClauses.isEmpty) throw StateError('Cannot use `orWhereFunc` without a where clause');
+
+    final newQuery = QueryImpl<Result>(tableName);
+    builder(newQuery);
+
+    final newGroup = WhereClauseImpl(this, operator: LogicalOperator.OR);
+    for (final clause in newQuery.whereClauses) {
+      newGroup.children.add((clause.operator, clause));
+    }
+
+    whereClauses.add(newGroup);
+
+    return this;
+  }
+
+  @override
+  Query<Result> whereFunc(Function(Query<Result> query) builder) {
+    final newQuery = QueryImpl<Result>(tableName);
+    builder(newQuery);
+
+    final newGroup = WhereClauseImpl(this, operator: LogicalOperator.AND);
+    for (final clause in newQuery.whereClauses) {
+      newGroup.children.add((clause.operator, clause));
+    }
+
+    whereClauses.add(newGroup);
+
+    return this;
+  }
+
+  @override
   WhereClause<Result> where<Value>(String field, String condition, [Value? value]) {
     final newClause = WhereClauseImpl<Result>(this)..clauseValue = WhereClauseValue.from(field, condition, value);
     whereClauses.add(newClause);
@@ -130,17 +167,17 @@ class QueryImpl<Result> extends Query<Result> {
   }
 
   @override
-  WhereClause<Result> whereBetween<Value>(String field, List<Value> args) {
+  WhereClause<Result> whereBetween<Value>(String field, List<Value> values) {
     final newClause = WhereClauseImpl<Result>(this)
-      ..clauseValue = WhereClauseValue(field, (operator: Operator.BETWEEN, value: args));
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.BETWEEN, value: values));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause<Result> whereNotBetween<Value>(String field, List<Value> args) {
+  WhereClause<Result> whereNotBetween<Value>(String field, List<Value> values) {
     final newClause = WhereClauseImpl<Result>(this)
-      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_BETWEEN, value: args));
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_BETWEEN, value: values));
     whereClauses.add(newClause);
     return newClause;
   }

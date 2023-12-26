@@ -81,7 +81,7 @@ abstract interface class Query<Result> extends QueryBase<Query<Result>>
         UpdateOperation {
   late final Set<String> fieldSelections;
   late final Set<OrderBy> orderByProps;
-  late final List<WhereClause> whereClauses;
+  late final List<WhereClause<Result>> whereClauses;
 
   late int? _limit;
 

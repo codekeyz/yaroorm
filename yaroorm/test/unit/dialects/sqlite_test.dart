@@ -103,11 +103,13 @@ void main() {
               .orWhere('city', '!=', 'Accra')
               .where('name', 'like', 'Chima%');
 
-          expect(query.statement,
-              'SELECT * FROM users WHERE firstname = \'Chima\' OR (age = 203 OR city != \'Accra\' AND name LIKE \'Chima%\');');
+          expect(
+            query.statement,
+            'SELECT * FROM users WHERE firstname = \'Chima\' OR age = 203 OR (city != \'Accra\' AND name LIKE \'Chima%\');',
+          );
         });
 
-        test('of level 4', () {
+        test('of level 5', () {
           final query = Query.table('users')
               .driver(driver)
               .where('firstname', '=', 'Chima')
@@ -118,7 +120,7 @@ void main() {
 
           expect(
             query.statement,
-            'SELECT * FROM users WHERE firstname = \'Chima\' OR (age = 203 OR city != \'Accra\' AND name LIKE \'Chima%\' AND sizes BETWEEN 12 AND 23);',
+            'SELECT * FROM users WHERE firstname = \'Chima\' OR age = 203 OR (city != \'Accra\' AND name LIKE \'Chima%\' AND sizes BETWEEN 12 AND 23);',
           );
         });
       });
@@ -629,7 +631,7 @@ void main() {
 
         expect(
           query.statement,
-          'SELECT * FROM users WHERE (places NOT LIKE \'Nems#\' AND lastname = \'Precious\') OR (names NOT LIKE \'Hello%\' OR age BETWEEN 23 AND 34);',
+          'SELECT * FROM users WHERE (places NOT LIKE \'Nems#\' AND lastname = \'Precious\') OR names NOT LIKE \'Hello%\' OR age BETWEEN 23 AND 34;',
         );
       });
     });
@@ -638,10 +640,7 @@ void main() {
       test('of level 1', () {
         final query = Query.table('users').driver(driver).whereNull('firstname');
 
-        expect(
-          query.statement,
-          'SELECT * FROM users WHERE firstname IS NULL;',
-        );
+        expect(query.statement, 'SELECT * FROM users WHERE firstname IS NULL;');
       });
 
       test('of level 2', () {
@@ -676,7 +675,7 @@ void main() {
 
         expect(
           query.statement,
-          'SELECT * FROM users WHERE (places IS NULL AND lastname = \'Precious\') OR (names IS NULL OR age BETWEEN 23 AND 34);',
+          'SELECT * FROM users WHERE (places IS NULL AND lastname = \'Precious\') OR names IS NULL OR age BETWEEN 23 AND 34;',
         );
       });
     });
@@ -723,7 +722,7 @@ void main() {
 
         expect(
           query.statement,
-          'SELECT * FROM users WHERE (places IS NOT NULL AND lastname = \'Precious\') OR (names IS NOT NULL OR age BETWEEN 23 AND 34);',
+          'SELECT * FROM users WHERE (places IS NOT NULL AND lastname = \'Precious\') OR names IS NOT NULL OR age BETWEEN 23 AND 34;',
         );
       });
     });
@@ -732,24 +731,157 @@ void main() {
       final query = Query.table('users')
           .driver(driver)
           .where('name', '=', 'John')
-          .whereFunc(($query) => $query.where('votes', '>', 100).orWhere('title', '=', 'Admin'));
+          .whereFunc((query) => query.where('votes', '>', 100).orWhere('title', '=', 'Admin'));
 
       expect(
         query.statement,
-        'SELECT * FROM users WHERE (name = \'John\' AND votes > 100) OR title = \'Admin\';',
+        'SELECT * FROM users WHERE name = \'John\' AND (votes > 100 OR title = \'Admin\');',
       );
     });
 
-    test('when .orWhereFunc', () {
-      final query = Query.table('users')
-          .driver(driver)
-          .where('votes', '>', 100)
-          .orWhereFunc(($query) => $query.where('name', '=', 'Abigail').where('votes', '>', 50));
+    group('when .orWhereFunc', () {
+      test('of level 1', () {
+        final query = Query.table('users')
+            .driver(driver)
+            .where('votes', '>', 100)
+            .orWhereFunc((query) => query.where('name', '=', 'Abigail').where('votes', '>', 50));
 
-      expect(
-        query.statement,
-        'SELECT * FROM users WHERE votes > 100 OR (name = \'Abigail\' AND votes > 50);',
-      );
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE votes > 100 OR (name = \'Abigail\' AND votes > 50);',
+        );
+      });
+
+      test('of level 2', () {
+        final query = Query.table('users')
+            .driver(driver)
+            .where('votes', '>', 100)
+            .orWhereFunc((query) => query.where('name', '=', 'Abigail').where('votes', '>', 50))
+            .orWhereFunc((query) => query.where('price', '=', 'GHC200').where('votes', 'not null'));
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE votes > 100 OR (name = \'Abigail\' AND votes > 50) OR (price = \'GHC200\' AND votes IS NOT NULL);',
+        );
+      });
+
+      test('or level 3', () {
+        var query = Query.table('users')
+            .driver(driver)
+            .where('votes', '>', 100)
+            .orWhereFunc((query) => query.where('name', '=', 'Abigail').where('votes', '>', 50))
+            .where('name', '=', 22)
+            .orWhereFunc((query) => query.where('name', '=', 'Abigail'));
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE votes > 100 OR (name = \'Abigail\' AND votes > 50) AND name = 22 OR name = \'Abigail\';',
+        );
+      });
+    });
+
+    group('.whereFunc or .orWhereFunc', () {
+      group('when used at start of query', () {
+        test('when .orWhereFunc', () {
+          expect(
+            () => Query.table('users').driver(driver).orWhereFunc((query) => query.where('name', '=', 'Abigail')),
+            throwsStateError,
+          );
+        });
+
+        test('when .whereFunc', () {
+          var query = Query.table('users').driver(driver).whereFunc((query) => query.where('name', '=', 'Abigail'));
+
+          expect(
+            query.statement,
+            'SELECT * FROM users WHERE name = \'Abigail\';',
+          );
+        });
+      });
+
+      test('when used together', () {
+        var query = Query.table('users')
+            .driver(driver)
+            .whereFunc((query) => query.where('name', '=', 'Abigail'))
+            .orWhereFunc((query) => query.where('age', '<', 24).where('names', 'not null'));
+
+        expect(
+          query.statement,
+          'SELECT * FROM users WHERE name = \'Abigail\' OR (age < 24 AND names IS NOT NULL);',
+        );
+      });
+
+      group('when nested crazy', () {
+        test('with level 1', () {
+          final query = Query.table('users').driver(driver).where('name', '=', 'Chima').orWhereFunc(
+                (query) => query
+                    .where('biscuit', '=', 'hello-world')
+                    .orWhere('car_type', '=', 'lamborgini server')
+                    .where('image', 'like', 'Image&&'),
+              );
+
+          expect(
+            query.statement,
+            "SELECT * FROM users WHERE name = 'Chima' OR (biscuit = 'hello-world' OR (car_type = 'lamborgini server' AND image LIKE 'Image&&'));",
+          );
+        });
+
+        test('with level 2', () {
+          final query = Query.table('users')
+              .driver(driver)
+              .where('name', '=', 'Chima')
+              .orWhereFunc(
+                (query) => query
+                    .where('biscuit', '=', 'hello-world')
+                    .orWhere('car_type', '=', 'lamborgini server')
+                    .where('image', 'like', 'Image&&'),
+              )
+              .whereFunc((query) => query
+                  .whereIn('fruits', ['oranges', 'apples'])
+                  .whereBetween('price', [20, 100])
+                  .whereEqual('status', 'available')
+                  .whereLike('stores', 'Accra, %%'));
+
+          final sB = StringBuffer();
+          sB.write("SELECT * FROM users WHERE name = 'Chima' ");
+          sB.write("OR (biscuit = 'hello-world' OR (car_type = 'lamborgini server' AND image LIKE 'Image&&')) ");
+          sB.write(
+              "AND (fruits IN ('oranges', 'apples') AND price BETWEEN 20 AND 100 AND status = 'available' AND stores LIKE 'Accra, %%');");
+
+          expect(query.statement, sB.toString());
+        });
+
+        test('with level 3', () {
+          final query = Query.table('users')
+              .driver(driver)
+              .where('name', '=', 'Chima')
+              .orWhereFunc(
+                (query) => query
+                    .where('biscuit', '=', 'hello-world')
+                    .orWhere('car_type', '=', 'lamborgini server')
+                    .where('image', 'like', 'Image&&'),
+              )
+              .whereFunc((query) => query
+                  .whereIn('fruits', ['oranges', 'apples'])
+                  .whereBetween('price', [20, 100])
+                  .whereEqual('status', 'available')
+                  .whereLike('stores', 'Accra, %%'))
+              .orWhereFunc((query) => query.where('languages', 'in', ['python', 'cobra']).orWhereFunc((query) => query
+                  .where('job_status', '=', 'available')
+                  .where('location', '=', 'Accra')
+                  .whereNotBetween('salary', [8000, 16000])));
+
+          final sB = StringBuffer();
+          sB.write("SELECT * FROM users WHERE name = 'Chima' ");
+          sB.write("OR (biscuit = 'hello-world' OR (car_type = 'lamborgini server' AND image LIKE 'Image&&')) ");
+          sB.write(
+              "AND (fruits IN ('oranges', 'apples') AND price BETWEEN 20 AND 100 AND status = 'available' AND stores LIKE 'Accra, %%') ");
+          sB.write(
+              "OR (languages IN ('python', 'cobra') OR (job_status = 'available' AND location = 'Accra' AND salary NOT BETWEEN 8000 AND 16000));");
+
+          expect(query.statement, sB.toString());
+        });
+      });
     });
   });
 }
