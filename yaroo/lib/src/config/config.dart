@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:dotenv/dotenv.dart';
 
 export 'app.dart';
-export 'database.dart';
 
 DotEnv? _env;
 

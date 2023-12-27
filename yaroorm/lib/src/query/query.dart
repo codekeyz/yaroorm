@@ -1,8 +1,9 @@
+import 'package:grammer/grammer.dart';
 import 'package:meta/meta.dart';
 import 'package:yaroorm/src/database/entity.dart';
 
-import '../_reflection/entity_helpers.dart';
 import '../database/driver/driver.dart';
+import '../reflection/entity_helpers.dart';
 
 part 'primitives/where.dart';
 part 'primitives/where_impl.dart';
@@ -49,6 +50,8 @@ mixin OrderByOperation<ReturnType> {
 abstract interface class QueryBase<Owner> {
   final String tableName;
 
+  String? database;
+
   DriverAble? _queryDriver;
 
   DriverAble get queryDriver {
@@ -91,7 +94,16 @@ abstract interface class Query<Result> extends QueryBase<Query<Result>>
         whereClauses = [],
         _limit = null;
 
-  static Query<Result> table<Result>(String tableName) => QueryImpl<Result>(tableName);
+  static Query<Model> table<Model>([String? tableName]) {
+    if (tableName == null) {
+      if (Model != Entity) {
+        tableName = Model.toString().toPlural().first;
+      } else {
+        throw ArgumentError.notNull(tableName);
+      }
+    }
+    return QueryImpl<Model>(tableName);
+  }
 
   int? get limit => _limit;
 

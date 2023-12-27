@@ -1,6 +1,6 @@
 import 'package:meta/meta.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:yaroorm/src/database/migration.dart';
+import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/src/query/primitives/serializer.dart';
 import 'package:yaroorm/src/query/query.dart';
 
@@ -81,7 +81,8 @@ class SqliteDriver implements DatabaseDriver {
 
   @override
   Future<int> insert(InsertQuery query) async {
-    return (await _getDatabase()).insert(query.tableName, query.values);
+    final sql = _serializer.acceptInsertQuery(query);
+    return (await _getDatabase()).rawInsert(sql);
   }
 
   @override
@@ -111,9 +112,8 @@ class SqliteDriver implements DatabaseDriver {
 
 class _SqliteTransactor implements DriverTransactor {
   final Transaction _txn;
-  final Batch _batch;
 
-  _SqliteTransactor(this._txn) : _batch = _txn.batch();
+  _SqliteTransactor(this._txn);
 
   @override
   Future<void> execute(String script) => _txn.execute(script);
@@ -130,28 +130,26 @@ class _SqliteTransactor implements DriverTransactor {
   @override
   Future<void> update(UpdateQuery query) {
     final sql = _serializer.acceptUpdateQuery(query);
-    return Future.sync(() => _batch.execute(sql));
+    return _txn.rawUpdate(sql);
   }
 
   @override
   Future<void> delete(DeleteQuery query) {
     final sql = _serializer.acceptDeleteQuery(query);
-    return Future.sync(() => _batch.execute(sql));
+    return _txn.rawDelete(sql);
   }
 
   @override
-  Future<void> insert(InsertQuery query) {
-    return Future.sync(() => _batch.insert(query.tableName, query.values));
+  Future<int> insert(InsertQuery query) {
+    final sql = _serializer.acceptInsertQuery(query);
+    return _txn.rawInsert(sql);
   }
 
   @override
   Future insertMany(InsertManyQuery query) {
     final sql = _serializer.acceptInsertManyQuery(query);
-    return Future.sync(() => _batch.rawInsert(sql));
+    return _txn.rawInsert(sql);
   }
-
-  @override
-  Future<List<Object?>> commit() => _batch.commit();
 
   @override
   PrimitiveSerializer get serializer => _serializer;

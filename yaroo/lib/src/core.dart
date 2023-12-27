@@ -4,7 +4,6 @@ import 'dart:async';
 
 import 'package:meta/meta.dart';
 import 'package:spookie/spookie.dart' as spookie;
-import 'package:yaroo/db/db.dart';
 
 import '../../http/http.dart';
 import '../../http/kernel.dart';
@@ -62,18 +61,12 @@ abstract class ApplicationFactory {
   static late final Kernel _appKernel;
 
   final AppConfig appConfig;
-  final DatabaseConfig? dbConfig;
 
-  ApplicationFactory(Kernel kernel, this.appConfig, {this.dbConfig}) {
+  ApplicationFactory(Kernel kernel, this.appConfig) {
     _appKernel = kernel;
   }
 
   Future<void> bootstrap({bool listen = true}) async {
-    if (dbConfig != null) {
-      DB.init(dbConfig!);
-      await DB.defaultDriver.connect();
-    }
-
     await _bootstrapComponents(appConfig);
 
     if (listen) await startServer();

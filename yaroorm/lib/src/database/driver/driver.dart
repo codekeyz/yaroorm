@@ -1,8 +1,7 @@
-import 'package:yaroorm/src/database/driver/mysql_driver.dart';
-
 import '../../query/primitives/serializer.dart';
 import '../../query/query.dart';
-import '../migration.dart';
+import '../../../migration.dart';
+import 'mysql_driver.dart';
 import 'sqlite_driver.dart';
 
 enum DatabaseDriverType { sqlite, pgsql, mysql, mariadb }
@@ -83,7 +82,7 @@ mixin DriverAble {
   Future<void> delete(DeleteQuery query);
 
   /// Perform insert on the database
-  Future<dynamic> insert(InsertQuery query);
+  Future<int> insert(InsertQuery query);
 
   /// Perform insert on the database
   Future<dynamic> insertMany(InsertManyQuery query);
@@ -91,9 +90,7 @@ mixin DriverAble {
   PrimitiveSerializer get serializer;
 }
 
-abstract class DriverTransactor with DriverAble {
-  Future<List<Object?>> commit();
-}
+abstract class DriverTransactor with DriverAble {}
 
 abstract interface class DatabaseDriver with DriverAble {
   factory DatabaseDriver.init(DatabaseConnection dbConn) {
@@ -127,9 +124,6 @@ abstract interface class DatabaseDriver with DriverAble {
 
   /// check if the table exists in the database
   Future<bool> hasTable(String tableName);
-
-  @override
-  Future<int> insert(InsertQuery query);
 
   TableBlueprint get blueprint;
 

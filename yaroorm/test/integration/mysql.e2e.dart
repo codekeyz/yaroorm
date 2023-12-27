@@ -1,18 +1,18 @@
 import 'package:test/test.dart';
-import 'package:yaroorm/src/database/driver/driver.dart';
+import 'package:yaroorm/yaroorm.dart';
 
-import '../fixtures/connections.dart';
+import '../fixtures/orm_config.dart' as db;
 import 'base.dart';
 import 'mysql.e2e.reflectable.dart';
 
-final _driver = DatabaseDriver.init(mysqlConnection);
+void main() async {
+  initializeReflectable();
 
-void main() {
-  setUpAll(() async {
-    initializeReflectable();
+  DB.init(db.config);
 
-    await _driver.connect(secure: true).timeout(const Duration(seconds: 5));
-  });
+  final driver = DB.driver('moo_mysql');
 
-  group('MySQL', () => runIntegrationTest(_driver));
+  await driver.connect(secure: true).timeout(const Duration(seconds: 5));
+
+  group('MySQL', () => runIntegrationTest('moo_mysql', driver));
 }

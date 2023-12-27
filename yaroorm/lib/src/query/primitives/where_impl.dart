@@ -1,8 +1,7 @@
 part of '../query.dart';
 
 class WhereClauseImpl<Result> extends WhereClause<Result> {
-  WhereClauseImpl(Query<Result> query, {LogicalOperator operator = LogicalOperator.AND})
-      : super(query, operator: operator);
+  WhereClauseImpl(super.query, {super.operator});
 
   @override
   WhereClause<Result> whereEqual<Value>(String field, Value value) {

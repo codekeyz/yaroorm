@@ -1,18 +1,18 @@
 import 'package:test/test.dart';
-import 'package:yaroorm/src/database/driver/driver.dart';
+import 'package:yaroorm/yaroorm.dart';
 
-import '../fixtures/connections.dart';
+import '../fixtures/orm_config.dart' as db;
 import 'base.dart';
 import 'mariadb.e2e.reflectable.dart';
 
-final _driver = DatabaseDriver.init(mariadbConnection);
+void main() async {
+  initializeReflectable();
 
-void main() {
-  setUpAll(() async {
-    initializeReflectable();
+  DB.init(db.config);
 
-    await Future.sync(() => _driver.connect(secure: false));
-  });
+  final driver = DB.driver('bar_mariadb');
 
-  group('MariaDB', () => runIntegrationTest(_driver));
+  await driver.connect(secure: false);
+
+  group('MariaDB', () => runIntegrationTest('bar_mariadb', driver));
 }
