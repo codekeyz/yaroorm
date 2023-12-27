@@ -1,25 +1,18 @@
-import 'dart:io';
-
-import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
-import 'package:yaroorm/src/database/driver/driver.dart';
+import 'package:yaroorm/yaroorm.dart';
 
-import '../fixtures/connections.dart';
+import '../fixtures/orm_config.dart' as db;
 import 'base.dart';
 import 'sqlite.e2e.reflectable.dart';
 
-final driver = DatabaseDriver.init(sqliteConnection);
+void main() async {
+  initializeReflectable();
 
-void main() {
-  setUpAll(() async {
-    initializeReflectable();
+  DB.init(db.config);
 
-    final dbPath = path.absolute(sqliteConnection.database);
-    final dbFile = File(dbPath);
-    if (await dbFile.exists()) await dbFile.delete();
+  final driver = DB.driver('foo_sqlite');
 
-    await driver.connect();
-  });
+  await driver.connect();
 
   group('SQLite', () => runIntegrationTest(driver));
 }

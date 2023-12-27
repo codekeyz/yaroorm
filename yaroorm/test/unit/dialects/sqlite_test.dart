@@ -1,12 +1,15 @@
 import 'package:test/test.dart';
-import 'package:yaroorm/src/database/driver/driver.dart';
-import 'package:yaroorm/src/query/query.dart';
+import 'package:yaroorm/yaroorm.dart';
 
-import '../../fixtures/connections.dart';
-
-final driver = DatabaseDriver.init(sqliteConnection);
+import '../../fixtures/orm_config.dart' as db;
 
 void main() {
+  DB.init(db.config);
+
+  late DatabaseDriver driver;
+
+  setUpAll(() => driver = DB.driver('foo_sqlite'));
+
   group('SQLITE Query Builder', () {
     test('when query', () {
       final query = Query.table('users').driver(driver);

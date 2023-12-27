@@ -36,7 +36,7 @@ extension ConfigExtension on Map<String, dynamic> {
   }
 }
 
-class DatabaseConfig {
+class YaroormConfig {
   final String defaultConnName;
   final List<DatabaseConnection> connections;
 
@@ -45,14 +45,17 @@ class DatabaseConfig {
 
   DatabaseConnection get defaultDBConn => connections.firstWhere((e) => e.name == defaultConnName);
 
-  const DatabaseConfig._(
+  YaroormConfig(
     this.defaultConnName, {
     required this.connections,
     required this.migrationsTable,
     this.migrations = const [],
-  });
+  }) {
+    final hasDefault = connections.any((e) => e.name == defaultConnName);
+    if (!hasDefault) throw ArgumentError('Database connection info not found for $defaultConnName');
+  }
 
-  factory DatabaseConfig.from(Map<String, dynamic> config) {
+  factory YaroormConfig.from(Map<String, dynamic> config) {
     final defaultConnName = config.getValue<String?>('default');
     if (defaultConnName == null) {
       throw ArgumentError('Default database connection not provided');
@@ -63,13 +66,9 @@ class DatabaseConfig {
       throw ArgumentError('Database connection infos not provided');
     }
 
-    final connections = connInfos.entries.map((e) => DatabaseConnection.from(e.key, e.value));
-    final hasDefault = connections.any((e) => e.name == defaultConnName);
-    if (!hasDefault) throw ArgumentError('Database connection info not found for $defaultConnName');
-
-    return DatabaseConfig._(
+    return YaroormConfig(
       defaultConnName,
-      connections: connections.toList(),
+      connections: connInfos.entries.map((e) => DatabaseConnection.from(e.key, e.value)).toList(),
       migrationsTable: config.getValue('migrations_table', defaultValue: 'migrations'),
       migrations: config.getValue('migrations', defaultValue: const []),
     );

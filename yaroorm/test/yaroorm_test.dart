@@ -1,82 +1,68 @@
 import 'package:test/test.dart';
 import 'package:yaroorm/config.dart';
-import 'package:yaroorm/src/database/driver/driver.dart';
 import 'package:yaroorm/src/database/driver/mysql_driver.dart';
 import 'package:yaroorm/src/database/driver/sqlite_driver.dart';
-import 'package:yaroorm/src/query/query.dart';
+import 'package:yaroorm/yaroorm.dart';
 
-import 'fixtures/connections.dart';
+import 'fixtures/orm_config.dart' as db;
 
 Matcher throwsArgumentErrorWithMessage(String message) =>
     throwsA(isA<ArgumentError>().having((p0) => p0.message, '', message));
 
 void main() {
+  setUpAll(() => DB.init(db.config));
+
   group('DatabaseDriver.init', () {
     group('when sqlite connection', () {
-      test('should return SQLite Driver', () {
-        final driver = DatabaseDriver.init(sqliteConnection);
-        expect(driver, isA<SqliteDriver>());
+      late DatabaseDriver driver;
 
-        expect(driver.type, DatabaseDriverType.sqlite);
+      setUpAll(() => driver = DB.driver('sqlite'));
+
+      test('should return SQLite Driver', () {
+        expect(driver, isA<SqliteDriver>().having((p0) => p0.type, 'has driver type', DatabaseDriverType.sqlite));
       });
 
       test('should have table blueprint', () {
-        final driver = DatabaseDriver.init(sqliteConnection);
-        expect(driver, isA<SqliteDriver>());
-
         expect(driver.blueprint, isA<SqliteTableBlueprint>());
       });
 
       test('should have primitive serializer', () {
-        final driver = DatabaseDriver.init(sqliteConnection);
-        expect(driver, isA<SqliteDriver>());
-
         expect(driver.serializer, isA<SqliteSerializer>());
       });
     });
 
     group('when mysql connection', () {
-      test('should return MySql Driver', () {
-        final driver = DatabaseDriver.init(mysqlConnection);
-        expect(driver, isA<MySqlDriver>());
+      late DatabaseDriver driver;
 
-        expect(driver.type, DatabaseDriverType.mysql);
+      setUpAll(() => driver = DB.driver('mysql'));
+
+      test('should return MySql Driver', () {
+        expect(driver, isA<MySqlDriver>().having((p0) => p0.type, 'has driver type', DatabaseDriverType.mysql));
       });
 
       test('should have table blueprint', () {
-        final driver = DatabaseDriver.init(mysqlConnection);
-        expect(driver, isA<MySqlDriver>());
-
         expect(driver.blueprint, isA<MySqlDriverTableBlueprint>());
       });
 
       test('should have primitive serializer', () {
-        final driver = DatabaseDriver.init(mysqlConnection);
-        expect(driver, isA<MySqlDriver>());
-
         expect(driver.serializer, isA<MySqlPrimitiveSerializer>());
       });
     });
 
     group('when mariadb connection', () {
-      test('should return MySql Driver', () {
-        final driver = DatabaseDriver.init(mariadbConnection);
-        expect(driver, isA<MySqlDriver>());
+      late DatabaseDriver driver;
 
-        expect(driver.type, DatabaseDriverType.mariadb);
+      setUpAll(() => driver = DB.driver('mariadb'));
+
+      test('should return MySql Driver', () {
+        expect(driver, isA<MySqlDriver>().having((p0) => p0.type, 'has driver type', DatabaseDriverType.mariadb));
       });
 
       test('should have table blueprint', () {
-        final driver = DatabaseDriver.init(mariadbConnection);
-        expect(driver, isA<MySqlDriver>());
-
         expect(driver.blueprint, isA<MySqlDriverTableBlueprint>());
       });
 
       test('should have primitive serializer', () {
-        final driver = DatabaseDriver.init(mariadbConnection);
-        expect(driver, isA<MySqlDriver>());
-
         expect(driver.serializer, isA<MySqlPrimitiveSerializer>());
       });
     });
@@ -99,17 +85,17 @@ void main() {
 
   group('Database Config Test', () {
     test('should require default connection', () {
-      expect(() => DatabaseConfig.from({}), throwsArgumentErrorWithMessage('Default database connection not provided'));
+      expect(() => YaroormConfig.from({}), throwsArgumentErrorWithMessage('Default database connection not provided'));
     });
 
     test('should require connection infos', () {
-      expect(() => DatabaseConfig.from({'default': 'sqlite'}),
+      expect(() => YaroormConfig.from({'default': 'sqlite'}),
           throwsArgumentErrorWithMessage('Database connection infos not provided'));
     });
 
     test('should error when default connection info not found ', () {
       expect(
-          () => DatabaseConfig.from({
+          () => YaroormConfig.from({
                 'default': 'sqlite',
                 'connections': {
                   'mysql': {'driver': 'sqlite', 'database': 'foo.db'}
@@ -121,12 +107,12 @@ void main() {
     test(
         'should initialize correctly',
         () => expect(
-            DatabaseConfig.from({
+            YaroormConfig.from({
               'default': 'sqlite',
               'connections': {
                 'sqlite': {'driver': 'sqlite', 'database': 'foo.db'}
               }
             }),
-            isA<DatabaseConfig>()));
+            isA<YaroormConfig>()));
   });
 }

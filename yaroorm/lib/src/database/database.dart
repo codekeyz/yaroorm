@@ -17,7 +17,7 @@ const String pleaseInitializeMessage = 'DB has not been initialized.\n'
     'Please make sure that you have called `DB.init(DatabaseConfig)`.';
 
 class DB {
-  static DatabaseConfig config = throw StateError(pleaseInitializeMessage);
+  static YaroormConfig config = throw StateError(pleaseInitializeMessage);
 
   static final Map<String, DatabaseDriver> _driverInstances = {};
 
@@ -31,6 +31,9 @@ class DB {
 
   static UseDatabaseConnection connection(String connName) => UseDatabaseConnection(connName);
 
+  /// This call returns the driver for a connection
+  ///
+  /// [connName] is the connection name you defined in [YaroormConfig]
   static DatabaseDriver driver(String connName) {
     if (connName == 'default') return defaultDriver;
     final instance = _driverInstances[connName];
@@ -40,7 +43,7 @@ class DB {
     return _driverInstances[connName] = DatabaseDriver.init(connInfo);
   }
 
-  static void init(DatabaseConfig config) {
+  static void init(YaroormConfig config) {
     DB.config = config;
 
     final defaultConn = config.defaultConnName;
