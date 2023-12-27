@@ -117,7 +117,7 @@ class Migrator {
 
         await Query.table(Migrator.tableName)
             .driver(transactor)
-            .delete((where) => where.where('migration', '=', rollback.name))
+            .delete((where) => where.whereEqual('migration', rollback.name))
             .exec();
       });
 
