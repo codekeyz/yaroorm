@@ -49,8 +49,8 @@ class Migrator {
 
       await driver.transaction((transactor) async {
         for (final schema in migration.schemas) {
-          final serialized = schema.toScript(driver.blueprint);
-          await transactor.execute(serialized);
+          final sql = schema.toScript(driver.blueprint);
+          await transactor.execute(sql);
         }
 
         await Query.table<MigrationData>(Migrator.tableName)

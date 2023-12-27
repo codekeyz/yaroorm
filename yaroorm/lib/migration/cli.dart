@@ -41,7 +41,8 @@ class MigratorCLI {
   static Future<void> processCmd(String cmd, {List<String> cmdArguments = const []}) async {
     final dbConfig = DB.config;
 
-    var connectionNameFromArgs = getValueFromCLIArs('database', cmdArguments);
+    /// get connection name from args if present eg: --database=sqlite will produce sqlite
+    var connectionNameFromArgs = getValueFromCLIArgs('database', cmdArguments);
     if (connectionNameFromArgs != null) {
       if (!dbConfig.connections.any((e) => e.name == connectionNameFromArgs)) {
         throw ArgumentError(connectionNameFromArgs, 'No database connection found with name: $connectionNameFromArgs');
@@ -51,14 +52,13 @@ class MigratorCLI {
     final connectionToUse = connectionNameFromArgs ?? dbConfig.defaultConnName;
     Migrator.tableName = dbConfig.migrationsTable;
 
-    final Iterable<Migration> migrationsForConnection = (dbConfig.migrations)
-        .where((e) => (e.connection == 'default' ? dbConfig.defaultConnName : e.connection) == connectionToUse);
-    if (migrationsForConnection.isEmpty) {
+    final tasks = (dbConfig.migrations)
+        .where((e) => e.connection == null ? true : e.connection == connectionToUse)
+        .map((e) => _Task(e));
+    if (tasks.isEmpty) {
       print('No migrations found for connection: $connectionToUse');
       return;
     }
-
-    final tasks = migrationsForConnection.map((e) => _Task(e));
 
     cmd = cmd.toLowerCase();
     final MigratorAction cmdAction = switch (cmd) {

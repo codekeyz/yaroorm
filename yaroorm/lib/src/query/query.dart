@@ -2,8 +2,8 @@ import 'package:grammer/grammer.dart';
 import 'package:meta/meta.dart';
 import 'package:yaroorm/src/database/entity.dart';
 
-import '../reflection/entity_helpers.dart';
 import '../database/driver/driver.dart';
+import '../reflection/entity_helpers.dart';
 
 part 'primitives/where.dart';
 part 'primitives/where_impl.dart';
@@ -49,6 +49,8 @@ mixin OrderByOperation<ReturnType> {
 
 abstract interface class QueryBase<Owner> {
   final String tableName;
+
+  String? database;
 
   DriverAble? _queryDriver;
 

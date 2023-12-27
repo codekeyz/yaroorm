@@ -165,11 +165,11 @@ class Schema {
 }
 
 abstract class Migration {
-  const Migration();
+  Migration();
 
   String get name => runtimeType.toString().snakeCase;
 
-  String get connection => 'default';
+  String? connection;
 
   void up(List<Schema> schemas);
 

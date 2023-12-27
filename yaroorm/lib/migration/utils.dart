@@ -23,7 +23,7 @@ Future<int> getLastBatchNumber(DatabaseDriver driver, String migrationsTable) as
   return result.first['max_batch'] ?? 0;
 }
 
-String? getValueFromCLIArs(String key, List<String> args) {
+String? getValueFromCLIArgs(String key, List<String> args) {
   final argument = args.firstWhereOrNull((arg) => arg.split('=').first == '--$key');
   if (argument == null) return null;
   return argument.split('=').last;

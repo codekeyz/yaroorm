@@ -5,12 +5,13 @@ import 'package:yaroorm/config.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 class UseDatabaseConnection {
-  final String name;
-  late final DatabaseDriver _driver;
+  final DatabaseConnection info;
+  late final DatabaseDriver driver;
 
-  UseDatabaseConnection(this.name) : _driver = DB.driver(name);
+  UseDatabaseConnection(this.info) : driver = DB.driver(info.name);
 
-  Query<Model> query<Model extends Entity>([String? table]) => Query.table<Model>(table).driver(_driver);
+  Query<Model> query<Model extends Entity>([String? table]) =>
+      Query.table<Model>(table).driver(driver)..database = info.database;
 }
 
 const String pleaseInitializeMessage = 'DB has not been initialized.\n'
@@ -25,11 +26,12 @@ class DB {
 
   DB._();
 
-  static DatabaseDriver get defaultDriver => defaultConnection._driver;
+  static DatabaseDriver get defaultDriver => defaultConnection.driver;
 
   static Query<Result> query<Result extends Entity>([String? table]) => defaultConnection.query<Result>(table);
 
-  static UseDatabaseConnection connection(String connName) => UseDatabaseConnection(connName);
+  static UseDatabaseConnection connection(String connName) =>
+      UseDatabaseConnection(config.connections.firstWhere((e) => e.name == connName));
 
   /// This call returns the driver for a connection
   ///
@@ -46,8 +48,8 @@ class DB {
   static void init(YaroormConfig config) {
     DB.config = config;
 
-    final defaultConn = config.defaultConnName;
-    DB._driverInstances[defaultConn] = DatabaseDriver.init(config.defaultDBConn);
+    final defaultConn = config.defaultDBConn;
+    DB._driverInstances[defaultConn.name] = DatabaseDriver.init(defaultConn);
     DB.defaultConnection = UseDatabaseConnection(defaultConn);
   }
 }
