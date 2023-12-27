@@ -14,5 +14,5 @@ void main() async {
 
   await driver.connect();
 
-  group('SQLite', () => runIntegrationTest(driver));
+  group('SQLite', () => runIntegrationTest('foo_sqlite', driver));
 }

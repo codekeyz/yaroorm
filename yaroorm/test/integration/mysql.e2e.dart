@@ -14,5 +14,5 @@ void main() async {
 
   await driver.connect(secure: true).timeout(const Duration(seconds: 5));
 
-  group('MySQL', () => runIntegrationTest(driver));
+  group('MySQL', () => runIntegrationTest('moo_mysql', driver));
 }
