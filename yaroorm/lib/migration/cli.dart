@@ -26,6 +26,8 @@ class _Task {
 }
 
 class MigratorCLI {
+  MigratorCLI._();
+
   /// commands
   static const String migrate = 'migrate';
   static const String migrateReset = 'migrate:reset';
@@ -45,7 +47,8 @@ class MigratorCLI {
     var connectionNameFromArgs = getValueFromCLIArgs('database', cmdArguments);
     if (connectionNameFromArgs != null) {
       if (!dbConfig.connections.any((e) => e.name == connectionNameFromArgs)) {
-        throw ArgumentError(connectionNameFromArgs, 'No database connection found with name: $connectionNameFromArgs');
+        throw ArgumentError.value(
+            connectionNameFromArgs, null, 'No database connection found with name: $connectionNameFromArgs');
       }
     }
 

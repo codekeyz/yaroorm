@@ -14,10 +14,6 @@ class EntityValidationException implements Exception {
 }
 
 ClassMirror reflectEntity<Model>() {
-  if (Model == dynamic) {
-    throw EntityValidationException('Static Type required for `reflectEntity` call');
-  }
-
   late ClassMirror mirror;
 
   try {
