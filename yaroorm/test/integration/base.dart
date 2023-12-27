@@ -1,8 +1,7 @@
 import 'package:test/test.dart';
-import 'package:yaroorm/migration.dart';
+import 'package:yaroorm/migration/cli.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import '../fixtures/migrations.dart';
 import '../fixtures/test_data.dart';
 
 void runIntegrationTest(DatabaseDriver driver) => group('Integration Test with ${driver.type.name} driver', () {
@@ -18,11 +17,7 @@ void runIntegrationTest(DatabaseDriver driver) => group('Integration Test with $
       });
 
       test('should execute migration', () async {
-        final schemas = <Schema>[];
-        AddUsersTable().up(schemas);
-
-        final createTableScripts = schemas.map((schema) => schema.toScript(driver.blueprint));
-        await driver.transaction((txn) => Future.wait(createTableScripts.map(txn.execute)));
+        await MigratorCLI.processCmd('migrate');
 
         final result = await Future.wait([
           driver.hasTable('users'),
@@ -144,19 +139,14 @@ void runIntegrationTest(DatabaseDriver driver) => group('Integration Test with $
       });
 
       test('should drop tables', () async {
-        final schemas = <Schema>[];
-        AddUsersTable().down(schemas);
+        await MigratorCLI.processCmd('migrate:reset');
 
-        final dropTableScripts = schemas.map((schema) => schema.toScript(driver.blueprint));
-        for (final script in dropTableScripts) {
-          await driver.execute(script);
-        }
+        final result = await Future.wait([
+          driver.hasTable('users'),
+          driver.hasTable('tasks'),
+        ]);
 
-        final hasUsersTable = await driver.hasTable('users');
-        expect(hasUsersTable, isFalse);
-
-        final hasTodosTable = await driver.hasTable('tasks');
-        expect(hasTodosTable, isFalse);
+        expect(result.every((e) => e), isFalse);
       });
 
       test('should disconnect', () async {
