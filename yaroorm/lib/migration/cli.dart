@@ -1,6 +1,5 @@
 import 'dart:isolate';
 
-import 'package:yaroorm/config.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import '../migration.dart';
@@ -41,21 +40,21 @@ class MigratorCLI {
       ..integer('batch');
   });
 
-  static Future<void> processCmd(String cmd, DatabaseConfig config, {List<String> cmdArguments = const []}) async {
-    final classes = config.migrations;
+  static Future<void> processCmd(String cmd, {List<String> cmdArguments = const []}) async {
+    final dbConfig = DB.config;
 
     var connectionNameFromArgs = getValueFromCLIArs('database', cmdArguments);
     if (connectionNameFromArgs != null) {
-      if (!config.connections.any((e) => e.name == connectionNameFromArgs)) {
+      if (!dbConfig.connections.any((e) => e.name == connectionNameFromArgs)) {
         throw ArgumentError(connectionNameFromArgs, 'No database connection found with name: $connectionNameFromArgs');
       }
     }
 
-    final connectionToUse = connectionNameFromArgs ?? config.defaultConnName;
-    Migrator.tableName = config.migrationsTable;
+    final connectionToUse = connectionNameFromArgs ?? dbConfig.defaultConnName;
+    Migrator.tableName = dbConfig.migrationsTable;
 
-    final Iterable<Migration> migrationsForConnection =
-        (classes).where((e) => (e.connection == 'default' ? config.defaultConnName : e.connection) == connectionToUse);
+    final Iterable<Migration> migrationsForConnection = (dbConfig.migrations)
+        .where((e) => (e.connection == 'default' ? dbConfig.defaultConnName : e.connection) == connectionToUse);
     if (migrationsForConnection.isEmpty) {
       print('No migrations found for connection: $connectionToUse');
       return;
@@ -72,7 +71,6 @@ class MigratorCLI {
     };
 
     isolatedTask() async {
-      DB.init(config);
       await cmdAction.call(DB.driver(connectionToUse));
     }
 

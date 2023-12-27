@@ -3,7 +3,6 @@ library database;
 import 'package:collection/collection.dart';
 import 'package:grammer/grammer.dart';
 import 'package:yaroorm/config.dart';
-import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 class UseDatabaseConnection {
@@ -24,12 +23,17 @@ class UseDatabaseConnection {
   }
 }
 
+const String pleaseInitializeMessage = 'DB has not been initialized.\n'
+    'Please make sure that you have called `DB.init(DatabaseConfig)`.';
+
 class DB {
-  static final List<DatabaseConnection> _connections = [];
+  /// This mapping contains the mirror-data for each reflector.
+  /// It will be initialized in the generated code.
+  static DatabaseConfig config = throw StateError(pleaseInitializeMessage);
+
   static final Map<String, DatabaseDriver> _driverInstances = {};
 
   static late final UseDatabaseConnection defaultConnection;
-  static late final List<Migration> migrations;
 
   DB._();
 
@@ -45,15 +49,13 @@ class DB {
     if (connName == 'default') return defaultDriver;
     final instance = _driverInstances[connName];
     if (instance != null) return instance;
-    final connInfo = _connections.firstWhereOrNull((e) => e.name == connName);
+    final connInfo = config.connections.firstWhereOrNull((e) => e.name == connName);
     if (connInfo == null) throw ArgumentError.value(connName, 'No Database connection found with name: $connName');
     return _driverInstances[connName] = DatabaseDriver.init(connInfo);
   }
 
   static void init(DatabaseConfig config) {
-    DB._connections
-      ..clear()
-      ..addAll(config.connections);
+    DB.config = config;
 
     final defaultConn = config.defaultConnName;
     DB._driverInstances[defaultConn] = DatabaseDriver.init(config.defaultDBConn);
