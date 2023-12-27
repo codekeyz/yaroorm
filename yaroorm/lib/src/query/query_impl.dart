@@ -3,7 +3,7 @@ part of 'query.dart';
 enum OrderByDirection { asc, desc }
 
 class QueryImpl<Result> extends Query<Result> {
-  QueryImpl(String tableName) : super(tableName);
+  QueryImpl(super.tableName);
 
   @override
   WhereClause<Result> where<Value>(String field, String condition, [Value? value]) {
