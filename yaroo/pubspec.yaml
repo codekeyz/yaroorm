@@ -9,10 +9,6 @@ environment:
   sdk: ^3.0.0
 
 dependencies:
-  yaroorm:
-    git:
-      url: https://github.com/codekeyz/yaroo.git
-      path: yaroorm
   pharaoh:
     git:
       url: https://github.com/codekeyz/pharaoh.git
@@ -24,10 +20,9 @@ dependencies:
   dotenv: ^4.2.0
   get_it: ^7.6.4
   uuid: ^4.2.1
-  grammer: ^1.0.3
 
   # build related
-  build_runner: ^2.4.7
+  build_runner: any
   reflectable:
     git:
       url: https://github.com/codekeyz/reflectable.dart.git
