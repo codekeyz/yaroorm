@@ -3,7 +3,7 @@
 part of '../query.dart';
 
 mixin WhereOperation<Result> {
-  WhereClause where<Value>(String field, String condition, [Value? value]);
+  WhereClause<Result> where<Value>(String field, String condition, [Value? value]);
 
   WhereClause<Result> orWhere<Value>(String field, String condition, [Value? value]);
 

@@ -92,7 +92,7 @@ abstract interface class Query<Result> extends QueryBase<Query<Result>>
         whereClauses = [],
         _limit = null;
 
-  static Query<Model> table<Model extends Entity>([String? tableName]) {
+  static Query<Model> table<Model>([String? tableName]) {
     if (tableName == null) {
       if (Model != Entity) {
         tableName = Model.toString().toPlural().first;

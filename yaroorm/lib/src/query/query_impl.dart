@@ -6,6 +6,13 @@ class QueryImpl<Result> extends Query<Result> {
   QueryImpl(String tableName) : super(tableName);
 
   @override
+  WhereClause<Result> where<Value>(String field, String condition, [Value? value]) {
+    final newClause = WhereClauseImpl<Result>(this)..clauseValue = WhereClauseValue.from(field, condition, value);
+    whereClauses.add(newClause);
+    return newClause;
+  }
+
+  @override
   Query<Result> orderByAsc(String field) {
     orderByProps.add((field: field, direction: OrderByDirection.asc));
     return this;
@@ -38,7 +45,7 @@ class QueryImpl<Result> extends Query<Result> {
   Future<List<Result>> all() async {
     final results = await queryDriver.query(this);
     if (results.isEmpty) return <Result>[];
-    if (Result == dynamic) return results as dynamic;
+    if (Result == Entity || Result == dynamic) return results as dynamic;
     return results.map(jsonToEntity<Result>).toList();
   }
 
@@ -47,7 +54,7 @@ class QueryImpl<Result> extends Query<Result> {
     _limit = limit;
     final results = await queryDriver.query(this);
     if (results.isEmpty) return <Result>[];
-    if (Result == dynamic) return results as dynamic;
+    if (Result == Entity || Result == dynamic) return results as dynamic;
     return results.map(jsonToEntity<Result>).toList();
   }
 
@@ -93,13 +100,6 @@ class QueryImpl<Result> extends Query<Result> {
     whereClauses.add(newGroup);
 
     return this;
-  }
-
-  @override
-  WhereClause<Result> where<Value>(String field, String condition, [Value? value]) {
-    final newClause = WhereClauseImpl<Result>(this)..clauseValue = WhereClauseValue.from(field, condition, value);
-    whereClauses.add(newClause);
-    return newClause;
   }
 
   @override
