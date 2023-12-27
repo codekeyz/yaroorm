@@ -16,7 +16,7 @@ void main() {
     group('when sqlite connection', () {
       late DatabaseDriver driver;
 
-      setUpAll(() => driver = DB.driver('sqlite'));
+      setUpAll(() => driver = DB.driver('foo_sqlite'));
 
       test('should return SQLite Driver', () {
         expect(driver, isA<SqliteDriver>().having((p0) => p0.type, 'has driver type', DatabaseDriverType.sqlite));
@@ -34,7 +34,7 @@ void main() {
     group('when mysql connection', () {
       late DatabaseDriver driver;
 
-      setUpAll(() => driver = DB.driver('mysql'));
+      setUpAll(() => driver = DB.driver('moo_mysql'));
 
       test('should return MySql Driver', () {
         expect(driver, isA<MySqlDriver>().having((p0) => p0.type, 'has driver type', DatabaseDriverType.mysql));
@@ -52,7 +52,7 @@ void main() {
     group('when mariadb connection', () {
       late DatabaseDriver driver;
 
-      setUpAll(() => driver = DB.driver('mariadb'));
+      setUpAll(() => driver = DB.driver('bar_mariadb'));
 
       test('should return MySql Driver', () {
         expect(driver, isA<MySqlDriver>().having((p0) => p0.type, 'has driver type', DatabaseDriverType.mariadb));
