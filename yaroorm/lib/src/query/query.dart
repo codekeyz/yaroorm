@@ -1,3 +1,4 @@
+import 'package:grammer/grammer.dart';
 import 'package:meta/meta.dart';
 import 'package:yaroorm/src/database/entity.dart';
 
@@ -91,7 +92,16 @@ abstract interface class Query<Result> extends QueryBase<Query<Result>>
         whereClauses = [],
         _limit = null;
 
-  static Query<Result> table<Result>(String tableName) => QueryImpl<Result>(tableName);
+  static Query<Model> table<Model extends Entity>([String? tableName]) {
+    if (tableName == null) {
+      if (Model != Entity) {
+        tableName = Model.toString().toPlural().first;
+      } else {
+        throw ArgumentError.notNull(tableName);
+      }
+    }
+    return QueryImpl<Model>(tableName);
+  }
 
   int? get limit => _limit;
 

@@ -1,7 +1,6 @@
 library database;
 
 import 'package:collection/collection.dart';
-import 'package:grammer/grammer.dart';
 import 'package:yaroorm/config.dart';
 import 'package:yaroorm/yaroorm.dart';
 
@@ -11,24 +10,13 @@ class UseDatabaseConnection {
 
   UseDatabaseConnection(this.name) : _driver = DB.driver(name);
 
-  Query<Result> query<Result>([String? table]) {
-    if (table == null) {
-      if (Result != Entity) {
-        table = Result.toString().toPlural().first;
-      } else {
-        throw ArgumentError.notNull(table);
-      }
-    }
-    return Query.table<Result>(table).driver(_driver);
-  }
+  Query<Model> query<Model extends Entity>([String? table]) => Query.table<Model>(table).driver(_driver);
 }
 
 const String pleaseInitializeMessage = 'DB has not been initialized.\n'
     'Please make sure that you have called `DB.init(DatabaseConfig)`.';
 
 class DB {
-  /// This mapping contains the mirror-data for each reflector.
-  /// It will be initialized in the generated code.
   static DatabaseConfig config = throw StateError(pleaseInitializeMessage);
 
   static final Map<String, DatabaseDriver> _driverInstances = {};
@@ -39,9 +27,7 @@ class DB {
 
   static DatabaseDriver get defaultDriver => defaultConnection._driver;
 
-  static Query<Result> query<Result extends Entity>([String? table]) {
-    return defaultConnection.query<Result>(table);
-  }
+  static Query<Result> query<Result extends Entity>([String? table]) => defaultConnection.query<Result>(table);
 
   static UseDatabaseConnection connection(String connName) => UseDatabaseConnection(connName);
 
