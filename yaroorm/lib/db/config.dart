@@ -1,4 +1,4 @@
-import 'package:yaroo/src/config/config.dart';
+import 'package:yaroorm/config.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 class DatabaseConfig {

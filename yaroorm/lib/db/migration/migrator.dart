@@ -1,8 +1,8 @@
 import 'package:collection/collection.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import '_migration_data.dart';
-import '_utils.dart';
+import 'migration_data.dart' as mdata;
+import 'utils.dart';
 import 'cli.dart';
 
 typedef Rollback = ({int batch, String name, MigrationTask? migration});
@@ -36,7 +36,9 @@ class Migrator {
           transactor.execute(serialized);
         }
 
-        await Query.table(Migrator.tableName).driver(transactor).insert(MigrationDbData(fileName, batchNos));
+        await Query.table<mdata.Migration>(Migrator.tableName)
+            .driver(transactor)
+            .insert(mdata.Migration(fileName, batchNos));
 
         await transactor.commit();
 
@@ -51,7 +53,7 @@ class Migrator {
     await ensureMigrationsTableReady(driver);
 
     final migrationInfoFromDB =
-        await Query.table<MigrationDbData>(Migrator.tableName).driver(driver).orderByDesc('batch').all();
+        await Query.table<mdata.Migration>(Migrator.tableName).driver(driver).orderByDesc('batch').all();
     if (migrationInfoFromDB.isEmpty) {
       print('𐄂 skipped: reason:     no migrations to reset');
       return;
@@ -59,9 +61,9 @@ class Migrator {
 
     print('------- Resetting migrations  📦 -------\n');
 
-    final rollbacks = migrationInfoFromDB.map<Rollback>((e) {
+    final rollbacks = migrationInfoFromDB.map((e) {
       final found = allTasks.firstWhereOrNull((m) => m.name == e.migration);
-      return (batch: e.batch, name: e.migration, migration: found);
+      return found == null ? null : (batch: e.batch, name: e.migration, migration: found);
     }).whereNotNull();
 
     await _processRollbacks(driver, rollbacks);
@@ -71,7 +73,7 @@ class Migrator {
 
   static Future<void> rollBackMigration(DatabaseDriver driver, Iterable<MigrationTask> allTasks) async {
     final migrationDbData =
-        await Query.table<MigrationDbData>(Migrator.tableName).driver(driver).orderByDesc('batch').get();
+        await Query.table<mdata.Migration>(Migrator.tableName).driver(driver).orderByDesc('batch').get();
     if (migrationDbData == null) {
       print('𐄂 skipped: reason:     no migration to rollback');
       return;

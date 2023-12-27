@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import '_migrator.dart';
+import 'migrator.dart';
 import 'cli.dart';
 
 Future<void> ensureMigrationsTableReady(DatabaseDriver driver) async {

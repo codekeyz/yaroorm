@@ -2,8 +2,6 @@ import 'dart:convert';
 
 import 'package:dotenv/dotenv.dart';
 
-export 'app.dart';
-
 DotEnv? _env;
 
 T? env<T>(String name, [T? defaultValue]) {
