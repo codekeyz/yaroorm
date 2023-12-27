@@ -16,6 +16,7 @@ dependencies:
   spanner: ^1.0.1+2
   spookie: ^1.0.2+1
   meta: ^1.11.0
+  grammer: ^1.0.3
   collection: ^1.18.0
   dotenv: ^4.2.0
   get_it: ^7.6.4

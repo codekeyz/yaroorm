@@ -1,8 +1,8 @@
 import 'package:collection/collection.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import 'migrator.dart';
 import 'cli.dart';
+import 'migrator.dart';
 
 Future<void> ensureMigrationsTableReady(DatabaseDriver driver) async {
   final hasTable = await driver.hasTable(Migrator.tableName);

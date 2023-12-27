@@ -1,11 +1,30 @@
 import 'package:collection/collection.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import 'migration_data.dart' as mdata;
-import 'utils.dart';
 import 'cli.dart';
+import 'utils.dart';
 
 typedef Rollback = ({int batch, String name, MigrationTask? migration});
+
+class MigrationData extends Entity<int> {
+  final String migration;
+  final int batch;
+
+  MigrationData(this.migration, this.batch);
+
+  static MigrationData fromJson(Map<String, dynamic> json) =>
+      MigrationData(json['migration'] as String, json['batch'] as int)..id = PrimaryKey.thisFromJson(json['id']);
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': PrimaryKey.thisToJson(id),
+        'migration': migration,
+        'batch': batch,
+      };
+
+  @override
+  bool get enableTimestamps => false;
+}
 
 class Migrator {
   /// config keys for migrations
@@ -36,9 +55,7 @@ class Migrator {
           transactor.execute(serialized);
         }
 
-        await Query.table<mdata.Migration>(Migrator.tableName)
-            .driver(transactor)
-            .insert(mdata.Migration(fileName, batchNos));
+        await Query.table(Migrator.tableName).driver(transactor).insert(MigrationData(fileName, batchNos));
 
         await transactor.commit();
 
@@ -52,16 +69,15 @@ class Migrator {
   static Future<void> resetMigrations(DatabaseDriver driver, Iterable<MigrationTask> allTasks) async {
     await ensureMigrationsTableReady(driver);
 
-    final migrationInfoFromDB =
-        await Query.table<mdata.Migration>(Migrator.tableName).driver(driver).orderByDesc('batch').all();
-    if (migrationInfoFromDB.isEmpty) {
+    var _ = await Query.table(Migrator.tableName).driver(driver).orderByDesc('batch').all();
+    if (_.isEmpty) {
       print('𐄂 skipped: reason:     no migrations to reset');
       return;
     }
 
     print('------- Resetting migrations  📦 -------\n');
 
-    final rollbacks = migrationInfoFromDB.map((e) {
+    final rollbacks = _.map((e) => MigrationData.fromJson(e)).map((e) {
       final found = allTasks.firstWhereOrNull((m) => m.name == e.migration);
       return found == null ? null : (batch: e.batch, name: e.migration, migration: found);
     }).whereNotNull();
@@ -72,8 +88,8 @@ class Migrator {
   }
 
   static Future<void> rollBackMigration(DatabaseDriver driver, Iterable<MigrationTask> allTasks) async {
-    final migrationDbData =
-        await Query.table<mdata.Migration>(Migrator.tableName).driver(driver).orderByDesc('batch').get();
+    final MigrationData? migrationDbData =
+        await Query.table(Migrator.tableName).driver(driver).orderByDesc('batch').get();
     if (migrationDbData == null) {
       print('𐄂 skipped: reason:     no migration to rollback');
       return;

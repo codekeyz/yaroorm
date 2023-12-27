@@ -1,11 +1,13 @@
 import 'dart:isolate';
 
-import 'package:yaroorm/db/config.dart';
+import 'package:yaroorm/config.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import '../db.dart';
+import '../migration.dart';
 import 'migrator.dart';
 import 'utils.dart';
+
+export 'cli.dart';
 
 typedef MigrationTask = ({String name, List<Schema> schemas});
 

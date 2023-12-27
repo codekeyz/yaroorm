@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:yaroorm/db/config.dart';
+import 'package:yaroorm/config.dart';
 import 'package:yaroorm/src/database/driver/driver.dart';
 import 'package:yaroorm/src/database/driver/mysql_driver.dart';
 import 'package:yaroorm/src/database/driver/sqlite_driver.dart';

@@ -1,6 +1,6 @@
 import 'package:test/test.dart';
 import 'package:yaroorm/src/database/driver/driver.dart';
-import 'package:yaroorm/src/database/migration.dart';
+import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/src/query/query.dart';
 
 import '../fixtures/migrations.dart';

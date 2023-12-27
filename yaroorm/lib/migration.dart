@@ -1,7 +1,9 @@
+library migration;
+
 import 'package:meta/meta.dart';
 import 'package:recase/recase.dart';
 
-import 'entity.dart';
+import 'src/database/entity.dart';
 
 abstract interface class TableBlueprint {
   void id({String name = 'id', bool autoIncrement = true});
@@ -162,6 +164,18 @@ class Schema {
   static Schema rename(String from, String to) => _RenameSchema(from, to);
 }
 
+abstract class Migration {
+  const Migration();
+
+  String get name => runtimeType.toString().snakeCase;
+
+  String get connection => 'default';
+
+  void up(List<Schema> schemas);
+
+  void down(List<Schema> schemas);
+}
+
 class _DropSchema extends Schema {
   _DropSchema(String name) : super._(name, null);
 
@@ -176,16 +190,4 @@ class _RenameSchema extends Schema {
 
   @override
   String toScript(TableBlueprint table) => table.renameScript(tableName, newName);
-}
-
-abstract class Migration {
-  const Migration();
-
-  String get name => runtimeType.toString().snakeCase;
-
-  String get connection => 'default';
-
-  void up(List<Schema> schemas);
-
-  void down(List<Schema> schemas);
 }

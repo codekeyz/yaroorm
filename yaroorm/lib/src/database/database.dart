@@ -1,10 +1,10 @@
+library database;
+
 import 'package:collection/collection.dart';
 import 'package:grammer/grammer.dart';
-import 'package:yaroorm/db/config.dart';
+import 'package:yaroorm/config.dart';
+import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/yaroorm.dart';
-
-export 'package:yaroorm/src/database/entity.dart';
-export 'package:yaroorm/src/database/migration.dart';
 
 class UseDatabaseConnection {
   final String name;
