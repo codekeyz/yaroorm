@@ -1,7 +1,7 @@
 import 'package:meta/meta.dart';
 import 'package:yaroorm/src/database/entity.dart';
 
-import '../_reflection/entity_helpers.dart';
+import '../reflection/entity_helpers.dart';
 import '../database/driver/driver.dart';
 
 part 'primitives/where.dart';

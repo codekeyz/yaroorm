@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 
-import '../_reflection/reflector.dart';
+import '../reflection/reflector.dart';
 
 const entity = ReflectableEntity();
 
