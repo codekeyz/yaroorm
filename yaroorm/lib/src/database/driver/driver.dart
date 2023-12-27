@@ -90,9 +90,7 @@ mixin DriverAble {
   PrimitiveSerializer get serializer;
 }
 
-abstract class DriverTransactor with DriverAble {
-  Future<List<Object?>> commit();
-}
+abstract class DriverTransactor with DriverAble {}
 
 abstract interface class DatabaseDriver with DriverAble {
   factory DatabaseDriver.init(DatabaseConnection dbConn) {

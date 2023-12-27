@@ -12,15 +12,13 @@ class MigrationData extends Entity<int> {
 
   MigrationData(this.migration, this.batch);
 
-  static MigrationData fromJson(Map<String, dynamic> json) =>
-      MigrationData(json['migration'] as String, json['batch'] as int)..id = PrimaryKey.thisFromJson(json['id']);
+  static MigrationData fromJson(Map<String, dynamic> json) => MigrationData(
+        json['migration'] as String,
+        json['batch'] as int,
+      )..id = PrimaryKey.thisFromJson(json['id']);
 
   @override
-  Map<String, dynamic> toJson() => {
-        'id': PrimaryKey.thisToJson(id),
-        'migration': migration,
-        'batch': batch,
-      };
+  Map<String, dynamic> toJson() => {'id': PrimaryKey.thisToJson(id), 'migration': migration, 'batch': batch};
 
   @override
   bool get enableTimestamps => false;
@@ -52,12 +50,12 @@ class Migrator {
       await driver.transaction((transactor) async {
         for (final schema in migration.schemas) {
           final serialized = schema.toScript(driver.blueprint);
-          transactor.execute(serialized);
+          await transactor.execute(serialized);
         }
 
-        await Query.table(Migrator.tableName).driver(transactor).insert(MigrationData(fileName, batchNos));
-
-        await transactor.commit();
+        await Query.table<MigrationData>(Migrator.tableName)
+            .driver(transactor)
+            .insert(MigrationData(fileName, batchNos));
 
         print('✔ done:   $fileName');
       });
@@ -69,15 +67,16 @@ class Migrator {
   static Future<void> resetMigrations(DatabaseDriver driver, Iterable<MigrationTask> allTasks) async {
     await ensureMigrationsTableReady(driver);
 
-    var _ = await Query.table(Migrator.tableName).driver(driver).orderByDesc('batch').all();
-    if (_.isEmpty) {
+    final migrationsList =
+        await Query.table<MigrationData>(Migrator.tableName).driver(driver).orderByDesc('batch').all();
+    if (migrationsList.isEmpty) {
       print('𐄂 skipped: reason:     no migrations to reset');
       return;
     }
 
     print('------- Resetting migrations  📦 -------\n');
 
-    final rollbacks = _.map((e) => MigrationData.fromJson(e)).map((e) {
+    final rollbacks = migrationsList.map((e) {
       final found = allTasks.firstWhereOrNull((m) => m.name == e.migration);
       return found == null ? null : (batch: e.batch, name: e.migration, migration: found);
     }).whereNotNull();
@@ -88,8 +87,8 @@ class Migrator {
   }
 
   static Future<void> rollBackMigration(DatabaseDriver driver, Iterable<MigrationTask> allTasks) async {
-    final MigrationData? migrationDbData =
-        await Query.table(Migrator.tableName).driver(driver).orderByDesc('batch').get();
+    final migrationDbData =
+        await Query.table<MigrationData>(Migrator.tableName).driver(driver).orderByDesc('batch').get();
     if (migrationDbData == null) {
       print('𐄂 skipped: reason:     no migration to rollback');
       return;
@@ -111,16 +110,15 @@ class Migrator {
       await driver.transaction((transactor) async {
         final schemas = rollback.migration?.schemas ?? [];
         if (schemas.isNotEmpty) {
-          // ignore: avoid_function_literals_in_foreach_calls
-          schemas.forEach((e) => transactor.execute(e.toScript(driver.blueprint)));
+          for (var e in schemas) {
+            await transactor.execute(e.toScript(driver.blueprint));
+          }
         }
 
         await Query.table(Migrator.tableName)
             .driver(transactor)
             .delete((where) => where.where('migration', '=', rollback.name))
             .exec();
-
-        await transactor.commit();
       });
 
       print('✔ rolled back: ${rollback.name}');

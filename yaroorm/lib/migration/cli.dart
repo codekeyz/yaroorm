@@ -1,5 +1,3 @@
-import 'dart:isolate';
-
 import 'package:yaroorm/yaroorm.dart';
 
 import '../migration.dart';
@@ -70,10 +68,6 @@ class MigratorCLI {
       _ => throw UnsupportedError(cmd),
     };
 
-    isolatedTask() async {
-      await cmdAction.call(DB.driver(connectionToUse));
-    }
-
-    await Isolate.run(isolatedTask);
+    await cmdAction.call(DB.driver(connectionToUse));
   }
 }

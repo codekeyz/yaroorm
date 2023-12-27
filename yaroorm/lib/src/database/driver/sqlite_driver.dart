@@ -152,11 +152,6 @@ class _SqliteTransactor implements DriverTransactor {
   }
 
   @override
-  Future<List<Object?>> commit() {
-    throw Exception('SQLite transaction does not require a call to `commit`');
-  }
-
-  @override
   PrimitiveSerializer get serializer => _serializer;
 }
 

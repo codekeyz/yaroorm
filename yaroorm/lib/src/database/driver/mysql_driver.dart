@@ -163,11 +163,6 @@ class _MysqlTransactor extends DriverTransactor {
   }
 
   @override
-  Future<List<Object?>> commit() {
-    throw UnsupportedError('Commit not supported for MariaDB & MySQL Driver');
-  }
-
-  @override
   PrimitiveSerializer get serializer => _primitiveSerializer;
 }
 
