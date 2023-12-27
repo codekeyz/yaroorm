@@ -24,7 +24,6 @@ void runIntegrationTest(DatabaseDriver driver) {
       AddUsersTable().up(schemas);
 
       final createTableScripts = schemas.map((schema) => schema.toScript(driver.blueprint));
-
       await driver.transaction((txn) => Future.wait(createTableScripts.map(txn.execute)));
 
       final result = await Future.wait([
@@ -150,9 +149,10 @@ void runIntegrationTest(DatabaseDriver driver) {
       final schemas = <Schema>[];
       AddUsersTable().down(schemas);
 
-      final dropTableScripts = schemas.map((schema) => schema.toScript(driver.blueprint)).join('\n');
-
-      await driver.execute(dropTableScripts);
+      final dropTableScripts = schemas.map((schema) => schema.toScript(driver.blueprint));
+      for (final script in dropTableScripts) {
+        await driver.execute(script);
+      }
 
       final hasUsersTable = await driver.hasTable('users');
       expect(hasUsersTable, isFalse);
