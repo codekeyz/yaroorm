@@ -1,5 +1,6 @@
 import 'package:meta/meta.dart';
 import 'package:yaroo/http/_pharaoh.dart';
+import 'package:yaroo/http/meta.dart';
 
 import '../_reflector/reflector.dart';
 import '../core.dart';
@@ -58,25 +59,28 @@ typedef ControllerMethodDefinition = (Type controller, Symbol symbol);
 
 class ControllerMethod {
   final ControllerMethodDefinition method;
+  final List<ControllerMethodParam> params;
 
   String get methodName => symbolToString(method.$2);
 
   Type get controller => method.$1;
 
-  ControllerMethod(this.method);
+  ControllerMethod(this.method, [this.params = const []]);
 }
 
 class ControllerMethodParam {
   final String name;
   final Type type;
-  final bool required;
-  final List<Object> metadata;
+  final bool optional;
+  final dynamic defaultValue;
+  final RequestAnnotation? meta;
 
   const ControllerMethodParam(
     this.name,
     this.type, {
-    this.metadata = const [],
-    this.required = true,
+    this.meta,
+    this.optional = false,
+    this.defaultValue,
   });
 }
 
