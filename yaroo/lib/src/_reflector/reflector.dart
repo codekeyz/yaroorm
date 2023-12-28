@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:reflectable/reflectable.dart' as r;
+import 'package:yaroo/http/meta.dart';
 
 import '../../../http/http.dart';
 import '../_container/container.dart';
@@ -93,9 +94,21 @@ ControllerMethod parseControllerMethod(ControllerMethodDefinition defn) {
     throw ArgumentError('$type does not have method  #${symbolToString(method)}');
   }
 
-  if (actualMethod.parameters.isNotEmpty) {
-    throw ArgumentError.value('$type.${actualMethod.simpleName}', null, 'Controller methods cannot have parameters');
+  final parameters = actualMethod.parameters;
+  if (parameters.isEmpty) return ControllerMethod(defn);
+
+  if (parameters.any((e) => e.metadata.length > 1)) {
+    throw ArgumentError('Multiple annotations using on $type #${symbolToString(method)} parameters');
   }
 
-  return ControllerMethod(defn);
+  final params = parameters.map((e) {
+    final meta = e.metadata.first;
+    if (meta is! RequestAnnotation) {
+      throw ArgumentError('Invalid annotation $meta used on $type #${symbolToString(method)} parameter');
+    }
+    return ControllerMethodParam(e.simpleName, e.reflectedType,
+        defaultValue: e.defaultValue, optional: e.isOptional, meta: meta);
+  }).toList();
+
+  return ControllerMethod(defn, params);
 }
