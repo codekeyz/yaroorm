@@ -26,14 +26,13 @@ class PostgreSqlDriver implements DatabaseDriver {
       assert(config.password != null, 'Password is required when :secure true');
     }
 
-
     db = await pg.Connection.open(pg.Endpoint(
       host: config.host!,
       database: config.database,
       username: config.username,
       password: config.password,
       port: config.port == null ? 5432 : config.port!,
-    ));
+    ),settings: pg.ConnectionSettings(sslMode: pg.SslMode.disable));
     return this;
   }
 
@@ -45,12 +44,12 @@ class PostgreSqlDriver implements DatabaseDriver {
 
   @override
   Future<void> disconnect() async {
-    if(!isOpen) return;
+    if (!isOpen) return;
     await db.close();
   }
 
   Future<List<Map<String, dynamic>>> _execRawQuery(String script) async {
-    if(!isOpen) await connect();
+    if (!isOpen) await connect();
     final result = await db.execute(script);
     return result.map((e) => e.toColumnMap()).toList();
   }
@@ -92,7 +91,7 @@ class PostgreSqlDriver implements DatabaseDriver {
 
   @override
   Future<bool> hasTable(String tableName) async {
-    final result = await db.execute(
+    final result = await _execRawQuery(
         '''SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='$tableName')''');
     if (result.isEmpty) return false;
     return true;
@@ -104,7 +103,7 @@ class PostgreSqlDriver implements DatabaseDriver {
   }
 
   @override
-  Future<void> transaction(void Function(DriverTransactor transactor) func)  {
+  Future<void> transaction(void Function(DriverTransactor transactor) func) {
     return db.runTx((txn) async => func(_PgSqlDriverTransactor(txn)));
   }
 
@@ -126,7 +125,7 @@ class _PgSqlDriverTransactor extends DriverTransactor {
   }
 
   @override
-  Future<void> delete(DeleteQuery query)async {
+  Future<void> delete(DeleteQuery query) async {
     final sql = _primitiveSerializer.acceptDeleteQuery(query);
     await rawQuery(sql);
   }
@@ -153,7 +152,7 @@ class _PgSqlDriverTransactor extends DriverTransactor {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> rawQuery(String script)async {
+  Future<List<Map<String, dynamic>>> rawQuery(String script) async {
     final result = await txn.execute(script);
     return result.map((e) => e.toColumnMap()).toList();
   }
@@ -162,21 +161,19 @@ class _PgSqlDriverTransactor extends DriverTransactor {
   PrimitiveSerializer get serializer => _primitiveSerializer;
 
   @override
-  Future<void> update(UpdateQuery query)async {
+  Future<void> update(UpdateQuery query) async {
     final sql = _primitiveSerializer.acceptUpdateQuery(query);
     await rawQuery(sql);
   }
-
 }
 
 @protected
-class PgSqlPrimitiveSerializer extends SqliteSerializer  {
+class PgSqlPrimitiveSerializer extends SqliteSerializer {
   const PgSqlPrimitiveSerializer();
 }
 
 @protected
 class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
-
   String _getColumn(String name, String type, {nullable = false, defaultValue}) {
     final sb = StringBuffer()..write('$name $type');
     if (!nullable) {

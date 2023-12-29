@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'package:path/path.dart' as p;
+
 import 'package:test/test.dart';
 import 'package:yaroorm/src/database/driver/driver.dart';
 import 'package:yaroorm/src/query/query.dart';
@@ -768,5 +771,47 @@ void main() {
         'SELECT * FROM users WHERE votes > 100 OR (name = \'Abigail\' AND votes > 50);',
       );
     });
+
+    test('Check existence of users table', () async {
+      // Check if the table exists
+      bool tableExists = await driver.hasTable('users');
+
+      // Assert that the table exists
+      expect(tableExists, isA<bool>());
+    });
+
+
+    test('Update users table', () async {
+      // Generate the SQL command for updating the record
+      var updateQuery = UpdateQuery('users', values: {'username': 'newUsername'}).where('id', '=', 1);
+      var updateCommand = driver.serializer.acceptUpdateQuery(updateQuery);
+
+      // Execute the SQL command
+      await driver.execute(updateCommand);
+
+      // Query the updated record
+      var selectQuery = Query.table('users').where('id', '=', 1);
+      var result = await driver.query(selectQuery);
+
+      // Check if the record was updated successfully
+      expect(result.first['username'], 'newUsername');
+    });
+
+    test('Delete from users table', () async {
+      // Generate the SQL command for deleting the record
+      var deleteQuery = DeleteQuery('users').where('id', '=', 1);
+      var deleteCommand = driver.serializer.acceptDeleteQuery(deleteQuery);
+
+      // Execute the SQL command
+      await driver.execute(deleteCommand);
+
+      // Query the deleted record
+      var selectQuery = Query.table('users').where('id', '=', 1);
+      var result = await driver.query(selectQuery);
+
+      // Check if the record was deleted successfully
+      expect(result, isEmpty);
+    });
   });
+
 }
