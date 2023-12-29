@@ -27,13 +27,15 @@ class PostgreSqlDriver implements DatabaseDriver {
       assert(config.password != null, 'Password is required when :secure true');
     }
 
-    db = await pg.Connection.open(pg.Endpoint(
-      host: config.host!,
-      database: config.database,
-      username: config.username,
-      password: config.password,
-      port: config.port == null ? 5432 : config.port!,
-    ),settings: pg.ConnectionSettings(sslMode: pg.SslMode.disable));
+    db = await pg.Connection.open(
+        pg.Endpoint(
+          host: config.host!,
+          database: config.database,
+          username: config.username,
+          password: config.password,
+          port: config.port == null ? 5432 : config.port!,
+        ),
+        settings: pg.ConnectionSettings(sslMode: pg.SslMode.disable));
     return this;
   }
 
@@ -50,7 +52,7 @@ class PostgreSqlDriver implements DatabaseDriver {
   }
 
   Future<List<Map<String, dynamic>>> _execRawQuery(String script) async {
-   // if (!isOpen) await connect();
+    // if (!isOpen) await connect();
     final result = await db.execute(script);
     return result.map((e) => e.toColumnMap()).toList();
   }
@@ -60,7 +62,7 @@ class PostgreSqlDriver implements DatabaseDriver {
 
   @override
   Future<int> insert(InsertQuery query) async {
-   // if (!isOpen) await connect();
+    // if (!isOpen) await connect();
     final sql = _primitiveSerializer.acceptInsertQuery(query);
     final result = await db.execute(sql);
     return result.affectedRows;
@@ -130,7 +132,7 @@ class _PgSqlDriverTransactor extends DriverTransactor {
   Future execute(String script) => rawQuery(script);
 
   @override
-  Future<int> insert(InsertQuery query)  async{
+  Future<int> insert(InsertQuery query) async {
     final sql = _primitiveSerializer.acceptInsertQuery(query);
     final result = await txn.execute(sql);
     return result.affectedRows;
@@ -230,13 +232,13 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   }
 
   @override
-  void text(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate, int length = 1}) {
+  void text(String name,
+      {bool nullable = false, String? defaultValue, String? charset, String? collate, int length = 1}) {
     statements.add(_getColumn(name, 'TEXT', nullable: nullable, defaultValue: null));
   }
 
   @override
   void longText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
-
     throw UnimplementedError('longText not implemented for Postgres');
   }
 
@@ -251,13 +253,15 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   }
 
   @override
-  void binary(String name,{bool nullable = false, String? defaultValue, String? charset, String? collate, int size = 1}) {
+  void binary(String name,
+      {bool nullable = false, String? defaultValue, String? charset, String? collate, int size = 1}) {
     statements.add(_getColumn(name, "BYTEA", nullable: nullable, defaultValue: null));
   }
 
   @override
-  void varbinary(String name,{bool nullable = false, String? defaultValue, String? charset, String? collate, int size = 1}) {
-   throw UnimplementedError('varbinary not implemented for Postgres');
+  void varbinary(String name,
+      {bool nullable = false, String? defaultValue, String? charset, String? collate, int size = 1}) {
+    throw UnimplementedError('varbinary not implemented for Postgres');
   }
 
   @override
