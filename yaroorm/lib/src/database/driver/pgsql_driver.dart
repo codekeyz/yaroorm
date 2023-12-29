@@ -206,7 +206,7 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
 
   @override
   String renameScript(String oldName, String toName) {
-    return 'ALTER TABLE $oldName RENAME TO $toName';
+    return 'ALTER TABLE $oldName RENAME TO $toName;';
   }
 
   @override
@@ -275,4 +275,5 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
       {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
     throw UnimplementedError('set not implemented for Postgres');
   }
+
 }

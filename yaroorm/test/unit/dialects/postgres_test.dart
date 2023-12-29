@@ -72,6 +72,18 @@ void main() {
       final expectedSql = 'CREATE TABLE users (name VARCHAR(255) NOT NULL DEFAULT John Doe, age INTEGER NOT NULL DEFAULT 30, score NUMERIC(10, 0 ) NOT NULL DEFAULT 100.0, is_active BOOLEAN NOT NULL DEFAULT true, created_at TIMESTAMP NOT NULL DEFAULT $currentDate, updated_at TIMESTAMP NOT NULL DEFAULT $currentDate);';
       expect(query.toScript(PgSqlTableBlueprint()), expectedSql);
     });
+
+    test('Drop if Exist', () async {
+      final query = Schema.dropIfExists('users');
+
+      expect(query.toScript(PgSqlTableBlueprint()), 'DROP TABLE IF EXISTS users;');
+    });
+
+    test('Rename Table', () async {
+      final query = Schema.rename('users', 'customers');
+
+      expect(query.toScript(PgSqlTableBlueprint()), 'ALTER TABLE users RENAME TO customers;');
+    });
   });
 
   group('Postgres Query Builder', () {
