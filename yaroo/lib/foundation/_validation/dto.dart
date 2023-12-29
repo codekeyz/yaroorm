@@ -22,7 +22,7 @@ class DtoReflector extends r.Reflectable {
 const dtoReflector = DtoReflector();
 
 @dtoReflector
-abstract class BaseDTO implements _BaseDTOImpl {
+abstract class BaseDTO extends _BaseDTOImpl {
   @override
   noSuchMethod(Invocation invocation) {
     final property = symbolToString(invocation.memberName);

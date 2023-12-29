@@ -21,8 +21,18 @@ class _YarooAppImpl implements Application {
   }
 
   @override
-  void useViewEngine(ViewEngine viewEngine) {
-    _viewEngine = viewEngine;
+  void useViewEngine(ViewEngine viewEngine) => _viewEngine = viewEngine;
+
+  FutureOr<Response> onException(Object error, Request request) {
+    final response = Response.create();
+
+    if (error is RequestValidationError) {
+      final errorsList = error.errors;
+      final errorData = errorsList == null ? {'error': error.message} : {'errors': errorsList};
+      return response.json(errorData, statusCode: HttpStatus.badRequest);
+    }
+
+    return response.internalServerError(error.toString());
   }
 
   @override
@@ -39,5 +49,6 @@ class _YarooAppImpl implements Application {
 
   Pharaoh _createPharaohInstance() => Pharaoh()
     ..useSpanner(_spanner)
+    ..onError(onException)
     ..viewEngine = _viewEngine;
 }
