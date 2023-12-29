@@ -21,6 +21,8 @@ dependencies:
   dotenv: ^4.2.0
   get_it: ^7.6.4
   uuid: ^4.2.1
+  ez_validator:
+    path: ../third_party/ez_validator
 
   # build related
   build_runner: any
