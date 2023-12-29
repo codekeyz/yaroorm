@@ -306,15 +306,15 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
 
   @override
   void char(String name,
-      {bool nullable = false, String? defaultValue, int size = 255, String? charset, String? collate, int length = 1}) {
+      {bool nullable = false, String? defaultValue, String? charset, String? collate, int length = 1}) {
     final type = _getStringType('CHAR($length)', charset: charset, collate: collate);
     statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void varchar(String name,
-      {bool nullable = false, String? defaultValue, int size = 255, String? charset, String? collate}) {
-    final type = _getStringType('VARCHAR($size)', charset: charset, collate: collate);
+      {bool nullable = false, String? defaultValue, int length = 255, String? charset, String? collate}) {
+    final type = _getStringType('VARCHAR($length)', charset: charset, collate: collate);
     statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
@@ -334,15 +334,15 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
 
   @override
   void binary(String name,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate, int length = 1}) {
-    final type = _getStringType('BINARY($length)', charset: charset, collate: collate);
+      {bool nullable = false, String? defaultValue, String? charset, String? collate, int size = 1}) {
+    final type = _getStringType('BINARY($size)', charset: charset, collate: collate);
     statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void varbinary(String name,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate, int length = 1}) {
-    final type = _getStringType('VARBINARY($length)', charset: charset, collate: collate);
+      {bool nullable = false, String? defaultValue, String? charset, String? collate, int size = 1}) {
+    final type = _getStringType('VARBINARY($size)', charset: charset, collate: collate);
     statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 }

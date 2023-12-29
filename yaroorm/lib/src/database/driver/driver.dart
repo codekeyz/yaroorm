@@ -4,7 +4,6 @@ import 'package:yaroorm/src/database/driver/pgsql_driver.dart';
 import '../../query/primitives/serializer.dart';
 import '../../query/query.dart';
 import '../../../migration.dart';
-import 'mysql_driver.dart';
 import 'sqlite_driver.dart';
 
 enum DatabaseDriverType { sqlite, pgsql, mysql, mariadb }

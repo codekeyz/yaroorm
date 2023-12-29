@@ -28,6 +28,11 @@ final config = YaroormConfig.from({
       'port': 3001,
       ..._baseConfig,
     },
+    'foo_pgsql': {
+      'driver': 'pgsql',
+      'port': 5432,
+      ..._baseConfig,
+    },
   },
   'migrations_table': 'migrations',
   'migrations': [AddUsersTable()]
