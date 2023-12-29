@@ -46,7 +46,7 @@ extension ClassMirrorExtensions on r.ClassMirror {
     return filteredDeclarationsOf(this, (v) => v is r.VariableMirror);
   }
 
-  List<r.MethodMirror> get getter {
+  List<r.MethodMirror> get getters {
     return filteredDeclarationsOf(this, (v) => v is r.MethodMirror && v.isGetter);
   }
 
