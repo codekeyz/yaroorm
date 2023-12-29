@@ -1,5 +1,6 @@
 import 'package:meta/meta.dart';
 import 'package:postgres/postgres.dart' as pg;
+import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/src/database/driver/mysql_driver.dart';
 import 'package:yaroorm/src/query/primitives/serializer.dart';
 import 'package:yaroorm/yaroorm.dart';
@@ -49,7 +50,7 @@ class PostgreSqlDriver implements DatabaseDriver {
   }
 
   Future<List<Map<String, dynamic>>> _execRawQuery(String script) async {
-    if (!isOpen) await connect();
+   // if (!isOpen) await connect();
     final result = await db.execute(script);
     return result.map((e) => e.toColumnMap()).toList();
   }
@@ -59,8 +60,8 @@ class PostgreSqlDriver implements DatabaseDriver {
 
   @override
   Future<int> insert(InsertQuery query) async {
+   // if (!isOpen) await connect();
     final sql = _primitiveSerializer.acceptInsertQuery(query);
-    if (!isOpen) await connect();
     final result = await db.execute(sql);
     return result.affectedRows;
   }
@@ -120,11 +121,6 @@ class _PgSqlDriverTransactor extends DriverTransactor {
   _PgSqlDriverTransactor(this.txn);
 
   @override
-  Future<List<Object?>> commit() {
-    throw UnsupportedError('Commit not supported for Postgres Driver');
-  }
-
-  @override
   Future<void> delete(DeleteQuery query) async {
     final sql = _primitiveSerializer.acceptDeleteQuery(query);
     await rawQuery(sql);
@@ -134,9 +130,10 @@ class _PgSqlDriverTransactor extends DriverTransactor {
   Future execute(String script) => rawQuery(script);
 
   @override
-  Future insert(InsertQuery query) {
-    // TODO: implement insert
-    throw UnimplementedError();
+  Future<int> insert(InsertQuery query)  async{
+    final sql = _primitiveSerializer.acceptInsertQuery(query);
+    final result = await txn.execute(sql);
+    return result.affectedRows;
   }
 
   @override
@@ -201,12 +198,77 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   @override
   void id({name = 'id', autoIncrement = true}) {
     final sb = StringBuffer()..write(name);
-    sb.write(autoIncrement ? "SERIAL PRIMARY KEY" : "INTEGER PRIMARY KEY");
+    sb.write(autoIncrement ? " SERIAL PRIMARY KEY" : " INTEGER PRIMARY KEY");
     statements.add(sb.toString());
   }
 
   @override
   String renameScript(String oldName, String toName) {
     return 'ALTER TABLE $oldName RENAME TO $toName';
+  }
+
+  @override
+  void float(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+    final type = 'DOUBLE PRECISION';
+    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void double(String name, {bool nullable = false, num? defaultValue, int? precision = 10, int? scale = 0}) {
+    final type = 'NUMERIC($precision, $scale )';
+    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void tinyInt(String name, {bool nullable = false, num? defaultValue}) {
+    throw UnimplementedError('tinyInt not implemented for Postgres');
+  }
+
+  @override
+  void mediumInteger(String name, {bool nullable = false, num? defaultValue}) {
+    statements.add(_getColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void text(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate, int length = 1}) {
+    statements.add(_getColumn(name, 'TEXT', nullable: nullable, defaultValue: null));
+  }
+
+  @override
+  void longText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+
+    throw UnimplementedError('longText not implemented for Postgres');
+  }
+
+  @override
+  void mediumText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+    throw UnimplementedError('mediumText not implemented for Postgres');
+  }
+
+  @override
+  void tinyText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+    throw UnimplementedError('tinyText not implemented for Postgres');
+  }
+
+  @override
+  void binary(String name,{bool nullable = false, String? defaultValue, String? charset, String? collate, int size = 1}) {
+    statements.add(_getColumn(name, "BYTEA", nullable: nullable, defaultValue: null));
+  }
+
+  @override
+  void varbinary(String name,{bool nullable = false, String? defaultValue, String? charset, String? collate, int size = 1}) {
+   throw UnimplementedError('varbinary not implemented for Postgres');
+  }
+
+  @override
+  void enums(String name, List<String> values,
+      {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+    throw UnimplementedError('enums not implemented for Postgres');
+  }
+
+  @override
+  void set(String name, List<String> values,
+      {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+    throw UnimplementedError('set not implemented for Postgres');
   }
 }
