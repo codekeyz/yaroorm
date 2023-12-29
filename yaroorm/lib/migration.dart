@@ -76,7 +76,7 @@ abstract interface class TableBlueprint {
     String name, {
     bool nullable = false,
     String? defaultValue,
-    int size = 255,
+    int length = 255,
     String? charset,
     String? collate,
   });
@@ -108,7 +108,7 @@ abstract interface class TableBlueprint {
   void binary(
     String name, {
     bool nullable = false,
-    int length = 1,
+    int size = 1,
     String? defaultValue,
     String? charset,
     String? collate,
@@ -117,7 +117,7 @@ abstract interface class TableBlueprint {
   void varbinary(
     String name, {
     bool nullable = false,
-    int length = 1,
+    int size = 1,
     String? defaultValue,
     String? charset,
     String? collate,

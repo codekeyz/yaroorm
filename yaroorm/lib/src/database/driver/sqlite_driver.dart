@@ -425,7 +425,7 @@ class SqliteTableBlueprint implements TableBlueprint {
 
   @override
   void binary(String name,
-      {bool nullable = false, int length = 1, String? defaultValue, String? charset, String? collate}) {
+      {bool nullable = false, int size = 1, String? defaultValue, String? charset, String? collate}) {
     statements.add(_getColumn(name, 'BLOB', nullable: nullable, defaultValue: defaultValue));
   }
 
@@ -501,13 +501,13 @@ class SqliteTableBlueprint implements TableBlueprint {
 
   @override
   void varbinary(String name,
-      {bool nullable = false, int length = 1, String? defaultValue, String? charset, String? collate}) {
+      {bool nullable = false, int size = 1, String? defaultValue, String? charset, String? collate}) {
     binary(name, nullable: nullable, defaultValue: defaultValue);
   }
 
   @override
   void varchar(String name,
-      {bool nullable = false, String? defaultValue, int size = 255, String? charset, String? collate}) {
+      {bool nullable = false, String? defaultValue, int length = 255, String? charset, String? collate}) {
     string(name, nullable: nullable, defaultValue: defaultValue);
   }
 
