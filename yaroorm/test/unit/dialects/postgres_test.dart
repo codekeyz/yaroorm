@@ -4,8 +4,6 @@ import 'package:yaroorm/src/database/driver/pgsql_driver.dart';
 import '../../fixtures/orm_config.dart' as db;
 import 'package:yaroorm/yaroorm.dart';
 
-import '../../fixtures/test_data.dart';
-
 void main() {
   DB.init(db.config);
 
