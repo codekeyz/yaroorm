@@ -1,40 +1,42 @@
+import 'package:grammer/grammer.dart';
 import 'package:meta/meta.dart';
+import 'package:yaroorm/src/database/entity.dart';
 
-import '../_reflection/entity_helpers.dart';
 import '../database/driver/driver.dart';
+import '../reflection/entity_helpers.dart';
 
-part 'operations/query.dart';
 part 'primitives/where.dart';
 part 'primitives/where_impl.dart';
+part 'query_impl.dart';
 
-mixin ReadOperation {
-  Future<T?> get<T>();
+mixin ReadOperation<Result> {
+  Future<Result?> get([dynamic id]);
 
-  Future<List<T>> all<T>();
+  Future<List<Result>> all();
 }
 
-mixin FindOperation {
-  Future<T?> findOne<T>();
+mixin FindOperation<Result> {
+  Future<Result?> findOne();
 
-  Future<List<T>> findMany<T>();
+  Future<List<Result>> findMany();
 }
 
 mixin InsertOperation {
-  InsertQuery insert(Map<String, dynamic> values);
+  Future insert<T extends Entity>(T entity);
 
-  InsertManyQuery insertAll(List<Map<String, dynamic>> values);
+  Future insertMany<T extends Entity>(List<T> entities);
 }
 
 mixin LimitOperation<ReturnType> {
-  ReturnType take<T>(int limit);
+  Future<List<ReturnType>> take(int limit);
 }
 
 mixin UpdateOperation {
-  UpdateQuery update({required WhereClause Function(WhereClause builder) where, required Map<String, dynamic> values});
+  UpdateQuery update({required WhereClause Function(Query query) where, required Map<String, dynamic> values});
 }
 
 mixin DeleteOperation {
-  DeleteQuery delete(WhereClause Function(WhereClause builder) whereFunc);
+  DeleteQuery delete(WhereClause Function(Query query) where);
 }
 
 typedef OrderBy = ({String field, OrderByDirection direction});
@@ -47,6 +49,8 @@ mixin OrderByOperation<ReturnType> {
 
 abstract interface class QueryBase<Owner> {
   final String tableName;
+
+  String? database;
 
   DriverAble? _queryDriver;
 
@@ -69,18 +73,18 @@ abstract interface class QueryBase<Owner> {
   String get statement;
 }
 
-abstract class Query extends QueryBase<Query>
+abstract interface class Query<Result> extends QueryBase<Query<Result>>
     with
-        ReadOperation,
-        WhereOperation,
-        LimitOperation,
+        ReadOperation<Result>,
+        WhereOperation<Result>,
+        LimitOperation<Result>,
+        OrderByOperation<Query<Result>>,
         InsertOperation,
         DeleteOperation,
-        UpdateOperation,
-        OrderByOperation<Query> {
+        UpdateOperation {
   late final Set<String> fieldSelections;
   late final Set<OrderBy> orderByProps;
-  late final List<WhereClause> whereClauses;
+  late final List<WhereClause<Result>> whereClauses;
 
   late int? _limit;
 
@@ -90,25 +94,28 @@ abstract class Query extends QueryBase<Query>
         whereClauses = [],
         _limit = null;
 
-  factory Query.table(String tableName) => _QueryImpl(tableName);
+  static Query<Model> table<Model>([String? tableName]) {
+    if (tableName == null) {
+      if (Model != Entity) {
+        tableName = Model.toString().toPlural().first;
+      } else {
+        throw ArgumentError.notNull(tableName);
+      }
+    }
+    return QueryImpl<Model>(tableName);
+  }
 
   int? get limit => _limit;
 
   @override
-  DeleteQuery delete(WhereClause Function(WhereClause builder) whereFunc) {
-    return DeleteQuery(tableName, whereClause: whereFunc(WhereClauseImpl(this))).driver(queryDriver);
+  DeleteQuery delete(WhereClause Function(Query query) where) {
+    return DeleteQuery(tableName, whereClause: where(this)).driver(queryDriver);
   }
 
   @override
-  UpdateQuery update({required WhereClause Function(WhereClause builder) where, required Map<String, dynamic> values}) {
-    return UpdateQuery(tableName, whereClause: where(WhereClauseImpl(this)), values: values).driver(queryDriver);
+  UpdateQuery update({required WhereClause Function(Query query) where, required Map<String, dynamic> values}) {
+    return UpdateQuery(tableName, whereClause: where(this), values: values).driver(queryDriver);
   }
-
-  @override
-  Future<List<T>> take<T>(int limit);
-
-  @override
-  String get statement => queryDriver.serializer.acceptReadQuery(this);
 }
 
 @protected

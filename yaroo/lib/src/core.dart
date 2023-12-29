@@ -3,9 +3,7 @@
 import 'dart:async';
 
 import 'package:meta/meta.dart';
-import 'package:pharaoh/pharaoh.dart';
-import 'package:spookie/spookie.dart';
-import 'package:yaroo/db/db.dart';
+import 'package:spookie/spookie.dart' as spookie;
 
 import '../../http/http.dart';
 import '../../http/kernel.dart';
@@ -26,7 +24,9 @@ abstract class AppInstance {
 }
 
 abstract interface class Application {
-  static final Application _instance = instanceFromRegistry<Application>();
+  Application(AppConfig config);
+
+  static late final Application _instance;
 
   String get name;
 
@@ -38,13 +38,9 @@ abstract interface class Application {
 
   T singleton<T extends Object>(T instance);
 
-  void useMiddlewares(List<Middleware> middlewares);
-
   void useRoutes(RoutesResolver routeResolver);
 
   void useViewEngine(ViewEngine viewEngine);
-
-  void _useConfig(AppConfig config);
 }
 
 class AppServiceProvider extends ServiceProvider {
@@ -62,31 +58,22 @@ class AppServiceProvider extends ServiceProvider {
 }
 
 abstract class ApplicationFactory {
+  static late final Kernel _appKernel;
+
   final AppConfig appConfig;
-  final DatabaseConfig? dbConfig;
-  final Kernel _kernel;
 
-  ApplicationFactory(
-    this._kernel,
-    this.appConfig, {
-    this.dbConfig,
-  });
-
-  List<Middleware> get globalMiddlewares => [bodyParser];
+  ApplicationFactory(Kernel kernel, this.appConfig) {
+    _appKernel = kernel;
+  }
 
   Future<void> bootstrap({bool listen = true}) async {
-    if (dbConfig != null) {
-      DB.init(dbConfig!);
-      await DB.defaultDriver.connect();
-    }
-
     await _bootstrapComponents(appConfig);
 
     if (listen) await startServer();
   }
 
   Future<void> startServer() async {
-    final app = instanceFromRegistry<Application>() as _YarooAppImpl;
+    final app = Application._instance as _YarooAppImpl;
 
     await app._createPharaohInstance().listen(port: app.port);
 
@@ -94,24 +81,23 @@ abstract class ApplicationFactory {
   }
 
   Future<void> _bootstrapComponents(AppConfig config) async {
-    final application = registerSingleton<Application>(_YarooAppImpl(Spanner()));
+    final spanner = Spanner()..addMiddleware('/', bodyParser);
+    final globalMdw = ApplicationFactory.globalMiddleware;
+    if (globalMdw != null) spanner.addMiddleware<HandlerFunc>('/', globalMdw);
 
-    application
-      .._useConfig(config)
-      ..singleton<Kernel>(_kernel)
-      ..useMiddlewares(globalMiddlewares);
+    Application._instance = _YarooAppImpl(config, spanner);
 
-    /// boostrap providers
-    for (final type in appConfig.providers) {
-      final provider = createNewInstance<ServiceProvider>(type);
-      await registerSingleton(provider).boot();
+    final providers = config.providers.map((e) => createNewInstance<ServiceProvider>(e));
+
+    /// register dependencies
+    for (final provider in providers) {
+      await Future.sync(provider.register);
     }
-  }
 
-  @visibleForTesting
-  Future<Spookie> get tester {
-    final application = (instanceFromRegistry<Application>() as _YarooAppImpl);
-    return request(application._createPharaohInstance());
+    /// boot providers
+    for (final provider in providers) {
+      await Future.sync(provider.boot);
+    }
   }
 
   static RequestHandler buildControllerMethod(ControllerMethod method) {
@@ -130,5 +116,27 @@ abstract class ApplicationFactory {
 
       return result;
     };
+  }
+
+  static Iterable<HandlerFunc> resolveMiddlewareForGroup(String group) {
+    final middlewareGroup = ApplicationFactory._appKernel.middlewareGroups[group];
+    if (middlewareGroup == null) throw ArgumentError('Middleware group `$group` does not exist');
+    return middlewareGroup.map<Middleware>((type) => createNewInstance(type)).map((e) => e.handle);
+  }
+
+  static HandlerFunc? get globalMiddleware {
+    final middleware = ApplicationFactory._appKernel.middleware;
+    if (middleware.isEmpty) return null;
+
+    return ApplicationFactory._appKernel.middleware
+        .map<Middleware>((type) => createNewInstance(type))
+        .map((e) => e.handle)
+        .reduce((val, e) => val.chain(e));
+  }
+
+  @visibleForTesting
+  Future<spookie.Spookie> get tester {
+    final app = (Application._instance as _YarooAppImpl);
+    return spookie.request(app._createPharaohInstance());
   }
 }

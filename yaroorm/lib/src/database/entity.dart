@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 
-import '../_reflection/reflector.dart';
+import '../reflection/reflector.dart';
 
 const entity = ReflectableEntity();
 
@@ -44,7 +44,7 @@ class PrimaryKey<T> {
 abstract class Entity<T> {
   Entity() {
     if (T == dynamic) {
-      throw Exception('Entity Primary Key Data Type is required. Use either `int` or `String`');
+      throw Exception('Entity Primary Key Data Type is required. Use either `extends Entity<int>` or `Entity<String>`');
     }
   }
 

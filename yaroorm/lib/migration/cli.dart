@@ -1,10 +1,10 @@
-import 'dart:isolate';
-
-import 'package:yaroo/db/db.dart';
-import 'package:yaroo/db/migration/_migrator.dart';
-import 'package:yaroo/db/migration/_utils.dart';
-import 'package:yaroo/src/config/database.dart';
 import 'package:yaroorm/yaroorm.dart';
+
+import '../migration.dart';
+import 'migrator.dart';
+import 'utils.dart';
+
+export 'cli.dart';
 
 typedef MigrationTask = ({String name, List<Schema> schemas});
 
@@ -26,6 +26,8 @@ class _Task {
 }
 
 class MigratorCLI {
+  MigratorCLI._();
+
   /// commands
   static const String migrate = 'migrate';
   static const String migrateReset = 'migrate:reset';
@@ -38,27 +40,28 @@ class MigratorCLI {
       ..integer('batch');
   });
 
-  static Future<void> processCmd(String cmd, DatabaseConfig config, {List<String> cmdArguments = const []}) async {
-    final classes = config.migrations;
+  static Future<void> processCmd(String cmd, {List<String> cmdArguments = const []}) async {
+    final dbConfig = DB.config;
 
-    var connectionNameFromArgs = getValueFromCLIArs('database', cmdArguments);
+    /// get connection name from args if present eg: --database=sqlite will produce sqlite
+    var connectionNameFromArgs = getValueFromCLIArgs('database', cmdArguments);
     if (connectionNameFromArgs != null) {
-      if (!config.connections.any((e) => e.name == connectionNameFromArgs)) {
-        throw ArgumentError(connectionNameFromArgs, 'No database connection found with name: $connectionNameFromArgs');
+      if (!dbConfig.connections.any((e) => e.name == connectionNameFromArgs)) {
+        throw ArgumentError.value(
+            connectionNameFromArgs, null, 'No database connection found with name: $connectionNameFromArgs');
       }
     }
 
-    final connectionToUse = connectionNameFromArgs ?? config.defaultConnName;
-    Migrator.tableName = config.migrationsTable;
+    final connectionToUse = connectionNameFromArgs ?? dbConfig.defaultConnName;
+    Migrator.tableName = dbConfig.migrationsTable;
 
-    final Iterable<Migration> migrationsForConnection =
-        (classes).where((e) => (e.connection == 'default' ? config.defaultConnName : e.connection) == connectionToUse);
-    if (migrationsForConnection.isEmpty) {
+    final tasks = (dbConfig.migrations)
+        .where((e) => e.connection == null ? true : e.connection == connectionToUse)
+        .map((e) => _Task(e));
+    if (tasks.isEmpty) {
       print('No migrations found for connection: $connectionToUse');
       return;
     }
-
-    final tasks = migrationsForConnection.map((e) => _Task(e));
 
     cmd = cmd.toLowerCase();
     final MigratorAction cmdAction = switch (cmd) {
@@ -68,11 +71,6 @@ class MigratorCLI {
       _ => throw UnsupportedError(cmd),
     };
 
-    isolatedTask() async {
-      DB.init(config);
-      await cmdAction.call(DB.driver(connectionToUse));
-    }
-
-    await Isolate.run(isolatedTask);
+    await cmdAction.call(DB.driver(connectionToUse));
   }
 }

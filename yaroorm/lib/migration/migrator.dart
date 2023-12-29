@@ -1,22 +1,28 @@
 import 'package:collection/collection.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import '_utils.dart';
 import 'cli.dart';
+import 'utils.dart';
 
-class _MigrationDbData {
-  final int id;
+typedef Rollback = ({int batch, String name, MigrationTask? migration});
+
+class MigrationData extends Entity<int> {
   final String migration;
   final int batch;
 
-  const _MigrationDbData(this.id, this.migration, this.batch);
+  MigrationData(this.migration, this.batch);
 
-  static _MigrationDbData from(Map<String, dynamic> data) {
-    return _MigrationDbData(data['id'], data['migration'], data['batch']);
-  }
+  static MigrationData fromJson(Map<String, dynamic> json) => MigrationData(
+        json['migration'] as String,
+        json['batch'] as int,
+      )..id = PrimaryKey.thisFromJson(json['id']);
+
+  @override
+  Map<String, dynamic> toJson() => {'id': PrimaryKey.thisToJson(id), 'migration': migration, 'batch': batch};
+
+  @override
+  bool get enableTimestamps => false;
 }
-
-typedef Rollback = ({int batch, String name, MigrationTask? migration});
 
 class Migrator {
   /// config keys for migrations
@@ -43,15 +49,13 @@ class Migrator {
 
       await driver.transaction((transactor) async {
         for (final schema in migration.schemas) {
-          final serialized = schema.toScript(driver.blueprint);
-          transactor.execute(serialized);
+          final sql = schema.toScript(driver.blueprint);
+          await transactor.execute(sql);
         }
 
-        await Query.table(Migrator.tableName)
+        await Query.table<MigrationData>(Migrator.tableName)
             .driver(transactor)
-            .insert({'migration': fileName, 'batch': batchNos}).exec();
-
-        await transactor.commit();
+            .insert(MigrationData(fileName, batchNos));
 
         print('✔ done:   $fileName');
       });
@@ -63,17 +67,18 @@ class Migrator {
   static Future<void> resetMigrations(DatabaseDriver driver, Iterable<MigrationTask> allTasks) async {
     await ensureMigrationsTableReady(driver);
 
-    final migrationInfoFromDB = await Query.table(Migrator.tableName).driver(driver).orderByDesc('batch').all();
-    if (migrationInfoFromDB.isEmpty) {
+    final migrationsList =
+        await Query.table<MigrationData>(Migrator.tableName).driver(driver).orderByDesc('batch').all();
+    if (migrationsList.isEmpty) {
       print('𐄂 skipped: reason:     no migrations to reset');
       return;
     }
 
     print('------- Resetting migrations  📦 -------\n');
 
-    final rollbacks = migrationInfoFromDB.map((e) => _MigrationDbData.from(e)).map<Rollback>((e) {
+    final rollbacks = migrationsList.map((e) {
       final found = allTasks.firstWhereOrNull((m) => m.name == e.migration);
-      return (batch: e.batch, name: e.migration, migration: found);
+      return found == null ? null : (batch: e.batch, name: e.migration, migration: found);
     }).whereNotNull();
 
     await _processRollbacks(driver, rollbacks);
@@ -82,13 +87,13 @@ class Migrator {
   }
 
   static Future<void> rollBackMigration(DatabaseDriver driver, Iterable<MigrationTask> allTasks) async {
-    final lastBatch = await Query.table(Migrator.tableName).driver(driver).orderByDesc('batch').get();
-    if (lastBatch == null) {
+    final migrationDbData =
+        await Query.table<MigrationData>(Migrator.tableName).driver(driver).orderByDesc('batch').get();
+    if (migrationDbData == null) {
       print('𐄂 skipped: reason:     no migration to rollback');
       return;
     }
 
-    final migrationDbData = _MigrationDbData.from(lastBatch);
     final rollbacks = allTasks
         .where((e) => e.name == migrationDbData.migration)
         .map((e) => (name: e.name, migration: e, batch: migrationDbData.batch));
@@ -105,16 +110,15 @@ class Migrator {
       await driver.transaction((transactor) async {
         final schemas = rollback.migration?.schemas ?? [];
         if (schemas.isNotEmpty) {
-          // ignore: avoid_function_literals_in_foreach_calls
-          schemas.forEach((e) => transactor.execute(e.toScript(driver.blueprint)));
+          for (var e in schemas) {
+            await transactor.execute(e.toScript(driver.blueprint));
+          }
         }
 
         await Query.table(Migrator.tableName)
             .driver(transactor)
-            .delete((where) => where.where('migration', '=', rollback.name))
+            .delete((where) => where.whereEqual('migration', rollback.name))
             .exec();
-
-        await transactor.commit();
       });
 
       print('✔ rolled back: ${rollback.name}');

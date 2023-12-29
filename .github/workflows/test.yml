@@ -39,6 +39,22 @@ jobs:
   test:
     name: Test Packages
     runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MARIADB_DATABASE: test_db
+        ports:
+          - 3000:3306
+      mysql:
+        image: mysql
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: test_db
+        ports:
+          - 3001:3306
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -53,25 +69,14 @@ jobs:
           melos bootstrap
           melos exec -- "dart run build_runner build"
 
-      - name: Run Unit tests
-        run: melos tests:unit
+      - name: Run Unit Tests
+        run: melos tests:ci
 
-
-      - name: Setup MariaDB For Integration Test
-        uses: ankane/setup-mariadb@v1
-        with:
-          mariadb-version: "10.11"
-          database: "maria_test_db"
-
-
-      - name: Run Integration tests
-        run: |
-          sudo mysql -e "ALTER USER '$USER'@'localhost' IDENTIFIED BY 'password'; FLUSH PRIVILEGES;"
-          melos tests:integration
+      - name: Run E2E Tests
+        run: cd yaroorm && "./e2e_test.sh"
 
       - name: Combine Coverage
         run: melos coverage
-
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v3

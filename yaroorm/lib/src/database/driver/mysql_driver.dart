@@ -1,6 +1,6 @@
 import 'package:meta/meta.dart';
 import 'package:mysql_client/mysql_client.dart';
-import 'package:yaroorm/src/database/migration.dart';
+import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/src/query/primitives/serializer.dart';
 import 'package:yaroorm/src/query/query.dart';
 
@@ -84,15 +84,14 @@ class MySqlDriver implements DatabaseDriver {
   @override
   Future<int> insert(InsertQuery query) async {
     final sql = _primitiveSerializer.acceptInsertQuery(query);
-    if (!isOpen) await connect();
     final result = await _dbConnection.execute(sql);
     return result.lastInsertID.toInt();
   }
 
   @override
-  Future<dynamic> insertMany(InsertManyQuery query) {
+  Future<void> insertMany(InsertManyQuery query) async {
     final sql = _primitiveSerializer.acceptInsertManyQuery(query);
-    return rawQuery(sql);
+    await rawQuery(sql);
   }
 
   @override
@@ -151,20 +150,16 @@ class _MysqlTransactor extends DriverTransactor {
   }
 
   @override
-  Future<int> insert(InsertQuery query) {
+  Future<int> insert(InsertQuery query) async {
     final sql = _primitiveSerializer.acceptInsertQuery(query);
-    return rawQuery(sql).then((value) => value.first['id'] as int);
+    final result = await _dbConn.execute(sql);
+    return result.lastInsertID.toInt();
   }
 
   @override
   Future<dynamic> insertMany(InsertManyQuery query) {
     final sql = _primitiveSerializer.acceptInsertManyQuery(query);
     return rawQuery(sql);
-  }
-
-  @override
-  Future<List<Object?>> commit() {
-    throw UnsupportedError('Commit not supported for MariaDB & MySQL Driver');
   }
 
   @override

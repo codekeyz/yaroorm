@@ -3,6 +3,7 @@ import 'package:yaroo/http/http.dart';
 import 'package:yaroo/yaroo.dart';
 
 import './router_test.reflectable.dart';
+import 'core_test.dart';
 
 class TestController extends HTTPController {
   void create() {}
@@ -15,8 +16,6 @@ class TestController extends HTTPController {
 
   void delete() {}
 }
-
-Middleware _testMdw = (req, res, next) {};
 
 void main() {
   setUpAll(() => initializeReflectable());
@@ -83,7 +82,7 @@ void main() {
 
       group('when middlewares used', () {
         test('should add to routes', () {
-          final group = Route.group('users', middlewares: [_testMdw]).routes([
+          final group = Route.group('users').routes([
             Route.get('/get', (TestController, #index)),
             Route.delete('/delete', (TestController, #delete)),
             Route.put('/update', (TestController, #update)),
@@ -96,7 +95,6 @@ void main() {
           ]);
 
           expect(group.paths, [
-            '[ALL]: /users',
             '[GET]: /users/get',
             '[DELETE]: /users/delete',
             '[PUT]: /users/update',
@@ -107,7 +105,7 @@ void main() {
         });
 
         test('should chain multiple into one', () {
-          final group = Route.group('users', middlewares: [_testMdw, _testMdw, _testMdw]).routes([
+          final group = Route.group('users').routes([
             Route.get('/get', (TestController, #index)),
             Route.delete('/delete', (TestController, #delete)),
             Route.put('/update', (TestController, #update)),
@@ -120,7 +118,6 @@ void main() {
           ]);
 
           expect(group.paths, [
-            '[ALL]: /users',
             '[GET]: /users/get',
             '[DELETE]: /users/delete',
             '[PUT]: /users/update',
@@ -143,6 +140,32 @@ void main() {
           '[PUT]: /merchants/photos/<photoId>',
           '[PATCH]: /merchants/photos/<photoId>',
           '[DELETE]: /merchants/photos/<photoId>'
+        ]);
+      });
+
+      test('when used with middleware', () {
+        TestKidsApp(TestAppKernel([]));
+
+        final group = Route.middleware('api').group('merchants').routes([
+          Route.handler(HTTPMethod.GET, '/create', (req, res) => null),
+          Route.group('users').routes([
+            Route.get('/get', (TestController, #index)),
+            Route.delete('/delete', (TestController, #delete)),
+            Route.put('/update', (TestController, #update)),
+            Route.middleware('api').group('hello').routes([
+              Route.get('/world', (TestController, #index)),
+            ])
+          ]),
+        ]);
+
+        expect(group.paths, [
+          '[ALL]: /merchants',
+          '[GET]: /merchants/create',
+          '[GET]: /merchants/users/get',
+          '[DELETE]: /merchants/users/delete',
+          '[PUT]: /merchants/users/update',
+          '[ALL]: /merchants/users/hello',
+          '[GET]: /merchants/users/hello/world'
         ]);
       });
     });

@@ -2,38 +2,34 @@
 
 part of '../query.dart';
 
-mixin WhereOperation {
-  WhereClause where<Value>(
-    String field,
-    String condition, [
-    Value? value,
-  ]);
+mixin WhereOperation<Result> {
+  WhereClause<Result> where<Value>(String field, String condition, [Value? value]);
 
-  WhereClause whereNull(String field);
+  WhereClause<Result> orWhere<Value>(String field, String condition, [Value? value]);
 
-  WhereClause whereNotNull(String field);
+  WhereClause<Result> whereEqual<Value>(String field, Value value);
 
-  WhereClause whereIn<Value>(String field, List<Value> values);
+  WhereClause<Result> whereNotEqual<Value>(String field, Value value);
 
-  WhereClause whereNotIn<Value>(String field, List<Value> values);
+  WhereClause<Result> whereNull(String field);
 
-  WhereClause whereLike<Value>(String field, String pattern);
+  WhereClause<Result> whereNotNull(String field);
 
-  WhereClause whereNotLike<Value>(String field, String pattern);
+  WhereClause<Result> whereIn<Value>(String field, List<Value> values);
 
-  WhereClause whereBetween<Value>(
-    String field,
-    List<Value> args,
-  );
+  WhereClause<Result> whereNotIn<Value>(String field, List<Value> values);
 
-  WhereClause whereNotBetween<Value>(
-    String field,
-    List<Value> args,
-  );
-}
+  WhereClause<Result> whereLike<Value>(String field, String pattern);
 
-abstract class Clause {
-  WhereClauseValue? clauseValue;
+  WhereClause<Result> whereNotLike<Value>(String field, String pattern);
+
+  WhereClause<Result> whereBetween<Value>(String field, List<Value> values);
+
+  WhereClause<Result> whereNotBetween<Value>(String field, List<Value> values);
+
+  Query<Result> orWhereFunc(Function(Query<Result> query) builder);
+
+  Query<Result> whereFunc(Function(Query<Result> query) builder);
 }
 
 enum LogicalOperator { AND, OR }
@@ -105,47 +101,30 @@ class WhereClauseValue<A> {
   }
 }
 
-abstract class WhereClause extends Clause
-    with WhereOperation, FindOperation, LimitOperation, OrderByOperation<WhereClause> {
-  final Query _query;
+abstract class WhereClause<Result>
+    with WhereOperation<Result>, FindOperation<Result>, LimitOperation<Result>, OrderByOperation<WhereClause<Result>> {
+  final List<CombineClause<WhereClause<Result>>> children = [];
+
+  List<CombineClause<WhereClause<Result>>> get group => children.isEmpty
+      ? const []
+      : [
+          if (clauseValue != null) (operator, WhereClauseImpl(_query, operator: operator)..clauseValue = clauseValue),
+          ...children
+        ];
+
+  Set<LogicalOperator> get operators => {operator, if (children.isNotEmpty) ...children.map((e) => e.$1)};
+
+  final Query<Result> _query;
+
   final LogicalOperator operator;
-  final List<CombineClause<WhereClauseValue>> subparts = [];
 
-  WhereClause(
-    this._query, {
-    this.operator = LogicalOperator.AND,
-  });
+  WhereClauseValue? clauseValue;
 
-  WhereClause orWhere<Value>(String field, String condition, [Value? value]);
+  WhereClause(this._query, {this.operator = LogicalOperator.AND});
 
-  Query whereFunc(Function(WhereClauseImpl $query) function);
+  Future<void> update(Map<String, dynamic> values);
 
-  Query orWhereFunc(Function(WhereClauseImpl $query) function);
+  Future<void> delete();
 
-  @override
-  WhereClause orderByAsc(String field) {
-    _query.orderByProps.add((field: field, direction: OrderByDirection.asc));
-    return this;
-  }
-
-  @override
-  WhereClause orderByDesc(String field) {
-    _query.orderByProps.add((field: field, direction: OrderByDirection.desc));
-    return this;
-  }
-
-  @override
-  Future<T?> findOne<T>() => _query.get<T>();
-
-  @override
-  Future<List<T>> findMany<T>() => _query.all<T>();
-
-  @override
-  Future<List<T>> take<T>(int limit) => _query.take<T>(limit);
-
-  Future<void> delete() {
-    return DeleteQuery(_query.tableName, whereClause: this).driver(_query.queryDriver).exec();
-  }
-
-  String get statement => _query.statement;
+  String get statement;
 }

@@ -32,7 +32,13 @@ List<X> filteredDeclarationsOf<X extends r.DeclarationMirror>(r.ClassMirror cm, 
   return result;
 }
 
-r.ClassMirror reflectType(Type type) => inject.reflectType(type) as r.ClassMirror;
+r.ClassMirror reflectType(Type type) {
+  try {
+    return inject.reflectType(type) as r.ClassMirror;
+  } catch (e) {
+    throw UnsupportedError('Unable to reflect on $type. Re-run your build command');
+  }
+}
 
 extension ClassMirrorExtensions on r.ClassMirror {
   List<r.VariableMirror> get variables {
@@ -61,10 +67,15 @@ T createNewInstance<T extends Object>(Type classType) {
     return classMirror.newInstance(unnamedConstructor, const []) as T;
   }
 
-  final dependencies =
-      constructorParameters.map((e) => e.reflectedType).map((type) => instanceFromRegistry(type: type)).toList();
+  final namedDeps = constructorParameters
+      .where((e) => e.isNamed)
+      .map((e) => (name: e.simpleName, instance: instanceFromRegistry(type: e.reflectedType)))
+      .fold<Map<Symbol, dynamic>>({}, (prev, e) => prev..[Symbol(e.name)] = e.instance);
 
-  return classMirror.newInstance(unnamedConstructor, dependencies) as T;
+  final dependencies =
+      constructorParameters.where((e) => !e.isNamed).map((e) => instanceFromRegistry(type: e.reflectedType)).toList();
+
+  return classMirror.newInstance(unnamedConstructor, dependencies, namedDeps) as T;
 }
 
 ControllerMethod parseControllerMethod(ControllerMethodDefinition defn) {
