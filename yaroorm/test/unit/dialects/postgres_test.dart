@@ -39,6 +39,39 @@ void main() {
       expect(query.toScript(PgSqlTableBlueprint()),
           'CREATE TABLE users (id SERIAL PRIMARY KEY, firstname VARCHAR(255) NOT NULL, lastname VARCHAR(255) NOT NULL, age INTEGER NOT NULL, score NUMERIC(10, 0 ) NOT NULL, amount NUMERIC(10, 0) NOT NULL, aggregate DOUBLE PRECISION NOT NULL, votes BIGINT NOT NULL, price DECIMAL(10, 0) NOT NULL, isActive BOOLEAN NOT NULL, createdAt TIMESTAMP NOT NULL, updatedAt TIMESTAMP NOT NULL, image BYTEA NOT NULL, birthdate DATE NOT NULL, title CHAR(3) NOT NULL, Bio VARCHAR(255) NOT NULL, dateOfBirth DATE NOT NULL, timeOfBirth TIME NOT NULL);');
     });
+
+    test('Create table with nullable columns', () async {
+      final query = Schema.create('users', (table) {
+        table.string('name', nullable: true);
+        table.integer('age', nullable: true);
+        table.double('score', nullable: true);
+        table.boolean('is_active', nullable: true);
+        table.datetime('created_at', nullable: true);
+        table.timestamp('updated_at', nullable: true);
+        table.date('birthdate', nullable: true);
+        return table;
+      });
+
+      final expectedSql = 'CREATE TABLE users (name VARCHAR(255), age INTEGER, score NUMERIC(10, 0 ), is_active BOOLEAN, created_at TIMESTAMP, updated_at TIMESTAMP, birthdate DATE);';
+      expect(query.toScript(PgSqlTableBlueprint()), expectedSql);
+    });
+
+    test('Create table with default values', () async {
+
+      final currentDate = DateTime.now();
+      final query = Schema.create('users', (table) {
+        table.string('name', defaultValue: 'John Doe');
+        table.integer('age', defaultValue: 30);
+        table.double('score', defaultValue: 100.0);
+        table.boolean('is_active', defaultValue: true);
+        table.datetime('created_at', defaultValue: currentDate);
+        table.timestamp('updated_at', defaultValue: currentDate);
+        return table;
+      });
+
+      final expectedSql = 'CREATE TABLE users (name VARCHAR(255) NOT NULL DEFAULT John Doe, age INTEGER NOT NULL DEFAULT 30, score NUMERIC(10, 0 ) NOT NULL DEFAULT 100.0, is_active BOOLEAN NOT NULL DEFAULT true, created_at TIMESTAMP NOT NULL DEFAULT $currentDate, updated_at TIMESTAMP NOT NULL DEFAULT $currentDate);';
+      expect(query.toScript(PgSqlTableBlueprint()), expectedSql);
+    });
   });
 
   group('Postgres Query Builder', () {
