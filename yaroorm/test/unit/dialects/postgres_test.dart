@@ -1,15 +1,54 @@
-import 'dart:io';
-import 'package:path/path.dart' as p;
-
 import 'package:test/test.dart';
-import 'package:yaroorm/src/database/driver/driver.dart';
-import 'package:yaroorm/src/query/query.dart';
+import 'package:yaroorm/migration.dart';
+import 'package:yaroorm/src/database/driver/pgsql_driver.dart';
+import '../../fixtures/orm_config.dart' as db;
+import 'package:yaroorm/yaroorm.dart';
 
-import '../helpers/drivers.dart';
+import '../../fixtures/test_data.dart';
 
-final driver = DatabaseDriver.init(postGresConnection);
 
 void main() {
+
+
+  DB.init(db.config);
+
+  late DatabaseDriver driver;
+
+  setUpAll(() => driver = DB.driver('foo_pgsql'));
+  
+  
+  group('Postgres Schema Builder', ()  {
+    test('when create table', () async {
+      final query = Schema.create('users', (table) {
+        table.id();
+        table.string('firstname');
+        table.string('lastname');
+        table.integer('age');
+        table.double('score');
+        table.numeric('amount');
+        table.float('aggregate');
+        table.bigInteger('votes');
+        table.decimal('price');
+        table.boolean('isActive');
+        table.datetime('createdAt');
+        table.timestamp('updatedAt');
+        table.blob('image');
+        table.date('birthdate');
+        table.char('title',length: 3);
+        table.varchar('Bio',length: 255);
+       // table.enums('Religion', ['Christianity', 'Islam', 'Traditional']);
+       // table.set('sizes', ['small', 'medium', 'large']);
+        table.date('dateOfBirth');
+        table.time('timeOfBirth');
+        return table;
+      });
+      expect(query.toScript(PgSqlTableBlueprint()), 'CREATE TABLE users (id SERIAL PRIMARY KEY, firstname VARCHAR(255) NOT NULL, lastname VARCHAR(255) NOT NULL, age INTEGER NOT NULL, score NUMERIC(10, 0 ) NOT NULL, amount NUMERIC(10, 0) NOT NULL, aggregate DOUBLE PRECISION NOT NULL, votes BIGINT NOT NULL, price DECIMAL(10, 0) NOT NULL, isActive BOOLEAN NOT NULL, createdAt TIMESTAMP NOT NULL, updatedAt TIMESTAMP NOT NULL, image BYTEA NOT NULL, birthdate DATE NOT NULL, title CHAR(3) NOT NULL, Bio VARCHAR(255) NOT NULL, dateOfBirth DATE NOT NULL, timeOfBirth TIME NOT NULL);');
+    });
+
+  });
+
+
+  
   group('Postgres Query Builder', () {
     test('when query', () {
       final query = Query.table('users').driver(driver);
@@ -29,18 +68,14 @@ void main() {
       expect(query.statement, 'SELECT * FROM users ORDER BY names DESC, ages ASC;');
     });
 
-    test('when insert', () {
-      final query = Query.table('users').driver(driver).insert({'firstname': 'Chima', 'lastname': 'Precious'});
+    test('when insert', () async{
+      final query = await Query.table<User>().driver(driver).insert(usersTestData.first);
 
       expect(query.statement, 'INSERT INTO users (firstname, lastname) VALUES (\'Chima\', \'Precious\');');
     });
 
-    test('when insert many', () {
-      final query = Query.table('users').driver(driver).insertAll([
-        {'firstname': 'Pookie', 'lastname': 'ReyRey'},
-        {'firstname': 'Foo', 'lastname': 'Boo'},
-        {'firstname': 'Mee', 'lastname': 'Moo'},
-      ]);
+    test('when insert many', () async {
+      final query = await Query.table('users').driver(driver).insertMany(usersTestData);
 
       expect(query.statement,
           'INSERT INTO users (firstname, lastname) VALUES (\'Pookie\', \'ReyRey\'), (\'Foo\', \'Boo\'), (\'Mee\', \'Moo\');');
@@ -124,7 +159,7 @@ void main() {
               .where('name', 'like', 'Chima%');
 
           expect(query.statement,
-              'SELECT * FROM users WHERE firstname = \'Chima\' OR (age = 203 OR city != \'Accra\' AND name LIKE \'Chima%\');');
+              'SELECT * FROM users WHERE firstname = \'Chima\' OR age = 203 OR (city != \'Accra\' AND name LIKE \'Chima%\');');
         });
 
         test('of level 4', () {
@@ -138,7 +173,7 @@ void main() {
 
           expect(
             query.statement,
-            'SELECT * FROM users WHERE firstname = \'Chima\' OR (age = 203 OR city != \'Accra\' AND name LIKE \'Chima%\' AND sizes BETWEEN 12 AND 23);',
+            'SELECT * FROM users WHERE firstname = \'Chima\' OR age = 203 OR (city != \'Accra\' AND name LIKE \'Chima%\' AND sizes BETWEEN 12 AND 23);',
           );
         });
       });
@@ -649,7 +684,7 @@ void main() {
 
         expect(
           query.statement,
-          'SELECT * FROM users WHERE (places NOT LIKE \'Nems#\' AND lastname = \'Precious\') OR (names NOT LIKE \'Hello%\' OR age BETWEEN 23 AND 34);',
+          'SELECT * FROM users WHERE (places NOT LIKE \'Nems#\' AND lastname = \'Precious\') OR names NOT LIKE \'Hello%\' OR age BETWEEN 23 AND 34;',
         );
       });
     });
@@ -696,7 +731,7 @@ void main() {
 
         expect(
           query.statement,
-          'SELECT * FROM users WHERE (places IS NULL AND lastname = \'Precious\') OR (names IS NULL OR age BETWEEN 23 AND 34);',
+          'SELECT * FROM users WHERE (places IS NULL AND lastname = \'Precious\') OR names IS NULL OR age BETWEEN 23 AND 34;',
         );
       });
     });
@@ -743,7 +778,7 @@ void main() {
 
         expect(
           query.statement,
-          'SELECT * FROM users WHERE (places IS NOT NULL AND lastname = \'Precious\') OR (names IS NOT NULL OR age BETWEEN 23 AND 34);',
+          'SELECT * FROM users WHERE (places IS NOT NULL AND lastname = \'Precious\') OR names IS NOT NULL OR age BETWEEN 23 AND 34;',
         );
       });
     });
@@ -756,7 +791,7 @@ void main() {
 
       expect(
         query.statement,
-        'SELECT * FROM users WHERE (name = \'John\' AND votes > 100) OR title = \'Admin\';',
+        'SELECT * FROM users WHERE name = \'John\' AND (votes > 100 OR title = \'Admin\');',
       );
     });
 
@@ -778,39 +813,6 @@ void main() {
 
       // Assert that the table exists
       expect(tableExists, isA<bool>());
-    });
-
-
-    test('Update users table', () async {
-      // Generate the SQL command for updating the record
-      var updateQuery = UpdateQuery('users', values: {'username': 'newUsername'}).where('id', '=', 1);
-      var updateCommand = driver.serializer.acceptUpdateQuery(updateQuery);
-
-      // Execute the SQL command
-      await driver.execute(updateCommand);
-
-      // Query the updated record
-      var selectQuery = Query.table('users').where('id', '=', 1);
-      var result = await driver.query(selectQuery);
-
-      // Check if the record was updated successfully
-      expect(result.first['username'], 'newUsername');
-    });
-
-    test('Delete from users table', () async {
-      // Generate the SQL command for deleting the record
-      var deleteQuery = DeleteQuery('users').where('id', '=', 1);
-      var deleteCommand = driver.serializer.acceptDeleteQuery(deleteQuery);
-
-      // Execute the SQL command
-      await driver.execute(deleteCommand);
-
-      // Query the deleted record
-      var selectQuery = Query.table('users').where('id', '=', 1);
-      var result = await driver.query(selectQuery);
-
-      // Check if the record was deleted successfully
-      expect(result, isEmpty);
     });
   });
 

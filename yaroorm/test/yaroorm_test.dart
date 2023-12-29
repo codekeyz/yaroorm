@@ -1,6 +1,7 @@
 import 'package:test/test.dart';
 import 'package:yaroorm/config.dart';
 import 'package:yaroorm/src/database/driver/mysql_driver.dart';
+import 'package:yaroorm/src/database/driver/pgsql_driver.dart';
 import 'package:yaroorm/src/database/driver/sqlite_driver.dart';
 import 'package:yaroorm/yaroorm.dart';
 
@@ -64,6 +65,24 @@ void main() {
 
       test('should have primitive serializer', () {
         expect(driver.serializer, isA<MySqlPrimitiveSerializer>());
+      });
+    });
+
+    group('when postgres connection', () {
+      late DatabaseDriver driver;
+
+      setUpAll(() => driver = DB.driver('foo_pgsql'));
+
+      test('should return MySql Driver', () {
+        expect(driver, isA<PostgreSqlDriver>().having((p0) => p0.type, 'has driver type', DatabaseDriverType.pgsql));
+      });
+
+      test('should have table blueprint', () {
+        expect(driver.blueprint, isA<PgSqlTableBlueprint>());
+      });
+
+      test('should have primitive serializer', () {
+        expect(driver.serializer, isA<PgSqlPrimitiveSerializer>());
       });
     });
   });
