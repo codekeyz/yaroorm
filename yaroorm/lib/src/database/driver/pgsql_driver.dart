@@ -275,5 +275,4 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
       {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
     throw UnimplementedError('set not implemented for Postgres');
   }
-
 }
