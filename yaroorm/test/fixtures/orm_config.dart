@@ -31,7 +31,7 @@ final config = YaroormConfig.from({
     'foo_pgsql': {
       'driver': 'pgsql',
       'port': 5432,
-       ..._baseConfig,
+      ..._baseConfig,
     },
   },
   'migrations_table': 'migrations',
