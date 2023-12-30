@@ -63,7 +63,7 @@ class PostgreSqlDriver implements DatabaseDriver {
     if (!isOpen) await connect();
     final sql = _primitiveSerializer.acceptInsertQuery(query);
     final result = await db?.execute(sql);
-    return result?.affectedRows ?? 0;
+    return result?[0][0] as int;
   }
 
   @override
@@ -111,9 +111,11 @@ class PostgreSqlDriver implements DatabaseDriver {
   }
 
   @override
-  Future insertMany(InsertManyQuery query) {
+  Future insertMany(InsertManyQuery query) async {
+    if (!isOpen) await connect();
     final sql = _primitiveSerializer.acceptInsertManyQuery(query);
-    return rawQuery(sql);
+    final result = await db?.execute(sql);
+    return result?.expand((x) => x).toList();
   }
 }
 
@@ -169,6 +171,22 @@ class _PgSqlDriverTransactor extends DriverTransactor {
 @protected
 class PgSqlPrimitiveSerializer extends SqliteSerializer {
   const PgSqlPrimitiveSerializer();
+
+  @override
+  String acceptInsertQuery(InsertQuery query) {
+    final data = query.values;
+    final fields = data.keys.join(', ');
+    final values = data.values.map((e) => acceptDartValue(e)).join(', ');
+    return 'INSERT INTO ${query.tableName} ($fields) VALUES ($values) RETURNING ${data.keys.first} $terminator';
+  }
+
+  @override
+  String acceptInsertManyQuery(InsertManyQuery query) {
+    final data = query.values;
+    final fields = data.first.keys.join(', ');
+    final values = data.map((e) => '(${e.values.map((e) => acceptDartValue(e)).join(', ')})').join(', ');
+    return 'INSERT INTO ${query.tableName} ($fields) VALUES $values RETURNING ${data.first.keys.first} $terminator';
+  }
 }
 
 @protected

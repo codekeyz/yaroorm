@@ -16,7 +16,9 @@ void main() {
       final query = Schema.create('users', (table) {
         table.id();
         table.string('firstname');
-        table.string('lastname');
+        table.text('lastname');
+        table.mediumInteger('height');
+        table.binary('photo');
         table.integer('age');
         table.double('score');
         table.numeric('amount');
@@ -30,14 +32,40 @@ void main() {
         table.date('birthdate');
         table.char('title', length: 3);
         table.varchar('Bio', length: 255);
-        // table.enums('Religion', ['Christianity', 'Islam', 'Traditional']);
-        // table.set('sizes', ['small', 'medium', 'large']);
         table.date('dateOfBirth');
         table.time('timeOfBirth');
         return table;
       });
       expect(query.toScript(PgSqlTableBlueprint()),
-          'CREATE TABLE users (id SERIAL PRIMARY KEY, firstname VARCHAR(255) NOT NULL, lastname VARCHAR(255) NOT NULL, age INTEGER NOT NULL, score NUMERIC(10, 0 ) NOT NULL, amount NUMERIC(10, 0) NOT NULL, aggregate DOUBLE PRECISION NOT NULL, votes BIGINT NOT NULL, price DECIMAL(10, 0) NOT NULL, isActive BOOLEAN NOT NULL, createdAt TIMESTAMP NOT NULL, updatedAt TIMESTAMP NOT NULL, image BYTEA NOT NULL, birthdate DATE NOT NULL, title CHAR(3) NOT NULL, Bio VARCHAR(255) NOT NULL, dateOfBirth DATE NOT NULL, timeOfBirth TIME NOT NULL);');
+          'CREATE TABLE users (id SERIAL PRIMARY KEY, firstname VARCHAR(255) NOT NULL, lastname TEXT NOT NULL, height INTEGER NOT NULL, photo BYTEA NOT NULL, age INTEGER NOT NULL, score NUMERIC(10, 0 ) NOT NULL, amount NUMERIC(10, 0) NOT NULL, aggregate DOUBLE PRECISION NOT NULL, votes BIGINT NOT NULL, price DECIMAL(10, 0) NOT NULL, isActive BOOLEAN NOT NULL, createdAt TIMESTAMP NOT NULL, updatedAt TIMESTAMP NOT NULL, image BYTEA NOT NULL, birthdate DATE NOT NULL, title CHAR(3) NOT NULL, Bio VARCHAR(255) NOT NULL, dateOfBirth DATE NOT NULL, timeOfBirth TIME NOT NULL);');
+    });
+
+    test('when create table throws exception', () async {
+      final query = Schema.create('users', (table) {
+        table.id();
+        table.string('firstname');
+        table.longText('lastname');
+        table.mediumInteger('height');
+        table.integer('age');
+        table.double('score');
+        table.numeric('amount');
+        table.float('aggregate');
+        table.bigInteger('votes');
+        table.decimal('price');
+        table.boolean('isActive');
+        table.datetime('createdAt');
+        table.timestamp('updatedAt');
+        table.varbinary('image');
+        table.date('birthdate');
+        table.tinyText('title');
+        table.varchar('Bio', length: 255);
+        table.date('dateOfBirth');
+        table.enums('gender', ['Male', 'Female', 'Others']);
+        table.set('gender', ['Male', 'Female', 'Others']);
+        table.tinyInt('timeOfBirth');
+        return table;
+      });
+      expect(() => query.toScript(PgSqlTableBlueprint()), throwsA(isA<UnimplementedError>()));
     });
 
     test('Create table with nullable columns', () async {
@@ -88,34 +116,34 @@ void main() {
   });
 
   group('Postgres Query Builder', () {
-    test('when query', () {
+    test('when updateQuery', () {
       final query = Query.table('users').driver(driver);
 
       expect(query.statement, 'SELECT * FROM users;');
     });
 
-    test('when query with single orderBy', () {
+    test('when updateQuery with single orderBy', () {
       final query = Query.table('users').driver(driver).orderByDesc('names');
 
       expect(query.statement, 'SELECT * FROM users ORDER BY names DESC;');
     });
 
-    test('when query with multiple orderBy', () {
+    test('when updateQuery with multiple orderBy', () {
       final query = Query.table('users').driver(driver).orderByDesc('names').orderByAsc('ages');
 
       expect(query.statement, 'SELECT * FROM users ORDER BY names DESC, ages ASC;');
     });
 
     // test('when insert', () async {
-    //   final query = await Query.table().driver(driver).insert(usersTestData.first);
+    //   final updateQuery = await Query.table<User>('users').driver(driver).(usersTestData.first);
     //
-    //   expect(query.statement, 'INSERT INTO users (firstname, lastname) VALUES (\'Chima\', \'Precious\',\'Lagos, Nigeria\');');
+    //   expect(updateQuery.statement, 'INSERT INTO users (firstname, lastname, age, homeAddress ) VALUES (\'Chima\', \'Precious\',22,\'Lagos, Nigeria\');');
     // });
     //
     // test('when insert many', () async {
-    //   final query = await Query.table('users').driver(driver).insertMany(usersTestData);
+    //   final updateQuery = await Query.table('users').driver(driver).insertMany(usersTestData);
     //
-    //   expect(query.statement,
+    //   expect(updateQuery.statement,
     //       'INSERT INTO users (firstname, lastname) VALUES (\'Pookie\', \'ReyRey\'), (\'Foo\', \'Boo\'), (\'Mee\', \'Moo\');');
     // });
 
