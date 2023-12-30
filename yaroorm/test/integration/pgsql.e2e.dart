@@ -16,7 +16,7 @@ void main() async {
       .connect(
         secure: true,
       )
-      .timeout(const Duration(seconds: 5));
+      .timeout(const Duration(seconds: 60));
 
   group('description', () => runIntegrationTest('foo_pgsql', driver));
 }
