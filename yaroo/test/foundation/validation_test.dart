@@ -1,7 +1,28 @@
-import 'package:test/test.dart';
+import 'package:pharaoh/pharaoh.dart';
+import 'package:spookie/spookie.dart';
 import 'package:yaroo/foundation/validation.dart';
+import 'package:yaroo/http/meta.dart';
+
+import 'validation_test.reflectable.dart';
+
+class TestDTO extends BaseDTO {
+  String get username;
+
+  String get lastname;
+
+  int get age;
+}
+
+class TestSingleOptional extends BaseDTO {
+  String get nationality;
+
+  @ezOptional(String)
+  String? get address;
+}
 
 void main() {
+  initializeReflectable();
+
   group('Validation', () {
     group('when `ezRequired`', () {
       test('when passed type as argument', () {
@@ -50,6 +71,84 @@ void main() {
       requiredValidator = ezDateTime(optional: true).validator.build();
       expect(requiredValidator(null), isNull);
       expect(requiredValidator('df'), 'The field must be a DateTime type');
+    });
+  });
+
+  group('when used in a class', () {
+    final pharaoh = Pharaoh()
+      ..onError((error, req) {
+        final response = Response.create();
+        if (error is RequestValidationError) return response.json(error.errorBody, statusCode: 422);
+        return response.internalServerError();
+      });
+
+    test('when no metas', () async {
+      final dto = TestDTO();
+      final testData = {'username': 'Foo', 'lastname': 'Bar', 'age': 22};
+
+      final app = pharaoh
+        ..post('/', (req, res) {
+          dto.make(req);
+          return res.json({'firstname': dto.username, 'lastname': dto.lastname, 'age': dto.age});
+        });
+
+      await (await request(app))
+          .post('/', {})
+          .expectStatus(422)
+          .expectJsonBody({
+            'location': 'body',
+            'errors': [
+              'username: The field is required',
+              'lastname: The field is required',
+              'age: The field is required'
+            ]
+          })
+          .test();
+
+      await (await request(app))
+          .post('/', testData)
+          .expectStatus(200)
+          .expectJsonBody({'firstname': 'Foo', 'lastname': 'Bar', 'age': 22}).test();
+    });
+
+    test('when single property optional', () async {
+      final dto = TestSingleOptional();
+
+      final app = pharaoh
+        ..post('/optional', (req, res) {
+          dto.make(req);
+          return res.json({'nationality': dto.nationality, 'address': dto.address});
+        });
+
+      await (await request(app))
+          .post('/optional', {})
+          .expectStatus(422)
+          .expectJsonBody({
+            'location': 'body',
+            'errors': ['nationality: The field is required']
+          })
+          .test();
+
+      await (await request(app))
+          .post('/optional', {'nationality': 'Ghanaian'})
+          .expectStatus(200)
+          .expectJsonBody({'nationality': 'Ghanaian', 'address': null})
+          .test();
+
+      await (await request(app))
+          .post('/optional', {'nationality': 'Ghanaian', 'address': 344})
+          .expectStatus(422)
+          .expectJsonBody({
+            'location': 'body',
+            'errors': ['address: The field must be a String type']
+          })
+          .test();
+
+      await (await request(app))
+          .post('/optional', {'nationality': 'Ghanaian', 'address': 'Terminalia Street'})
+          .expectStatus(200)
+          .expectJsonBody({'nationality': 'Ghanaian', 'address': 'Terminalia Street'})
+          .test();
     });
   });
 }
