@@ -25,6 +25,7 @@ class PostgreSqlDriver implements DatabaseDriver {
       assert(config.password != null, 'Password is required when :secure true');
     }
 
+    print('Connecting to Postgres: ${config.host}:${config.port} - ${config.database} - ${config.username}');
     db = await pg.Connection.open(
         pg.Endpoint(
           host: config.host!,

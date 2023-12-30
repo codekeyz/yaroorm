@@ -12,11 +12,7 @@ void main() async {
 
   final driver = DB.driver('foo_pgsql');
 
-  await driver
-      .connect(
-        secure: true,
-      )
-      .timeout(const Duration(seconds: 60));
+  await driver.connect().timeout(const Duration(seconds: 60));
 
   group('description', () => runIntegrationTest('foo_pgsql', driver));
 }
