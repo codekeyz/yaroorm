@@ -27,9 +27,7 @@ class _YarooAppImpl implements Application {
     final response = Response.create();
 
     if (error is RequestValidationError) {
-      final errorsList = error.errors;
-      final errorData = errorsList == null ? {'error': error.message} : {'errors': errorsList};
-      return response.json(errorData, statusCode: HttpStatus.badRequest);
+      return response.json(error.errorBody, statusCode: HttpStatus.badRequest);
     } else if (error is SpannerRouteValidatorError) {
       return response.json({'error': error.toString()}, statusCode: HttpStatus.badRequest);
     }

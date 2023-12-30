@@ -5,7 +5,7 @@ abstract interface class _BaseDTOImpl {
 
   void make(Request request) {
     final (data, errors) = schema.validateSync(request.body ?? {});
-    if (errors.isNotEmpty) throw RequestValidationError.errors(ValidationErrorLocation.Body, errors);
+    if (errors.isNotEmpty) throw RequestValidationError.errors(ValidationErrorLocation.body, errors);
     _databag.addAll(data);
   }
 
