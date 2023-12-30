@@ -20,7 +20,7 @@ class PostgreSqlDriver implements DatabaseDriver {
     assert(maxConnections == null, 'Postgres max connections not supported');
     secure ??= false;
 
-    if (secure ) {
+    if (secure) {
       assert(config.username != null, 'Username is required when :secure true');
       assert(config.password != null, 'Password is required when :secure true');
     }
