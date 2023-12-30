@@ -11,11 +11,9 @@ final _primitiveSerializer = PgSqlPrimitiveSerializer();
 
 class PostgreSqlDriver implements DatabaseDriver {
   final DatabaseConnection config;
-  late pg.Connection db;
+  pg.Connection? db;
 
   PostgreSqlDriver(this.config);
-
-  static const _serializer = PgSqlPrimitiveSerializer();
 
   @override
   Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection, bool? secure}) async {
@@ -48,13 +46,13 @@ class PostgreSqlDriver implements DatabaseDriver {
   @override
   Future<void> disconnect() async {
     if (!isOpen) return;
-    await db.close();
+    await db?.close();
   }
 
   Future<List<Map<String, dynamic>>> _execRawQuery(String script) async {
-    // if (!isOpen) await connect();
-    final result = await db.execute(script);
-    return result.map((e) => e.toColumnMap()).toList();
+    if (!isOpen) await connect();
+    final result = await db?.execute(script);
+    return result?.map((e) => e.toColumnMap()).toList() ?? [];
   }
 
   @override
@@ -62,14 +60,14 @@ class PostgreSqlDriver implements DatabaseDriver {
 
   @override
   Future<int> insert(InsertQuery query) async {
-    // if (!isOpen) await connect();
+    if (!isOpen) await connect();
     final sql = _primitiveSerializer.acceptInsertQuery(query);
-    final result = await db.execute(sql);
-    return result.affectedRows;
+    final result = await db?.execute(sql);
+    return result?.affectedRows ?? 0;
   }
 
   @override
-  bool get isOpen => db.isOpen;
+  bool get isOpen => db?.isOpen ?? false;
 
   @override
   Future<List<Map<String, dynamic>>> query(Query query) async {
@@ -84,7 +82,7 @@ class PostgreSqlDriver implements DatabaseDriver {
   }
 
   @override
-  PrimitiveSerializer get serializer => _serializer;
+  PrimitiveSerializer get serializer => _primitiveSerializer;
 
   @override
   DatabaseDriverType get type => DatabaseDriverType.pgsql;
@@ -106,8 +104,10 @@ class PostgreSqlDriver implements DatabaseDriver {
   }
 
   @override
-  Future<void> transaction(void Function(DriverTransactor transactor) func) {
-    return db.runTx((txn) async => func(_PgSqlDriverTransactor(txn)));
+  Future<void> transaction(void Function(DriverTransactor transactor) func) async {
+    if (!isOpen) await connect();
+    if (db == null) return Future.value();
+    return db!.runTx((txn) async => func(_PgSqlDriverTransactor(txn)));
   }
 
   @override

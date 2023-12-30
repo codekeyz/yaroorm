@@ -5,10 +5,6 @@ import 'package:recase/recase.dart';
 
 import 'src/database/entity.dart';
 
-class Id {}
-
-enum Integer { smallint, integer, bigint }
-
 abstract interface class TableBlueprint {
   void id({String name = 'id', bool autoIncrement = true});
 

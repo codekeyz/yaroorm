@@ -107,9 +107,9 @@ void main() {
     });
 
     // test('when insert', () async {
-    //   final query = await Query.table<User>().driver(driver).insert(usersTestData.first);
+    //   final query = await Query.table().driver(driver).insert(usersTestData.first);
     //
-    //   expect(query.statement, 'INSERT INTO users (firstname, lastname) VALUES (\'Chima\', \'Precious\');');
+    //   expect(query.statement, 'INSERT INTO users (firstname, lastname) VALUES (\'Chima\', \'Precious\',\'Lagos, Nigeria\');');
     // });
     //
     // test('when insert many', () async {
@@ -845,12 +845,20 @@ void main() {
       );
     });
 
-    // test('Check existence of users table', () async {
-    //   // Check if the table exists
-    //   bool tableExists = await driver.hasTable('users');
-    //
-    //   // Assert that the table exists
-    //   expect(tableExists, isA<bool>());
-    // });
+    test('Check existence of users table', () async {
+      // Check if the table exists
+      bool tableExists = await driver.hasTable('users');
+
+      // Assert that the table exists
+      expect(tableExists, isA<bool>());
+    });
+
+    test('Check existence of users table Query', () async {
+      // Check if the table exists
+      bool tableExists = await driver.hasTable('users');
+
+      // Assert that the table exists
+      expect(tableExists, isA<bool>());
+    });
   });
 }
