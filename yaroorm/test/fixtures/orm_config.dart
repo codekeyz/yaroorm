@@ -34,7 +34,7 @@ final config = YaroormConfig.from({
       'database': 'postgres',
       'host': 'localhost',
       'username': 'postgres',
-      'password': 'password',
+      'password': 'postgres',
     },
   },
   'migrations_table': 'migrations',
