@@ -61,7 +61,7 @@ jobs:
           POSTGRES_DB: testDb
         # setup the database name and password here
         ports:
-          - 5433:5432
+          - 5432:58918
 
     steps:
       - name: Checkout Repository
