@@ -55,13 +55,13 @@ jobs:
         ports:
           - 3001:3306
       postgres:
-        image: postgres
+        image: postgres:latest
         env:
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: testDb
-        # setup the database name and password here
+          POSTGRES_DB: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
         ports:
-          - 5432:58918
+          - 5432:60858
 
     steps:
       - name: Checkout Repository

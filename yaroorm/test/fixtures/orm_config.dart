@@ -31,7 +31,7 @@ final config = YaroormConfig.from({
     'foo_pgsql': {
       'driver': 'pgsql',
       'port': 5432,
-      'database': 'testDb',
+      'database': 'postgres',
       'host': 'localhost',
       'username': 'postgres',
       'password': 'password',
