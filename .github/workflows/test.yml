@@ -61,7 +61,7 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
         ports:
-          - 5432:44766
+          - 5432:5432
 
     steps:
       - name: Checkout Repository
