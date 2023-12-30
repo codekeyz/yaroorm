@@ -20,7 +20,7 @@ class PostgreSqlDriver implements DatabaseDriver {
     assert(maxConnections == null, 'Postgres max connections not supported');
     secure ??= false;
 
-    if (secure == true) {
+    if (secure ) {
       assert(config.username != null, 'Username is required when :secure true');
       assert(config.password != null, 'Password is required when :secure true');
     }
@@ -33,7 +33,7 @@ class PostgreSqlDriver implements DatabaseDriver {
           password: config.password,
           port: config.port == null ? 5432 : config.port!,
         ),
-        settings: pg.ConnectionSettings(sslMode: pg.SslMode.disable));
+        settings: pg.ConnectionSettings(sslMode: secure ? pg.SslMode.require : pg.SslMode.disable));
     return this;
   }
 
@@ -93,7 +93,7 @@ class PostgreSqlDriver implements DatabaseDriver {
   @override
   Future<bool> hasTable(String tableName) async {
     final result = await _execRawQuery(
-        '''SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='$tableName')''');
+        '''SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='$tableName\'''');
     if (result.isEmpty) return false;
     return true;
   }
