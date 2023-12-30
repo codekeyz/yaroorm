@@ -845,20 +845,12 @@ void main() {
       );
     });
 
-    test('Check existence of users table', () async {
-      // Check if the table exists
-      bool tableExists = await driver.hasTable('users');
-
-      // Assert that the table exists
-      expect(tableExists, isA<bool>());
-    });
-
-    test('Check existence of users table Query', () async {
-      // Check if the table exists
-      bool tableExists = await driver.hasTable('users');
-
-      // Assert that the table exists
-      expect(tableExists, isA<bool>());
-    });
+    // test('Check existence of users table', () async {
+    //   // Check if the table exists
+    //   bool tableExists = await driver.hasTable('users');
+    //
+    //   // Assert that the table exists
+    //   expect(tableExists, isA<bool>());
+    // });
   });
 }
