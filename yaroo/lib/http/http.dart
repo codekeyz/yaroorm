@@ -24,7 +24,7 @@ abstract class HTTPController extends AppInstance {
 
   Session? get session => request.session;
 
-  get body => request.body;
+  get requestBody => request.body;
 
   Response badRequest([String? message]) {
     const status = 422;

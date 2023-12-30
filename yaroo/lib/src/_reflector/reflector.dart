@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:reflectable/reflectable.dart' as r;
+import 'package:yaroo/foundation/validation.dart';
 import 'package:yaroo/http/meta.dart';
 
 import '../../../http/http.dart';
@@ -98,7 +99,7 @@ ControllerMethod parseControllerMethod(ControllerMethodDefinition defn) {
   if (parameters.isEmpty) return ControllerMethod(defn);
 
   if (parameters.any((e) => e.metadata.length > 1)) {
-    throw ArgumentError('Multiple annotations using on $type #${symbolToString(method)} parameters');
+    throw ArgumentError('Multiple annotations using on $type #${symbolToString(method)} parameter');
   }
 
   final params = parameters.map((e) {
@@ -106,9 +107,22 @@ ControllerMethod parseControllerMethod(ControllerMethodDefinition defn) {
     if (meta is! RequestAnnotation) {
       throw ArgumentError('Invalid annotation $meta used on $type #${symbolToString(method)} parameter');
     }
-    return ControllerMethodParam(e.simpleName, e.reflectedType,
-        defaultValue: e.defaultValue, optional: e.isOptional, meta: meta);
+
+    final paramType = e.reflectedType;
+    final maybeDto = _tryResolveDtoInstance(paramType);
+
+    return ControllerMethodParam(e.simpleName, paramType,
+        defaultValue: e.defaultValue, optional: e.isOptional, meta: meta, dto: maybeDto);
   }).toList();
 
   return ControllerMethod(defn, params);
+}
+
+BaseDTO? _tryResolveDtoInstance(Type type) {
+  try {
+    final mirror = dtoReflector.reflectType(type) as r.ClassMirror;
+    return mirror.newInstance(unnamedConstructor, []) as BaseDTO;
+  } on r.NoSuchCapabilityError catch (_) {
+    return null;
+  }
 }

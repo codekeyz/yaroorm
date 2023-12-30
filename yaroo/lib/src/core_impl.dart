@@ -30,6 +30,8 @@ class _YarooAppImpl implements Application {
       final errorsList = error.errors;
       final errorData = errorsList == null ? {'error': error.message} : {'errors': errorsList};
       return response.json(errorData, statusCode: HttpStatus.badRequest);
+    } else if (error is SpannerRouteValidatorError) {
+      return response.json({'error': error.toString()}, statusCode: HttpStatus.badRequest);
     }
 
     return response.internalServerError(error.toString());

@@ -18,8 +18,7 @@ abstract class ClassPropertyValidator<T> {
   const ClassPropertyValidator({this.name, this.defaultVal, this.optional = false});
 
   EzValidator<T> get validator {
-    final base = EzValidator<T>(defaultValue: defaultVal);
-
+    final base = EzValidator<T>(defaultValue: defaultVal, optional: optional);
     return optional ? base.isType(propertyType) : base.required().isType(propertyType);
   }
 }
@@ -56,4 +55,15 @@ class ezRequired<T> extends ClassPropertyValidator<T> {
 
   @override
   Type get propertyType => type ?? T;
+}
+
+class ezOptional extends ClassPropertyValidator {
+  final Type type;
+  const ezOptional(this.type);
+
+  @override
+  Type get propertyType => type;
+
+  @override
+  bool get optional => true;
 }

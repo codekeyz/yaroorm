@@ -1,4 +1,5 @@
 import 'package:meta/meta.dart';
+import 'package:yaroo/foundation/validation.dart';
 import 'package:yaroo/http/_pharaoh.dart';
 import 'package:yaroo/http/meta.dart';
 
@@ -75,13 +76,9 @@ class ControllerMethodParam {
   final dynamic defaultValue;
   final RequestAnnotation? meta;
 
-  const ControllerMethodParam(
-    this.name,
-    this.type, {
-    this.meta,
-    this.optional = false,
-    this.defaultValue,
-  });
+  final BaseDTO? dto;
+
+  const ControllerMethodParam(this.name, this.type, {this.meta, this.optional = false, this.defaultValue, this.dto});
 }
 
 class ControllerRouteMethodDefinition extends RouteDefinition {

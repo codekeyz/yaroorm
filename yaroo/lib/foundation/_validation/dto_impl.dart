@@ -1,13 +1,12 @@
 part of 'dto.dart';
 
 abstract interface class _BaseDTOImpl {
-  final Map<String, dynamic> _databag = {};
+  final Map<dynamic, dynamic> _databag = {};
 
   void make(Request request) {
-    final requestBody = request.body ?? {};
-    final errors = schema.catchErrors(requestBody);
+    final (data, errors) = schema.validateSync(request.body ?? {});
     if (errors.isNotEmpty) throw RequestValidationError.errors(ValidationErrorLocation.Body, errors);
-    _databag.addAll(requestBody);
+    _databag.addAll(data);
   }
 
   EzSchema? _schemaCache;
@@ -16,7 +15,7 @@ abstract interface class _BaseDTOImpl {
     if (_schemaCache != null) return _schemaCache!;
 
     final mirror = dtoReflector.reflectType(runtimeType) as r.ClassMirror;
-    final properties = mirror.getters;
+    final properties = mirror.getters.where((e) => e.isAbstract);
 
     final entries = properties.map((prop) {
       final returnType = prop.reflectedReturnType;

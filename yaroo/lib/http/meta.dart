@@ -1,9 +1,6 @@
 import 'dart:convert';
 
-import 'package:reflectable/reflectable.dart';
-import 'package:yaroo/foundation/validation.dart';
 import 'package:yaroo/http/http.dart';
-import 'package:yaroo/src/_reflector/reflector.dart';
 import 'package:yaroo/src/_router/definition.dart';
 
 abstract class RequestAnnotation<T> {
@@ -42,27 +39,24 @@ class RequestValidationError extends Error {
 /// which will be resolved to the request body.
 ///
 /// Example: create(@Body() user) {}
-class Body<T> extends RequestAnnotation<T> {
+class Body extends RequestAnnotation {
   const Body();
 
   @override
   process(Request request, ControllerMethodParam param) {
     final body = request.body;
-    if (!param.optional && body == null) throw RequestValidationError.body('Request Body is required');
-    if (T != dynamic && body is! T) throw RequestValidationError.body('Request Body is not valid');
+    if (body == null) {
+      if (param.optional) return null;
+      throw RequestValidationError.body('Request Body is required');
+    }
+
+    final dtoInstance = param.dto;
+    if (dtoInstance != null) return dtoInstance..make(request);
+
+    final type = param.type;
+    if (type != dynamic && body.runtimeType != type) throw RequestValidationError.body('Request Body is not valid');
+
     return body;
-  }
-}
-
-class DTO extends RequestAnnotation<BaseDTO> {
-  const DTO();
-
-  @override
-  BaseDTO process(Request request, ControllerMethodParam param) {
-    final classMirror = dtoReflector.reflectType(param.type) as ClassMirror;
-    final instance = classMirror.newInstance(unnamedConstructor, []) as BaseDTO;
-    instance.make(request);
-    return instance;
   }
 }
 
@@ -79,15 +73,21 @@ class Param extends RequestAnnotation {
   process(Request request, ControllerMethodParam param) {
     final paramName = name ?? param.name;
     final value = request.params[paramName] ?? param.defaultValue;
-    if (!param.optional && value == null) throw RequestValidationError.param('Request Param: $paramName is required');
+    if (value == null) {
+      return param.optional ? null : throw RequestValidationError.param('Request Param: $paramName is required');
+    }
+
+    if (value.runtimeType == param.type) return value;
+
     final parsedValue = switch (param.type) {
       const (int) => int.tryParse(value),
       const (double) => double.tryParse(value),
       const (bool) => value == 'true',
+      const (String) => value.toString(),
       _ => value,
     };
     if (parsedValue == null) throw RequestValidationError.param('Request Param: $paramName is invalid');
-    return value;
+    return parsedValue;
   }
 }
 
@@ -118,7 +118,6 @@ class Query extends RequestAnnotation {
   }
 }
 
-const dto = DTO();
 const param = Param();
 const query = Query();
 const body = Body();
