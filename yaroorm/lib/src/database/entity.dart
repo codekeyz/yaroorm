@@ -12,6 +12,7 @@ const String entityToJsonStaticFuncName = 'fromJson';
 @entity
 abstract class Entity<PkType, Model> {
   Entity() {
+    assert(runtimeType == Model, 'Type Mismatch on Entity<$PkType, $Model>. $runtimeType expected');
     if (PkType == dynamic) {
       throw Exception('Entity Primary Key Data Type is required. Use either `extends Entity<int>` or `Entity<String>`');
     }
