@@ -20,7 +20,7 @@ void main() {
   initializeReflectable();
 
   group('ApplicationFactory', () {
-    group('when `buildControllerMethod`', () {
+    group('.buildControllerMethod', () {
       group('should return request handler', () {
         test('for method with no args', () async {
           final indexMethod = ControllerMethod((TestHttpController, #index));

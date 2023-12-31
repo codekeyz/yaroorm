@@ -173,9 +173,3 @@ ClassMirror? getDTOInstance(Type type) {
     return null;
   }
 }
-
-dynamic resolveRequestDTO(Request req, Type dto) {
-  final instance = reflectType(dto).newInstance(unnamedConstructor, []);
-  inject.reflect(instance).invoke('validate', [req]);
-  return instance;
-}
