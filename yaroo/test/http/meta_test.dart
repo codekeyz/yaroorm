@@ -1,11 +1,24 @@
 import 'dart:io';
 
 import 'package:spookie/spookie.dart';
+import 'package:yaroo/foundation/validation.dart';
 import 'package:yaroo/http/http.dart';
 import 'package:yaroo/http/meta.dart';
 import 'package:yaroo/src/_router/definition.dart';
 
+import 'meta_test.reflectable.dart';
+
+class TestDTO extends BaseDTO {
+  String get username;
+
+  String get lastname;
+
+  int get age;
+}
+
 void main() {
+  initializeReflectable();
+
   group('Meta', () {
     group('Param', () {
       final pharaoh = Pharaoh()
@@ -183,6 +196,34 @@ void main() {
             .expectStatus(200)
             .expectBody('{hello: Foo}')
             .test();
+      });
+
+      test('when dto provided', () async {
+        final dto = TestDTO();
+        final testData = {'username': 'Foo', 'lastname': 'Bar', 'age': 22};
+
+        pharaoh.post('/mongo', (req, res) {
+          final actualParam = Body();
+          final result = actualParam.process(req, ControllerMethodParam('reqBody', TestDTO, dto: dto));
+          return res.json({'username': result is TestDTO ? result.username : null});
+        });
+        await (await request(pharaoh))
+            .post('/mongo', {})
+            .expectStatus(422)
+            .expectJsonBody({
+              'location': 'body',
+              'errors': [
+                'username: The field is required',
+                'lastname: The field is required',
+                'age: The field is required'
+              ]
+            })
+            .test();
+
+        await (await request(pharaoh))
+            .post('/mongo', testData)
+            .expectStatus(200)
+            .expectJsonBody({'username': 'Foo'}).test();
       });
     });
   });
