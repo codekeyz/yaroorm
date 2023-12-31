@@ -95,6 +95,9 @@ abstract interface class Query<Result> extends QueryBase<Query<Result>>
         _limit = null;
 
   static Query<Model> table<Model>([String? tableName]) {
+    // test type to be sure it's a subtype of Entity
+    if (Model != Entity) reflectEntity<Model>();
+
     if (tableName == null) {
       if (Model != Entity) {
         tableName = Model.toString().toPlural().first;
@@ -102,6 +105,7 @@ abstract interface class Query<Result> extends QueryBase<Query<Result>>
         throw ArgumentError.notNull(tableName);
       }
     }
+
     return QueryImpl<Model>(tableName);
   }
 

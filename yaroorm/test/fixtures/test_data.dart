@@ -1,7 +1,7 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:yaroorm/src/database/entity.dart';
 
-class User extends Entity<int> {
+class User extends Entity<int, User> {
   final String firstname;
   final String lastname;
   final int age;
