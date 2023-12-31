@@ -29,6 +29,20 @@ void main() {
         });
         await (await request(pharaoh)).get('/boys/499').expectStatus(200).expectBody('499').test();
       });
+
+      test('when param value not valid', () async {
+        pharaoh.get('/test/<userId>', (req, res) {
+          final result = Param().process(req, ControllerMethodParam('userId', int));
+          return res.ok(result.toString());
+        });
+
+        await (await request(pharaoh)).get('/test/asfkd').expectStatus(422).expectJsonBody({
+          'location': 'param',
+          'errors': ['userId must be a int type']
+        }).test();
+
+        await (await request(pharaoh)).get('/test/2345').expectStatus(200).expectBody('2345').test();
+      });
     });
   });
 }

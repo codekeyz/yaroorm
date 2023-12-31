@@ -9,7 +9,7 @@ abstract class RequestAnnotation<T> {
 
   const RequestAnnotation([this.name]);
 
-  T process(Request request, ControllerMethodParam param);
+  T process(Request request, ControllerMethodParam methodParam);
 }
 
 enum ValidationErrorLocation { param, query, body, header }
@@ -55,19 +55,19 @@ class Body extends RequestAnnotation {
   const Body();
 
   @override
-  process(Request request, ControllerMethodParam param) {
+  process(Request request, ControllerMethodParam methodParam) {
     final body = request.body;
     if (body == null) {
-      if (param.optional) return null;
+      if (methodParam.optional) return null;
       throw RequestValidationError.body(EzValidator.globalLocale.required('body'));
     }
 
-    final dtoInstance = param.dto;
+    final dtoInstance = methodParam.dto;
     if (dtoInstance != null) return dtoInstance..make(request);
 
-    final type = param.type;
+    final type = methodParam.type;
     if (type != dynamic && body.runtimeType != type) {
-      throw RequestValidationError.body(EzValidator.globalLocale.isTypeOf('${param.type}', 'body'));
+      throw RequestValidationError.body(EzValidator.globalLocale.isTypeOf('${methodParam.type}', 'body'));
     }
 
     return body;
@@ -82,16 +82,16 @@ class Param extends RequestAnnotation {
   const Param([super.name]);
 
   @override
-  process(Request request, ControllerMethodParam param) {
-    final paramName = name ?? param.name;
-    final value = request.params[paramName] ?? param.defaultValue;
+  process(Request request, ControllerMethodParam methodParam) {
+    final paramName = name ?? methodParam.name;
+    final value = request.params[paramName] ?? methodParam.defaultValue;
     if (value == null) {
       throw RequestValidationError.param(EzValidator.globalLocale.required(paramName));
     }
 
-    final parsedValue = _parseValue(value, param.type);
+    final parsedValue = _parseValue(value, methodParam.type);
     if (parsedValue == null) {
-      throw RequestValidationError.param(EzValidator.globalLocale.isTypeOf('${param.type}', paramName));
+      throw RequestValidationError.param(EzValidator.globalLocale.isTypeOf('${methodParam.type}', paramName));
     }
     return parsedValue;
   }
@@ -105,16 +105,16 @@ class Query extends RequestAnnotation {
   const Query([super.name]);
 
   @override
-  process(Request request, ControllerMethodParam param) {
-    final paramName = name ?? param.name;
-    final value = request.query[paramName] ?? param.defaultValue;
-    if (!param.optional && value == null) {
+  process(Request request, ControllerMethodParam methodParam) {
+    final paramName = name ?? methodParam.name;
+    final value = request.query[paramName] ?? methodParam.defaultValue;
+    if (!methodParam.optional && value == null) {
       throw RequestValidationError.query(EzValidator.globalLocale.required(paramName));
     }
 
-    final parsedValue = _parseValue(value, param.type);
+    final parsedValue = _parseValue(value, methodParam.type);
     if (parsedValue == null) {
-      throw RequestValidationError.query(EzValidator.globalLocale.isTypeOf('${param.type}', paramName));
+      throw RequestValidationError.query(EzValidator.globalLocale.isTypeOf('${methodParam.type}', paramName));
     }
     return parsedValue;
   }
@@ -124,16 +124,16 @@ class Header extends RequestAnnotation {
   const Header([super.name]);
 
   @override
-  process(Request request, ControllerMethodParam param) {
-    final paramName = name ?? param.name;
-    final value = request.headers[paramName] ?? param.defaultValue;
-    if (!param.optional && value == null) {
+  process(Request request, ControllerMethodParam methodParam) {
+    final paramName = name ?? methodParam.name;
+    final value = request.headers[paramName] ?? methodParam.defaultValue;
+    if (!methodParam.optional && value == null) {
       throw RequestValidationError.header(EzValidator.globalLocale.required(paramName));
     }
 
-    final parsedValue = _parseValue(value, param.type);
+    final parsedValue = _parseValue(value, methodParam.type);
     if (parsedValue == null) {
-      throw RequestValidationError.query(EzValidator.globalLocale.isTypeOf('${param.type}', paramName));
+      throw RequestValidationError.query(EzValidator.globalLocale.isTypeOf('${methodParam.type}', paramName));
     }
     return parsedValue;
   }
