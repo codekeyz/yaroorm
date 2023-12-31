@@ -60,7 +60,14 @@ abstract class Entity<PkType, Model> {
 
   String get tableName => typeToTableName(runtimeType);
 
-  Query<Model> get _query => DB.query<Model>(tableName);
+  Query<Model> get _query {
+    final connName = connection;
+    final query = DB.query<Model>(tableName);
+    return connName == null ? query : query.driver(DB.driver(connName));
+  }
+
+  /// override this this set the connection for this model
+  String? connection;
 
   WhereClause _whereId(Query _) => _.whereEqual('id', id.value);
 

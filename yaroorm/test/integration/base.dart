@@ -29,7 +29,7 @@ void runIntegrationTest(String connectionName, DatabaseDriver driver) {
     });
 
     test('should insert single user', () async {
-      final result = await usersTestData.first.save();
+      final result = await (usersTestData.first..connection = connectionName).save();
       expect(result, isA<User>().having((p0) => p0.id.value, 'has primary key', 1));
 
       final users = await Query.table<User>().driver(driver).all();
@@ -119,7 +119,7 @@ void runIntegrationTest(String connectionName, DatabaseDriver driver) {
       final userOne = await query.get();
       expect(userOne, isNotNull);
 
-      await userOne!.delete();
+      await (userOne!..connection = connectionName).delete();
 
       final usersAfterDelete = await query.all();
       expect(usersAfterDelete.any((e) => e.id.value == userOne.id.value), isFalse);
