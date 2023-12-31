@@ -17,32 +17,19 @@ abstract class Entity<PkType, Model> {
     }
   }
 
-  Map<String, dynamic> toJson();
-
   PkType? id;
 
-  @JsonKey(name: entityCreatedAtColumnName)
-  late DateTime createdAt;
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  DateTime? createdAt;
 
-  @JsonKey(name: entityUpdatedAtColumnName)
-  late DateTime updatedAt;
-
-  bool get enableTimestamps => true;
-
-  String get tableName => typeToTableName(runtimeType);
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  DateTime? updatedAt;
 
   Query<Model> get _query {
     final connName = connection;
     final query = DB.query<Model>(tableName);
     return connName == null ? query : query.driver(DB.driver(connName));
   }
-
-  /// override this this set the connection for this model
-  @JsonKey(includeToJson: false, includeFromJson: false)
-  String? connection;
-
-  @JsonKey(includeToJson: false, includeFromJson: false)
-  String primaryKey = 'id';
 
   WhereClause _whereId(Query _) => _.whereEqual(primaryKey, id);
 
@@ -57,4 +44,33 @@ abstract class Entity<PkType, Model> {
     await _query.update(where: _whereId, values: values).exec();
     return _query.get();
   }
+
+  Map<String, dynamic> toJson();
+
+  bool get enableTimestamps => false;
+
+  String get tableName => typeToTableName(runtimeType);
+
+  /// override this this set the connection for this model
+  @JsonKey(includeToJson: false, includeFromJson: false)
+  String? connection;
+
+  String get primaryKey => 'id';
+
+  String get createdAtColumn => entityCreatedAtColumnName;
+
+  String get updatedAtColumn => entityUpdatedAtColumnName;
+
+  bool get allowInsertIdAsNull => false;
+
+  Map<String, dynamic> get data {
+    final jsonData = toJson();
+    if (!allowInsertIdAsNull) jsonData.remove(primaryKey);
+    return {...jsonData, if (enableTimestamps) ...timestampData};
+  }
+
+  Map<String, dynamic> get timestampData => {
+        createdAtColumn: createdAt?.toIso8601String(),
+        updatedAtColumn: updatedAt?.toIso8601String(),
+      };
 }
