@@ -97,18 +97,12 @@ abstract interface class Query<Result> extends QueryBase<Query<Result>>
         _limit = null;
 
   static Query<Model> table<Model>([String? tableName]) {
-    // test type to be sure it's a subtype of Entity
-    if (Model != Entity) reflectEntity<Model>();
-
-    if (tableName == null) {
-      if (Model != Entity) {
-        tableName = typeToTableName(Model);
-      } else {
-        throw ArgumentError.notNull(tableName);
-      }
+    if (Model != Entity && Model != dynamic) {
+      reflectEntity<Model>(); // test type to be sure it's a subtype of Entity
+      tableName ??= typeToTableName(Model);
     }
-
-    return QueryImpl<Model>(tableName);
+    assert(tableName != null, 'Either provide Entity Type or tableName');
+    return QueryImpl<Model>(tableName!);
   }
 
   int? get limit => _limit;
