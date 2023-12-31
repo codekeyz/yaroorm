@@ -4,8 +4,8 @@ import 'package:yaroorm/yaroorm.dart';
 
 const entity = ReflectableEntity();
 
-const String entityCreatedAtColumnName = 'created_at';
-const String entityUpdatedAtColumnName = 'updated_at';
+const String entityCreatedAtColumnName = 'createdAt';
+const String entityUpdatedAtColumnName = 'updatedAt';
 
 const String entityToJsonStaticFuncName = 'fromJson';
 
@@ -19,10 +19,8 @@ abstract class Entity<PkType, Model> {
 
   PkType? id;
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   DateTime? createdAt;
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   DateTime? updatedAt;
 
   Query<Model> get _query {
@@ -45,8 +43,6 @@ abstract class Entity<PkType, Model> {
     return _query.get();
   }
 
-  Map<String, dynamic> toJson();
-
   bool get enableTimestamps => false;
 
   String get tableName => typeToTableName(runtimeType);
@@ -63,14 +59,17 @@ abstract class Entity<PkType, Model> {
 
   bool get allowInsertIdAsNull => false;
 
-  Map<String, dynamic> get data {
-    final jsonData = toJson();
-    if (!allowInsertIdAsNull) jsonData.remove(primaryKey);
-    return {...jsonData, if (enableTimestamps) ...timestampData};
-  }
+  Map<String, dynamic> toMap();
 
-  Map<String, dynamic> get timestampData => {
-        createdAtColumn: createdAt?.toIso8601String(),
-        updatedAtColumn: updatedAt?.toIso8601String(),
-      };
+  @nonVirtual
+  Map<String, dynamic> toJson() {
+    final mapData = toMap();
+    if (mapData[primaryKey] == null && !allowInsertIdAsNull) mapData.remove(primaryKey);
+    if (!enableTimestamps) {
+      mapData
+        ..remove(createdAtColumn)
+        ..remove(updatedAtColumn);
+    }
+    return mapData;
+  }
 }
