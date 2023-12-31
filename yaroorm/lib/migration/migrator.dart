@@ -6,7 +6,7 @@ import 'utils.dart';
 
 typedef Rollback = ({int batch, String name, MigrationTask? migration});
 
-class MigrationData extends Entity<int> {
+class MigrationData extends Entity<int, MigrationData> {
   final String migration;
   final int batch;
 

@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
-
-import '../reflection/reflector.dart';
+import 'package:meta/meta.dart';
+import 'package:yaroorm/yaroorm.dart';
 
 const entity = ReflectableEntity();
 
@@ -14,10 +14,7 @@ class PrimaryKey<T> {
 
   T get key => value!;
 
-  PrimaryKey withKey(T value) {
-    if (value is int) return PrimaryKey<int>(value: value);
-    return PrimaryKey<String>(value: '$value');
-  }
+  PrimaryKey<T> withKey(T value) => PrimaryKey<T>(value: value);
 
   PrimaryKey({this.value}) {
     if (value == null) return;
@@ -41,9 +38,9 @@ class PrimaryKey<T> {
 }
 
 @entity
-abstract class Entity<T> {
+abstract class Entity<PkType, Model> {
   Entity() {
-    if (T == dynamic) {
+    if (PkType == dynamic) {
       throw Exception('Entity Primary Key Data Type is required. Use either `extends Entity<int>` or `Entity<String>`');
     }
   }
@@ -51,7 +48,7 @@ abstract class Entity<T> {
   Map<String, dynamic> toJson();
 
   @JsonKey(fromJson: PrimaryKey.thisFromJson, toJson: PrimaryKey.thisToJson)
-  PrimaryKey<T> id = PrimaryKey<T>();
+  PrimaryKey<PkType> id = PrimaryKey<PkType>();
 
   @JsonKey(name: entityCreatedAtColumnName)
   late DateTime createdAt;
@@ -60,4 +57,29 @@ abstract class Entity<T> {
   late DateTime updatedAt;
 
   bool get enableTimestamps => true;
+
+  String get tableName => typeToTableName(runtimeType);
+
+  Query<Model> get _query {
+    final connName = connection;
+    final query = DB.query<Model>(tableName);
+    return connName == null ? query : query.driver(DB.driver(connName));
+  }
+
+  /// override this this set the connection for this model
+  String? connection;
+
+  WhereClause _whereId(Query _) => _.whereEqual('id', id.value);
+
+  @nonVirtual
+  Future<void> delete() => _query.delete(_whereId).exec();
+
+  @nonVirtual
+  Future<Model> save() async => await _query.insert(this);
+
+  @nonVirtual
+  Future<Model?> update(Map<String, dynamic> values) async {
+    await _query.update(where: _whereId, values: values).exec();
+    return _query.get();
+  }
 }
