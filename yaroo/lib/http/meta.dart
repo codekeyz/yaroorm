@@ -5,7 +5,9 @@ import 'package:yaroo/http/http.dart';
 import 'package:yaroo/src/_router/definition.dart';
 
 abstract class RequestAnnotation<T> {
-  const RequestAnnotation();
+  final String? name;
+
+  const RequestAnnotation([this.name]);
 
   T process(Request request, ControllerMethodParam param);
 }
@@ -77,9 +79,7 @@ class Body extends RequestAnnotation {
 ///
 /// `/users/<userId>/details` Example: getUser(@Param() String userId) {}
 class Param extends RequestAnnotation {
-  final String? name;
-
-  const Param([this.name]);
+  const Param([super.name]);
 
   @override
   process(Request request, ControllerMethodParam param) {
@@ -102,9 +102,7 @@ class Param extends RequestAnnotation {
 ///
 /// `/users?name=Chima` Example: searchUsers(@Query() String name) {}
 class Query extends RequestAnnotation {
-  final String? name;
-
-  const Query([this.name]);
+  const Query([super.name]);
 
   @override
   process(Request request, ControllerMethodParam param) {
@@ -123,8 +121,7 @@ class Query extends RequestAnnotation {
 }
 
 class Header extends RequestAnnotation {
-  final String? name;
-  const Header([this.name]);
+  const Header([super.name]);
 
   @override
   process(Request request, ControllerMethodParam param) {

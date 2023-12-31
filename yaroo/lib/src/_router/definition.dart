@@ -69,11 +69,11 @@ class ControllerMethod {
   ControllerMethod(this.method, [this.params = const []]);
 }
 
-class ControllerMethodParam {
+class ControllerMethodParam<T> {
   final String name;
-  final Type type;
+  final T type;
   final bool optional;
-  final dynamic defaultValue;
+  final T? defaultValue;
   final RequestAnnotation? meta;
 
   final BaseDTO? dto;
