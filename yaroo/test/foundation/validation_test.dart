@@ -20,6 +20,11 @@ class TestSingleOptional extends BaseDTO {
   String? get address;
 }
 
+class DTOTypeMismatch extends BaseDTO {
+  @ezOptional(int)
+  String? get name;
+}
+
 void main() {
   initializeReflectable();
 
@@ -79,7 +84,7 @@ void main() {
       ..onError((error, req) {
         final response = Response.create();
         if (error is RequestValidationError) return response.json(error.errorBody, statusCode: 422);
-        return response.internalServerError();
+        return response.internalServerError(error.toString());
       });
 
     test('when no metas', () async {
@@ -148,6 +153,24 @@ void main() {
           .post('/optional', {'nationality': 'Ghanaian', 'address': 'Terminalia Street'})
           .expectStatus(200)
           .expectJsonBody({'nationality': 'Ghanaian', 'address': 'Terminalia Street'})
+          .test();
+    });
+
+    test('when type mismatch', () async {
+      final dto = DTOTypeMismatch();
+
+      pharaoh.post('/type-mismatch', (req, res) {
+        dto.make(req);
+        return res.ok('Foo Bar');
+      });
+
+      await (await request(pharaoh))
+          .post('/type-mismatch', {'name': 'Chima'})
+          .expectStatus(500)
+          .expectJsonBody({
+            'error':
+                'Invalid argument(s): Type Mismatch between ezOptional(int) & DTOTypeMismatch class property name->(String)'
+          })
           .test();
     });
   });

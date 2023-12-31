@@ -20,9 +20,10 @@ abstract interface class _BaseDTOImpl {
     final entries = properties.map((prop) {
       final returnType = prop.reflectedReturnType;
       final meta = prop.metadata.whereType<ClassPropertyValidator>().firstOrNull ?? ezRequired(returnType);
+
       if (meta.propertyType != returnType) {
         throw ArgumentError(
-            'Type Mismatch between DTO Meta ${meta.runtimeType} & Property ${prop.simpleName} $returnType');
+            'Type Mismatch between ${meta.runtimeType}(${meta.propertyType}) & $runtimeType class property ${prop.simpleName}->($returnType)');
       }
 
       return MapEntry(meta.name ?? prop.simpleName, meta.validator);
