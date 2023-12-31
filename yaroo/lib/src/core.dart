@@ -1,9 +1,12 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:meta/meta.dart';
+import 'package:reflectable/reflectable.dart';
 import 'package:spookie/spookie.dart' as spookie;
+import 'package:yaroo/http/meta.dart';
 
 import '../../http/http.dart';
 import '../../http/kernel.dart';
@@ -101,7 +104,9 @@ abstract class ApplicationFactory {
   }
 
   static RequestHandler buildControllerMethod(ControllerMethod method) {
-    return (req, res) async {
+    final params = method.params;
+
+    return (req, res) {
       final methodName = method.methodName;
       final instance = createNewInstance<HTTPController>(method.controller);
       final mirror = inject.reflect(instance);
@@ -110,12 +115,32 @@ abstract class ApplicationFactory {
         ..invokeSetter('request', req)
         ..invokeSetter('response', res);
 
-      methodCall() => mirror.invoke(methodName, []);
+      late Function() methodCall;
 
-      final result = await Future.sync(methodCall);
+      if (params.isNotEmpty) {
+        final args = _resolveControllerMethodArgs(req, method);
+        methodCall = () => mirror.invoke(methodName, args);
+      } else {
+        methodCall = () => mirror.invoke(methodName, []);
+      }
 
-      return result;
+      return Future.sync(methodCall);
     };
+  }
+
+  static List<Object> _resolveControllerMethodArgs(Request request, ControllerMethod method) {
+    if (method.params.isEmpty) return [];
+
+    final args = <Object>[];
+
+    for (final param in method.params) {
+      final meta = param.meta;
+      if (meta != null) {
+        args.add(meta.process(request, param));
+        continue;
+      }
+    }
+    return args;
   }
 
   static Iterable<HandlerFunc> resolveMiddlewareForGroup(String group) {
@@ -139,4 +164,18 @@ abstract class ApplicationFactory {
     final app = (Application._instance as _YarooAppImpl);
     return spookie.request(app._createPharaohInstance());
   }
+}
+
+ClassMirror? getDTOInstance(Type type) {
+  try {
+    return reflectType(type);
+  } on UnsupportedError catch (_) {
+    return null;
+  }
+}
+
+dynamic resolveRequestDTO(Request req, Type dto) {
+  final instance = reflectType(dto).newInstance(unnamedConstructor, []);
+  inject.reflect(instance).invoke('validate', [req]);
+  return instance;
 }
