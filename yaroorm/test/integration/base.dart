@@ -29,7 +29,7 @@ void runIntegrationTest(String connectionName, DatabaseDriver driver) {
     });
 
     test('should insert single user', () async {
-      final result = usersTestData.first.save();
+      final result = await usersTestData.first.save();
       expect(result, isA<User>().having((p0) => p0.id.value, 'has primary key', 1));
 
       final users = await Query.table<User>().driver(driver).all();
