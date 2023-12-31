@@ -46,11 +46,9 @@ void main() {
   initializeReflectable();
 
   group('Core', () {
-    group('Kernel', () {
-      setUpAll(() {
-        TestKidsApp(TestAppKernel([TestMiddleware]));
-      });
+    final testApp = TestKidsApp(TestAppKernel([TestMiddleware]));
 
+    group('Kernel', () {
       test('should resolve global middleware', () {
         final globalMiddleware = ApplicationFactory.globalMiddleware;
         expect(globalMiddleware, isA<HandlerFunc>());
@@ -87,11 +85,9 @@ void main() {
     });
 
     test('should return tester', () async {
-      final app = TestKidsApp(TestAppKernel([TestMiddleware]));
+      await testApp.bootstrap(listen: false);
 
-      await app.bootstrap(listen: false);
-
-      // expect(await app.tester, isA<Spookie>());
+      expect(await testApp.tester, isA<Spookie>());
     });
   });
 }
