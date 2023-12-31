@@ -3,7 +3,7 @@ import 'package:yaroo/http/http.dart';
 import 'package:yaroo/yaroo.dart';
 
 import './router_test.reflectable.dart';
-import 'core_test.dart';
+import 'core/core_test.dart';
 
 class TestController extends HTTPController {
   void create() {}
