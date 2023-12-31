@@ -5,7 +5,7 @@ part of 'core.dart';
 class _YarooAppImpl implements Application {
   late final AppConfig _appConfig;
   late final Spanner _spanner;
-  late final ViewEngine _viewEngine;
+  ViewEngine? _viewEngine;
 
   _YarooAppImpl(this._appConfig, this._spanner);
 
