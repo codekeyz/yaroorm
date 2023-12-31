@@ -4,38 +4,10 @@ import 'package:yaroorm/yaroorm.dart';
 
 const entity = ReflectableEntity();
 
-const String entityCreatedAtColumnName = 'created_at';
-const String entityUpdatedAtColumnName = 'updated_at';
+const String entityCreatedAtColumnName = 'createdAt';
+const String entityUpdatedAtColumnName = 'updatedAt';
 
 const String entityToJsonStaticFuncName = 'fromJson';
-
-class PrimaryKey<T> {
-  final T? value;
-
-  T get key => value!;
-
-  PrimaryKey<T> withKey(T value) => PrimaryKey<T>(value: value);
-
-  PrimaryKey({this.value}) {
-    if (value == null) return;
-    if (!(value is String || value is int)) {
-      throw Exception('Primary Key value must be either `String` or `int` Type');
-    }
-  }
-
-  dynamic toJson() => PrimaryKey.thisToJson(this);
-
-  static thisFromJson<T>(data) {
-    if (data == null) return PrimaryKey(value: null);
-    if (data is int) return PrimaryKey<int>(value: data);
-    if (data is String) return PrimaryKey<String>(value: data);
-    return PrimaryKey<T>(value: '$data' as T);
-  }
-
-  static T thisToJson<T>(data) {
-    return (data as PrimaryKey).value;
-  }
-}
 
 @entity
 abstract class Entity<PkType, Model> {
@@ -45,20 +17,11 @@ abstract class Entity<PkType, Model> {
     }
   }
 
-  Map<String, dynamic> toJson();
+  PkType? id;
 
-  @JsonKey(fromJson: PrimaryKey.thisFromJson, toJson: PrimaryKey.thisToJson)
-  PrimaryKey<PkType> id = PrimaryKey<PkType>();
+  DateTime? createdAt;
 
-  @JsonKey(name: entityCreatedAtColumnName)
-  late DateTime createdAt;
-
-  @JsonKey(name: entityUpdatedAtColumnName)
-  late DateTime updatedAt;
-
-  bool get enableTimestamps => true;
-
-  String get tableName => typeToTableName(runtimeType);
+  DateTime? updatedAt;
 
   Query<Model> get _query {
     final connName = connection;
@@ -66,11 +29,7 @@ abstract class Entity<PkType, Model> {
     return connName == null ? query : query.driver(DB.driver(connName));
   }
 
-  /// override this this set the connection for this model
-  @JsonKey(includeToJson: false, includeFromJson: false)
-  String? connection;
-
-  WhereClause _whereId(Query _) => _.whereEqual('id', id.value);
+  WhereClause _whereId(Query _) => _.whereEqual(primaryKey, id);
 
   @nonVirtual
   Future<void> delete() => _query.delete(_whereId).exec();
@@ -82,5 +41,35 @@ abstract class Entity<PkType, Model> {
   Future<Model?> update(Map<String, dynamic> values) async {
     await _query.update(where: _whereId, values: values).exec();
     return _query.get();
+  }
+
+  bool get enableTimestamps => false;
+
+  String get tableName => typeToTableName(runtimeType);
+
+  /// override this this set the connection for this model
+  @JsonKey(includeToJson: false, includeFromJson: false)
+  String? connection;
+
+  String get primaryKey => 'id';
+
+  String get createdAtColumn => entityCreatedAtColumnName;
+
+  String get updatedAtColumn => entityUpdatedAtColumnName;
+
+  bool get allowInsertIdAsNull => false;
+
+  Map<String, dynamic> toMap();
+
+  @nonVirtual
+  Map<String, dynamic> toJson() {
+    final mapData = toMap();
+    if (mapData[primaryKey] == null && !allowInsertIdAsNull) mapData.remove(primaryKey);
+    if (!enableTimestamps) {
+      mapData
+        ..remove(createdAtColumn)
+        ..remove(updatedAtColumn);
+    }
+    return mapData;
   }
 }

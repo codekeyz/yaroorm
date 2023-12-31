@@ -27,9 +27,9 @@ class QueryImpl<Result> extends Query<Result> {
   @override
   Future<T> insert<T extends Entity>(T entity) async {
     if (entity.enableTimestamps) entity.createdAt = entity.updatedAt = DateTime.now().toUtc();
-    final query = InsertQuery(tableName, values: entity.toJson()..remove('id'));
+    final query = InsertQuery(tableName, values: entity.toJson());
     final recordId = await queryDriver.insert(query);
-    return entity..id = entity.id.withKey(recordId);
+    return entity..id = recordId;
   }
 
   @override

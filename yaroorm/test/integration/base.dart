@@ -30,7 +30,7 @@ void runIntegrationTest(String connectionName, DatabaseDriver driver) {
 
     test('should insert single user', () async {
       final result = await (usersTestData.first..connection = connectionName).save();
-      expect(result, isA<User>().having((p0) => p0.id.value, 'has primary key', 1));
+      expect(result, isA<User>().having((p0) => p0.id, 'has primary key', 1));
 
       final users = await Query.table<User>().driver(driver).all();
       expect(users.length, 1);
@@ -46,7 +46,7 @@ void runIntegrationTest(String connectionName, DatabaseDriver driver) {
     test('should update user', () async {
       var user = await Query.table<User>().driver(driver).get();
       expect(user, isNotNull);
-      final userId = user?.id.value;
+      final userId = user?.id;
       expect(userId, 1);
 
       await Query.table<User>()
@@ -58,7 +58,7 @@ void runIntegrationTest(String connectionName, DatabaseDriver driver) {
 
       user as User;
       expect(user.firstname, 'Red Oil');
-      expect(user.id.value, 1);
+      expect(user.id, 1);
     });
 
     test('should update many users', () async {
@@ -122,7 +122,7 @@ void runIntegrationTest(String connectionName, DatabaseDriver driver) {
       await (userOne!..connection = connectionName).delete();
 
       final usersAfterDelete = await query.all();
-      expect(usersAfterDelete.any((e) => e.id.value == userOne.id.value), isFalse);
+      expect(usersAfterDelete.any((e) => e.id == userOne.id), isFalse);
     });
 
     test('should delete many users', () async {
