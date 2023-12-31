@@ -4,7 +4,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:meta/meta.dart';
-import 'package:reflectable/reflectable.dart';
 import 'package:spookie/spookie.dart' as spookie;
 import 'package:yaroo/http/meta.dart';
 
@@ -163,13 +162,5 @@ abstract class ApplicationFactory {
   Future<spookie.Spookie> get tester {
     final app = (Application._instance as _YarooAppImpl);
     return spookie.request(app._createPharaohInstance());
-  }
-}
-
-ClassMirror? getDTOInstance(Type type) {
-  try {
-    return reflectType(type);
-  } on UnsupportedError catch (_) {
-    return null;
   }
 }

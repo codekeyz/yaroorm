@@ -85,5 +85,13 @@ void main() {
         expect(() => ApplicationFactory.resolveMiddlewareForGroup('web'), throwsA(isA<UnsupportedError>()));
       });
     });
+
+    test('should return tester', () async {
+      final app = TestKidsApp(TestAppKernel([TestMiddleware]));
+
+      await app.bootstrap(listen: false);
+
+      // expect(await app.tester, isA<Spookie>());
+    });
   });
 }
