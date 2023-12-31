@@ -1,10 +1,12 @@
+import 'dart:io';
+
 import 'package:spookie/spookie.dart';
 import 'package:yaroo/http/http.dart';
 import 'package:yaroo/http/meta.dart';
 import 'package:yaroo/src/_router/definition.dart';
 
 void main() {
-  group('Metas', () {
+  group('Meta', () {
     group('Param', () {
       final pharaoh = Pharaoh()
         ..onError((error, req) {
@@ -13,7 +15,7 @@ void main() {
           return response.internalServerError(error.toString());
         });
 
-      test('should use name set in param', () async {
+      test('should use name set in meta', () async {
         pharaoh.get('/<userId>/hello', (req, res) {
           final actualParam = Param('userId');
           final result = actualParam.process(req, ControllerMethodParam('user', String));
@@ -22,7 +24,7 @@ void main() {
         await (await request(pharaoh)).get('/234/hello').expectStatus(200).expectBody('234').test();
       });
 
-      test('should use controller method property name if param name not provided', () async {
+      test('should use controller method property name if meta name not provided', () async {
         pharaoh.get('/boys/<user>', (req, res) {
           final result = param.process(req, ControllerMethodParam('user', String));
           return res.ok(result);
@@ -88,6 +90,59 @@ void main() {
             .test();
 
         await (await request(pharaoh)).get('/moo?name=244').expectStatus(200).expectBody('244').test();
+      });
+    });
+
+    group('Header', () {
+      final pharaoh = Pharaoh()
+        ..onError((error, req) {
+          final response = Response.create();
+          if (error is RequestValidationError) return response.json(error.errorBody, statusCode: 422);
+          return response.internalServerError(error.toString());
+        });
+
+      test('should use name set in meta', () async {
+        pharaoh.get('/foo', (req, res) {
+          final actualParam = Header(HttpHeaders.authorizationHeader);
+          final result = actualParam.process(req, ControllerMethodParam('token', String));
+          return res.json(result);
+        });
+        await (await request(pharaoh))
+            .get('/foo', headers: {HttpHeaders.authorizationHeader: 'foo token'})
+            .expectStatus(200)
+            .expectJsonBody('[foo token]')
+            .test();
+      });
+
+      test('should use controller method property name if meta name not provided', () async {
+        pharaoh.get('/bar', (req, res) {
+          final result = header.process(req, ControllerMethodParam('token', String));
+          return res.ok(result);
+        });
+        await (await request(pharaoh))
+            .get('/bar', headers: {'token': 'Hello Token'})
+            .expectStatus(200)
+            .expectBody('[Hello Token]')
+            .test();
+      });
+
+      test('when Header value not valid', () async {
+        pharaoh.get('/moo', (req, res) {
+          final result = header.process(req, ControllerMethodParam('age_max', String));
+          return res.ok(result.toString());
+        });
+
+        await (await request(pharaoh))
+            .get('/moo', headers: {'age_max': 'Chima'})
+            .expectStatus(200)
+            .expectBody('[Chima]')
+            .test();
+
+        await (await request(pharaoh))
+            .get('/moo')
+            .expectStatus(422)
+            .expectBody('{"location":"header","errors":["age_max is required"]}')
+            .test();
       });
     });
   });

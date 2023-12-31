@@ -129,7 +129,7 @@ class Header extends RequestAnnotation {
 
     final parsedValue = _parseValue(value, methodParam.type);
     if (parsedValue == null) {
-      throw RequestValidationError.query(EzValidator.globalLocale.isTypeOf('${methodParam.type}', paramName));
+      throw RequestValidationError.header(EzValidator.globalLocale.isTypeOf('${methodParam.type}', paramName));
     }
     return parsedValue;
   }
@@ -137,7 +137,6 @@ class Header extends RequestAnnotation {
 
 _parseValue(dynamic value, Type type) {
   if (value.runtimeType == type) return value;
-
   value = value.toString();
   return switch (type) {
     const (int) => int.tryParse(value),
@@ -151,3 +150,4 @@ _parseValue(dynamic value, Type type) {
 const param = Param();
 const query = Query();
 const body = Body();
+const header = Header();
