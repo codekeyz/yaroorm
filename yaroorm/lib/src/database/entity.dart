@@ -1,4 +1,3 @@
-import 'package:grammer/grammer.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:meta/meta.dart';
 import 'package:yaroorm/yaroorm.dart';
@@ -59,7 +58,7 @@ abstract class Entity<PkType, Model> {
 
   bool get enableTimestamps => true;
 
-  String get tableName => runtimeType.toString().toPlural().first;
+  String get tableName => typeToTableName(runtimeType);
 
   Query<Model> get _query => DB.query<Model>(tableName);
 
