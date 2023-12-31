@@ -145,5 +145,45 @@ void main() {
             .test();
       });
     });
+
+    group('Body', () {
+      final pharaoh = Pharaoh()
+        ..onError((error, req) {
+          final response = Response.create();
+          if (error is RequestValidationError) return response.json(error.errorBody, statusCode: 422);
+          return response.internalServerError(error.toString());
+        });
+
+      test('should use name set in meta', () async {
+        pharaoh.post('/hello', (req, res) {
+          final actualParam = Body();
+          final result = actualParam.process(req, ControllerMethodParam('reqBody', dynamic));
+          return res.json(result);
+        });
+        await (await request(pharaoh))
+            .post('/hello', {'foo': "bar"})
+            .expectStatus(200)
+            .expectJsonBody({'foo': 'bar'})
+            .test();
+      });
+
+      test('when body not provided', () async {
+        pharaoh.post('/test', (req, res) {
+          final result = body.process(req, ControllerMethodParam('reqBody', dynamic));
+          return res.ok(result.toString());
+        });
+
+        await (await request(pharaoh)).post('/test', null).expectStatus(422).expectJsonBody({
+          'location': 'body',
+          'errors': ['body is required']
+        }).test();
+
+        await (await request(pharaoh))
+            .post('/test', {'hello': 'Foo'})
+            .expectStatus(200)
+            .expectBody('{hello: Foo}')
+            .test();
+      });
+    });
   });
 }
