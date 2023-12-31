@@ -67,6 +67,7 @@ abstract class Entity<PkType, Model> {
   }
 
   /// override this this set the connection for this model
+  @JsonKey(includeToJson: false, includeFromJson: false)
   String? connection;
 
   WhereClause _whereId(Query _) => _.whereEqual('id', id.value);
