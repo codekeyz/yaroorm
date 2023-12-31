@@ -9,34 +9,6 @@ const String entityUpdatedAtColumnName = 'updated_at';
 
 const String entityToJsonStaticFuncName = 'fromJson';
 
-class PrimaryKey<T> {
-  final T? value;
-
-  T get key => value!;
-
-  PrimaryKey<T> withKey(T value) => PrimaryKey<T>(value: value);
-
-  PrimaryKey({this.value}) {
-    if (value == null) return;
-    if (!(value is String || value is int)) {
-      throw Exception('Primary Key value must be either `String` or `int` Type');
-    }
-  }
-
-  dynamic toJson() => PrimaryKey.thisToJson(this);
-
-  static thisFromJson<T>(data) {
-    if (data == null) return PrimaryKey(value: null);
-    if (data is int) return PrimaryKey<int>(value: data);
-    if (data is String) return PrimaryKey<String>(value: data);
-    return PrimaryKey<T>(value: '$data' as T);
-  }
-
-  static T thisToJson<T>(data) {
-    return (data as PrimaryKey).value;
-  }
-}
-
 @entity
 abstract class Entity<PkType, Model> {
   Entity() {
@@ -47,8 +19,7 @@ abstract class Entity<PkType, Model> {
 
   Map<String, dynamic> toJson();
 
-  @JsonKey(fromJson: PrimaryKey.thisFromJson, toJson: PrimaryKey.thisToJson)
-  PrimaryKey<PkType> id = PrimaryKey<PkType>();
+  PkType? id;
 
   @JsonKey(name: entityCreatedAtColumnName)
   late DateTime createdAt;
@@ -70,7 +41,10 @@ abstract class Entity<PkType, Model> {
   @JsonKey(includeToJson: false, includeFromJson: false)
   String? connection;
 
-  WhereClause _whereId(Query _) => _.whereEqual('id', id.value);
+  @JsonKey(includeToJson: false, includeFromJson: false)
+  String primaryKey = 'id';
+
+  WhereClause _whereId(Query _) => _.whereEqual(primaryKey, id);
 
   @nonVirtual
   Future<void> delete() => _query.delete(_whereId).exec();

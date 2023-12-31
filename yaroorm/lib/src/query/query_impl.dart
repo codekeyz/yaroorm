@@ -29,7 +29,7 @@ class QueryImpl<Result> extends Query<Result> {
     if (entity.enableTimestamps) entity.createdAt = entity.updatedAt = DateTime.now().toUtc();
     final query = InsertQuery(tableName, values: entity.toJson()..remove('id'));
     final recordId = await queryDriver.insert(query);
-    return entity..id = entity.id.withKey(recordId);
+    return entity..id = recordId;
   }
 
   @override
