@@ -85,10 +85,6 @@ class Param extends RequestAnnotation {
   process(Request request, ControllerMethodParam methodParam) {
     final paramName = name ?? methodParam.name;
     final value = request.params[paramName] ?? methodParam.defaultValue;
-    if (value == null) {
-      throw RequestValidationError.param(EzValidator.globalLocale.required(paramName));
-    }
-
     final parsedValue = _parseValue(value, methodParam.type);
     if (parsedValue == null) {
       throw RequestValidationError.param(EzValidator.globalLocale.isTypeOf('${methodParam.type}', paramName));
