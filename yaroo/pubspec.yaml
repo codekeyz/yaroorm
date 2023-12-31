@@ -22,7 +22,7 @@ dependencies:
   get_it: ^7.6.4
   uuid: ^4.2.1
   ez_validator:
-    path: ../third_party/ez_validator
+    git: https://github.com/codekeyz/ez-validator-yaroo.git
 
   # build related
   build_runner: any
