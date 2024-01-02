@@ -48,7 +48,7 @@ class DatabaseConnection {
       password: connInfo['password'],
       username: connInfo['username'],
       url: connInfo['url'],
-      secure: bool.tryParse(connInfo['secure']),
+      secure: connInfo['secure'],
       dbForeignKeys: connInfo['foreign_key_constraints'] ?? true,
     );
   }
