@@ -8,7 +8,7 @@ import 'migration.dart';
 DotEnv? _env;
 
 T? env<T>(String name, [T? defaultValue]) {
-  _env ??= DotEnv(quiet: true, includePlatformEnvironment: false)..load();
+  _env ??= DotEnv(quiet: true, includePlatformEnvironment: true)..load();
   final strVal = _env![name];
 
   if (strVal == null) return defaultValue;
