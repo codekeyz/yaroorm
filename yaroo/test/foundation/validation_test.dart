@@ -66,6 +66,19 @@ void main() {
       expect(emailValidator('chima@yaroo.dev'), isNull);
     });
 
+    test('when `ezMinLength`', () {
+      final val1 = ezMinLength(4).validator.build();
+      expect(val1('foo'), 'The field must be at least 4 characters long');
+      expect(val1('foob'), isNull);
+      expect(val1('foobd'), isNull);
+    });
+
+    test('when `ezMaxLength`', () {
+      final val1 = ezMaxLength(10).validator.build();
+      expect(val1('foobasdfkasdfasdf'), 'The field must be at most 10 characters long');
+      expect(val1('foobasdfk'), isNull);
+    });
+
     test('when `ezDateTime`', () {
       var requiredValidator = ezDateTime().validator.build();
       final now = DateTime.now();
