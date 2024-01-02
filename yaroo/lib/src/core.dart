@@ -22,13 +22,13 @@ typedef RoutesResolver = List<RouteDefinition> Function();
 /// This should really be a mixin but due to a bug in reflectable.dart#324
 /// TODO:(codekeyz) make this a mixin when reflectable.dart#324 is fixed
 abstract class AppInstance {
-  Application get app => Application._instance;
+  Application get app => Application.instance;
 }
 
 abstract interface class Application {
   Application(AppConfig config);
 
-  static late final Application _instance;
+  static late final Application instance;
 
   String get name;
 
@@ -61,11 +61,11 @@ abstract class ApplicationFactory {
   }
 
   Future<void> startServer() async {
-    final app = Application._instance as _YarooAppImpl;
+    final app = Application.instance as _YarooAppImpl;
 
     await app._createPharaohInstance().listen(port: app.port);
 
-    await launchUrl(Application._instance.url);
+    await launchUrl(Application.instance.url);
   }
 
   Future<void> _bootstrapComponents(AppConfig config) async {
@@ -73,7 +73,7 @@ abstract class ApplicationFactory {
     final globalMdw = ApplicationFactory.globalMiddleware;
     if (globalMdw != null) spanner.addMiddleware<HandlerFunc>('/', globalMdw);
 
-    Application._instance = _YarooAppImpl(config, spanner);
+    Application.instance = _YarooAppImpl(config, spanner);
 
     final providers = config.providers.map((e) => createNewInstance<ServiceProvider>(e));
 
@@ -146,7 +146,7 @@ abstract class ApplicationFactory {
 
   @visibleForTesting
   Future<spookie.Spookie> get tester {
-    final app = (Application._instance as _YarooAppImpl);
+    final app = (Application.instance as _YarooAppImpl);
     return spookie.request(app._createPharaohInstance());
   }
 }
