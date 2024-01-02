@@ -10,9 +10,10 @@ class _YarooAppImpl implements Application {
   _YarooAppImpl(this._appConfig, this._spanner);
 
   @override
-  T singleton<T extends Object>(T instance) {
-    return registerSingleton<T>(instance);
-  }
+  T singleton<T extends Object>(T instance) => registerSingleton<T>(instance);
+
+  @override
+  T instanceOf<T extends Object>() => instanceFromRegistry<T>();
 
   @override
   void useRoutes(RoutesResolver routeResolver) {

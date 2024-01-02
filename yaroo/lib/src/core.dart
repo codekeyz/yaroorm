@@ -40,6 +40,8 @@ abstract interface class Application {
 
   T singleton<T extends Object>(T instance);
 
+  T instanceOf<T extends Object>();
+
   void useRoutes(RoutesResolver routeResolver);
 
   void useViewEngine(ViewEngine viewEngine);
