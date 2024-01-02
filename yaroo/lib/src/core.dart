@@ -45,20 +45,6 @@ abstract interface class Application {
   void useViewEngine(ViewEngine viewEngine);
 }
 
-class AppServiceProvider extends ServiceProvider {
-  @override
-  FutureOr<void> boot() {
-    /// setup jinja view engine
-    final environment = Environment(
-      autoReload: false,
-      trimBlocks: true,
-      leftStripBlocks: true,
-      loader: FileSystemLoader(paths: ['public', 'templates'], extensions: {'j2'}),
-    );
-    app.useViewEngine(JinjaViewEngine(environment, fileExt: 'j2'));
-  }
-}
-
 abstract class ApplicationFactory {
   static late final Kernel _appKernel;
 

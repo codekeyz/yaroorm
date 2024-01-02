@@ -49,7 +49,7 @@ abstract class HTTPController extends AppInstance {
 
 @inject
 abstract class ServiceProvider extends AppInstance {
-  static List<Type> get defaultProviders => [AppServiceProvider];
+  static List<Type> get defaultProviders => [];
 
   void boot() {}
 
