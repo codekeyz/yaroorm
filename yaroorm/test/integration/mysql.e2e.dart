@@ -10,9 +10,5 @@ void main() async {
 
   DB.init(db.config);
 
-  final driver = DB.driver('moo_mysql');
-
-  await driver.connect(secure: true);
-
-  group('MySQL', () => runIntegrationTest('moo_mysql', driver));
+  group('MySQL', () => runIntegrationTest('moo_mysql'));
 }

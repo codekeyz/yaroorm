@@ -19,8 +19,7 @@ class SqliteDriver implements DatabaseDriver {
   SqliteDriver(this.config);
 
   @override
-  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection, bool? secure}) async {
-    assert(secure == null, 'Sqlite does not support secure connection');
+  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection}) async {
     assert(maxConnections == null, 'Sqlite does not support max connections');
     assert(singleConnection == null, 'Sqlite does not support single connection');
 

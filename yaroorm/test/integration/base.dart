@@ -4,9 +4,17 @@ import 'package:yaroorm/yaroorm.dart';
 
 import '../fixtures/test_data.dart';
 
-void runIntegrationTest(String connectionName, DatabaseDriver driver) {
+void runIntegrationTest(String connectionName) {
+  final driver = DB.driver(connectionName);
+
   return group('Integration Test with ${driver.type.name} driver', () {
-    test('driver should be connected', () => expect(driver.isOpen, isTrue));
+    test('driver should connect', () async {
+      final driver = DB.driver(connectionName);
+
+      await driver.connect();
+
+      expect(driver.isOpen, isTrue);
+    });
 
     test('should have no tables', () async {
       final result = await Future.wait([

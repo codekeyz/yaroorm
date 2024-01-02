@@ -19,6 +19,7 @@ class DatabaseConnection {
   final String? charset, collation;
   final bool dbForeignKeys;
   final DatabaseDriverType driver;
+  final bool? secure;
 
   const DatabaseConnection(
     this.name,
@@ -32,6 +33,7 @@ class DatabaseConnection {
     this.url,
     this.username,
     this.dbForeignKeys = true,
+    this.secure,
   });
 
   factory DatabaseConnection.from(String name, Map<String, dynamic> connInfo) {
@@ -46,6 +48,7 @@ class DatabaseConnection {
       password: connInfo['password'],
       username: connInfo['username'],
       url: connInfo['url'],
+      secure: bool.tryParse(connInfo['secure']),
       dbForeignKeys: connInfo['foreign_key_constraints'] ?? true,
     );
   }
@@ -115,7 +118,7 @@ abstract interface class DatabaseDriver with DriverAble {
   /// Performs connection to the database.
   ///
   /// Depend on driver type it may create a connection pool.
-  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection, bool? secure});
+  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection});
 
   /// Performs connection to the database.
   ///

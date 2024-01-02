@@ -10,9 +10,5 @@ void main() async {
 
   DB.init(db.config);
 
-  final driver = DB.driver('foo_sqlite');
-
-  await driver.connect();
-
-  group('SQLite', () => runIntegrationTest('foo_sqlite', driver));
+  group('SQLite', () => runIntegrationTest('foo_sqlite'));
 }
