@@ -1,6 +1,7 @@
 import 'package:meta/meta.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:yaroorm/migration.dart';
+import 'package:yaroorm/src/database/entity.dart';
 import 'package:yaroorm/src/query/primitives/serializer.dart';
 import 'package:yaroorm/src/query/query.dart';
 
@@ -411,10 +412,7 @@ class SqliteTableBlueprint implements TableBlueprint {
   }
 
   @override
-  void timestamps({
-    String createdAt = 'created_at',
-    String updatedAt = 'updated_at',
-  }) {
+  void timestamps({String createdAt = entityCreatedAtColumnName, String updatedAt = entityUpdatedAtColumnName}) {
     timestamp(createdAt);
     timestamp(updatedAt);
   }
