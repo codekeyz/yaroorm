@@ -1,10 +1,13 @@
 import 'package:spookie/spookie.dart';
+import 'package:yaroo/http/http.dart';
 import 'package:yaroo/yaroo.dart';
 
 import './config_test.reflectable.dart' as r;
 
 Matcher throwsArgumentErrorWithMessage(String message) =>
     throwsA(isA<ArgumentError>().having((p0) => p0.message, '', message));
+
+class AppServiceProvider extends ServiceProvider {}
 
 void main() {
   setUpAll(() => r.initializeReflectable());
