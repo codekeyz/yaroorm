@@ -12,7 +12,7 @@ void main() async {
 
   final driver = DB.driver('moo_mysql');
 
-  await driver.connect(secure: true).timeout(const Duration(seconds: 5));
+  await driver.connect(secure: true);
 
   group('MySQL', () => runIntegrationTest('moo_mysql', driver));
 }
