@@ -148,8 +148,10 @@ class RouteGroupDefinition extends RouteDefinition {
   }
 }
 
+typedef RequestHandlerWithApp = Function(Application app, Request req, Response res);
+
 class FunctionalRouteDefinition extends RouteDefinition {
-  final RequestHandler handler;
+  final RequestHandlerWithApp handler;
   final HTTPMethod method;
   final String path;
 
@@ -159,6 +161,7 @@ class FunctionalRouteDefinition extends RouteDefinition {
 
   @override
   void commit(Spanner spanner) {
-    spanner.addRoute(method, path, useRequestHandler(handler));
+    wrap(req, res) => handler(Application.instance, req, res);
+    spanner.addRoute(method, path, useRequestHandler(wrap));
   }
 }
