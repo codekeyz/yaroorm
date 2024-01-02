@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:yaroo/src/_reflector/reflector.dart';
 import 'package:yaroo/src/core.dart';
 
@@ -25,6 +27,11 @@ abstract class HTTPController extends AppInstance {
   Session? get session => request.session;
 
   get requestBody => request.body;
+
+  bool get expectsJson {
+    final headerValue = request.headers[HttpHeaders.acceptEncodingHeader]?.toString();
+    return headerValue != null && headerValue.contains('application/json');
+  }
 
   Response badRequest([String? message]) {
     const status = 422;
