@@ -48,6 +48,24 @@ class ezDateTime extends ClassPropertyValidator<DateTime> {
   }
 }
 
+class ezMinLength extends ClassPropertyValidator<String> {
+  final int value;
+
+  const ezMinLength(this.value);
+
+  @override
+  EzValidator<String> get validator => super.validator.minLength(value);
+}
+
+class ezMaxLength extends ClassPropertyValidator<String> {
+  final int value;
+
+  const ezMaxLength(this.value);
+
+  @override
+  EzValidator<String> get validator => super.validator.maxLength(value);
+}
+
 class ezRequired<T> extends ClassPropertyValidator<T> {
   final Type? type;
 
@@ -59,7 +77,9 @@ class ezRequired<T> extends ClassPropertyValidator<T> {
 
 class ezOptional extends ClassPropertyValidator {
   final Type type;
-  const ezOptional(this.type);
+  final dynamic defaultValue;
+
+  const ezOptional(this.type, {this.defaultValue}) : super(defaultVal: defaultValue);
 
   @override
   Type get propertyType => type;
