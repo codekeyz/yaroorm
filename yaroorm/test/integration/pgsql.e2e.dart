@@ -10,9 +10,5 @@ void main() async {
 
   DB.init(db.config);
 
-  final driver = DB.driver('foo_pgsql');
-
-  await driver.connect().timeout(const Duration(seconds: 60));
-
-  group('description', () => runIntegrationTest('foo_pgsql', driver));
+  group('description', () => runIntegrationTest('foo_pgsql'));
 }

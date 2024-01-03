@@ -1,7 +1,6 @@
 import 'package:meta/meta.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:yaroorm/migration.dart';
-import 'package:yaroorm/src/database/entity.dart';
 import 'package:yaroorm/src/query/primitives/serializer.dart';
 
 import 'package:yaroorm/yaroorm.dart';
