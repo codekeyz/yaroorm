@@ -1,26 +1,24 @@
-import 'package:json_annotation/json_annotation.dart';
-import 'package:yaroorm/src/database/entity.dart';
+import 'package:yaroorm/yaroorm.dart';
 
-class User extends Entity<int> {
+class User extends Entity<int, User> {
   final String firstname;
   final String lastname;
   final int age;
 
-  @JsonKey(name: 'home_address')
   final String homeAddress;
 
   User({required this.firstname, required this.lastname, required this.age, required this.homeAddress});
 
   static User fromJson(Map<String, dynamic> json) => User(
-        firstname: json['firstname'] as String,
-        lastname: json['lastname'] as String,
-        age: json['age'] as int,
-        homeAddress: json['home_address'] as String,
-      )..id = PrimaryKey.thisFromJson(json['id']);
+      firstname: json['firstname'] as String,
+      lastname: json['lastname'] as String,
+      age: json['age'] as int,
+      homeAddress: json['home_address'] as String)
+    ..id = json['id'] as int?;
 
   @override
-  Map<String, dynamic> toJson() => {
-        'id': PrimaryKey.thisToJson(id),
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'id': id,
         'firstname': firstname,
         'lastname': lastname,
         'age': age,

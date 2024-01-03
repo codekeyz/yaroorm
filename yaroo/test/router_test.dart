@@ -3,7 +3,7 @@ import 'package:yaroo/http/http.dart';
 import 'package:yaroo/yaroo.dart';
 
 import './router_test.reflectable.dart';
-import 'core_test.dart';
+import 'core/core_test.dart';
 
 class TestController extends HTTPController {
   void create() {}
@@ -52,7 +52,7 @@ void main() {
 
       test('with handler', () {
         final group = Route.group('users').routes([
-          Route.handler(HTTPMethod.GET, '/my-name', (req, res) => null),
+          Route.handler(HTTPMethod.GET, '/my-name', (_, req, res) => null),
         ]);
         expect(group.paths, ['[GET]: /users/my-name']);
       });
@@ -147,7 +147,7 @@ void main() {
         TestKidsApp(TestAppKernel([]));
 
         final group = Route.middleware('api').group('merchants').routes([
-          Route.handler(HTTPMethod.GET, '/create', (req, res) => null),
+          Route.handler(HTTPMethod.GET, '/create', (_, req, res) => null),
           Route.group('users').routes([
             Route.get('/get', (TestController, #index)),
             Route.delete('/delete', (TestController, #delete)),

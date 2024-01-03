@@ -1,9 +1,11 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:meta/meta.dart';
 import 'package:spookie/spookie.dart' as spookie;
+import 'package:yaroo/http/meta.dart';
 
 import '../../http/http.dart';
 import '../../http/kernel.dart';
@@ -20,13 +22,13 @@ typedef RoutesResolver = List<RouteDefinition> Function();
 /// This should really be a mixin but due to a bug in reflectable.dart#324
 /// TODO:(codekeyz) make this a mixin when reflectable.dart#324 is fixed
 abstract class AppInstance {
-  Application get app => Application._instance;
+  Application get app => Application.instance;
 }
 
 abstract interface class Application {
   Application(AppConfig config);
 
-  static late final Application _instance;
+  static late final Application instance;
 
   String get name;
 
@@ -38,23 +40,11 @@ abstract interface class Application {
 
   T singleton<T extends Object>(T instance);
 
+  T instanceOf<T extends Object>();
+
   void useRoutes(RoutesResolver routeResolver);
 
   void useViewEngine(ViewEngine viewEngine);
-}
-
-class AppServiceProvider extends ServiceProvider {
-  @override
-  FutureOr<void> boot() {
-    /// setup jinja view engine
-    final environment = Environment(
-      autoReload: false,
-      trimBlocks: true,
-      leftStripBlocks: true,
-      loader: FileSystemLoader(paths: ['public', 'templates'], extensions: {'j2'}),
-    );
-    app.useViewEngine(JinjaViewEngine(environment, fileExt: 'j2'));
-  }
 }
 
 abstract class ApplicationFactory {
@@ -73,11 +63,11 @@ abstract class ApplicationFactory {
   }
 
   Future<void> startServer() async {
-    final app = Application._instance as _YarooAppImpl;
+    final app = Application.instance as _YarooAppImpl;
 
     await app._createPharaohInstance().listen(port: app.port);
 
-    await launchUrl(Application._instance.url);
+    await launchUrl(Application.instance.url);
   }
 
   Future<void> _bootstrapComponents(AppConfig config) async {
@@ -85,7 +75,7 @@ abstract class ApplicationFactory {
     final globalMdw = ApplicationFactory.globalMiddleware;
     if (globalMdw != null) spanner.addMiddleware<HandlerFunc>('/', globalMdw);
 
-    Application._instance = _YarooAppImpl(config, spanner);
+    Application.instance = _YarooAppImpl(config, spanner);
 
     final providers = config.providers.map((e) => createNewInstance<ServiceProvider>(e));
 
@@ -101,7 +91,9 @@ abstract class ApplicationFactory {
   }
 
   static RequestHandler buildControllerMethod(ControllerMethod method) {
-    return (req, res) async {
+    final params = method.params;
+
+    return (req, res) {
       final methodName = method.methodName;
       final instance = createNewInstance<HTTPController>(method.controller);
       final mirror = inject.reflect(instance);
@@ -110,12 +102,32 @@ abstract class ApplicationFactory {
         ..invokeSetter('request', req)
         ..invokeSetter('response', res);
 
-      methodCall() => mirror.invoke(methodName, []);
+      late Function() methodCall;
 
-      final result = await Future.sync(methodCall);
+      if (params.isNotEmpty) {
+        final args = _resolveControllerMethodArgs(req, method);
+        methodCall = () => mirror.invoke(methodName, args);
+      } else {
+        methodCall = () => mirror.invoke(methodName, []);
+      }
 
-      return result;
+      return Future.sync(methodCall);
     };
+  }
+
+  static List<Object> _resolveControllerMethodArgs(Request request, ControllerMethod method) {
+    if (method.params.isEmpty) return [];
+
+    final args = <Object>[];
+
+    for (final param in method.params) {
+      final meta = param.meta;
+      if (meta != null) {
+        args.add(meta.process(request, param));
+        continue;
+      }
+    }
+    return args;
   }
 
   static Iterable<HandlerFunc> resolveMiddlewareForGroup(String group) {
@@ -136,7 +148,7 @@ abstract class ApplicationFactory {
 
   @visibleForTesting
   Future<spookie.Spookie> get tester {
-    final app = (Application._instance as _YarooAppImpl);
+    final app = (Application.instance as _YarooAppImpl);
     return spookie.request(app._createPharaohInstance());
   }
 }

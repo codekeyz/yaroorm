@@ -9,6 +9,8 @@ part 'primitives/where.dart';
 part 'primitives/where_impl.dart';
 part 'query_impl.dart';
 
+String typeToTableName(Type type) => type.toString().toPlural().first;
+
 mixin ReadOperation<Result> {
   Future<Result?> get([dynamic id]);
 
@@ -95,14 +97,12 @@ abstract interface class Query<Result> extends QueryBase<Query<Result>>
         _limit = null;
 
   static Query<Model> table<Model>([String? tableName]) {
-    if (tableName == null) {
-      if (Model != Entity) {
-        tableName = Model.toString().toPlural().first;
-      } else {
-        throw ArgumentError.notNull(tableName);
-      }
+    if (Model != Entity && Model != dynamic) {
+      reflectEntity<Model>(); // test type to be sure it's a subtype of Entity
+      tableName ??= typeToTableName(Model);
     }
-    return QueryImpl<Model>(tableName);
+    assert(tableName != null, 'Either provide Entity Type or tableName');
+    return QueryImpl<Model>(tableName!);
   }
 
   int? get limit => _limit;

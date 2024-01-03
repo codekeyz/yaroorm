@@ -9,11 +9,6 @@ environment:
   sdk: ^3.0.0
 
 dependencies:
-  pharaoh:
-    git:
-      url: https://github.com/codekeyz/pharaoh.git
-      path: packages/pharaoh
-  spanner: ^1.0.1+2
   spookie: ^1.0.2+1
   meta: ^1.11.0
   grammer: ^1.0.3
@@ -21,6 +16,8 @@ dependencies:
   dotenv: ^4.2.0
   get_it: ^7.6.4
   uuid: ^4.2.1
+  ez_validator:
+    git: https://github.com/codekeyz/ez-validator-yaroo.git
 
   # build related
   build_runner: any
@@ -28,6 +25,10 @@ dependencies:
     git:
       url: https://github.com/codekeyz/reflectable.dart.git
       path: reflectable
+  pharaoh:
+    git:
+      url: https://github.com/codekeyz/pharaoh.git
+      path: packages/pharaoh
 
 dev_dependencies:
   lints: ^3.0.0

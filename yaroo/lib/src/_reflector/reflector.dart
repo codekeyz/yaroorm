@@ -1,5 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:reflectable/reflectable.dart' as r;
+import 'package:yaroo/foundation/validation.dart';
+import 'package:yaroo/http/meta.dart';
 
 import '../../../http/http.dart';
 import '../_container/container.dart';
@@ -45,7 +47,7 @@ extension ClassMirrorExtensions on r.ClassMirror {
     return filteredDeclarationsOf(this, (v) => v is r.VariableMirror);
   }
 
-  List<r.MethodMirror> get getter {
+  List<r.MethodMirror> get getters {
     return filteredDeclarationsOf(this, (v) => v is r.MethodMirror && v.isGetter);
   }
 
@@ -93,9 +95,34 @@ ControllerMethod parseControllerMethod(ControllerMethodDefinition defn) {
     throw ArgumentError('$type does not have method  #${symbolToString(method)}');
   }
 
-  if (actualMethod.parameters.isNotEmpty) {
-    throw ArgumentError.value('$type.${actualMethod.simpleName}', null, 'Controller methods cannot have parameters');
+  final parameters = actualMethod.parameters;
+  if (parameters.isEmpty) return ControllerMethod(defn);
+
+  if (parameters.any((e) => e.metadata.length > 1)) {
+    throw ArgumentError('Multiple annotations using on $type #${symbolToString(method)} parameter');
   }
 
-  return ControllerMethod(defn);
+  final params = parameters.map((e) {
+    final meta = e.metadata.first;
+    if (meta is! RequestAnnotation) {
+      throw ArgumentError('Invalid annotation $meta used on $type #${symbolToString(method)} parameter');
+    }
+
+    final paramType = e.reflectedType;
+    final maybeDto = _tryResolveDtoInstance(paramType);
+
+    return ControllerMethodParam(e.simpleName, paramType,
+        defaultValue: e.defaultValue, optional: e.isOptional, meta: meta, dto: maybeDto);
+  }).toList();
+
+  return ControllerMethod(defn, params);
+}
+
+BaseDTO? _tryResolveDtoInstance(Type type) {
+  try {
+    final mirror = dtoReflector.reflectType(type) as r.ClassMirror;
+    return mirror.newInstance(unnamedConstructor, []) as BaseDTO;
+  } on r.NoSuchCapabilityError catch (_) {
+    return null;
+  }
 }

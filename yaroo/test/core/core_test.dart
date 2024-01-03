@@ -46,22 +46,32 @@ void main() {
   initializeReflectable();
 
   group('Core', () {
-    group('Kernel', () {
-      setUpAll(() {
-        TestKidsApp(TestAppKernel([TestMiddleware]));
-      });
+    final testApp = TestKidsApp(TestAppKernel([TestMiddleware]));
 
+    group('Kernel', () {
       test('should resolve global middleware', () {
         final globalMiddleware = ApplicationFactory.globalMiddleware;
         expect(globalMiddleware, isA<HandlerFunc>());
       });
 
-      test('should resolve group middleware ', () {
-        final group = Route.middleware('api').group('Users').routes([
-          Route.handler(HTTPMethod.GET, '/', (req, res) => null),
-        ]);
+      group('when middleware group', () {
+        test('should resolve', () {
+          final group = Route.middleware('api').group('Users').routes([
+            Route.handler(HTTPMethod.GET, '/', (_, req, res) => null),
+          ]);
 
-        expect(group.paths, ['[ALL]: /users', '[GET]: /users/']);
+          expect(group.paths, ['[ALL]: /users', '[GET]: /users/']);
+        });
+
+        test('should error when not exist', () {
+          expect(
+            () => Route.middleware('foo').group('Users').routes([
+              Route.handler(HTTPMethod.GET, '/', (_, req, res) => null),
+            ]),
+            throwsA(
+                isA<ArgumentError>().having((p0) => p0.message, 'message', 'Middleware group `foo` does not exist')),
+          );
+        });
       });
 
       test('should throw if type is not subtype of Middleware', () {
@@ -72,6 +82,12 @@ void main() {
 
         expect(() => ApplicationFactory.resolveMiddlewareForGroup('web'), throwsA(isA<UnsupportedError>()));
       });
+    });
+
+    test('should return tester', () async {
+      await testApp.bootstrap(listen: false);
+
+      expect(await testApp.tester, isA<Spookie>());
     });
   });
 }

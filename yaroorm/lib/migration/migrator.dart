@@ -6,7 +6,7 @@ import 'utils.dart';
 
 typedef Rollback = ({int batch, String name, MigrationTask? migration});
 
-class MigrationData extends Entity<int> {
+class MigrationData extends Entity<int, MigrationData> {
   final String migration;
   final int batch;
 
@@ -15,10 +15,10 @@ class MigrationData extends Entity<int> {
   static MigrationData fromJson(Map<String, dynamic> json) => MigrationData(
         json['migration'] as String,
         json['batch'] as int,
-      )..id = PrimaryKey.thisFromJson(json['id']);
+      )..id = json['id'] as int?;
 
   @override
-  Map<String, dynamic> toJson() => {'id': PrimaryKey.thisToJson(id), 'migration': migration, 'batch': batch};
+  Map<String, dynamic> toMap() => {'id': id, 'migration': migration, 'batch': batch};
 
   @override
   bool get enableTimestamps => false;

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:yaroorm/yaroorm.dart';
 
 import '../migration.dart';
@@ -71,6 +73,13 @@ class MigratorCLI {
       _ => throw UnsupportedError(cmd),
     };
 
-    await cmdAction.call(DB.driver(connectionToUse));
+    final driver = DB.driver(connectionToUse);
+    await driver.connect();
+
+    await cmdAction.call(driver);
+
+    await driver.disconnect();
+
+    exit(0);
   }
 }

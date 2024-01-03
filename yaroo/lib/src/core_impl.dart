@@ -5,14 +5,15 @@ part of 'core.dart';
 class _YarooAppImpl implements Application {
   late final AppConfig _appConfig;
   late final Spanner _spanner;
-  late final ViewEngine _viewEngine;
+  ViewEngine? _viewEngine;
 
   _YarooAppImpl(this._appConfig, this._spanner);
 
   @override
-  T singleton<T extends Object>(T instance) {
-    return registerSingleton<T>(instance);
-  }
+  T singleton<T extends Object>(T instance) => registerSingleton<T>(instance);
+
+  @override
+  T instanceOf<T extends Object>() => instanceFromRegistry<T>();
 
   @override
   void useRoutes(RoutesResolver routeResolver) {
@@ -21,8 +22,18 @@ class _YarooAppImpl implements Application {
   }
 
   @override
-  void useViewEngine(ViewEngine viewEngine) {
-    _viewEngine = viewEngine;
+  void useViewEngine(ViewEngine viewEngine) => _viewEngine = viewEngine;
+
+  FutureOr<Response> onException(Object error, Request request) {
+    final response = Response.create();
+
+    if (error is RequestValidationError) {
+      return response.json(error.errorBody, statusCode: HttpStatus.badRequest);
+    } else if (error is SpannerRouteValidatorError) {
+      return response.json({'error': error.toString()}, statusCode: HttpStatus.badRequest);
+    }
+
+    return response.internalServerError(error.toString());
   }
 
   @override
@@ -39,5 +50,6 @@ class _YarooAppImpl implements Application {
 
   Pharaoh _createPharaohInstance() => Pharaoh()
     ..useSpanner(_spanner)
+    ..onError(onException)
     ..viewEngine = _viewEngine;
 }

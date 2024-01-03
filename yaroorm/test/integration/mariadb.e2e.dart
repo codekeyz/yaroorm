@@ -10,9 +10,5 @@ void main() async {
 
   DB.init(db.config);
 
-  final driver = DB.driver('bar_mariadb');
-
-  await driver.connect(secure: false);
-
-  group('MariaDB', () => runIntegrationTest('bar_mariadb', driver));
+  group('MariaDB', () => runIntegrationTest('bar_mariadb'));
 }

@@ -26,6 +26,7 @@ final config = YaroormConfig.from({
     'moo_mysql': {
       'driver': 'mysql',
       'port': 3001,
+      'secure': true,
       ..._baseConfig,
     },
     'foo_pgsql': {

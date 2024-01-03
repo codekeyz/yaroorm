@@ -1,6 +1,7 @@
 import 'package:meta/meta.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:yaroorm/migration.dart';
+import 'package:yaroorm/src/database/entity.dart';
 import 'package:yaroorm/src/query/primitives/serializer.dart';
 
 import 'package:yaroorm/yaroorm.dart';
@@ -17,8 +18,7 @@ class SqliteDriver implements DatabaseDriver {
   SqliteDriver(this.config);
 
   @override
-  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection, bool? secure}) async {
-    assert(secure == null, 'Sqlite does not support secure connection');
+  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection}) async {
     assert(maxConnections == null, 'Sqlite does not support max connections');
     assert(singleConnection == null, 'Sqlite does not support single connection');
 
@@ -410,10 +410,7 @@ class SqliteTableBlueprint implements TableBlueprint {
   }
 
   @override
-  void timestamps({
-    String createdAt = entityCreatedAtColumnName,
-    String updatedAt = entityUpdatedAtColumnName,
-  }) {
+  void timestamps({String createdAt = entityCreatedAtColumnName, String updatedAt = entityUpdatedAtColumnName}) {
     timestamp(createdAt);
     timestamp(updatedAt);
   }

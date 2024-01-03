@@ -61,9 +61,9 @@ abstract interface class Route {
     ]);
   }
 
-  static FunctionalRouteDefinition handler(HTTPMethod method, String path, RequestHandler handler) =>
+  static FunctionalRouteDefinition handler(HTTPMethod method, String path, RequestHandlerWithApp handler) =>
       FunctionalRouteDefinition(method, path, handler);
 
-  static FunctionalRouteDefinition notFound(RequestHandler handler, [HTTPMethod method = HTTPMethod.ALL]) =>
+  static FunctionalRouteDefinition notFound(RequestHandlerWithApp handler, [HTTPMethod method = HTTPMethod.ALL]) =>
       FunctionalRouteDefinition(method, '/*', handler);
 }

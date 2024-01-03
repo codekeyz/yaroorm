@@ -23,11 +23,11 @@ class MySqlDriver implements DatabaseDriver {
   }
 
   @override
-  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection, bool? secure}) async {
+  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection}) async {
     assert(maxConnections == null, '${_type.name} max connections not yet supported');
-    secure ??= false;
+    final secure = config.secure ?? false;
 
-    if (secure == true) {
+    if (secure) {
       assert(config.username != null, 'Username is required when :secure true');
       assert(config.password != null, 'Password is required when :secure true');
     }
