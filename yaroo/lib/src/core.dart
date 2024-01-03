@@ -133,7 +133,7 @@ abstract class ApplicationFactory {
   static Iterable<HandlerFunc> resolveMiddlewareForGroup(String group) {
     final middlewareGroup = ApplicationFactory._appKernel.middlewareGroups[group];
     if (middlewareGroup == null) throw ArgumentError('Middleware group `$group` does not exist');
-    return middlewareGroup.map<Middleware>((type) => createNewInstance(type)).map((e) => e.handle);
+    return middlewareGroup.map<Middleware>((type) => createNewInstance(type)).map((e) => e.handler ?? e.handle);
   }
 
   static HandlerFunc? get globalMiddleware {

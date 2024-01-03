@@ -9,7 +9,11 @@ export '_pharaoh.dart';
 
 @inject
 abstract class Middleware extends AppInstance {
-  handle(Request req, Response res, NextFunction next);
+  handle(Request req, Response res, NextFunction next) {
+    next();
+  }
+
+  HandlerFunc? get handler => null;
 }
 
 @inject
