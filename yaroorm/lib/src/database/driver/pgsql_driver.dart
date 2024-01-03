@@ -61,7 +61,9 @@ class PostgreSqlDriver implements DatabaseDriver {
   @override
   Future<int> insert(InsertQuery query) async {
     if (!isOpen) await connect();
-    final sql = _primitiveSerializer.acceptInsertQuery(query);
+    var primaryKey = await getPrimaryKeyColumn(query.tableName);
+    String sql = _primitiveSerializer.acceptInsertQuery(query);
+    sql = '$sql RETURNING $primaryKey ;';
     final result = await db?.execute(sql);
     return result?[0][0] as int;
   }
@@ -93,16 +95,14 @@ class PostgreSqlDriver implements DatabaseDriver {
   @override
   Future<bool> hasTable(String tableName) async {
     final result = await _execRawQuery(
-        '''SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='$tableName\'''');
-    if (result.isEmpty) return false;
+        '''SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='$tableName';''');
     print(result);
+    if (result.isEmpty) return false;
     return true;
   }
 
   @override
-  Future<List<Map<String, dynamic>>> rawQuery(String script) {
-    return _execRawQuery(script);
-  }
+  Future<List<Map<String, dynamic>>> rawQuery(String script) => _execRawQuery(script);
 
   @override
   Future<void> transaction(void Function(DriverTransactor transactor) func) async {
@@ -117,6 +117,21 @@ class PostgreSqlDriver implements DatabaseDriver {
     final sql = _primitiveSerializer.acceptInsertManyQuery(query);
     final result = await db?.execute(sql);
     return result?.expand((x) => x).toList();
+  }
+
+  Future<String> getPrimaryKeyColumn(String tableName) async {
+    final result = await db?.execute('''SELECT pg_attribute.attname 
+FROM pg_index, pg_class, pg_attribute, pg_namespace 
+WHERE 
+  pg_class.oid = '$tableName'::regclass AND 
+  indrelid = pg_class.oid AND 
+  nspname = 'public' AND 
+  pg_class.relnamespace = pg_namespace.oid AND 
+  pg_attribute.attrelid = pg_class.oid AND 
+  pg_attribute.attnum = any(pg_index.indkey)
+ AND indisprimary;''');
+
+    return result?[0][0] as String;
   }
 }
 
@@ -178,7 +193,7 @@ class PgSqlPrimitiveSerializer extends SqliteSerializer {
     final data = query.values;
     final fields = data.keys.join(', ');
     final values = data.values.map((e) => acceptDartValue(e)).join(', ');
-    return 'INSERT INTO ${query.tableName} ($fields) VALUES ($values) RETURNING id $terminator';
+    return 'INSERT INTO ${query.tableName} ($fields) VALUES ($values)';
   }
 
   @override

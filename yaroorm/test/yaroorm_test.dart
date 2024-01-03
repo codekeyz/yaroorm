@@ -73,7 +73,7 @@ void main() {
 
       setUpAll(() => driver = DB.driver('foo_pgsql'));
 
-      test('should return MySql Driver', () {
+      test('should return Postgres Driver', () {
         expect(driver, isA<PostgreSqlDriver>().having((p0) => p0.type, 'has driver type', DatabaseDriverType.pgsql));
       });
 

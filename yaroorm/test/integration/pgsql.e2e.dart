@@ -1,4 +1,3 @@
-@Tags(['integration'])
 import 'package:test/test.dart';
 import 'package:yaroorm/yaroorm.dart';
 import '../fixtures/orm_config.dart' as db;
@@ -10,5 +9,5 @@ void main() async {
 
   DB.init(db.config);
 
-  group('description', () => runIntegrationTest('foo_pgsql'));
+  group('Postgres', () => runIntegrationTest('foo_pgsql'));
 }
