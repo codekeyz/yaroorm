@@ -13,14 +13,11 @@ final appConfig = AppConfig(
     port: 3000,
     key: 'askdfjal;ksdjkajl;j');
 
-class TestMiddleware extends Middleware {
-  @override
-  handle(Request req, Response res, NextFunction next) {}
-}
+class TestMiddleware extends Middleware {}
 
 class FoobarMiddleware extends Middleware {
   @override
-  handle(Request req, Response res, NextFunction next) {}
+  HandlerFunc get handler => (req, res, next) => next();
 }
 
 class TestAppKernel extends Kernel {
