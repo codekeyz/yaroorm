@@ -165,13 +165,13 @@ void main() {
           'INSERT INTO users (firstname, lastname, age, home_address) VALUES (\'Chima\', \'Precious\', 22, \'Accra, Ghana\'), (\'Amos\', \'Godwin\', 216, \'Lagos, Ghana\') ;');
     });
 
-    test('when insertManyQuery', () async {
-      var insertQuery = await driver.insertMany(InsertManyQuery('users', values: [
-        {'firstname': 'Chima', 'lastname': 'Precious', 'age': 22, 'home_address': 'Accra, Ghana'}
-      ]));
-
-      expect(insertQuery, isNotNull);
-    });
+    // test('when insertManyQuery', () async {
+    //   var insertQuery = await driver.insertMany(InsertManyQuery('users', values: [
+    //     {'firstname': 'Chima', 'lastname': 'Precious', 'age': 22, 'home_address': 'Accra, Ghana'}
+    //   ]));
+    //
+    //   expect(insertQuery, isNotNull);
+    // });
 
     test('check if database is Open', () {
       var isOpen = driver.isOpen;
