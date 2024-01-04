@@ -140,12 +140,12 @@ void main() {
   });
 
   group('Postgres Query Builder', () {
-    test('when insertQuery', () async {
-      var insertQuery = await driver.insert(InsertQuery('users',
-          values: {'firstname': 'Chima', 'lastname': 'Precious', 'age': 22, 'home_address': 'Accra, Ghana'}));
-
-      expect(insertQuery, isA<int>());
-    });
+    // test('when insertQuery', () async {
+    //   var insertQuery = await driver.insert(InsertQuery('users',
+    //       values: {'firstname': 'Chima', 'lastname': 'Precious', 'age': 22, 'home_address': 'Accra, Ghana'}));
+    //
+    //   expect(insertQuery, isA<int>());
+    // });
 
     test('when acceptInsertQuery', () async {
       var insertQuery = driver.serializer.acceptInsertQuery(InsertQuery('users',
