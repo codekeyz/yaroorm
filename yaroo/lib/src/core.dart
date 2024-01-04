@@ -12,7 +12,6 @@ import '../../http/kernel.dart';
 import '_container/container.dart';
 import '_reflector/reflector.dart';
 import '_router/definition.dart';
-import '_router/utils.dart';
 import 'config/config.dart';
 
 part './core_impl.dart';
@@ -66,8 +65,6 @@ abstract class ApplicationFactory {
     final app = Application.instance as _YarooAppImpl;
 
     await app._createPharaohInstance().listen(port: app.port);
-
-    await launchUrl(Application.instance.url);
   }
 
   Future<void> _bootstrapComponents(AppConfig config) async {
