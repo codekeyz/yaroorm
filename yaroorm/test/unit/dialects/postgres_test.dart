@@ -80,7 +80,7 @@ void main() {
       final setException = Schema.create('users', (table) {
         table.id();
         table.string('firstname');
-        table.enums('gender', ['Male', 'Female', 'Others']);
+        table.set('gender', ['Male', 'Female', 'Others']);
         return table;
       });
       expect(() => longTextException.toScript(PgSqlTableBlueprint()), throwsA(isA<UnimplementedError>()));
