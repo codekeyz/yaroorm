@@ -41,31 +41,55 @@ void main() {
     });
 
     test('when create table throws exception', () async {
-      final query = Schema.create('users', (table) {
+      final longTextException = Schema.create('users', (table) {
         table.id();
         table.string('firstname');
         table.longText('lastname');
-        table.mediumInteger('height');
-        table.integer('age');
-        table.double('score');
-        table.numeric('amount');
-        table.float('aggregate');
-        table.bigInteger('votes');
-        table.decimal('price');
-        table.boolean('isActive');
-        table.datetime('createdAt');
-        table.timestamp('updatedAt');
-        table.varbinary('image');
-        table.date('birthdate');
-        table.tinyText('title');
-        table.varchar('Bio', length: 255);
-        table.date('dateOfBirth');
-        table.enums('gender', ['Male', 'Female', 'Others']);
-        table.set('gender', ['Male', 'Female', 'Others']);
-        table.tinyInt('timeOfBirth');
         return table;
       });
-      expect(() => query.toScript(PgSqlTableBlueprint()), throwsA(isA<UnimplementedError>()));
+      final tinyIntTextException = Schema.create('users', (table) {
+        table.id();
+        table.string('firstname');
+        table.tinyText('amount');
+        return table;
+      });
+      final mediumTextException = Schema.create('users', (table) {
+        table.id();
+        table.string('firstname');
+        table.mediumText('amount');
+        return table;
+      });
+      final tinyTextException = Schema.create('users', (table) {
+        table.id();
+        table.string('firstname');
+        table.tinyText('amount');
+        return table;
+      });
+      final varBinaryException = Schema.create('users', (table) {
+        table.id();
+        table.string('firstname');
+        table.varbinary('price');
+        return table;
+      });
+      final enumsException = Schema.create('users', (table) {
+        table.id();
+        table.string('firstname');
+        table.enums('gender', ['Male', 'Female', 'Others']);
+        return table;
+      });
+      final setException = Schema.create('users', (table) {
+        table.id();
+        table.string('firstname');
+        table.enums('gender', ['Male', 'Female', 'Others']);
+        return table;
+      });
+      expect(() => longTextException.toScript(PgSqlTableBlueprint()), throwsA(isA<UnimplementedError>()));
+      expect(() => tinyIntTextException.toScript(PgSqlTableBlueprint()), throwsA(isA<UnimplementedError>()));
+      expect(() => mediumTextException.toScript(PgSqlTableBlueprint()), throwsA(isA<UnimplementedError>()));
+      expect(() => tinyTextException.toScript(PgSqlTableBlueprint()), throwsA(isA<UnimplementedError>()));
+      expect(() => varBinaryException.toScript(PgSqlTableBlueprint()), throwsA(isA<UnimplementedError>()));
+      expect(() => enumsException.toScript(PgSqlTableBlueprint()), throwsA(isA<UnimplementedError>()));
+      expect(() => setException.toScript(PgSqlTableBlueprint()), throwsA(isA<UnimplementedError>()));
     });
 
     test('Create table with nullable columns', () async {
@@ -116,6 +140,45 @@ void main() {
   });
 
   group('Postgres Query Builder', () {
+    test('when insertQuery', () async {
+      var insertQuery = await driver.insert(InsertQuery('users',
+          values: {'firstname': 'Chima', 'lastname': 'Precious', 'age': 22, 'home_address': 'Accra, Ghana'}));
+
+      expect(insertQuery, isA<int>());
+    });
+
+    test('when acceptInsertQuery', () async {
+      var insertQuery = driver.serializer.acceptInsertQuery(InsertQuery('users',
+          values: {'firstname': 'Chima', 'lastname': 'Precious', 'age': 22, 'home_address': 'Accra, Ghana'}));
+
+      expect(insertQuery,
+          'INSERT INTO users (firstname, lastname, age, home_address) VALUES (\'Chima\', \'Precious\', 22, \'Accra, Ghana\')');
+    });
+
+    test('when acceptInsertManyQuery', () async {
+      var insertQuery = driver.serializer.acceptInsertManyQuery(InsertManyQuery('users', values: [
+        {'firstname': 'Chima', 'lastname': 'Precious', 'age': 22, 'home_address': 'Accra, Ghana'},
+        {'firstname': 'Amos', 'lastname': 'Godwin', 'age': 216, 'home_address': 'Lagos, Ghana'}
+      ]));
+
+      expect(insertQuery,
+          'INSERT INTO users (firstname, lastname, age, home_address) VALUES (\'Chima\', \'Precious\', 22, \'Accra, Ghana\'), (\'Amos\', \'Godwin\', 216, \'Lagos, Ghana\') ;');
+    });
+
+    test('when insertManyQuery', () async {
+      var insertQuery = await driver.insertMany(InsertManyQuery('users', values: [
+        {'firstname': 'Chima', 'lastname': 'Precious', 'age': 22, 'home_address': 'Accra, Ghana'}
+      ]));
+
+      expect(insertQuery, isNotNull);
+    });
+
+    test('check if database is Open', () {
+      var isOpen = driver.isOpen;
+
+      expect(isOpen, isA<bool>());
+    });
+
     test('when updateQuery', () {
       final query = Query.table('users').driver(driver);
 
@@ -133,19 +196,6 @@ void main() {
 
       expect(query.statement, 'SELECT * FROM users ORDER BY names DESC, ages ASC;');
     });
-
-    // test('when insert', () async {
-    //   final updateQuery = await Query.table<User>('users').driver(driver).(usersTestData.first);
-    //
-    //   expect(updateQuery.statement, 'INSERT INTO users (firstname, lastname, age, homeAddress ) VALUES (\'Chima\', \'Precious\',22,\'Lagos, Nigeria\');');
-    // });
-    //
-    // test('when insert many', () async {
-    //   final updateQuery = await Query.table('users').driver(driver).insertMany(usersTestData);
-    //
-    //   expect(updateQuery.statement,
-    //       'INSERT INTO users (firstname, lastname) VALUES (\'Pookie\', \'ReyRey\'), (\'Foo\', \'Boo\'), (\'Mee\', \'Moo\');');
-    // });
 
     test('when update', () {
       final query = Query.table('users').driver(driver).update(
@@ -873,12 +923,10 @@ void main() {
       );
     });
 
-    // test('Check existence of users table', () async {
-    //   // Check if the table exists
-    //   bool tableExists = await driver.hasTable('users');
-    //
-    //   // Assert that the table exists
-    //   expect(tableExists, isA<bool>());
-    // });
+    test('Check existence of users table', () async {
+      bool tableExists = await driver.hasTable('users');
+
+      expect(tableExists, isA<bool>());
+    });
   });
 }
