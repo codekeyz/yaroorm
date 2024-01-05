@@ -932,7 +932,9 @@ void main() {
       });
 
       test('class with no meta', () {
-        final foreignKey2 = SqliteTableBlueprint().foreign<ArticleComment, User>('userId');
+        final blueprint = SqliteTableBlueprint()..string('userId');
+
+        final foreignKey2 = blueprint.foreign<ArticleComment, User>('userId');
         expect(foreignKey2.table, 'article_comments');
         expect(foreignKey2.column, 'userId');
         expect(foreignKey2.foreignTable, 'users');
@@ -940,8 +942,10 @@ void main() {
       });
 
       test('custom foreign reference column', () {
+        final blueprint = SqliteTableBlueprint()..string('articleId');
+
         final foreignKey3 =
-            SqliteTableBlueprint().foreign<ArticleComment, Article>('articleId', reference: 'custom_article_id_field');
+            blueprint.foreign<ArticleComment, Article>('articleId', reference: 'custom_article_id_field');
         expect(foreignKey3.table, 'article_comments');
         expect(foreignKey3.column, 'articleId');
         expect(foreignKey3.foreignTable, 'user_articles');
@@ -955,7 +959,7 @@ void main() {
 
         final userForeignKey = articleTableBlueprint.foreign<Article, User>('ownerId');
         final statement = SqliteSerializer().acceptForeignKey(articleTableBlueprint, userForeignKey);
-        expect(statement, 'FOREIGN KEY ownerId INTEGER REFERENCES users(id)');
+        expect(statement, 'FOREIGN KEY (ownerId) REFERENCES users(id)');
       });
 
       test('when custom reference actions', () {
@@ -968,7 +972,7 @@ void main() {
             .actions(onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.setNull);
 
         final statement = SqliteSerializer().acceptForeignKey(articleTableBlueprint, userForeignKey);
-        expect(statement, 'FOREIGN KEY ownerId INTEGER REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL');
+        expect(statement, 'FOREIGN KEY (ownerId) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL');
       });
 
       group('when constrained', () {

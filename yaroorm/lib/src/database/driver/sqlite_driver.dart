@@ -349,14 +349,21 @@ class SqliteSerializer implements PrimitiveSerializer {
   @override
   String acceptForeignKey(TableBlueprint blueprint, ForeignKey key) {
     final type = blueprint.resolveTypeFor(key.column);
-    final sb = StringBuffer()..write('${key.column} $type REFERENCES ${key.foreignTable}(${key.foreignTableColumn})');
+    final sb = StringBuffer();
+
+    final constraint = key.constraint;
+    if (constraint == null) {
+      sb.write('FOREIGN KEY (${key.column}) ');
+    } else {
+      sb.write('CONSTRAINT $constraint ${key.column} $type ');
+    }
+
+    sb.write('REFERENCES ${key.foreignTable}(${key.foreignTableColumn})');
 
     if (key.onUpdate != null) sb.write(' ON UPDATE ${_acceptforeignKeyAction(key.onUpdate!)}');
     if (key.onDelete != null) sb.write(' ON DELETE ${_acceptforeignKeyAction(key.onDelete!)}');
 
-    if (key.constraint == null) return 'FOREIGN KEY ${sb.toString()}';
-
-    return 'CONSTRAINT ${key.constraint} $sb';
+    return sb.toString();
   }
 }
 
@@ -374,8 +381,8 @@ class SqliteTableBlueprint extends TableBlueprint {
   }
 
   @override
-  void id({name = 'id', autoIncrement = true}) {
-    final sb = StringBuffer()..write('$name INTEGER NOT NULL PRIMARY KEY');
+  void id({name = 'id', String type = 'INTEGER', autoIncrement = true}) {
+    final sb = StringBuffer()..write('$name $type NOT NULL PRIMARY KEY');
     if (autoIncrement) sb.write(' AUTOINCREMENT');
     statements.add(sb.toString());
   }
@@ -564,5 +571,13 @@ class SqliteTableBlueprint extends TableBlueprint {
     final exactLine = statements.firstWhereOrNull((e) => e.startsWith('$column '));
     if (exactLine == null) throw Exception('Column $column not found in table blueprint');
     return exactLine;
+  }
+
+  @override
+  ForeignKey foreign<Model extends Entity, ReferenceModel extends Entity>(String column, {String reference = 'id'}) {
+    final key = super.foreign<Model, ReferenceModel>(column, reference: reference);
+    final statement = _serializer.acceptForeignKey(this, key);
+    statements.add(statement);
+    return key;
   }
 }

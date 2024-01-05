@@ -5,7 +5,7 @@ import 'package:recase/recase.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 abstract class TableBlueprint {
-  void id({String name = 'id', bool autoIncrement = true});
+  void id({String name = 'id', String type = 'INTEGER', bool autoIncrement = true});
 
   ForeignKey foreign<Model extends Entity, ReferenceModel extends Entity>(String column, {String reference = 'id'}) {
     final table = getTableName(Model);
