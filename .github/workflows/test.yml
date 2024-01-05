@@ -7,9 +7,9 @@ name: Test Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   analyze:
@@ -26,7 +26,6 @@ jobs:
         run: |
           dart pub global activate melos
           melos bootstrap
-
 
       - name: Check formatting
         run: melos format -- --set-exit-if-changed
