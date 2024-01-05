@@ -1,5 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:meta/meta.dart';
+import 'package:meta/meta_meta.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import '../primitives/where.dart';
@@ -48,7 +49,11 @@ abstract class Entity<PkType, Model> {
 
   bool get enableTimestamps => false;
 
-  String get tableName => typeToTableName(runtimeType);
+  String? _tableName;
+  String get tableName {
+    if (_tableName != null) return _tableName!;
+    return _tableName = getTableName(runtimeType);
+  }
 
   /// override this this set the connection for this model
   @JsonKey(includeToJson: false, includeFromJson: false)
@@ -76,4 +81,10 @@ abstract class Entity<PkType, Model> {
     }
     return mapData;
   }
+}
+
+@Target({TargetKind.classType})
+class EntityMeta {
+  final String table;
+  const EntityMeta({required this.table});
 }

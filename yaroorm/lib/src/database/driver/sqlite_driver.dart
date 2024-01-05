@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:yaroorm/migration.dart';
@@ -334,10 +335,16 @@ class SqliteSerializer implements PrimitiveSerializer {
       Operator.NOT_BETWEEN => '$field NOT BETWEEN ${acceptDartValue(value[0])} AND ${acceptDartValue(value[1])}',
     };
   }
+
+  @override
+  String acceptForeignKey(TableBlueprint blueprint, ForeignKey key) {
+    final type = blueprint.resolveTypeFor(key.column);
+    return '${key.column} $type REFERENCES ${key.foreignTable}(${key.foreignTableColumn})';
+  }
 }
 
 @protected
-class SqliteTableBlueprint implements TableBlueprint {
+class SqliteTableBlueprint extends TableBlueprint {
   final List<String> statements = [];
 
   String _getColumn(String name, String type, {nullable = false, defaultValue}) {
@@ -521,11 +528,11 @@ class SqliteTableBlueprint implements TableBlueprint {
   }
 
   @override
-  String renameScript(String oldName, String toName) {
+  String renameScript(String fromName, String toName) {
     final StringBuffer renameScript = StringBuffer();
     renameScript
-      ..writeln('CREATE TABLE temp_info AS SELECT * FROM PRAGMA table_info(\'$oldName\');')
-      ..writeln('CREATE TABLE temp_data AS SELECT * FROM $oldName;')
+      ..writeln('CREATE TABLE temp_info AS SELECT * FROM PRAGMA table_info(\'$fromName\');')
+      ..writeln('CREATE TABLE temp_data AS SELECT * FROM $fromName;')
       ..writeln('CREATE TABLE $toName AS SELECT * FROM temp_data WHERE 1 = 0;')
       ..writeln('INSERT INTO $toName SELECT * FROM temp_data;')
       ..writeln('DROP TABLE temp_info; DROP TABLE temp_data;');
@@ -533,8 +540,12 @@ class SqliteTableBlueprint implements TableBlueprint {
   }
 
   @override
-  ForeignKey foreign<Model extends Entity>(String columnName, {bool nullable = false}) {
-    // TODO: implement foreign
-    throw UnimplementedError();
+  String resolveTypeFor(String column) => getColumn(column).split(' ')[1];
+
+  @override
+  String getColumn(String column) {
+    final exactLine = statements.firstWhereOrNull((e) => e.startsWith('$column '));
+    if (exactLine == null) throw Exception('Column $column not found in table blueprint');
+    return exactLine;
   }
 }

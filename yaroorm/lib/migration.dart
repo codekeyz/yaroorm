@@ -2,15 +2,15 @@ library migration;
 
 import 'package:meta/meta.dart';
 import 'package:recase/recase.dart';
+import 'package:yaroorm/yaroorm.dart';
 
-import 'src/database/entity.dart';
-import 'src/query/query.dart';
-
-abstract interface class TableBlueprint {
+abstract class TableBlueprint {
   void id({String name = 'id', bool autoIncrement = true});
 
-  ForeignKey foreign<Model extends Entity>(String columnName, {bool nullable = false}) {
-    return ForeignKey(columnName, typeToTableName(Model), nullable: nullable);
+  ForeignKey foreign<Model extends Entity, ReferenceModel extends Entity>(String column, {String reference = 'id'}) {
+    final table = getTableName(Model);
+    final referenceTable = getTableName(ReferenceModel);
+    return ForeignKey(table, column, foreignTable: referenceTable, foreignTableColumn: reference);
   }
 
   void string(String name, {bool nullable = false, String? defaultValue});
@@ -150,6 +150,10 @@ abstract interface class TableBlueprint {
 
   @protected
   String renameScript(String fromName, String toName);
+
+  String resolveTypeFor(String column);
+
+  String getColumn(String column);
 }
 
 typedef TableBluePrintFunc = TableBlueprint Function(TableBlueprint table);
@@ -200,26 +204,19 @@ class _RenameSchema extends Schema {
 typedef ForeignKeyCascade = ();
 
 class ForeignKey {
+  final String table;
   final String column;
+
   final String foreignTable;
   final String foreignTableColumn;
+
   final bool nullable;
 
-  const ForeignKey(this.column, this.foreignTable, {this.foreignTableColumn = 'id', this.nullable = false});
-
-  ForeignKey references(String foreignTableColumName) {
-    return ForeignKey(
-      column,
-      foreignTable,
-      foreignTableColumn: foreignTableColumName,
-    );
-  }
-
-  ForeignKey on(String foreignTableName) {
-    return ForeignKey(
-      column,
-      foreignTableName,
-      foreignTableColumn: foreignTableColumn,
-    );
-  }
+  const ForeignKey(
+    this.table,
+    this.column, {
+    required this.foreignTable,
+    required this.foreignTableColumn,
+    this.nullable = false,
+  });
 }

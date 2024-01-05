@@ -1,4 +1,3 @@
-import 'package:grammer/grammer.dart';
 import 'package:meta/meta.dart';
 
 import '../database/driver/driver.dart';
@@ -7,8 +6,6 @@ import '../primitives/where.dart';
 import '../reflection/util.dart';
 
 part 'query_impl.dart';
-
-String typeToTableName(Type type) => type.toString().toPlural().first;
 
 mixin ReadOperation<Result> {
   Future<Result?> get([dynamic id]);

@@ -1,3 +1,5 @@
+import 'package:yaroorm/migration.dart';
+
 import '../query/query.dart';
 import 'where.dart';
 
@@ -23,6 +25,8 @@ abstract class PrimitiveSerializer {
   String acceptLimit(int limit);
 
   dynamic acceptDartValue(dynamic value);
+
+  String acceptForeignKey(TableBlueprint blueprint, ForeignKey key);
 
   String get terminator;
 }
