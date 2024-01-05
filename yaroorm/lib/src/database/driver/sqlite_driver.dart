@@ -348,7 +348,7 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptForeignKey(TableBlueprint blueprint, ForeignKey key) {
-    final type = blueprint.resolveTypeFor(key.column);
+    blueprint.ensurePresenceOf(key.column);
     final sb = StringBuffer();
 
     final constraint = key.constraint;
@@ -560,13 +560,10 @@ class SqliteTableBlueprint extends TableBlueprint {
   }
 
   @override
-  String resolveTypeFor(String column) => getColumn(column).split(' ')[1];
-
-  @override
-  String getColumn(String column) {
+  String ensurePresenceOf(String column) {
     final exactLine = statements.firstWhereOrNull((e) => e.startsWith('$column '));
     if (exactLine == null) throw Exception('Column $column not found in table blueprint');
-    return exactLine;
+    return exactLine.split(' ')[1];
   }
 
   @override

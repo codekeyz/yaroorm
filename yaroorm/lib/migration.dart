@@ -156,9 +156,7 @@ abstract class TableBlueprint {
   @protected
   String renameScript(String fromName, String toName);
 
-  String resolveTypeFor(String column);
-
-  String getColumn(String column);
+  void ensurePresenceOf(String column);
 }
 
 typedef TableBluePrintFunc = TableBlueprint Function(TableBlueprint table);
