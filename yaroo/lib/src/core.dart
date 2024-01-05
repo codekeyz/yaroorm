@@ -71,15 +71,15 @@ abstract class ApplicationFactory {
     final spanner = Spanner()..addMiddleware('/', bodyParser);
     Application.instance = _YarooAppImpl(config, spanner);
 
-    final globalMdw = ApplicationFactory.globalMiddleware;
-    if (globalMdw != null) spanner.addMiddleware<HandlerFunc>('/', globalMdw);
-
     final providers = config.providers.map((e) => createNewInstance<ServiceProvider>(e));
 
     /// register dependencies
     for (final provider in providers) {
       await Future.sync(provider.register);
     }
+
+    final globalMdw = ApplicationFactory.globalMiddleware;
+    if (globalMdw != null) spanner.addMiddleware<HandlerFunc>('/', globalMdw);
 
     /// boot providers
     for (final provider in providers) {
