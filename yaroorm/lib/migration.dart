@@ -4,9 +4,14 @@ import 'package:meta/meta.dart';
 import 'package:recase/recase.dart';
 
 import 'src/database/entity.dart';
+import 'src/query/query.dart';
 
 abstract interface class TableBlueprint {
   void id({String name = 'id', bool autoIncrement = true});
+
+  ForeignKey foreign<Model extends Entity>(String columnName, {bool nullable = false}) {
+    return ForeignKey(columnName, typeToTableName(Model), nullable: nullable);
+  }
 
   void string(String name, {bool nullable = false, String? defaultValue});
 
@@ -190,4 +195,31 @@ class _RenameSchema extends Schema {
 
   @override
   String toScript(TableBlueprint table) => table.renameScript(tableName, newName);
+}
+
+typedef ForeignKeyCascade = ();
+
+class ForeignKey {
+  final String column;
+  final String foreignTable;
+  final String foreignTableColumn;
+  final bool nullable;
+
+  const ForeignKey(this.column, this.foreignTable, {this.foreignTableColumn = 'id', this.nullable = false});
+
+  ForeignKey references(String foreignTableColumName) {
+    return ForeignKey(
+      column,
+      foreignTable,
+      foreignTableColumn: foreignTableColumName,
+    );
+  }
+
+  ForeignKey on(String foreignTableName) {
+    return ForeignKey(
+      column,
+      foreignTableName,
+      foreignTableColumn: foreignTableColumn,
+    );
+  }
 }
