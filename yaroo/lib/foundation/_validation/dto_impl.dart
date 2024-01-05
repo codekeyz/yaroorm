@@ -1,12 +1,14 @@
 part of 'dto.dart';
 
 abstract interface class _BaseDTOImpl {
-  final Map<dynamic, dynamic> _databag = {};
+  final Map<String, dynamic> _databag = {};
+
+  Map<String, dynamic> get data => UnmodifiableMapView(_databag);
 
   void make(Request request) {
     final (data, errors) = schema.validateSync(request.body ?? {});
     if (errors.isNotEmpty) throw RequestValidationError.errors(ValidationErrorLocation.body, errors);
-    _databag.addAll(data);
+    _databag.addAll(Map<String, dynamic>.from(data));
   }
 
   EzSchema? _schemaCache;

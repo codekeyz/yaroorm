@@ -336,7 +336,7 @@ class SqliteSerializer implements PrimitiveSerializer {
     };
   }
 
-  String _acceptforeignKeyAction(ForeignKeyAction action) {
+  String _acceptForeignKeyAction(ForeignKeyAction action) {
     return switch (action) {
       ForeignKeyAction.cascade => 'CASCADE',
       ForeignKeyAction.restrict => 'RESTRICT',
@@ -356,8 +356,8 @@ class SqliteSerializer implements PrimitiveSerializer {
 
     sb.write('FOREIGN KEY (${key.column}) REFERENCES ${key.foreignTable}(${key.foreignTableColumn})');
 
-    if (key.onUpdate != null) sb.write(' ON UPDATE ${_acceptforeignKeyAction(key.onUpdate!)}');
-    if (key.onDelete != null) sb.write(' ON DELETE ${_acceptforeignKeyAction(key.onDelete!)}');
+    if (key.onUpdate != null) sb.write(' ON UPDATE ${_acceptForeignKeyAction(key.onUpdate!)}');
+    if (key.onDelete != null) sb.write(' ON DELETE ${_acceptForeignKeyAction(key.onDelete!)}');
 
     return sb.toString();
   }
@@ -366,6 +366,7 @@ class SqliteSerializer implements PrimitiveSerializer {
 @protected
 class SqliteTableBlueprint extends TableBlueprint {
   final List<String> statements = [];
+  final List<String> _foreignKeys = [];
 
   String _getColumn(String name, String type, {nullable = false, defaultValue}) {
     final sb = StringBuffer()..write('$name $type');
@@ -539,6 +540,7 @@ class SqliteTableBlueprint extends TableBlueprint {
 
   @override
   String createScript(String tableName) {
+    statements.addAll(_foreignKeys);
     return 'CREATE TABLE $tableName (${statements.join(', ')});';
   }
 
@@ -577,13 +579,6 @@ class SqliteTableBlueprint extends TableBlueprint {
 
     super.foreign<Model, ReferenceModel>(column, referenceId: referenceId, key: callback);
     final statement = _serializer.acceptForeignKey(this, result);
-    statements.add(statement);
+    _foreignKeys.add(statement);
   }
-
-  // @override
-  // ForeignKey foreign<Model extends Entity, ReferenceModel extends Entity>(String column, {String reference = 'id'}) {
-  //   final key = super.foreign<Model, ReferenceModel>(column, reference: reference);
-
-  //   return key;
-  // }
 }
