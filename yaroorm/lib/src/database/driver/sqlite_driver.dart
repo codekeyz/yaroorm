@@ -501,7 +501,7 @@ class SqliteTableBlueprint extends TableBlueprint {
   @override
   void set(String name, List<String> values,
       {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
-    // TODO: implement set
+    throw UnimplementedError();
   }
 
   @override
