@@ -9,7 +9,10 @@ void runIntegrationTest(String connectionName) {
   final driver = DB.driver(connectionName);
 
   Future<void> runMigrator(String command) async {
-    final result = await Process.run('dart', ['run', 'test/fixtures/migrator.dart', command]);
+    final commands = ['run', 'test/fixtures/migrator.dart', command, '--database=$connectionName'];
+    print('Starting Execution: dart ${commands.join(' ')}');
+
+    final result = await Process.run('dart', commands);
     stdout.write(result.stdout);
     stderr.write(result.stderr);
   }
