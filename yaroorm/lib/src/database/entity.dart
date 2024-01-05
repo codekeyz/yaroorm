@@ -2,6 +2,8 @@ import 'package:json_annotation/json_annotation.dart';
 import 'package:meta/meta.dart';
 import 'package:yaroorm/yaroorm.dart';
 
+import '../primitives/where.dart';
+
 const entity = ReflectableEntity();
 
 const String entityCreatedAtColumnName = 'createdAt';
@@ -30,7 +32,7 @@ abstract class Entity<PkType, Model> {
     return connName == null ? query : query.driver(DB.driver(connName));
   }
 
-  WhereClause _whereId(Query _) => _.whereEqual(primaryKey, id);
+  WhereClause<Model> _whereId(Query<Model> _) => _.whereEqual(primaryKey, id);
 
   @nonVirtual
   Future<void> delete() => _query.delete(_whereId).exec();

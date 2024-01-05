@@ -1,4 +1,5 @@
-import '../query.dart';
+import '../query/query.dart';
+import 'where.dart';
 
 abstract class PrimitiveSerializer {
   String acceptReadQuery(Query query);

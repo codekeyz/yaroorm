@@ -1,12 +1,11 @@
 import 'package:grammer/grammer.dart';
 import 'package:meta/meta.dart';
-import 'package:yaroorm/src/database/entity.dart';
 
 import '../database/driver/driver.dart';
-import '../reflection/entity_helpers.dart';
+import '../database/entity.dart';
+import '../primitives/where.dart';
+import '../reflection/util.dart';
 
-part 'primitives/where.dart';
-part 'primitives/where_impl.dart';
 part 'query_impl.dart';
 
 String typeToTableName(Type type) => type.toString().toPlural().first;
@@ -33,12 +32,12 @@ mixin LimitOperation<ReturnType> {
   Future<List<ReturnType>> take(int limit);
 }
 
-mixin UpdateOperation {
-  UpdateQuery update({required WhereClause Function(Query query) where, required Map<String, dynamic> values});
+mixin UpdateOperation<Result> {
+  UpdateQuery update({required WhereClause<Result> Function(Query query) where, required Map<String, dynamic> values});
 }
 
-mixin DeleteOperation {
-  DeleteQuery delete(WhereClause Function(Query query) where);
+mixin DeleteOperation<Result> {
+  DeleteQuery delete(WhereClause<Result> Function(Query query) where);
 }
 
 typedef OrderBy = ({String field, OrderByDirection direction});
@@ -75,18 +74,18 @@ abstract interface class QueryBase<Owner> {
   String get statement;
 }
 
-abstract interface class Query<Result> extends QueryBase<Query<Result>>
+abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
     with
-        ReadOperation<Result>,
-        WhereOperation<Result>,
-        LimitOperation<Result>,
-        OrderByOperation<Query<Result>>,
+        ReadOperation<EntityType>,
+        WhereOperation<EntityType>,
+        LimitOperation<EntityType>,
+        OrderByOperation<Query<EntityType>>,
         InsertOperation,
-        DeleteOperation,
-        UpdateOperation {
+        DeleteOperation<EntityType>,
+        UpdateOperation<EntityType> {
   late final Set<String> fieldSelections;
   late final Set<OrderBy> orderByProps;
-  late final List<WhereClause<Result>> whereClauses;
+  late final List<WhereClause<EntityType>> whereClauses;
 
   late int? _limit;
 
@@ -108,12 +107,14 @@ abstract interface class Query<Result> extends QueryBase<Query<Result>>
   int? get limit => _limit;
 
   @override
-  DeleteQuery delete(WhereClause Function(Query query) where) {
+  DeleteQuery delete(WhereClause<EntityType> Function(Query<EntityType> query) where) {
     return DeleteQuery(tableName, whereClause: where(this)).driver(queryDriver);
   }
 
   @override
-  UpdateQuery update({required WhereClause Function(Query query) where, required Map<String, dynamic> values}) {
+  UpdateQuery update(
+      {required WhereClause<EntityType> Function(Query<EntityType> query) where,
+      required Map<String, dynamic> values}) {
     return UpdateQuery(tableName, whereClause: where(this), values: values).driver(queryDriver);
   }
 }

@@ -1,4 +1,4 @@
-import '../../query/primitives/serializer.dart';
+import '../../primitives/serializer.dart';
 import '../../query/query.dart';
 import '../../../migration.dart';
 import 'mysql_driver.dart';

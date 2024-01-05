@@ -1,10 +1,11 @@
 import 'package:meta/meta.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:yaroorm/migration.dart';
-import 'package:yaroorm/src/database/entity.dart';
-import 'package:yaroorm/src/query/primitives/serializer.dart';
-import 'package:yaroorm/src/query/query.dart';
 
+import '../../primitives/serializer.dart';
+import '../../primitives/where.dart';
+import '../../query/query.dart';
+import '../entity.dart';
 import 'driver.dart';
 
 final _serializer = const SqliteSerializer();
@@ -529,5 +530,11 @@ class SqliteTableBlueprint implements TableBlueprint {
       ..writeln('INSERT INTO $toName SELECT * FROM temp_data;')
       ..writeln('DROP TABLE temp_info; DROP TABLE temp_data;');
     return renameScript.toString();
+  }
+
+  @override
+  ForeignKey foreign<Model extends Entity>(String columnName, {bool nullable = false}) {
+    // TODO: implement foreign
+    throw UnimplementedError();
   }
 }

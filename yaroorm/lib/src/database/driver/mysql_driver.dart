@@ -1,9 +1,9 @@
 import 'package:meta/meta.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:yaroorm/migration.dart';
-import 'package:yaroorm/src/query/primitives/serializer.dart';
 import 'package:yaroorm/src/query/query.dart';
 
+import '../../primitives/serializer.dart';
 import 'driver.dart';
 import 'sqlite_driver.dart';
 
