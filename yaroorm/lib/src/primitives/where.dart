@@ -1,6 +1,8 @@
 // ignore_for_file: constant_identifier_names
 
-part of '../query.dart';
+import '../query/query.dart';
+
+part '_where_impl.dart';
 
 mixin WhereOperation<Result> {
   WhereClause<Result> where<Value>(String field, String condition, [Value? value]);
@@ -77,9 +79,9 @@ Operator _strToOperator(String condition) => switch (condition) {
       _ => throw ArgumentError.value(condition, null, 'Condition $condition is not known')
     };
 
-class WhereClauseValue<A> {
+class WhereClauseValue<ValueType> {
   final String field;
-  final CompareWithValue comparer;
+  final CompareWithValue<ValueType> comparer;
 
   WhereClauseValue(this.field, this.comparer) {
     final operator = comparer.operator;
@@ -108,19 +110,27 @@ abstract class WhereClause<Result>
   List<CombineClause<WhereClause<Result>>> get group => children.isEmpty
       ? const []
       : [
-          if (clauseValue != null) (operator, WhereClauseImpl(_query, operator: operator)..clauseValue = clauseValue),
+          if (clauseValue != null)
+            (operator, WhereClause.create<Result>(query, operator: operator)..clauseValue = clauseValue),
           ...children
         ];
 
   Set<LogicalOperator> get operators => {operator, if (children.isNotEmpty) ...children.map((e) => e.$1)};
 
-  final Query<Result> _query;
+  final Query<Result> query;
 
   final LogicalOperator operator;
 
   WhereClauseValue? clauseValue;
 
-  WhereClause(this._query, {this.operator = LogicalOperator.AND});
+  WhereClause(this.query, {this.operator = LogicalOperator.AND});
+
+  static WhereClause<Result> create<Result>(
+    Query<Result> query, {
+    LogicalOperator operator = LogicalOperator.AND,
+    WhereClauseValue? value,
+  }) =>
+      _WhereClauseImpl<Result>(query, operator: operator)..clauseValue = value;
 
   Future<void> update(Map<String, dynamic> values);
 
