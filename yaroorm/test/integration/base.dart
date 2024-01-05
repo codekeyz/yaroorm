@@ -15,6 +15,7 @@ void runIntegrationTest(String connectionName) {
     final result = await Process.run('dart', commands);
     stdout.write(result.stdout);
     stderr.write(result.stderr);
+    expect(result.exitCode, 0);
   }
 
   return group('Integration Test with ${driver.type.name} driver', () {
