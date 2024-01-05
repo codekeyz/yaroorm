@@ -2,11 +2,21 @@ library migration;
 
 import 'package:meta/meta.dart';
 import 'package:recase/recase.dart';
+import 'package:yaroorm/yaroorm.dart';
 
-import 'src/database/entity.dart';
+abstract class TableBlueprint {
+  void id({String name = 'id', String type = 'INTEGER', bool autoIncrement = true});
 
-abstract interface class TableBlueprint {
-  void id({String name = 'id', bool autoIncrement = true});
+  void foreign<Model extends Entity, ReferenceModel extends Entity>(
+    String column, {
+    String referenceId = 'id',
+    ForeignKey Function(ForeignKey fkey)? key,
+  }) {
+    final table = getTableName(Model);
+    final referenceTable = getTableName(ReferenceModel);
+    final fkey = ForeignKey(table, column, foreignTable: referenceTable, foreignTableColumn: referenceId);
+    key?.call(fkey);
+  }
 
   void string(String name, {bool nullable = false, String? defaultValue});
 
@@ -145,6 +155,8 @@ abstract interface class TableBlueprint {
 
   @protected
   String renameScript(String fromName, String toName);
+
+  void ensurePresenceOf(String column);
 }
 
 typedef TableBluePrintFunc = TableBlueprint Function(TableBlueprint table);
@@ -190,4 +202,48 @@ class _RenameSchema extends Schema {
 
   @override
   String toScript(TableBlueprint table) => table.renameScript(tableName, newName);
+}
+
+enum ForeignKeyAction { cascade, restrict, setNull, setDefault, noAction }
+
+class ForeignKey {
+  final String table;
+  final String column;
+
+  final String foreignTable;
+  final String foreignTableColumn;
+
+  final bool nullable;
+
+  final ForeignKeyAction? onUpdate;
+  final ForeignKeyAction? onDelete;
+
+  final String? constraint;
+
+  const ForeignKey(
+    this.table,
+    this.column, {
+    required this.foreignTable,
+    required this.foreignTableColumn,
+    this.nullable = false,
+    this.onUpdate,
+    this.onDelete,
+    this.constraint,
+  });
+
+  ForeignKey actions({ForeignKeyAction? onUpdate, ForeignKeyAction? onDelete}) => ForeignKey(table, column,
+      foreignTable: foreignTable,
+      foreignTableColumn: foreignTableColumn,
+      nullable: nullable,
+      constraint: constraint,
+      onUpdate: onUpdate ?? this.onUpdate,
+      onDelete: onDelete ?? this.onDelete);
+
+  ForeignKey constrained({String? name}) => ForeignKey(table, column,
+      foreignTable: foreignTable,
+      foreignTableColumn: foreignTableColumn,
+      nullable: nullable,
+      onUpdate: onUpdate,
+      onDelete: onDelete,
+      constraint: name ?? 'fk_${table}_${column}_to_${foreignTable}_$foreignTableColumn');
 }

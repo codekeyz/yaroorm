@@ -1,11 +1,22 @@
+import 'dart:io';
+
 import 'package:test/test.dart';
-import 'package:yaroorm/migration/cli.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import '../fixtures/test_data.dart';
 
 void runIntegrationTest(String connectionName) {
   final driver = DB.driver(connectionName);
+
+  Future<void> runMigrator(String command) async {
+    final commands = ['run', 'test/fixtures/migrator.dart', command, '--database=$connectionName'];
+    print('Starting Execution: dart ${commands.join(' ')}');
+
+    final result = await Process.run('dart', commands);
+    stdout.write(result.stdout);
+    stderr.write(result.stderr);
+    expect(result.exitCode, 0);
+  }
 
   return group('Integration Test with ${driver.type.name} driver', () {
     test('driver should connect', () async {
@@ -26,7 +37,7 @@ void runIntegrationTest(String connectionName) {
     });
 
     test('should execute migration', () async {
-      await MigratorCLI.processCmd('migrate', cmdArguments: ['--database=$connectionName']);
+      await runMigrator('migrate');
 
       final result = await Future.wait([
         driver.hasTable('users'),
@@ -146,7 +157,7 @@ void runIntegrationTest(String connectionName) {
     });
 
     test('should drop tables', () async {
-      await MigratorCLI.processCmd('migrate:reset', cmdArguments: ['--database=$connectionName']);
+      await runMigrator('migrate:reset');
 
       final result = await Future.wait([
         driver.hasTable('users'),

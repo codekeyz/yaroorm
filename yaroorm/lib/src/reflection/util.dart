@@ -1,4 +1,6 @@
 import 'package:collection/collection.dart';
+import 'package:grammer/grammer.dart';
+import 'package:recase/recase.dart';
 import 'package:reflectable/reflectable.dart';
 
 import '../database/entity.dart';
@@ -37,3 +39,5 @@ Model jsonToEntity<Model>(
   mirror ??= reflectEntity<Model>();
   return mirror.invoke(entityFromJsonStaticFuncName, [json]) as Model;
 }
+
+String typeToTableName(Type type) => type.toString().snakeCase.toPlural().first;
