@@ -24,9 +24,7 @@ class _YarooAppImpl implements Application {
   @override
   void useViewEngine(ViewEngine viewEngine) => _viewEngine = viewEngine;
 
-  FutureOr<Response> onException(Object error, Request request) {
-    final response = Response.create();
-
+  FutureOr<Response> onException(Object error, Request request, Response response) {
     if (error is RequestValidationError) {
       return response.json(error.errorBody, statusCode: HttpStatus.badRequest);
     } else if (error is SpannerRouteValidatorError) {

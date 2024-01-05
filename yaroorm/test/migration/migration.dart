@@ -2,7 +2,7 @@ import 'package:test/test.dart';
 import 'package:yaroorm/migration/cli.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import 'fixtures/orm_config.dart' as db;
+import '../fixtures/orm_config.dart' as db;
 
 void main() {
   DB.init(db.config);

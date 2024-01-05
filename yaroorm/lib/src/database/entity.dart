@@ -1,13 +1,16 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:meta/meta.dart';
+import 'package:meta/meta_meta.dart';
 import 'package:yaroorm/yaroorm.dart';
+
+import '../primitives/where.dart';
 
 const entity = ReflectableEntity();
 
 const String entityCreatedAtColumnName = 'createdAt';
 const String entityUpdatedAtColumnName = 'updatedAt';
 
-const String entityToJsonStaticFuncName = 'fromJson';
+const String entityFromJsonStaticFuncName = 'fromJson';
 
 @entity
 abstract class Entity<PkType, Model> {
@@ -30,7 +33,7 @@ abstract class Entity<PkType, Model> {
     return connName == null ? query : query.driver(DB.driver(connName));
   }
 
-  WhereClause _whereId(Query _) => _.whereEqual(primaryKey, id);
+  WhereClause<Model> _whereId(Query<Model> _) => _.whereEqual(primaryKey, id);
 
   @nonVirtual
   Future<void> delete() => _query.delete(_whereId).exec();
@@ -46,7 +49,11 @@ abstract class Entity<PkType, Model> {
 
   bool get enableTimestamps => false;
 
-  String get tableName => typeToTableName(runtimeType);
+  String? _tableName;
+  String get tableName {
+    if (_tableName != null) return _tableName!;
+    return _tableName = getTableName(runtimeType);
+  }
 
   /// override this this set the connection for this model
   @JsonKey(includeToJson: false, includeFromJson: false)
@@ -60,11 +67,12 @@ abstract class Entity<PkType, Model> {
 
   bool get allowInsertIdAsNull => false;
 
-  Map<String, dynamic> toMap();
+  Map<String, dynamic> toJson();
 
   @nonVirtual
-  Map<String, dynamic> toJson() {
-    final mapData = toMap();
+  // ignore: non_constant_identifier_names
+  Map<String, dynamic> get to_db_data {
+    final mapData = toJson();
     if (mapData[primaryKey] == null && !allowInsertIdAsNull) mapData.remove(primaryKey);
     if (!enableTimestamps) {
       mapData
@@ -73,4 +81,10 @@ abstract class Entity<PkType, Model> {
     }
     return mapData;
   }
+}
+
+@Target({TargetKind.classType})
+class EntityMeta {
+  final String table;
+  const EntityMeta({required this.table});
 }

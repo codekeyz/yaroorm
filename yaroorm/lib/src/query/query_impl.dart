@@ -7,7 +7,7 @@ class QueryImpl<Result> extends Query<Result> {
 
   @override
   WhereClause<Result> where<Value>(String field, String condition, [Value? value]) {
-    final newClause = WhereClauseImpl<Result>(this)..clauseValue = WhereClauseValue.from(field, condition, value);
+    final newClause = WhereClause.create<Result>(this, value: WhereClauseValue.from(field, condition, value));
     whereClauses.add(newClause);
     return newClause;
   }
@@ -27,7 +27,7 @@ class QueryImpl<Result> extends Query<Result> {
   @override
   Future<T> insert<T extends Entity>(T entity) async {
     if (entity.enableTimestamps) entity.createdAt = entity.updatedAt = DateTime.now().toUtc();
-    final query = InsertQuery(tableName, values: entity.toJson());
+    final query = InsertQuery(tableName, values: entity.to_db_data);
     final recordId = await queryDriver.insert(query);
     return entity..id = recordId;
   }
@@ -77,7 +77,7 @@ class QueryImpl<Result> extends Query<Result> {
     final newQuery = QueryImpl<Result>(tableName);
     builder(newQuery);
 
-    final newGroup = WhereClauseImpl(this, operator: LogicalOperator.OR);
+    final newGroup = WhereClause.create<Result>(this, operator: LogicalOperator.OR);
     for (final clause in newQuery.whereClauses) {
       newGroup.children.add((clause.operator, clause));
     }
@@ -92,7 +92,7 @@ class QueryImpl<Result> extends Query<Result> {
     final newQuery = QueryImpl<Result>(tableName);
     builder(newQuery);
 
-    final newGroup = WhereClauseImpl(this, operator: LogicalOperator.AND);
+    final newGroup = WhereClause.create<Result>(this, operator: LogicalOperator.AND);
     for (final clause in newQuery.whereClauses) {
       newGroup.children.add((clause.operator, clause));
     }
@@ -104,80 +104,80 @@ class QueryImpl<Result> extends Query<Result> {
 
   @override
   WhereClause<Result> whereEqual<Value>(String field, Value value) {
-    final newClause = WhereClauseImpl<Result>(this)
-      ..clauseValue = WhereClauseValue(field, (operator: Operator.EQUAL, value: value));
+    final newClause =
+        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.EQUAL, value: value)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   WhereClause<Result> whereNotEqual<Value>(String field, Value value) {
-    final newClause = WhereClauseImpl<Result>(this)
-      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_EQUAL, value: value));
+    final newClause =
+        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.NOT_EQUAL, value: value)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   WhereClause<Result> whereIn<Value>(String field, List<Value> values) {
-    final newClause = WhereClauseImpl<Result>(this)
-      ..clauseValue = WhereClauseValue(field, (operator: Operator.IN, value: values));
+    final newClause =
+        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.IN, value: values)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   WhereClause<Result> whereNotIn<Value>(String field, List<Value> values) {
-    final newClause = WhereClauseImpl<Result>(this)
-      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_IN, value: values));
+    final newClause =
+        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.NOT_IN, value: values)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   WhereClause<Result> whereLike<Value>(String field, String pattern) {
-    final newClause = WhereClauseImpl<Result>(this)
-      ..clauseValue = WhereClauseValue(field, (operator: Operator.LIKE, value: pattern));
+    final newClause =
+        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.LIKE, value: pattern)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   WhereClause<Result> whereNotLike<Value>(String field, String pattern) {
-    final newClause = WhereClauseImpl<Result>(this)
-      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_LIKE, value: pattern));
+    final newClause =
+        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.NOT_LIKE, value: pattern)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   WhereClause<Result> whereNull(String field) {
-    final newClause = WhereClauseImpl<Result>(this)
-      ..clauseValue = WhereClauseValue(field, (operator: Operator.NULL, value: null));
+    final newClause =
+        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.NULL, value: null)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   WhereClause<Result> whereNotNull(String field) {
-    final newClause = WhereClauseImpl<Result>(this)
-      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_NULL, value: null));
+    final newClause =
+        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.NOT_NULL, value: null)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   WhereClause<Result> whereBetween<Value>(String field, List<Value> values) {
-    final newClause = WhereClauseImpl<Result>(this)
-      ..clauseValue = WhereClauseValue(field, (operator: Operator.BETWEEN, value: values));
+    final newClause =
+        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.BETWEEN, value: values)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   WhereClause<Result> whereNotBetween<Value>(String field, List<Value> values) {
-    final newClause = WhereClauseImpl<Result>(this)
-      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_BETWEEN, value: values));
+    final newClause = WhereClause.create<Result>(this,
+        value: WhereClauseValue(field, (operator: Operator.NOT_BETWEEN, value: values)));
     whereClauses.add(newClause);
     return newClause;
   }

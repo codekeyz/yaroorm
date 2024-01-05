@@ -1,13 +1,14 @@
 import 'package:reflectable/reflectable.dart' as r;
 
 import '../database/entity.dart';
-import 'entity_helpers.dart';
+import 'util.dart';
 
 class ReflectableEntity extends r.Reflectable {
   const ReflectableEntity()
       : super(
           const r.StaticInvokeCapability('fromJson'),
           r.declarationsCapability,
+          r.metadataCapability,
           r.newInstanceCapability,
 
           ///
@@ -22,4 +23,10 @@ r.ClassMirror reflectType(Type type) {
   } catch (e) {
     throw EntityValidationException('Unable to reflect on $type. Re-run your build command');
   }
+}
+
+String getTableName(Type type) {
+  final metadata = reflectType(type).metadata.whereType<EntityMeta>().firstOrNull;
+  if (metadata != null) return metadata.table;
+  return typeToTableName(type);
 }

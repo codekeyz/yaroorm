@@ -1,9 +1,9 @@
 import 'package:meta/meta.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:yaroorm/migration.dart';
-import 'package:yaroorm/src/query/primitives/serializer.dart';
 import 'package:yaroorm/src/query/query.dart';
 
+import '../../primitives/serializer.dart';
 import 'driver.dart';
 import 'sqlite_driver.dart';
 
@@ -178,8 +178,8 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
   }
 
   @override
-  void id({String name = 'id', bool autoIncrement = true}) {
-    final sb = StringBuffer()..write('$name INTEGER NOT NULL PRIMARY KEY');
+  void id({String name = 'id', String type = 'INTEGER', bool autoIncrement = true}) {
+    final sb = StringBuffer()..write('$name $type NOT NULL PRIMARY KEY');
     if (autoIncrement) sb.write(' AUTO_INCREMENT');
     statements.add(sb.toString());
   }

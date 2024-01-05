@@ -1,8 +1,9 @@
+import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:yaroorm/migration.dart';
-import 'package:yaroorm/src/query/primitives/serializer.dart';
-
+import '../../primitives/serializer.dart';
+import '../../primitives/where.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 final _serializer = const SqliteSerializer();
@@ -331,10 +332,36 @@ class SqliteSerializer implements PrimitiveSerializer {
       Operator.NOT_BETWEEN => '$field NOT BETWEEN ${acceptDartValue(value[0])} AND ${acceptDartValue(value[1])}',
     };
   }
+
+  String _acceptforeignKeyAction(ForeignKeyAction action) {
+    return switch (action) {
+      ForeignKeyAction.cascade => 'CASCADE',
+      ForeignKeyAction.restrict => 'RESTRICT',
+      ForeignKeyAction.setNull => 'SET NULL',
+      ForeignKeyAction.setDefault => 'SET DEFAULT',
+      ForeignKeyAction.noAction => 'NO ACTION',
+    };
+  }
+
+  @override
+  String acceptForeignKey(TableBlueprint blueprint, ForeignKey key) {
+    blueprint.ensurePresenceOf(key.column);
+    final sb = StringBuffer();
+
+    final constraint = key.constraint;
+    if (constraint != null) sb.write('CONSTRAINT $constraint ');
+
+    sb.write('FOREIGN KEY (${key.column}) REFERENCES ${key.foreignTable}(${key.foreignTableColumn})');
+
+    if (key.onUpdate != null) sb.write(' ON UPDATE ${_acceptforeignKeyAction(key.onUpdate!)}');
+    if (key.onDelete != null) sb.write(' ON DELETE ${_acceptforeignKeyAction(key.onDelete!)}');
+
+    return sb.toString();
+  }
 }
 
 @protected
-class SqliteTableBlueprint implements TableBlueprint {
+class SqliteTableBlueprint extends TableBlueprint {
   final List<String> statements = [];
 
   String _getColumn(String name, String type, {nullable = false, defaultValue}) {
@@ -347,8 +374,8 @@ class SqliteTableBlueprint implements TableBlueprint {
   }
 
   @override
-  void id({name = 'id', autoIncrement = true}) {
-    final sb = StringBuffer()..write('$name INTEGER NOT NULL PRIMARY KEY');
+  void id({name = 'id', String type = 'INTEGER', autoIncrement = true}) {
+    final sb = StringBuffer()..write('$name $type NOT NULL PRIMARY KEY');
     if (autoIncrement) sb.write(' AUTOINCREMENT');
     statements.add(sb.toString());
   }
@@ -471,7 +498,7 @@ class SqliteTableBlueprint implements TableBlueprint {
   @override
   void set(String name, List<String> values,
       {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
-    // TODO: implement set
+    throw UnimplementedError();
   }
 
   @override
@@ -518,14 +545,42 @@ class SqliteTableBlueprint implements TableBlueprint {
   }
 
   @override
-  String renameScript(String oldName, String toName) {
+  String renameScript(String fromName, String toName) {
     final StringBuffer renameScript = StringBuffer();
     renameScript
-      ..writeln('CREATE TABLE temp_info AS SELECT * FROM PRAGMA table_info(\'$oldName\');')
-      ..writeln('CREATE TABLE temp_data AS SELECT * FROM $oldName;')
+      ..writeln('CREATE TABLE temp_info AS SELECT * FROM PRAGMA table_info(\'$fromName\');')
+      ..writeln('CREATE TABLE temp_data AS SELECT * FROM $fromName;')
       ..writeln('CREATE TABLE $toName AS SELECT * FROM temp_data WHERE 1 = 0;')
       ..writeln('INSERT INTO $toName SELECT * FROM temp_data;')
       ..writeln('DROP TABLE temp_info; DROP TABLE temp_data;');
     return renameScript.toString();
   }
+
+  @override
+  String ensurePresenceOf(String column) {
+    final exactLine = statements.firstWhereOrNull((e) => e.startsWith('$column '));
+    if (exactLine == null) throw Exception('Column $column not found in table blueprint');
+    return exactLine.split(' ')[1];
+  }
+
+  @override
+  void foreign<Model extends Entity, ReferenceModel extends Entity>(
+    String column, {
+    String referenceId = 'id',
+    ForeignKey Function(ForeignKey fkey)? key,
+  }) {
+    late ForeignKey result;
+    callback(ForeignKey fkey) => result = key?.call(fkey) ?? fkey;
+
+    super.foreign<Model, ReferenceModel>(column, referenceId: referenceId, key: callback);
+    final statement = _serializer.acceptForeignKey(this, result);
+    statements.add(statement);
+  }
+
+  // @override
+  // ForeignKey foreign<Model extends Entity, ReferenceModel extends Entity>(String column, {String reference = 'id'}) {
+  //   final key = super.foreign<Model, ReferenceModel>(column, reference: reference);
+
+  //   return key;
+  // }
 }

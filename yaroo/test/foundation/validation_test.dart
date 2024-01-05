@@ -94,10 +94,9 @@ void main() {
 
   group('when used in a class', () {
     final pharaoh = Pharaoh()
-      ..onError((error, req) {
-        final response = Response.create();
-        if (error is RequestValidationError) return response.json(error.errorBody, statusCode: 422);
-        return response.internalServerError(error.toString());
+      ..onError((error, req, res) {
+        if (error is RequestValidationError) return res.json(error.errorBody, statusCode: 422);
+        return res.internalServerError(error.toString());
       });
 
     test('when no metas', () async {
