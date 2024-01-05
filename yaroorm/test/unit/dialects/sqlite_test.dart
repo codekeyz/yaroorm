@@ -1,9 +1,36 @@
 import 'package:test/test.dart';
+import 'package:yaroorm/migration.dart';
+import 'package:yaroorm/src/database/driver/sqlite_driver.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import '../../fixtures/orm_config.dart' as db;
+import '../../fixtures/test_data.dart';
+import 'sqlite_test.reflectable.dart';
+
+@EntityMeta(table: 'user_articles')
+class Article extends Entity<int, Entity> {
+  final String name;
+  final int ownerId;
+
+  Article(this.name, this.ownerId);
+
+  @override
+  Map<String, dynamic> toJson() => {'name': name, 'ownerId': ownerId};
+}
+
+class ArticleComment extends Entity<String, ArticleComment> {
+  final int articleId;
+  final int userId;
+
+  ArticleComment(this.articleId, this.userId);
+
+  @override
+  Map<String, dynamic> toJson() => {'articleId': articleId, 'userId': userId};
+}
 
 void main() {
+  initializeReflectable();
+
   DB.init(db.config);
 
   late DatabaseDriver driver;
@@ -883,6 +910,92 @@ void main() {
               "OR (languages IN ('python', 'cobra') OR (job_status = 'available' AND location = 'Accra' AND salary NOT BETWEEN 8000 AND 16000));");
 
           expect(query.statement, sB.toString());
+        });
+      });
+    });
+  });
+
+  group('SQLITE Table Blueprint', () {
+    //
+    group('`foreignKey` should resolve for ', () {
+      //
+      test('class with entity meta', () {
+        final articleTableBlueprint = SqliteTableBlueprint()
+          ..string('name')
+          ..integer('ownerId');
+
+        final userForeignKey = articleTableBlueprint.foreign<Article, User>('ownerId');
+        expect(userForeignKey.table, 'user_articles');
+        expect(userForeignKey.column, 'ownerId');
+        expect(userForeignKey.foreignTable, 'users');
+        expect(userForeignKey.foreignTableColumn, 'id');
+      });
+
+      test('class with no meta', () {
+        final foreignKey2 = SqliteTableBlueprint().foreign<ArticleComment, User>('userId');
+        expect(foreignKey2.table, 'article_comments');
+        expect(foreignKey2.column, 'userId');
+        expect(foreignKey2.foreignTable, 'users');
+        expect(foreignKey2.foreignTableColumn, 'id');
+      });
+
+      test('custom foreign reference column', () {
+        final foreignKey3 =
+            SqliteTableBlueprint().foreign<ArticleComment, Article>('articleId', reference: 'custom_article_id_field');
+        expect(foreignKey3.table, 'article_comments');
+        expect(foreignKey3.column, 'articleId');
+        expect(foreignKey3.foreignTable, 'user_articles');
+        expect(foreignKey3.foreignTableColumn, 'custom_article_id_field');
+      });
+
+      test('should make statement', () {
+        final articleTableBlueprint = SqliteTableBlueprint()
+          ..string('name')
+          ..integer('ownerId');
+
+        final userForeignKey = articleTableBlueprint.foreign<Article, User>('ownerId');
+        final statement = SqliteSerializer().acceptForeignKey(articleTableBlueprint, userForeignKey);
+        expect(statement, 'FOREIGN KEY ownerId INTEGER REFERENCES users(id)');
+      });
+
+      test('when custom reference actions', () {
+        final articleTableBlueprint = SqliteTableBlueprint()
+          ..string('name')
+          ..integer('ownerId');
+
+        final userForeignKey = articleTableBlueprint
+            .foreign<Article, User>('ownerId')
+            .actions(onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.setNull);
+
+        final statement = SqliteSerializer().acceptForeignKey(articleTableBlueprint, userForeignKey);
+        expect(statement, 'FOREIGN KEY ownerId INTEGER REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL');
+      });
+
+      group('when constrained', () {
+        test('with no specified name', () {
+          final articleTableBlueprint = SqliteTableBlueprint()
+            ..string('name')
+            ..integer('ownerId');
+
+          final userForeignKey = articleTableBlueprint.foreign<Article, User>('ownerId').constrained();
+
+          final statement = SqliteSerializer().acceptForeignKey(articleTableBlueprint, userForeignKey);
+          expect(statement, 'CONSTRAINT fk_user_articles_ownerId_to_users_id ownerId INTEGER REFERENCES users(id)');
+        });
+
+        test('with specified name', () {
+          final articleTableBlueprint = SqliteTableBlueprint()
+            ..string('name')
+            ..integer('ownerId');
+
+          final userForeignKey = articleTableBlueprint
+              .foreign<Article, User>('ownerId')
+              .actions(onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.setNull)
+              .constrained(name: 'fk_articles_users');
+
+          final statement = SqliteSerializer().acceptForeignKey(articleTableBlueprint, userForeignKey);
+          expect(statement,
+              'CONSTRAINT fk_articles_users ownerId INTEGER REFERENCES users(id) ON UPDATE SET NULL ON DELETE SET NULL');
         });
       });
     });

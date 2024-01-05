@@ -336,10 +336,27 @@ class SqliteSerializer implements PrimitiveSerializer {
     };
   }
 
+  String _acceptforeignKeyAction(ForeignKeyAction action) {
+    return switch (action) {
+      ForeignKeyAction.cascade => 'CASCADE',
+      ForeignKeyAction.restrict => 'RESTRICT',
+      ForeignKeyAction.setNull => 'SET NULL',
+      ForeignKeyAction.setDefault => 'SET DEFAULT',
+      ForeignKeyAction.noAction => 'NO ACTION',
+    };
+  }
+
   @override
   String acceptForeignKey(TableBlueprint blueprint, ForeignKey key) {
     final type = blueprint.resolveTypeFor(key.column);
-    return '${key.column} $type REFERENCES ${key.foreignTable}(${key.foreignTableColumn})';
+    final sb = StringBuffer()..write('${key.column} $type REFERENCES ${key.foreignTable}(${key.foreignTableColumn})');
+
+    if (key.onUpdate != null) sb.write(' ON UPDATE ${_acceptforeignKeyAction(key.onUpdate!)}');
+    if (key.onDelete != null) sb.write(' ON DELETE ${_acceptforeignKeyAction(key.onDelete!)}');
+
+    if (key.constraint == null) return 'FOREIGN KEY ${sb.toString()}';
+
+    return 'CONSTRAINT ${key.constraint} $sb';
   }
 }
 

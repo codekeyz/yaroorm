@@ -201,7 +201,7 @@ class _RenameSchema extends Schema {
   String toScript(TableBlueprint table) => table.renameScript(tableName, newName);
 }
 
-typedef ForeignKeyCascade = ();
+enum ForeignKeyAction { cascade, restrict, setNull, setDefault, noAction }
 
 class ForeignKey {
   final String table;
@@ -212,11 +212,35 @@ class ForeignKey {
 
   final bool nullable;
 
+  final ForeignKeyAction? onUpdate;
+  final ForeignKeyAction? onDelete;
+
+  final String? constraint;
+
   const ForeignKey(
     this.table,
     this.column, {
     required this.foreignTable,
     required this.foreignTableColumn,
     this.nullable = false,
+    this.onUpdate,
+    this.onDelete,
+    this.constraint,
   });
+
+  ForeignKey actions({ForeignKeyAction? onUpdate, ForeignKeyAction? onDelete}) => ForeignKey(table, column,
+      foreignTable: foreignTable,
+      foreignTableColumn: foreignTableColumn,
+      nullable: nullable,
+      onDelete: onDelete ?? this.onDelete,
+      onUpdate: onUpdate ?? this.onUpdate,
+      constraint: constraint);
+
+  ForeignKey constrained({String? name}) => ForeignKey(table, column,
+      foreignTable: foreignTable,
+      foreignTableColumn: foreignTableColumn,
+      nullable: nullable,
+      onDelete: onDelete,
+      onUpdate: onDelete,
+      constraint: name ?? 'fk_${table}_${column}_to_${foreignTable}_$foreignTableColumn');
 }
