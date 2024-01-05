@@ -7,10 +7,15 @@ import 'package:yaroorm/yaroorm.dart';
 abstract class TableBlueprint {
   void id({String name = 'id', String type = 'INTEGER', bool autoIncrement = true});
 
-  ForeignKey foreign<Model extends Entity, ReferenceModel extends Entity>(String column, {String reference = 'id'}) {
+  void foreign<Model extends Entity, ReferenceModel extends Entity>(
+    String column, {
+    String reference = 'id',
+    ForeignKey Function(ForeignKey fkey)? key,
+  }) {
     final table = getTableName(Model);
     final referenceTable = getTableName(ReferenceModel);
-    return ForeignKey(table, column, foreignTable: referenceTable, foreignTableColumn: reference);
+    final fkey = ForeignKey(table, column, foreignTable: referenceTable, foreignTableColumn: reference);
+    key?.call(fkey);
   }
 
   void string(String name, {bool nullable = false, String? defaultValue});
@@ -232,15 +237,15 @@ class ForeignKey {
       foreignTable: foreignTable,
       foreignTableColumn: foreignTableColumn,
       nullable: nullable,
-      onDelete: onDelete ?? this.onDelete,
+      constraint: constraint,
       onUpdate: onUpdate ?? this.onUpdate,
-      constraint: constraint);
+      onDelete: onDelete ?? this.onDelete);
 
   ForeignKey constrained({String? name}) => ForeignKey(table, column,
       foreignTable: foreignTable,
       foreignTableColumn: foreignTableColumn,
       nullable: nullable,
+      onUpdate: onUpdate,
       onDelete: onDelete,
-      onUpdate: onDelete,
       constraint: name ?? 'fk_${table}_${column}_to_${foreignTable}_$foreignTableColumn');
 }

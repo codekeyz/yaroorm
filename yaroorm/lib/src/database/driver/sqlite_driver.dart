@@ -352,13 +352,9 @@ class SqliteSerializer implements PrimitiveSerializer {
     final sb = StringBuffer();
 
     final constraint = key.constraint;
-    if (constraint == null) {
-      sb.write('FOREIGN KEY (${key.column}) ');
-    } else {
-      sb.write('CONSTRAINT $constraint ${key.column} $type ');
-    }
+    if (constraint != null) sb.write('CONSTRAINT $constraint ');
 
-    sb.write('REFERENCES ${key.foreignTable}(${key.foreignTableColumn})');
+    sb.write('FOREIGN KEY (${key.column}) REFERENCES ${key.foreignTable}(${key.foreignTableColumn})');
 
     if (key.onUpdate != null) sb.write(' ON UPDATE ${_acceptforeignKeyAction(key.onUpdate!)}');
     if (key.onDelete != null) sb.write(' ON DELETE ${_acceptforeignKeyAction(key.onDelete!)}');
@@ -574,10 +570,23 @@ class SqliteTableBlueprint extends TableBlueprint {
   }
 
   @override
-  ForeignKey foreign<Model extends Entity, ReferenceModel extends Entity>(String column, {String reference = 'id'}) {
-    final key = super.foreign<Model, ReferenceModel>(column, reference: reference);
-    final statement = _serializer.acceptForeignKey(this, key);
+  void foreign<Model extends Entity, ReferenceModel extends Entity>(
+    String column, {
+    String reference = 'id',
+    ForeignKey Function(ForeignKey fkey)? key,
+  }) {
+    late ForeignKey result;
+    callback(ForeignKey fkey) => result = key?.call(fkey) ?? fkey;
+
+    super.foreign<Model, ReferenceModel>(column, reference: reference, key: callback);
+    final statement = _serializer.acceptForeignKey(this, result);
     statements.add(statement);
-    return key;
   }
+
+  // @override
+  // ForeignKey foreign<Model extends Entity, ReferenceModel extends Entity>(String column, {String reference = 'id'}) {
+  //   final key = super.foreign<Model, ReferenceModel>(column, reference: reference);
+
+  //   return key;
+  // }
 }
