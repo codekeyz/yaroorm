@@ -18,9 +18,9 @@ ClassMirror reflectEntity<Model>() {
 
   try {
     mirror = (reflectType(Model));
-    final fromJson = mirror.staticMembers.entries.firstWhereOrNull((d) => d.key == entityToJsonStaticFuncName);
+    final fromJson = mirror.staticMembers.entries.firstWhereOrNull((d) => d.key == entityFromJsonStaticFuncName);
     if (fromJson == null) {
-      throw EntityValidationException("$Model.$entityToJsonStaticFuncName static method not found.");
+      throw EntityValidationException("$Model.$entityFromJsonStaticFuncName static method not found.");
     }
   } catch (e) {
     if (e is EntityValidationException) rethrow;
@@ -35,5 +35,5 @@ Model jsonToEntity<Model>(
   ClassMirror? mirror,
 }) {
   mirror ??= reflectEntity<Model>();
-  return mirror.invoke(entityToJsonStaticFuncName, [json]) as Model;
+  return mirror.invoke(entityFromJsonStaticFuncName, [json]) as Model;
 }

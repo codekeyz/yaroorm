@@ -69,9 +69,6 @@ abstract class ApplicationFactory {
 
   Future<void> _bootstrapComponents(AppConfig config) async {
     final spanner = Spanner()..addMiddleware('/', bodyParser);
-    final globalMdw = ApplicationFactory.globalMiddleware;
-    if (globalMdw != null) spanner.addMiddleware<HandlerFunc>('/', globalMdw);
-
     Application.instance = _YarooAppImpl(config, spanner);
 
     final providers = config.providers.map((e) => createNewInstance<ServiceProvider>(e));
@@ -80,6 +77,9 @@ abstract class ApplicationFactory {
     for (final provider in providers) {
       await Future.sync(provider.register);
     }
+
+    final globalMdw = ApplicationFactory.globalMiddleware;
+    if (globalMdw != null) spanner.addMiddleware<HandlerFunc>('/', globalMdw);
 
     /// boot providers
     for (final provider in providers) {
@@ -130,17 +130,18 @@ abstract class ApplicationFactory {
   static Iterable<HandlerFunc> resolveMiddlewareForGroup(String group) {
     final middlewareGroup = ApplicationFactory._appKernel.middlewareGroups[group];
     if (middlewareGroup == null) throw ArgumentError('Middleware group `$group` does not exist');
-    return middlewareGroup.map<Middleware>((type) => createNewInstance(type)).map((e) => e.handler ?? e.handle);
+    return middlewareGroup.map(_buildHandlerFunc);
   }
 
   static HandlerFunc? get globalMiddleware {
     final middleware = ApplicationFactory._appKernel.middleware;
     if (middleware.isEmpty) return null;
+    return ApplicationFactory._appKernel.middleware.map(_buildHandlerFunc).reduce((val, e) => val.chain(e));
+  }
 
-    return ApplicationFactory._appKernel.middleware
-        .map<Middleware>((type) => createNewInstance(type))
-        .map((e) => e.handle)
-        .reduce((val, e) => val.chain(e));
+  static HandlerFunc _buildHandlerFunc(Type type) {
+    final instance = createNewInstance<Middleware>(type);
+    return instance.handler ?? instance.handle;
   }
 
   @visibleForTesting
