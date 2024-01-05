@@ -950,7 +950,7 @@ void main() {
 
         late ForeignKey key;
         blueprint.foreign<ArticleComment, Article>('articleId',
-            reference: 'custom_article_id_field', key: (fkey) => key = fkey);
+            referenceId: 'custom_article_id_field', key: (fkey) => key = fkey);
 
         expect(key.table, 'article_comments');
         expect(key.column, 'articleId');
