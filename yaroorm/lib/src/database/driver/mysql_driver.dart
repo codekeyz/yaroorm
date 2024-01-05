@@ -178,7 +178,9 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
   }
 
   @override
-  void id({String name = 'id', String type = 'INTEGER', bool autoIncrement = true}) {
+  void id({String name = 'id', String? type, bool autoIncrement = true}) {
+    type ??= 'INT';
+
     final sb = StringBuffer()..write('$name $type NOT NULL PRIMARY KEY');
     if (autoIncrement) sb.write(' AUTO_INCREMENT');
     statements.add(sb.toString());

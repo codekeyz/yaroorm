@@ -377,7 +377,9 @@ class SqliteTableBlueprint extends TableBlueprint {
   }
 
   @override
-  void id({name = 'id', String type = 'INTEGER', autoIncrement = true}) {
+  void id({name = 'id', String? type, autoIncrement = true}) {
+    type ??= 'INTEGER';
+
     final sb = StringBuffer()..write('$name $type NOT NULL PRIMARY KEY');
     if (autoIncrement) sb.write(' AUTOINCREMENT');
     statements.add(sb.toString());
