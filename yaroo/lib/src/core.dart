@@ -69,10 +69,10 @@ abstract class ApplicationFactory {
 
   Future<void> _bootstrapComponents(AppConfig config) async {
     final spanner = Spanner()..addMiddleware('/', bodyParser);
+    Application.instance = _YarooAppImpl(config, spanner);
+
     final globalMdw = ApplicationFactory.globalMiddleware;
     if (globalMdw != null) spanner.addMiddleware<HandlerFunc>('/', globalMdw);
-
-    Application.instance = _YarooAppImpl(config, spanner);
 
     final providers = config.providers.map((e) => createNewInstance<ServiceProvider>(e));
 

@@ -17,7 +17,7 @@ class User extends Entity<int, User> {
     ..id = json['id'] as int?;
 
   @override
-  Map<String, dynamic> toMap() => <String, dynamic>{
+  Map<String, dynamic> toJson() => <String, dynamic>{
         'id': id,
         'firstname': firstname,
         'lastname': lastname,

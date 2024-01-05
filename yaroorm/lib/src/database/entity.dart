@@ -7,7 +7,7 @@ const entity = ReflectableEntity();
 const String entityCreatedAtColumnName = 'createdAt';
 const String entityUpdatedAtColumnName = 'updatedAt';
 
-const String entityToJsonStaticFuncName = 'fromJson';
+const String entityFromJsonStaticFuncName = 'fromJson';
 
 @entity
 abstract class Entity<PkType, Model> {
@@ -60,11 +60,12 @@ abstract class Entity<PkType, Model> {
 
   bool get allowInsertIdAsNull => false;
 
-  Map<String, dynamic> toMap();
+  Map<String, dynamic> toJson();
 
   @nonVirtual
-  Map<String, dynamic> toJson() {
-    final mapData = toMap();
+  // ignore: non_constant_identifier_names
+  Map<String, dynamic> get to_db_data {
+    final mapData = toJson();
     if (mapData[primaryKey] == null && !allowInsertIdAsNull) mapData.remove(primaryKey);
     if (!enableTimestamps) {
       mapData
