@@ -72,14 +72,14 @@ class SqliteDriver implements DatabaseDriver {
 
   @override
   Future<int> update(UpdateQuery query) async {
-    final sql = _serializer.acceptUpdateQuery(query);
-    return (await _getDatabase()).rawUpdate(sql);
+    return (await _getDatabase())
+        .rawUpdate(_serializer.acceptUpdateQuery(query), _serializer.parameterizeValues(query.values));
   }
 
   @override
   Future<int> insert(InsertQuery query) async {
     final sql = _serializer.acceptInsertQuery(query);
-    return (await _getDatabase()).rawInsert(sql, _serializer.acceptInsertValue(query.values));
+    return (await _getDatabase()).rawInsert(sql, _serializer.parameterizeValues(query.values));
   }
 
   @override
@@ -89,7 +89,7 @@ class SqliteDriver implements DatabaseDriver {
 
     for (final entry in query.values) {
       final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, values: entry));
-      batch.rawInsert(sql, _serializer.acceptInsertValue(entry));
+      batch.rawInsert(sql, _serializer.parameterizeValues(entry));
     }
 
     await batch.commit(noResult: true);
@@ -139,8 +139,7 @@ class _SqliteTransactor implements DriverTransactor {
 
   @override
   Future<void> update(UpdateQuery query) {
-    final sql = _serializer.acceptUpdateQuery(query);
-    return _txn.rawUpdate(sql);
+    return _txn.rawUpdate(_serializer.acceptUpdateQuery(query), _serializer.parameterizeValues(query.values));
   }
 
   @override
@@ -152,7 +151,7 @@ class _SqliteTransactor implements DriverTransactor {
   @override
   Future<int> insert(InsertQuery query) {
     final sql = _serializer.acceptInsertQuery(query);
-    return _txn.rawInsert(sql, _serializer.acceptInsertValue(query.values));
+    return _txn.rawInsert(sql, _serializer.parameterizeValues(query.values));
   }
 
   @override
@@ -161,7 +160,7 @@ class _SqliteTransactor implements DriverTransactor {
 
     for (final entry in query.values) {
       final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, values: entry));
-      batch.rawInsert(sql, _serializer.acceptInsertValue(entry));
+      batch.rawInsert(sql, _serializer.parameterizeValues(entry));
     }
 
     await batch.commit(noResult: true);
@@ -222,12 +221,12 @@ class SqliteSerializer implements PrimitiveSerializer {
   String acceptUpdateQuery(UpdateQuery query) {
     final queryBuilder = StringBuffer();
 
+    final fields = query.values.keys.map((e) => '${escapeName(e)} = ?').join(', ');
+
     queryBuilder.write('UPDATE ${escapeName(query.tableName)}');
 
-    final values = query.values.entries.map((e) => '${e.key} = ${acceptDartValue(e.value)}').join(', ');
-
     queryBuilder
-      ..write(' SET $values')
+      ..write(' SET $fields')
       ..write(' WHERE ${acceptWhereClause(query.whereClause)}')
       ..write(terminator);
 
@@ -246,7 +245,7 @@ class SqliteSerializer implements PrimitiveSerializer {
     throw UnimplementedError('No need to use this for SQLite Driver');
   }
 
-  List<dynamic> acceptInsertValue(Map<String, dynamic> values) {
+  List<dynamic> parameterizeValues(Map<String, dynamic> values) {
     final keys = values.keys;
     return List.generate(keys.length, (i) => values[keys.elementAt(i)], growable: false);
   }
