@@ -84,8 +84,7 @@ class MySqlDriver implements DatabaseDriver {
 
   @override
   Future<int> insert(InsertQuery query) async {
-    final sql = _serializer.acceptInsertQuery(query);
-    final result = await _dbConnection.execute(sql, query.values);
+    final result = await _dbConnection.execute(_serializer.acceptInsertQuery(query), query.values);
     return result.lastInsertID.toInt();
   }
 
@@ -153,8 +152,7 @@ class _MysqlTransactor extends DriverTransactor {
 
   @override
   Future<int> insert(InsertQuery query) async {
-    final sql = _serializer.acceptInsertQuery(query);
-    final result = await _dbConn.execute(sql, query.values);
+    final result = await _dbConn.execute(_serializer.acceptInsertQuery(query), query.values);
     return result.lastInsertID.toInt();
   }
 
@@ -351,4 +349,11 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
 }
 
 @protected
-class MySqlPrimitiveSerializer extends SqliteSerializer {}
+class MySqlPrimitiveSerializer extends SqliteSerializer {
+  @override
+  String acceptInsertQuery(InsertQuery query) {
+    final keys = query.values.keys.map(escapeName);
+    final values = keys.map((e) => ':$e').join(', ');
+    return 'INSERT INTO ${escapeName(query.tableName)} (${keys.join(', ')}) VALUES ($values)$terminator';
+  }
+}

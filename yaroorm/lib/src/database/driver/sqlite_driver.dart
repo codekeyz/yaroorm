@@ -248,7 +248,7 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   List<dynamic> acceptInsertValue(Map<String, dynamic> values) {
     final keys = values.keys;
-    return List.generate(keys.length, (i) => values[keys.elementAt(i)] ?? 'NULL', growable: false);
+    return List.generate(keys.length, (i) => values[keys.elementAt(i)], growable: false);
   }
 
   @override
