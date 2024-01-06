@@ -6,6 +6,7 @@ abstract interface class _BaseDTOImpl {
   Map<String, dynamic> get data => UnmodifiableMapView(_databag);
 
   void make(Request request) {
+    _databag.clear();
     final (data, errors) = schema.validateSync(request.body ?? {});
     if (errors.isNotEmpty) throw RequestValidationError.errors(ValidationErrorLocation.body, errors);
     _databag.addAll(Map<String, dynamic>.from(data));
@@ -31,10 +32,8 @@ abstract interface class _BaseDTOImpl {
       return MapEntry(meta.name ?? prop.simpleName, meta.validator);
     });
 
-    final mappedStructure = entries.fold<Map<String, EzValidator<dynamic>>>({}, (prev, curr) {
-      prev[curr.key] = curr.value;
-      return prev;
-    });
-    return _schemaCache = EzSchema.shape(mappedStructure, fillSchema: false);
+    final entriesToMap =
+        entries.fold<Map<String, EzValidator<dynamic>>>({}, (prev, curr) => prev..[curr.key] = curr.value);
+    return _schemaCache = EzSchema.shape(entriesToMap, fillSchema: false);
   }
 }
