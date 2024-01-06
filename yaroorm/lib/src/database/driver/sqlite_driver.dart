@@ -79,7 +79,7 @@ class SqliteDriver implements DatabaseDriver {
   @override
   Future<int> insert(InsertQuery query) async {
     final sql = _serializer.acceptInsertQuery(query);
-    return (await _getDatabase()).rawInsert(sql, _acceptInsertValue(query.values));
+    return (await _getDatabase()).rawInsert(sql, _serializer.acceptInsertValue(query.values));
   }
 
   @override
@@ -89,7 +89,7 @@ class SqliteDriver implements DatabaseDriver {
 
     for (final entry in query.values) {
       final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, values: entry));
-      batch.rawInsert(sql, _acceptInsertValue(entry));
+      batch.rawInsert(sql, _serializer.acceptInsertValue(entry));
     }
 
     await batch.commit(noResult: true);
@@ -152,7 +152,7 @@ class _SqliteTransactor implements DriverTransactor {
   @override
   Future<int> insert(InsertQuery query) {
     final sql = _serializer.acceptInsertQuery(query);
-    return _txn.rawInsert(sql, _acceptInsertValue(query.values));
+    return _txn.rawInsert(sql, _serializer.acceptInsertValue(query.values));
   }
 
   @override
@@ -161,7 +161,7 @@ class _SqliteTransactor implements DriverTransactor {
 
     for (final entry in query.values) {
       final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, values: entry));
-      batch.rawInsert(sql, _acceptInsertValue(entry));
+      batch.rawInsert(sql, _serializer.acceptInsertValue(entry));
     }
 
     await batch.commit(noResult: true);
@@ -169,11 +169,6 @@ class _SqliteTransactor implements DriverTransactor {
 
   @override
   PrimitiveSerializer get serializer => _serializer;
-}
-
-List<dynamic> _acceptInsertValue(Map<String, dynamic> values) {
-  final keys = values.keys;
-  return List.generate(keys.length, (i) => values[keys.elementAt(i)] ?? 'NULL', growable: false);
 }
 
 @protected
@@ -249,6 +244,11 @@ class SqliteSerializer implements PrimitiveSerializer {
   @override
   String acceptInsertManyQuery(InsertManyQuery query) {
     throw UnimplementedError('No need to use this for SQLite Driver');
+  }
+
+  List<dynamic> acceptInsertValue(Map<String, dynamic> values) {
+    final keys = values.keys;
+    return List.generate(keys.length, (i) => values[keys.elementAt(i)] ?? 'NULL', growable: false);
   }
 
   @override
