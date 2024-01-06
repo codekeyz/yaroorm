@@ -77,9 +77,9 @@ class MySqlDriver implements DatabaseDriver {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> update(UpdateQuery query) {
-    final sql = _serializer.acceptUpdateQuery(query);
-    return rawQuery(sql);
+  Future<List<Map<String, dynamic>>> update(UpdateQuery query) async {
+    final result = await _dbConnection.execute(_serializer.acceptUpdateQuery(query), query.values);
+    return result.rows.map((e) => e.typedAssoc()).toList();
   }
 
   @override
@@ -146,8 +146,7 @@ class _MysqlTransactor extends DriverTransactor {
 
   @override
   Future<void> update(UpdateQuery query) async {
-    final sql = _serializer.acceptUpdateQuery(query);
-    await rawQuery(sql);
+    await _dbConn.execute(_serializer.acceptUpdateQuery(query), query.values);
   }
 
   @override
@@ -355,5 +354,21 @@ class MySqlPrimitiveSerializer extends SqliteSerializer {
     final keys = query.values.keys.map(escapeName);
     final values = keys.map((e) => ':$e').join(', ');
     return 'INSERT INTO ${escapeName(query.tableName)} (${keys.join(', ')}) VALUES ($values)$terminator';
+  }
+
+  @override
+  String acceptUpdateQuery(UpdateQuery query) {
+    final queryBuilder = StringBuffer();
+
+    final fields = query.values.keys.map((e) => '$e = :$e').join(', ');
+
+    queryBuilder.write('UPDATE ${escapeName(query.tableName)}');
+
+    queryBuilder
+      ..write(' SET $fields')
+      ..write(' WHERE ${acceptWhereClause(query.whereClause)}')
+      ..write(terminator);
+
+    return queryBuilder.toString();
   }
 }
