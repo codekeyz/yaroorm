@@ -43,7 +43,8 @@ abstract class Entity<PkType, Model> {
 
   @nonVirtual
   Future<Model?> update(Map<String, dynamic> values) async {
-    if (!values.containsKey(updatedAtColumn)) values[updatedAtColumn] = DateTime.now().toUtc();
+    if (enableTimestamps && !values.containsKey(updatedAtColumn)) values[updatedAtColumn] = DateTime.now().toUtc();
+
     await _query.update(where: _whereId, values: values).exec();
     return _query.get();
   }
