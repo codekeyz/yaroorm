@@ -24,6 +24,9 @@ abstract class AppInstance {
   Application get app => Application.instance;
 }
 
+/// Use this to override the application exceptiosn handler
+typedef ApplicationExceptionsHandler = FutureOr<Response> Function(Object exception, ReqRes reqRes);
+
 abstract interface class Application {
   Application(AppConfig config);
 
@@ -44,6 +47,8 @@ abstract interface class Application {
   void useRoutes(RoutesResolver routeResolver);
 
   void useViewEngine(ViewEngine viewEngine);
+
+  void useErrorHandler(ApplicationExceptionsHandler handler);
 }
 
 abstract class ApplicationFactory {

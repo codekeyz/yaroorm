@@ -5,7 +5,10 @@ part of 'core.dart';
 class _YarooAppImpl implements Application {
   late final AppConfig _appConfig;
   late final Spanner _spanner;
+
   ViewEngine? _viewEngine;
+
+  ApplicationExceptionsHandler? _exceptionsHandler;
 
   _YarooAppImpl(this._appConfig, this._spanner);
 
@@ -25,6 +28,8 @@ class _YarooAppImpl implements Application {
   void useViewEngine(ViewEngine viewEngine) => _viewEngine = viewEngine;
 
   FutureOr<Response> onException(Object error, Request request, Response response) {
+    if (_exceptionsHandler != null) return _exceptionsHandler!.call(error, (req: request, res: response));
+
     if (error is RequestValidationError) {
       return response.json(error.errorBody, statusCode: HttpStatus.badRequest);
     } else if (error is SpannerRouteValidatorError) {
@@ -50,4 +55,9 @@ class _YarooAppImpl implements Application {
     ..useSpanner(_spanner)
     ..onError(onException)
     ..viewEngine = _viewEngine;
+
+  @override
+  void useErrorHandler(ApplicationExceptionsHandler handler) {
+    _exceptionsHandler = handler;
+  }
 }
