@@ -360,7 +360,7 @@ class MySqlPrimitiveSerializer extends SqliteSerializer {
   String acceptUpdateQuery(UpdateQuery query) {
     final queryBuilder = StringBuffer();
 
-    final fields = query.values.keys.map((e) => ':${escapeName(e)}').join(', ');
+    final fields = query.values.keys.map((e) => '$e = :$e').join(', ');
 
     queryBuilder.write('UPDATE ${escapeName(query.tableName)}');
 
