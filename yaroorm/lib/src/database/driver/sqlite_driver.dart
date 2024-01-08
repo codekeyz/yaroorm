@@ -6,9 +6,6 @@ import 'package:yaroorm/migration.dart';
 import '../../primitives/serializer.dart';
 import '../../primitives/where.dart';
 import 'package:yaroorm/yaroorm.dart';
-import '../../query/query.dart';
-import '../entity.dart';
-import 'driver.dart';
 
 final _serializer = const SqliteSerializer();
 
