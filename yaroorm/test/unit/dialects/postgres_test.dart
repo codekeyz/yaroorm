@@ -7,7 +7,6 @@ import 'package:yaroorm/yaroorm.dart';
 import '../../fixtures/test_data.dart';
 import 'sqlite_test.dart';
 
-
 void main() {
   DB.init(db.config);
 

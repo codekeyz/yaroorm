@@ -4,9 +4,6 @@ import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/src/database/driver/mysql_driver.dart';
 import 'package:yaroorm/src/primitives/serializer.dart';
 import 'package:yaroorm/yaroorm.dart';
-
-import '../../primitives/serializer.dart';
-import 'mysql_driver.dart';
 import 'sqlite_driver.dart' show SqliteSerializer;
 
 final _primitiveSerializer = PgSqlPrimitiveSerializer();
