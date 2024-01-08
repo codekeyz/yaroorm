@@ -22,7 +22,7 @@ mixin FindOperation<Result> {
 mixin InsertOperation {
   Future<PrimaryKeyKey> insert<PrimaryKeyKey>(Map<String, dynamic> data);
 
-  Future insertMany<T extends Entity>(List<T> entities);
+  Future<void> insertMany(List<Map<String, dynamic>> entities);
 }
 
 mixin LimitOperation<ReturnType> {
