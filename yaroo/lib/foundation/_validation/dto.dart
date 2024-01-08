@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:ez_validator/ez_validator.dart';
 import 'package:reflectable/reflectable.dart' as r;
 import 'package:meta/meta.dart';

@@ -1,24 +1,9 @@
 import 'package:get_it/get_it.dart';
 
-import '../../../http/http.dart';
-
-typedef ObjectRegistry<T extends Object> = Map<Type, T>;
-
-typedef ServiceProviderRegistry = ObjectRegistry<ServiceProvider>;
-
-final GetIt _getIt = GetIt.instance..registerSingleton<ServiceProviderRegistry>({});
-
-T? _fromServiceProviderRegistry<T extends Object>(Type type) {
-  final serviceProviderRegistry = _getIt.get<ServiceProviderRegistry>();
-  final instance = serviceProviderRegistry[type];
-  if (instance == null) return null;
-  return instance as T;
-}
+final GetIt _getIt = GetIt.instance;
 
 T instanceFromRegistry<T extends Object>({Type? type}) {
   type ??= T;
-  final local = _fromServiceProviderRegistry(type);
-  if (local != null) return local as T;
   try {
     return _getIt.get(type: type) as T;
   } catch (_) {
@@ -27,13 +12,7 @@ T instanceFromRegistry<T extends Object>({Type? type}) {
 }
 
 T registerSingleton<T extends Object>(T instance) {
-  if (instance is ServiceProvider) {
-    final serviceProviderRegistry = _getIt.get<ServiceProviderRegistry>();
-    serviceProviderRegistry[instance.runtimeType] = instance;
-  } else {
-    instance = _getIt.registerSingleton<T>(instance);
-  }
-  return instance;
+  return _getIt.registerSingleton<T>(instance);
 }
 
 bool isRegistered<T extends Object>() => _getIt.isRegistered<T>();

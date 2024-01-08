@@ -69,7 +69,7 @@ DatabaseDriverType _getDriverType(Map<String, dynamic> connInfo) {
   };
 }
 
-mixin DriverAble {
+mixin DriverContract {
   /// Perform query on the database
   Future<List<Map<String, dynamic>>> query(Query query);
 
@@ -88,7 +88,7 @@ mixin DriverAble {
   Future<void> delete(DeleteQuery query);
 
   /// Perform insert on the database
-  Future<int> insert(InsertQuery query);
+  Future<dynamic> insert(InsertQuery query);
 
   /// Perform insert on the database
   Future<dynamic> insertMany(InsertManyQuery query);
@@ -96,9 +96,9 @@ mixin DriverAble {
   PrimitiveSerializer get serializer;
 }
 
-abstract class DriverTransactor with DriverAble {}
+abstract class DriverTransactor with DriverContract {}
 
-abstract interface class DatabaseDriver with DriverAble {
+abstract interface class DatabaseDriver with DriverContract {
   factory DatabaseDriver.init(DatabaseConnection dbConn) {
     final driver = dbConn.driver;
     switch (driver) {

@@ -15,6 +15,7 @@ T? env<T>(String name, [T? defaultValue]) {
     const (String) => strVal,
     const (int) => int.tryParse(strVal),
     const (num) => num.tryParse(strVal),
+    const (bool) => bool.tryParse(strVal),
     const (double) => double.tryParse(strVal),
     const (List<String>) => jsonDecode(strVal),
     _ => throw ArgumentError.value(T, null, 'Unsupported Type used in `env` call.'),

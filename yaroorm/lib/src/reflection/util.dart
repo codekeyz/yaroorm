@@ -32,10 +32,7 @@ ClassMirror reflectEntity<Model>() {
   return mirror;
 }
 
-Model jsonToEntity<Model>(
-  Map<String, dynamic> json, {
-  ClassMirror? mirror,
-}) {
+Model jsonToEntity<Model>(Map<String, dynamic> json, {ClassMirror? mirror}) {
   mirror ??= reflectEntity<Model>();
   return mirror.invoke(entityFromJsonStaticFuncName, [json]) as Model;
 }

@@ -62,8 +62,7 @@ void main() {
         values: {'firstname': 'Chima', 'lastname': 'Precious'},
       );
 
-      expect(
-          query.statement, 'UPDATE users SET firstname = \'Chima\', lastname = \'Precious\' WHERE name = \'Chima\';');
+      expect(query.statement, 'UPDATE users SET firstname = ?, lastname = ? WHERE name = \'Chima\';');
     });
 
     test('when delete', () {

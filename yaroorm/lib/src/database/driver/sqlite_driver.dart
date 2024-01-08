@@ -1,6 +1,7 @@
-import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common/sql.dart';
+import 'package:collection/collection.dart';
 import 'package:yaroorm/migration.dart';
 
 import '../../primitives/serializer.dart';
@@ -69,20 +70,27 @@ class SqliteDriver implements DatabaseDriver {
 
   @override
   Future<int> update(UpdateQuery query) async {
-    final sql = _serializer.acceptUpdateQuery(query);
-    return (await _getDatabase()).rawUpdate(sql);
-  }
-
-  @override
-  Future<void> insertMany(InsertManyQuery query) async {
-    final sql = _serializer.acceptInsertManyQuery(query);
-    return (await _getDatabase()).execute(sql);
+    return (await _getDatabase())
+        .rawUpdate(_serializer.acceptUpdateQuery(query), _serializer.parameterizeValues(query.values));
   }
 
   @override
   Future<int> insert(InsertQuery query) async {
     final sql = _serializer.acceptInsertQuery(query);
-    return (await _getDatabase()).rawInsert(sql);
+    return (await _getDatabase()).rawInsert(sql, _serializer.parameterizeValues(query.values));
+  }
+
+  @override
+  Future<void> insertMany(InsertManyQuery query) async {
+    final db = await _getDatabase();
+    final batch = db.batch();
+
+    for (final entry in query.values) {
+      final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, values: entry));
+      batch.rawInsert(sql, _serializer.parameterizeValues(entry));
+    }
+
+    await batch.commit(noResult: true);
   }
 
   @override
@@ -129,8 +137,7 @@ class _SqliteTransactor implements DriverTransactor {
 
   @override
   Future<void> update(UpdateQuery query) {
-    final sql = _serializer.acceptUpdateQuery(query);
-    return _txn.rawUpdate(sql);
+    return _txn.rawUpdate(_serializer.acceptUpdateQuery(query), _serializer.parameterizeValues(query.values));
   }
 
   @override
@@ -142,13 +149,19 @@ class _SqliteTransactor implements DriverTransactor {
   @override
   Future<int> insert(InsertQuery query) {
     final sql = _serializer.acceptInsertQuery(query);
-    return _txn.rawInsert(sql);
+    return _txn.rawInsert(sql, _serializer.parameterizeValues(query.values));
   }
 
   @override
-  Future insertMany(InsertManyQuery query) {
-    final sql = _serializer.acceptInsertManyQuery(query);
-    return _txn.rawInsert(sql);
+  Future<void> insertMany(InsertManyQuery query) async {
+    final batch = _txn.batch();
+
+    for (final entry in query.values) {
+      final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, values: entry));
+      batch.rawInsert(sql, _serializer.parameterizeValues(entry));
+    }
+
+    await batch.commit(noResult: true);
   }
 
   @override
@@ -166,7 +179,7 @@ class SqliteSerializer implements PrimitiveSerializer {
     /// SELECT
     final selectStatement = acceptSelect(query.fieldSelections.toList());
     queryBuilder.write(selectStatement);
-    queryBuilder.write('FROM ${query.tableName}');
+    queryBuilder.write('FROM ${escapeName(query.tableName)}');
 
     /// WHERE
     final clauses = query.whereClauses;
@@ -206,12 +219,12 @@ class SqliteSerializer implements PrimitiveSerializer {
   String acceptUpdateQuery(UpdateQuery query) {
     final queryBuilder = StringBuffer();
 
-    queryBuilder.write('UPDATE ${query.tableName}');
+    final fields = query.values.keys.map((e) => '${escapeName(e)} = ?').join(', ');
 
-    final values = query.values.entries.map((e) => '${e.key} = ${acceptDartValue(e.value)}').join(', ');
+    queryBuilder.write('UPDATE ${escapeName(query.tableName)}');
 
     queryBuilder
-      ..write(' SET $values')
+      ..write(' SET $fields')
       ..write(' WHERE ${acceptWhereClause(query.whereClause)}')
       ..write(terminator);
 
@@ -220,18 +233,19 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptInsertQuery(InsertQuery query) {
-    final data = query.values;
-    final fields = data.keys.join(', ');
-    final values = data.values.map((e) => acceptDartValue(e)).join(', ');
-    return 'INSERT INTO ${query.tableName} ($fields) VALUES ($values)$terminator';
+    final fields = query.values.keys.map(escapeName);
+    final values = List<String>.filled(fields.length, '?').join(', ');
+    return 'INSERT INTO ${escapeName(query.tableName)} (${fields.join(', ')}) VALUES ($values)$terminator';
   }
 
   @override
   String acceptInsertManyQuery(InsertManyQuery query) {
-    final data = query.values;
-    final fields = data.first.keys.join(', ');
-    final values = data.map((e) => '(${e.values.map((e) => acceptDartValue(e)).join(', ')})').join(', ');
-    return 'INSERT INTO ${query.tableName} ($fields) VALUES $values$terminator';
+    throw UnimplementedError('No need to use this for SQLite Driver');
+  }
+
+  List<dynamic> parameterizeValues(Map<String, dynamic> values) {
+    final keys = values.keys;
+    return List.generate(keys.length, (i) => values[keys.elementAt(i)], growable: false);
   }
 
   @override
@@ -239,7 +253,7 @@ class SqliteSerializer implements PrimitiveSerializer {
     final queryBuilder = StringBuffer();
 
     queryBuilder
-      ..write('DELETE FROM ${query.tableName}')
+      ..write('DELETE FROM ${escapeName(query.tableName)}')
       ..write(' WHERE ${acceptWhereClause(query.whereClause)}')
       ..write(terminator);
 
@@ -248,7 +262,7 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptSelect(List<String> fields) {
-    return fields.isEmpty ? 'SELECT * ' : 'SELECT ${fields.join(', ')}';
+    return fields.isEmpty ? 'SELECT * ' : 'SELECT ${fields.map(escapeName).join(', ')}';
   }
 
   @override
@@ -334,7 +348,7 @@ class SqliteSerializer implements PrimitiveSerializer {
     };
   }
 
-  String _acceptforeignKeyAction(ForeignKeyAction action) {
+  String _acceptForeignKeyAction(ForeignKeyAction action) {
     return switch (action) {
       ForeignKeyAction.cascade => 'CASCADE',
       ForeignKeyAction.restrict => 'RESTRICT',
@@ -352,10 +366,11 @@ class SqliteSerializer implements PrimitiveSerializer {
     final constraint = key.constraint;
     if (constraint != null) sb.write('CONSTRAINT $constraint ');
 
-    sb.write('FOREIGN KEY (${key.column}) REFERENCES ${key.foreignTable}(${key.foreignTableColumn})');
+    sb.write(
+        'FOREIGN KEY (${escapeName(key.column)}) REFERENCES ${escapeName(key.foreignTable)}(${escapeName(key.foreignTableColumn)})');
 
-    if (key.onUpdate != null) sb.write(' ON UPDATE ${_acceptforeignKeyAction(key.onUpdate!)}');
-    if (key.onDelete != null) sb.write(' ON DELETE ${_acceptforeignKeyAction(key.onDelete!)}');
+    if (key.onUpdate != null) sb.write(' ON UPDATE ${_acceptForeignKeyAction(key.onUpdate!)}');
+    if (key.onDelete != null) sb.write(' ON DELETE ${_acceptForeignKeyAction(key.onDelete!)}');
 
     return sb.toString();
   }
@@ -364,9 +379,10 @@ class SqliteSerializer implements PrimitiveSerializer {
 @protected
 class SqliteTableBlueprint extends TableBlueprint {
   final List<String> statements = [];
+  final List<String> _foreignKeys = [];
 
   String _getColumn(String name, String type, {nullable = false, defaultValue}) {
-    final sb = StringBuffer()..write('$name $type');
+    final sb = StringBuffer()..write('${escapeName(name)} $type');
     if (!nullable) {
       sb.write(' NOT NULL');
       if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
@@ -378,19 +394,14 @@ class SqliteTableBlueprint extends TableBlueprint {
   void id({name = 'id', String? type, autoIncrement = true}) {
     type ??= 'INTEGER';
 
-    final sb = StringBuffer()..write('$name $type NOT NULL PRIMARY KEY');
+    final sb = StringBuffer()..write('${escapeName(name)} $type NOT NULL PRIMARY KEY');
     if (autoIncrement) sb.write(' AUTOINCREMENT');
     statements.add(sb.toString());
   }
 
   @override
   void string(String name, {nullable = false, defaultValue}) {
-    statements.add(_getColumn(
-      name,
-      'VARCHAR',
-      nullable: nullable,
-      defaultValue: defaultValue,
-    ));
+    statements.add(_getColumn(name, 'VARCHAR', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
@@ -539,12 +550,13 @@ class SqliteTableBlueprint extends TableBlueprint {
 
   @override
   String createScript(String tableName) {
-    return 'CREATE TABLE $tableName (${statements.join(', ')});';
+    statements.addAll(_foreignKeys);
+    return 'CREATE TABLE ${escapeName(tableName)} (${statements.join(', ')});';
   }
 
   @override
   String dropScript(String tableName) {
-    return 'DROP TABLE IF EXISTS $tableName;';
+    return 'DROP TABLE IF EXISTS ${escapeName(tableName)};';
   }
 
   @override
@@ -577,13 +589,6 @@ class SqliteTableBlueprint extends TableBlueprint {
 
     super.foreign<Model, ReferenceModel>(column, referenceId: referenceId, key: callback);
     final statement = _serializer.acceptForeignKey(this, result);
-    statements.add(statement);
+    _foreignKeys.add(statement);
   }
-
-  // @override
-  // ForeignKey foreign<Model extends Entity, ReferenceModel extends Entity>(String column, {String reference = 'id'}) {
-  //   final key = super.foreign<Model, ReferenceModel>(column, reference: reference);
-
-  //   return key;
-  // }
 }

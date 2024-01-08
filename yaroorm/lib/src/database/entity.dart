@@ -14,11 +14,20 @@ const String entityFromJsonStaticFuncName = 'fromJson';
 
 @entity
 abstract class Entity<PkType, Model> {
+  @JsonKey(includeToJson: false, includeFromJson: false)
+  DriverContract _driver = DB.defaultDriver;
+
+  /// override this this set the connection for this model
+  @JsonKey(includeToJson: false, includeFromJson: false)
+  String? get connection => null;
+
   Entity() {
     assert(runtimeType == Model, 'Type Mismatch on Entity<$PkType, $Model>. $runtimeType expected');
     if (PkType == dynamic) {
       throw Exception('Entity Primary Key Data Type is required. Use either `extends Entity<int>` or `Entity<String>`');
     }
+
+    if (connection != null) _driver = DB.driver(connection!);
   }
 
   PkType? id;
@@ -27,11 +36,17 @@ abstract class Entity<PkType, Model> {
 
   DateTime? updatedAt;
 
-  Query<Model> get _query {
-    final connName = connection;
-    final query = DB.query<Model>(tableName);
-    return connName == null ? query : query.driver(DB.driver(connName));
+  Entity withDriver(DriverContract driver) {
+    _driver = driver;
+    return this;
   }
+
+  Entity withTableName(String name) {
+    _tableName = name;
+    return this;
+  }
+
+  Query<Model> get _query => DB.query<Model>(tableName).driver(_driver);
 
   WhereClause<Model> _whereId(Query<Model> _) => _.whereEqual(primaryKey, id);
 
@@ -39,10 +54,23 @@ abstract class Entity<PkType, Model> {
   Future<void> delete() => _query.delete(_whereId).exec();
 
   @nonVirtual
-  Future<Model> save() async => await _query.insert(this);
+  Future<Model> save() async {
+    if (enableTimestamps) {
+      final now = DateTime.now().toUtc();
+      createdAt ??= now;
+      updatedAt ??= now;
+    }
+    final recordId = await _query.insert<PkType>(to_db_data);
+    return (this..id = recordId) as Model;
+  }
 
   @nonVirtual
   Future<Model?> update(Map<String, dynamic> values) async {
+    if (enableTimestamps && !values.containsKey(updatedAtColumn)) {
+      values = Map.from(values);
+      values[updatedAtColumn] = DateTime.now().toUtc().toIso8601String();
+    }
+
     await _query.update(where: _whereId, values: values).exec();
     return _query.get();
   }
@@ -54,10 +82,6 @@ abstract class Entity<PkType, Model> {
     if (_tableName != null) return _tableName!;
     return _tableName = getTableName(runtimeType);
   }
-
-  /// override this this set the connection for this model
-  @JsonKey(includeToJson: false, includeFromJson: false)
-  String? connection;
 
   String get primaryKey => 'id';
 

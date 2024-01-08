@@ -48,7 +48,7 @@ void runIntegrationTest(String connectionName) {
     });
 
     test('should insert single user', () async {
-      final result = await (usersTestData.first..connection = connectionName).save();
+      final result = await usersTestData.first.withDriver(driver).save();
       expect(result, isA<User>().having((p0) => p0.id, 'has primary key', 1));
 
       final users = await Query.table<User>().driver(driver).all();
@@ -56,7 +56,9 @@ void runIntegrationTest(String connectionName) {
     });
 
     test('should insert many users', () async {
-      await Query.table<User>().driver(driver).insertMany(usersTestData.sublist(1));
+      final remainingUsers = usersTestData.sublist(1).map((e) => e.to_db_data).toList();
+      await Query.table<User>().driver(driver).insertMany(remainingUsers);
+
       final users = await Query.table<User>().driver(driver).all();
 
       expect(users.length, usersTestData.length);
@@ -138,7 +140,7 @@ void runIntegrationTest(String connectionName) {
       final userOne = await query.get();
       expect(userOne, isNotNull);
 
-      await (userOne!..connection = connectionName).delete();
+      await userOne!.delete();
 
       final usersAfterDelete = await query.all();
       expect(usersAfterDelete.any((e) => e.id == userOne.id), isFalse);
