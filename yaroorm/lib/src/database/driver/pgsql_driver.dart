@@ -2,7 +2,7 @@ import 'package:meta/meta.dart';
 import 'package:postgres/postgres.dart' as pg;
 import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/src/database/driver/mysql_driver.dart';
-import 'package:yaroorm/src/query/primitives/serializer.dart';
+import 'package:yaroorm/src/primitives/serializer.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import 'sqlite_driver.dart' show SqliteSerializer;
@@ -231,15 +231,15 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   }
 
   @override
-  void id({name = 'id', autoIncrement = true}) {
+  void id({name = 'id',String type = 'INTEGER', autoIncrement = true}) {
     final sb = StringBuffer()..write(name);
-    sb.write(autoIncrement ? " SERIAL PRIMARY KEY" : " INTEGER PRIMARY KEY");
+    sb.write(autoIncrement ? " SERIAL PRIMARY KEY" : " $type PRIMARY KEY");
     statements.add(sb.toString());
   }
 
   @override
-  String renameScript(String oldName, String toName) {
-    return 'ALTER TABLE $oldName RENAME TO $toName;';
+  String renameScript(String fromName, String toName) {
+    return 'ALTER TABLE $fromName RENAME TO $toName;';
   }
 
   @override

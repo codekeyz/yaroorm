@@ -1,9 +1,7 @@
 import 'package:yaroorm/migration/cli.dart';
 import 'package:yaroorm/yaroorm.dart';
-
 import '../fixtures/orm_config.dart' as conf;
-
-import 'migrator.reflectable.dart';
+import '../integration/mariadb.e2e.reflectable.dart';
 
 void main(List<String> args) async {
   if (args.isEmpty) throw UnsupportedError('Provide args');
