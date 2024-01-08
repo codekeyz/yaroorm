@@ -39,8 +39,7 @@ class QueryImpl<Result> extends Query<Result> {
   Future<List<Result>> all() async {
     final results = await queryDriver.query(this);
     if (results.isEmpty) return <Result>[];
-    if (Result == Entity || Result == dynamic) return results as dynamic;
-    return results.map(jsonToEntity<Result>).toList();
+    return results.map(_wrapRawResult<Result>).toList();
   }
 
   @override
@@ -48,15 +47,19 @@ class QueryImpl<Result> extends Query<Result> {
     _limit = limit;
     final results = await queryDriver.query(this);
     if (results.isEmpty) return <Result>[];
-    if (Result == Entity || Result == dynamic) return results as dynamic;
-    return results.map(jsonToEntity<Result>).toList();
+    return results.map(_wrapRawResult<Result>).toList();
   }
 
   @override
   Future<Result?> get([dynamic id]) async {
     if (id != null) return whereEqual('id', id).findOne();
-    final results = await take(1);
-    return results.firstOrNull;
+    return (await take(1)).firstOrNull;
+  }
+
+  /// [T] is the expected type passed to [Query] via Query<T>
+  T _wrapRawResult<T>(Map<String, dynamic>? result) {
+    if (T == dynamic || result == null) return result as dynamic;
+    return (jsonToEntity<T>(result) as Entity).withDriver(_queryDriver!) as T;
   }
 
   @override

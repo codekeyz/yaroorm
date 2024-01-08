@@ -19,7 +19,7 @@ abstract class Entity<PkType, Model> {
 
   /// override this this set the connection for this model
   @JsonKey(includeToJson: false, includeFromJson: false)
-  String? connection;
+  String? get connection => null;
 
   Entity() {
     assert(runtimeType == Model, 'Type Mismatch on Entity<$PkType, $Model>. $runtimeType expected');
