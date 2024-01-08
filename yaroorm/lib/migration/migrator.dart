@@ -4,7 +4,7 @@ import 'package:yaroorm/yaroorm.dart';
 import 'cli.dart';
 import 'utils.dart';
 
-typedef Rollback = ({int batch, String name, MigrationTask? migration});
+typedef _Rollback = ({MigrationData entry, MigrationTask? task});
 
 class MigrationData extends Entity<int, MigrationData> {
   final String migration;
@@ -53,7 +53,7 @@ class Migrator {
           await txnDriver.execute(sql);
         }
 
-        await MigrationData(fileName, batchNos).withDriver(txnDriver).save();
+        await MigrationData(fileName, batchNos).withTableName(Migrator.tableName).withDriver(txnDriver).save();
 
         print('✔ done:   $fileName');
       });
@@ -76,7 +76,7 @@ class Migrator {
 
     final rollbacks = migrationsList.map((e) {
       final found = allTasks.firstWhereOrNull((m) => m.name == e.migration);
-      return found == null ? null : (batch: e.batch, name: e.migration, migration: found);
+      return found == null ? null : (entry: e, task: found);
     }).whereNotNull();
 
     await _processRollbacks(driver, rollbacks);
@@ -92,9 +92,8 @@ class Migrator {
       return;
     }
 
-    final rollbacks = allTasks
-        .where((e) => e.name == migrationDbData.migration)
-        .map((e) => (name: e.name, migration: e, batch: migrationDbData.batch));
+    final rollbacks =
+        allTasks.where((e) => e.name == migrationDbData.migration).map((e) => (entry: migrationDbData, task: e));
 
     print('------- Rolling back ${migrationDbData.migration}  📦 -------\n');
 
@@ -103,23 +102,20 @@ class Migrator {
     print('\n------- Rollback done 🚀 -------\n');
   }
 
-  static Future<void> _processRollbacks(DatabaseDriver driver, Iterable<Rollback> rollbacks) async {
+  static Future<void> _processRollbacks(DatabaseDriver driver, Iterable<_Rollback> rollbacks) async {
     for (final rollback in rollbacks) {
       await driver.transaction((transactor) async {
-        final schemas = rollback.migration?.schemas ?? [];
+        final schemas = rollback.task?.schemas ?? [];
         if (schemas.isNotEmpty) {
           for (var e in schemas) {
             await transactor.execute(e.toScript(driver.blueprint));
           }
         }
 
-        await Query.table(Migrator.tableName)
-            .driver(transactor)
-            .delete((where) => where.whereEqual('migration', rollback.name))
-            .exec();
+        await rollback.entry.withTableName(Migrator.tableName).withDriver(transactor).delete();
       });
 
-      print('✔ rolled back: ${rollback.name}');
+      print('✔ rolled back: ${rollback.entry.migration}');
     }
   }
 }

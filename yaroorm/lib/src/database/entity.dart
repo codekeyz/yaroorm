@@ -41,6 +41,11 @@ abstract class Entity<PkType, Model> {
     return this;
   }
 
+  Entity withTableName(String name) {
+    _tableName = name;
+    return this;
+  }
+
   Query<Model> get _query => DB.query<Model>(tableName).driver(_driver);
 
   WhereClause<Model> _whereId(Query<Model> _) => _.whereEqual(primaryKey, id);
