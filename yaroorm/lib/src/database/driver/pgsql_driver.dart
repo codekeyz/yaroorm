@@ -5,6 +5,8 @@ import 'package:yaroorm/src/database/driver/mysql_driver.dart';
 import 'package:yaroorm/src/primitives/serializer.dart';
 import 'package:yaroorm/yaroorm.dart';
 
+import '../../primitives/serializer.dart';
+import 'mysql_driver.dart';
 import 'sqlite_driver.dart' show SqliteSerializer;
 
 final _primitiveSerializer = PgSqlPrimitiveSerializer();
@@ -231,9 +233,11 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   }
 
   @override
-  void id({name = 'id',String type = 'INTEGER', autoIncrement = true}) {
+  void id({name = 'id', String? type, autoIncrement = true}) {
+    type ??= 'SERIAL';
+
     final sb = StringBuffer()..write(name);
-    sb.write(autoIncrement ? " SERIAL PRIMARY KEY" : " $type PRIMARY KEY");
+    sb.write(autoIncrement ? " $type PRIMARY KEY" : " $type PRIMARY KEY");
     statements.add(sb.toString());
   }
 

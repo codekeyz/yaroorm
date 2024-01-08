@@ -2,9 +2,13 @@ import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:yaroorm/migration.dart';
+
 import '../../primitives/serializer.dart';
 import '../../primitives/where.dart';
 import 'package:yaroorm/yaroorm.dart';
+import '../../query/query.dart';
+import '../entity.dart';
+import 'driver.dart';
 
 final _serializer = const SqliteSerializer();
 
@@ -374,7 +378,9 @@ class SqliteTableBlueprint extends TableBlueprint {
   }
 
   @override
-  void id({name = 'id', String type = 'INTEGER', autoIncrement = true}) {
+  void id({name = 'id', String? type, autoIncrement = true}) {
+    type ??= 'INTEGER';
+
     final sb = StringBuffer()..write('$name $type NOT NULL PRIMARY KEY');
     if (autoIncrement) sb.write(' AUTOINCREMENT');
     statements.add(sb.toString());
