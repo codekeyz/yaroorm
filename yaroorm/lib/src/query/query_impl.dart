@@ -25,11 +25,9 @@ class QueryImpl<Result> extends Query<Result> {
   }
 
   @override
-  Future<T> insert<T extends Entity>(T entity) async {
-    if (entity.enableTimestamps) entity.createdAt = entity.updatedAt = DateTime.now().toUtc();
-    final query = InsertQuery(tableName, values: entity.to_db_data);
-    final recordId = await queryDriver.insert(query);
-    return entity..id = recordId;
+  Future<PrimaryKeyKey> insert<PrimaryKeyKey>(Map<String, dynamic> data) async {
+    final recordId = await queryDriver.insert(InsertQuery(tableName, values: data));
+    return recordId as PrimaryKeyKey;
   }
 
   @override

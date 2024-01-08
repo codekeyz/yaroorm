@@ -20,7 +20,7 @@ mixin FindOperation<Result> {
 }
 
 mixin InsertOperation {
-  Future insert<T extends Entity>(T entity);
+  Future<PrimaryKeyKey> insert<PrimaryKeyKey>(Map<String, dynamic> data);
 
   Future insertMany<T extends Entity>(List<T> entities);
 }
@@ -50,16 +50,16 @@ abstract interface class QueryBase<Owner> {
 
   String? database;
 
-  DriverAble? _queryDriver;
+  DriverContract? _queryDriver;
 
-  DriverAble get queryDriver {
+  DriverContract get queryDriver {
     if (_queryDriver == null) {
       throw StateError('Driver not set for query. Make sure you supply a driver using .driver()');
     }
     return _queryDriver!;
   }
 
-  Owner driver(DriverAble driver) {
+  Owner driver(DriverContract driver) {
     _queryDriver = driver;
     return this as Owner;
   }

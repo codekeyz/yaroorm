@@ -47,15 +47,13 @@ class Migrator {
         continue;
       }
 
-      await driver.transaction((transactor) async {
+      await driver.transaction((txnDriver) async {
         for (final schema in migration.schemas) {
           final sql = schema.toScript(driver.blueprint);
-          await transactor.execute(sql);
+          await txnDriver.execute(sql);
         }
 
-        await Query.table<MigrationData>(Migrator.tableName)
-            .driver(transactor)
-            .insert(MigrationData(fileName, batchNos));
+        await MigrationData(fileName, batchNos).withDriver(txnDriver).save();
 
         print('✔ done:   $fileName');
       });
