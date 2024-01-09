@@ -22,7 +22,7 @@ void main(List<String> args) async {
 @visibleForTesting
 Future<void> runMigrator(String connectionName, String command) async {
   final commands = ['run', 'test/fixtures/migrator.dart', command, '--database=$connectionName'];
-  print('Executing: dart ${commands.join(' ')}');
+  print('> dart ${commands.join(' ')}');
 
   final result = await Process.run('dart', commands);
   stderr.write(result.stderr);

@@ -74,10 +74,14 @@ class Migrator {
 
     print('------- Resetting migrations  📦 -------\n');
 
-    final rollbacks = migrationsList.map((e) {
-      final found = allTasks.firstWhereOrNull((m) => m.name == e.migration);
-      return found == null ? null : (entry: e, task: found);
-    }).whereNotNull();
+    final rollbacks = migrationsList
+        .map((e) {
+          final found = allTasks.firstWhereOrNull((m) => m.name == e.migration);
+          return found == null ? null : (entry: e, task: found);
+        })
+        .whereNotNull()
+        .toList()
+        .reversed;
 
     await _processRollbacks(driver, rollbacks);
 
