@@ -25,8 +25,13 @@ r.ClassMirror reflectType(Type type) {
   }
 }
 
-String getTableName(Type type) {
+String getEntityTableName(Type type) {
   final metadata = reflectType(type).metadata.whereType<EntityMeta>().firstOrNull;
   if (metadata != null) return metadata.table;
   return typeToTableName(type);
+}
+
+String getEntityPrimaryKey(Type type) {
+  final metadata = reflectType(type).metadata.whereType<EntityMeta>().firstOrNull;
+  return metadata?.primaryKey ?? 'id';
 }

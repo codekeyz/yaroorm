@@ -85,15 +85,14 @@ void runBasicE2ETest(String connectionName) {
       expect(updatedResult.every((e) => e.homeAddress == 'Keta Lagoon'), isTrue);
     });
 
-    test('should fetch only 23 users in Lagos Nigeria', () async {
-      final age50Users = await Query.table<User>()
-          .driver(driver)
-          .whereIn('home_address', ['Lagos, Nigeria'])
-          .orderByDesc('age')
-          .take(23);
+    test('should fetch only users in Ghana', () async {
+      final query = Query.table<User>().driver(driver).whereLike('home_address', '%, Ghana').orderByDesc('age');
+      final usersInGhana = await query.findMany();
+      expect(usersInGhana.length, 6);
+      expect(usersInGhana.every((e) => e.homeAddress.contains('Ghana')), isTrue);
 
-      expect(age50Users.length, 23);
-      expect(age50Users.every((e) => e.homeAddress == 'Lagos, Nigeria'), isTrue);
+      final take4 = await query.take(4);
+      expect(take4.length, 4);
     });
 
     test('should get all users between age 35 and 50', () async {
@@ -111,7 +110,7 @@ void runBasicE2ETest(String connectionName) {
           .orderByAsc('home_address')
           .findMany();
 
-      expect(users.length, 33);
+      expect(users.length, 18);
       expect(users.first.homeAddress, 'Abuja, Nigeria');
       expect(users.last.homeAddress, 'Owerri, Nigeria');
     });
@@ -134,7 +133,7 @@ void runBasicE2ETest(String connectionName) {
     });
 
     test('should delete many users', () async {
-      final query = Query.table<User>().driver(driver).whereIn('home_address', ['Lagos, Nigeria']);
+      final query = Query.table<User>().driver(driver).whereLike('home_address', '%, Nigeria');
 
       final users = await query.findMany();
       expect(users, isNotEmpty);
@@ -148,10 +147,7 @@ void runBasicE2ETest(String connectionName) {
     test('should drop tables', () async {
       await runMigrator(connectionName, 'migrate:reset');
 
-      final result = await Future.wait([
-        driver.hasTable('users'),
-        driver.hasTable('todos'),
-      ]);
+      final result = await Future.wait([driver.hasTable('users'), driver.hasTable('todos')]);
 
       expect(result.every((e) => e), isFalse);
     });

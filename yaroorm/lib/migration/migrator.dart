@@ -53,7 +53,7 @@ class Migrator {
           await txnDriver.execute(sql);
         }
 
-        await MigrationData(fileName, batchNos).withTableName(Migrator.tableName).withDriver(txnDriver).save();
+        await Query.table(Migrator.tableName).driver(txnDriver).insert(MigrationData(fileName, batchNos).to_db_data);
 
         print('✔ done:   $fileName');
       });
@@ -112,7 +112,7 @@ class Migrator {
           }
         }
 
-        await rollback.entry.withTableName(Migrator.tableName).withDriver(transactor).delete();
+        await Query.table(Migrator.tableName).driver(transactor).whereEqual('id', rollback.entry.id!).delete();
       });
 
       print('✔ rolled back: ${rollback.entry.migration}');

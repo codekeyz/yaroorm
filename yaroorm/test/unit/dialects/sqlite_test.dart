@@ -7,7 +7,7 @@ import '../../fixtures/orm_config.dart' as db;
 import '../../fixtures/test_data.dart';
 import 'sqlite_test.reflectable.dart';
 
-@EntityMeta(table: 'user_articles')
+@EntityMeta(table: 'user_articles', primaryKey: '_id_')
 class Article extends Entity<int, Entity> {
   final String name;
   final int ownerId;
@@ -948,13 +948,12 @@ void main() {
         final blueprint = SqliteTableBlueprint()..string('articleId');
 
         late ForeignKey key;
-        blueprint.foreign<ArticleComment, Article>('articleId',
-            referenceId: 'custom_article_id_field', onKey: (fkey) => key = fkey);
+        blueprint.foreign<ArticleComment, Article>('articleId', onKey: (fkey) => key = fkey);
 
         expect(key.table, 'article_comments');
         expect(key.column, 'articleId');
         expect(key.foreignTable, 'user_articles');
-        expect(key.foreignTableColumn, 'custom_article_id_field');
+        expect(key.foreignTableColumn, '_id_');
       });
 
       test('should make statement', () {
