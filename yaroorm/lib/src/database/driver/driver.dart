@@ -23,6 +23,7 @@ class DatabaseConnection {
   final bool dbForeignKeys;
   final DatabaseDriverType driver;
   final bool? secure;
+  final String timeZone;
 
   const DatabaseConnection(
     this.name,
@@ -37,6 +38,7 @@ class DatabaseConnection {
     this.username,
     this.dbForeignKeys = true,
     this.secure,
+    this.timeZone = 'UTC',
   });
 
   factory DatabaseConnection.from(String name, Map<String, dynamic> connInfo) {
@@ -53,6 +55,7 @@ class DatabaseConnection {
       url: connInfo['url'],
       secure: connInfo['secure'],
       dbForeignKeys: connInfo['foreign_key_constraints'] ?? true,
+      timeZone: connInfo['timezone'] ?? 'UTC',
     );
   }
 }

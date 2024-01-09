@@ -1,5 +1,6 @@
 import 'package:meta/meta.dart';
 import 'package:postgres/postgres.dart' as pg;
+import 'package:sqflite_common/sql.dart';
 import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/src/database/driver/mysql_driver.dart';
 import 'package:yaroorm/src/primitives/serializer.dart';
@@ -32,7 +33,8 @@ class PostgreSqlDriver implements DatabaseDriver {
           password: config.password,
           port: config.port == null ? 5432 : config.port!,
         ),
-        settings: pg.ConnectionSettings(sslMode: secure ? pg.SslMode.require : pg.SslMode.disable, timeZone: 'GMT'));
+        settings: pg.ConnectionSettings(
+            sslMode: secure ? pg.SslMode.require : pg.SslMode.disable, timeZone: config.timeZone));
     return this;
   }
 
@@ -48,9 +50,10 @@ class PostgreSqlDriver implements DatabaseDriver {
     await db?.close();
   }
 
-  Future<List<Map<String, dynamic>>> _execRawQuery(String script) async {
+  Future<List<Map<String, dynamic>>> _execRawQuery(String script, {Map<String, dynamic>? parameters}) async {
+    parameters ??= {};
     if (!isOpen) await connect();
-    final result = await db?.execute(script);
+    final result = await db?.execute(pg.Sql.named(script), parameters: parameters);
     return result?.map((e) => e.toColumnMap()).toList() ?? [];
   }
 
@@ -62,8 +65,9 @@ class PostgreSqlDriver implements DatabaseDriver {
     if (!isOpen) await connect();
     var primaryKey = await getPrimaryKeyColumn(query.tableName);
     String sql = _primitiveSerializer.acceptInsertQuery(query);
-    sql = '$sql RETURNING $primaryKey ;';
-    final result = await db?.execute(sql);
+    query.values.addAll({'primaryKey': primaryKey});
+    sql = '$sql RETURNING @primaryKey ;';
+    final result = await db?.execute(pg.Sql.named(sql), parameters: query.values);
     return result?[0][0] as int;
   }
 
@@ -79,7 +83,7 @@ class PostgreSqlDriver implements DatabaseDriver {
   @override
   Future<List<Map<String, dynamic>>> update(UpdateQuery query) {
     final sqlScript = serializer.acceptUpdateQuery(query);
-    return _execRawQuery(sqlScript);
+    return _execRawQuery(sqlScript, parameters: query.values);
   }
 
   @override
@@ -94,7 +98,8 @@ class PostgreSqlDriver implements DatabaseDriver {
   @override
   Future<bool> hasTable(String tableName) async {
     final result = await _execRawQuery(
-        '''SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='$tableName';''');
+        '''SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name=@tableName;''',
+        parameters: {'tableName': tableName});
     if (result.isEmpty) return false;
     return true;
   }
@@ -188,10 +193,9 @@ class PgSqlPrimitiveSerializer extends SqliteSerializer {
 
   @override
   String acceptInsertQuery(InsertQuery query) {
-    final data = query.values;
-    final fields = data.keys.join(', ');
-    final values = data.values.map((e) => acceptDartValue(e)).join(', ');
-    return 'INSERT INTO ${query.tableName} ($fields) VALUES ($values)';
+    final keys = query.values.keys.map(escapeName);
+    final values = keys.map((e) => '@$e').join(', ');
+    return 'INSERT INTO ${escapeName(query.tableName)} (${keys.join(', ')}) VALUES ($values)$terminator';
   }
 
   @override
@@ -200,6 +204,22 @@ class PgSqlPrimitiveSerializer extends SqliteSerializer {
     final fields = data.first.keys.join(', ');
     final values = data.map((e) => '(${e.values.map((e) => acceptDartValue(e)).join(', ')})').join(', ');
     return 'INSERT INTO ${query.tableName} ($fields) VALUES $values $terminator';
+  }
+
+  @override
+  String acceptUpdateQuery(UpdateQuery query) {
+    final queryBuilder = StringBuffer();
+
+    final fields = query.values.keys.map((e) => '$e = @$e').join(', ');
+
+    queryBuilder.write('UPDATE ${escapeName(query.tableName)}');
+
+    queryBuilder
+      ..write(' SET $fields')
+      ..write(' WHERE ${acceptWhereClause(query.whereClause)}')
+      ..write(terminator);
+
+    return queryBuilder.toString();
   }
 }
 
@@ -295,13 +315,19 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   @override
   void varbinary(String name,
       {bool nullable = false, String? defaultValue, String? charset, String? collate, int size = 1}) {
-    throw UnimplementedError('varbinary not implemented for Postgres');
+    final type = 'BIT VARYING($size)';
+    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void enums(String name, List<String> values,
       {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
-    throw UnimplementedError('enums not implemented for Postgres');
+    final sb = StringBuffer()..write('CREATE TYPE $name AS ENUM (${values.map((e) => "'$e'").join(', ')});');
+    if (!nullable) {
+      sb.write(' NOT NULL');
+      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
+    }
+    statements.add(sb.toString());
   }
 
   @override

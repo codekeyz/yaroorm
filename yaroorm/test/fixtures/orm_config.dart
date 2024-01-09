@@ -36,6 +36,7 @@ final config = YaroormConfig.from({
       'host': 'localhost',
       'username': 'postgres',
       'password': 'postgres',
+      'timezone': 'GMT',
     },
   },
   'migrations_table': 'migrations',
