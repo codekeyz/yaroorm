@@ -1,6 +1,4 @@
 import 'package:collection/collection.dart';
-import 'package:grammer/grammer.dart';
-import 'package:recase/recase.dart';
 import 'package:reflectable/reflectable.dart';
 
 import '../database/entity.dart';
@@ -20,6 +18,12 @@ ClassMirror reflectEntity<Model>() {
 
   try {
     mirror = (reflectType(Model));
+
+    /// TODO(codekeyz): change this from static to factory method
+    ///
+    /// final method = mirror.declarations.values
+    ///     .whereType<MethodMirror>()
+    ///     .firstWhereOrNull((e) => e.isFactoryConstructor && e.simpleName == entityFromJsonStaticFuncName);
     final fromJson = mirror.staticMembers.entries.firstWhereOrNull((d) => d.key == entityFromJsonStaticFuncName);
     if (fromJson == null) {
       throw EntityValidationException("$Model.$entityFromJsonStaticFuncName static method not found.");
@@ -36,5 +40,3 @@ Model jsonToEntity<Model>(Map<String, dynamic> json, {ClassMirror? mirror}) {
   mirror ??= reflectEntity<Model>();
   return mirror.invoke(entityFromJsonStaticFuncName, [json]) as Model;
 }
-
-String typeToTableName(Type type) => type.toString().snakeCase.toPlural().first;

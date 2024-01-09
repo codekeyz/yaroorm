@@ -24,7 +24,9 @@ abstract class PrimitiveSerializer {
 
   String acceptLimit(int limit);
 
-  dynamic acceptDartValue(dynamic value);
+  dynamic acceptPrimitiveValue(dynamic value);
+
+  Map<String, dynamic> conformDartTypeToDbType(Map<String, dynamic> data);
 
   String acceptForeignKey(TableBlueprint blueprint, ForeignKey key);
 

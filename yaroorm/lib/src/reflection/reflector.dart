@@ -1,3 +1,5 @@
+import 'package:grammer/grammer.dart';
+import 'package:recase/recase.dart';
 import 'package:reflectable/reflectable.dart' as r;
 
 import '../database/entity.dart';
@@ -27,8 +29,7 @@ r.ClassMirror reflectType(Type type) {
 
 String getEntityTableName(Type type) {
   final metadata = reflectType(type).metadata.whereType<EntityMeta>().firstOrNull;
-  if (metadata != null) return metadata.table;
-  return typeToTableName(type);
+  return metadata?.table ?? type.toString().snakeCase.toPlural().first;
 }
 
 String getEntityPrimaryKey(Type type) {

@@ -71,15 +71,16 @@ final usersTestData = <User>[
   User(firstname: 'Nneka', lastname: 'Okoli', age: 45, homeAddress: "Nairobi, Kenya"),
 ];
 
+@EntityMeta(table: 'todos')
 class Todo extends Entity<int, Todo> {
   final String title;
-  final String desc;
+  final String description;
   final bool completed;
   final int ownerId;
 
   Todo(
     this.title,
-    this.desc, {
+    this.description, {
     required this.ownerId,
     this.completed = false,
   });
@@ -88,9 +89,11 @@ class Todo extends Entity<int, Todo> {
   Map<String, dynamic> toJson() => <String, dynamic>{
         'id': id,
         'title': title,
-        'desc': desc,
+        'description': description,
         'ownerId': ownerId,
         'completed': completed,
+        'createdAt': createdAt?.toIso8601String(),
+        'updatedAt': updatedAt?.toIso8601String(),
       };
 
   static Todo fromJson(Map<String, dynamic> json) =>

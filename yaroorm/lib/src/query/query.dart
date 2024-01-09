@@ -94,10 +94,7 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
         _limit = null;
 
   static Query<Model> table<Model>([String? tableName]) {
-    if (Model != Entity && Model != dynamic) {
-      reflectEntity<Model>(); // test type to be sure it's a subtype of Entity
-      tableName ??= typeToTableName(Model);
-    }
+    if (Model != Entity && Model != dynamic) tableName ??= getEntityTableName(Model);
     assert(tableName != null, 'Either provide Entity Type or tableName');
     return QueryImpl<Model>(tableName!);
   }
@@ -113,16 +110,16 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
   UpdateQuery update(
       {required WhereClause<EntityType> Function(Query<EntityType> query) where,
       required Map<String, dynamic> values}) {
-    return UpdateQuery(tableName, whereClause: where(this), values: values).driver(queryDriver);
+    return UpdateQuery(tableName, whereClause: where(this), data: values).driver(queryDriver);
   }
 }
 
 @protected
 class UpdateQuery extends QueryBase<UpdateQuery> {
   final WhereClause whereClause;
-  final Map<String, dynamic> values;
+  final Map<String, dynamic> data;
 
-  UpdateQuery(super.tableName, {required this.whereClause, required this.values});
+  UpdateQuery(super.tableName, {required this.whereClause, required this.data});
 
   @override
   String get statement => queryDriver.serializer.acceptUpdateQuery(this);
@@ -132,9 +129,9 @@ class UpdateQuery extends QueryBase<UpdateQuery> {
 }
 
 class InsertQuery extends QueryBase<InsertQuery> {
-  final Map<String, dynamic> values;
+  final Map<String, dynamic> data;
 
-  InsertQuery(super.tableName, {required this.values});
+  InsertQuery(super.tableName, {required this.data});
 
   @override
   Future<dynamic> exec() => queryDriver.insert(this);

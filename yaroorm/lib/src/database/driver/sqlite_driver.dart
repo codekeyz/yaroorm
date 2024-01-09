@@ -72,14 +72,16 @@ class SqliteDriver implements DatabaseDriver {
 
   @override
   Future<int> update(UpdateQuery query) async {
-    return (await _getDatabase())
-        .rawUpdate(_serializer.acceptUpdateQuery(query), _serializer.parameterizeValues(query.values));
+    final sql = _serializer.acceptUpdateQuery(query);
+    final values = _serializer.conformDartTypeToDbType(query.data).values.toList();
+    return (await _getDatabase()).rawUpdate(sql, values);
   }
 
   @override
   Future<int> insert(InsertQuery query) async {
     final sql = _serializer.acceptInsertQuery(query);
-    return (await _getDatabase()).rawInsert(sql, _serializer.parameterizeValues(query.values));
+    final values = _serializer.conformDartTypeToDbType(query.data).values.toList();
+    return (await _getDatabase()).rawInsert(sql, values);
   }
 
   @override
@@ -88,8 +90,8 @@ class SqliteDriver implements DatabaseDriver {
     final batch = db.batch();
 
     for (final entry in query.values) {
-      final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, values: entry));
-      batch.rawInsert(sql, _serializer.parameterizeValues(entry));
+      final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, data: entry));
+      batch.rawInsert(sql, entry.values.toList());
     }
 
     await batch.commit(noResult: true);
@@ -138,11 +140,6 @@ class _SqliteTransactor implements DriverTransactor {
   }
 
   @override
-  Future<void> update(UpdateQuery query) {
-    return _txn.rawUpdate(_serializer.acceptUpdateQuery(query), _serializer.parameterizeValues(query.values));
-  }
-
-  @override
   Future<void> delete(DeleteQuery query) {
     final sql = _serializer.acceptDeleteQuery(query);
     return _txn.rawDelete(sql);
@@ -151,7 +148,13 @@ class _SqliteTransactor implements DriverTransactor {
   @override
   Future<int> insert(InsertQuery query) {
     final sql = _serializer.acceptInsertQuery(query);
-    return _txn.rawInsert(sql, _serializer.parameterizeValues(query.values));
+    return _txn.rawInsert(sql, _serializer.conformDartTypeToDbType(query.data).values.toList());
+  }
+
+  @override
+  Future<void> update(UpdateQuery query) {
+    final sql = _serializer.acceptUpdateQuery(query);
+    return _txn.rawUpdate(sql, _serializer.conformDartTypeToDbType(query.data).values.toList());
   }
 
   @override
@@ -159,8 +162,8 @@ class _SqliteTransactor implements DriverTransactor {
     final batch = _txn.batch();
 
     for (final entry in query.values) {
-      final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, values: entry));
-      batch.rawInsert(sql, _serializer.parameterizeValues(entry));
+      final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, data: entry));
+      batch.rawInsert(sql, entry.values.toList());
     }
 
     await batch.commit(noResult: true);
@@ -221,7 +224,7 @@ class SqliteSerializer implements PrimitiveSerializer {
   String acceptUpdateQuery(UpdateQuery query) {
     final queryBuilder = StringBuffer();
 
-    final fields = query.values.keys.map((e) => '${escapeName(e)} = ?').join(', ');
+    final fields = query.data.keys.map((e) => '${escapeName(e)} = ?').join(', ');
 
     queryBuilder.write('UPDATE ${escapeName(query.tableName)}');
 
@@ -235,7 +238,7 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptInsertQuery(InsertQuery query) {
-    final fields = query.values.keys.map(escapeName);
+    final fields = query.data.keys.map(escapeName);
     final params = List<String>.filled(fields.length, '?').join(', ');
     return 'INSERT INTO ${escapeName(query.tableName)} (${fields.join(', ')}) VALUES ($params)$terminator';
   }
@@ -243,11 +246,6 @@ class SqliteSerializer implements PrimitiveSerializer {
   @override
   String acceptInsertManyQuery(InsertManyQuery query) {
     throw UnimplementedError('No need to use this for SQLite Driver');
-  }
-
-  List<dynamic> parameterizeValues(Map<String, dynamic> values) {
-    final keys = values.keys;
-    return List.generate(keys.length, (i) => values[keys.elementAt(i)], growable: false);
   }
 
   @override
@@ -313,20 +311,28 @@ class SqliteSerializer implements PrimitiveSerializer {
   String get terminator => ';';
 
   @override
-  dynamic acceptDartValue(dartValue) => switch (dartValue.runtimeType) {
+  dynamic acceptPrimitiveValue(dartValue) => switch (dartValue.runtimeType) {
         const (int) || const (double) => dartValue,
-        const (bool) => dartValue == true ? 1 : 0,
         const (List<String>) => '(${dartValue.map((e) => "'$e'").join(', ')})',
         const (List<int>) || const (List<num>) || const (List<double>) => '(${dartValue.join(', ')})',
         _ => "'$dartValue'"
       };
 
   @override
+  Map<String, dynamic> conformDartTypeToDbType(Map<String, dynamic> data) {
+    for (final entry in data.entries) {
+      final value = entry.value;
+      if (value is bool) data[entry.key] = value ? 1 : 0;
+    }
+    return data;
+  }
+
+  @override
   String acceptWhereClauseValue(WhereClauseValue clauseVal) {
     final field = clauseVal.field;
     final value = clauseVal.comparer.value;
     final valueOperator = clauseVal.comparer.operator;
-    final wrapped = acceptDartValue(value);
+    final wrapped = acceptPrimitiveValue(value);
 
     return switch (valueOperator) {
       Operator.LESS_THAN => '$field < $wrapped',
@@ -346,8 +352,9 @@ class SqliteSerializer implements PrimitiveSerializer {
       Operator.NULL => '$field IS NULL',
       Operator.NOT_NULL => '$field IS NOT NULL',
       //
-      Operator.BETWEEN => '$field BETWEEN ${acceptDartValue(value[0])} AND ${acceptDartValue(value[1])}',
-      Operator.NOT_BETWEEN => '$field NOT BETWEEN ${acceptDartValue(value[0])} AND ${acceptDartValue(value[1])}',
+      Operator.BETWEEN => '$field BETWEEN ${acceptPrimitiveValue(value[0])} AND ${acceptPrimitiveValue(value[1])}',
+      Operator.NOT_BETWEEN =>
+        '$field NOT BETWEEN ${acceptPrimitiveValue(value[0])} AND ${acceptPrimitiveValue(value[1])}',
     };
   }
 
@@ -389,7 +396,7 @@ class SqliteTableBlueprint extends TableBlueprint {
     if (!nullable) {
       sb.write(' NOT NULL');
       if (defaultValue != null) {
-        final value = _serializer.acceptDartValue(defaultValue);
+        final value = _serializer.acceptPrimitiveValue(defaultValue);
         sb.write(' DEFAULT $value');
       }
     }

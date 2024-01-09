@@ -78,20 +78,20 @@ class MySqlDriver implements DatabaseDriver {
 
   @override
   Future<List<Map<String, dynamic>>> update(UpdateQuery query) async {
-    final result = await _dbConnection.execute(_serializer.acceptUpdateQuery(query), query.values);
+    final result = await _dbConnection.execute(_serializer.acceptUpdateQuery(query), query.data);
     return result.rows.map((e) => e.typedAssoc()).toList();
   }
 
   @override
   Future<int> insert(InsertQuery query) async {
-    final result = await _dbConnection.execute(_serializer.acceptInsertQuery(query), query.values);
+    final result = await _dbConnection.execute(_serializer.acceptInsertQuery(query), query.data);
     return result.lastInsertID.toInt();
   }
 
   @override
   Future<void> insertMany(InsertManyQuery query) async {
     for (final value in query.values) {
-      await insert(InsertQuery(query.tableName, values: value));
+      await insert(InsertQuery(query.tableName, data: value));
     }
   }
 
@@ -146,19 +146,19 @@ class _MysqlTransactor extends DriverTransactor {
 
   @override
   Future<void> update(UpdateQuery query) async {
-    await _dbConn.execute(_serializer.acceptUpdateQuery(query), query.values);
+    await _dbConn.execute(_serializer.acceptUpdateQuery(query), query.data);
   }
 
   @override
   Future<int> insert(InsertQuery query) async {
-    final result = await _dbConn.execute(_serializer.acceptInsertQuery(query), query.values);
+    final result = await _dbConn.execute(_serializer.acceptInsertQuery(query), query.data);
     return result.lastInsertID.toInt();
   }
 
   @override
   Future<void> insertMany(InsertManyQuery query) async {
     for (final value in query.values) {
-      await insert(InsertQuery(query.tableName, values: value));
+      await insert(InsertQuery(query.tableName, data: value));
     }
   }
 
@@ -351,16 +351,19 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
 class MySqlPrimitiveSerializer extends SqliteSerializer {
   @override
   String acceptInsertQuery(InsertQuery query) {
-    final keys = query.values.keys.map(escapeName);
+    final keys = query.data.keys.map(escapeName);
     final values = keys.map((e) => ':$e').join(', ');
     return 'INSERT INTO ${escapeName(query.tableName)} (${keys.join(', ')}) VALUES ($values)$terminator';
   }
 
   @override
+  Map<String, dynamic> conformDartTypeToDbType(Map<String, dynamic> data) => data;
+
+  @override
   String acceptUpdateQuery(UpdateQuery query) {
     final queryBuilder = StringBuffer();
 
-    final fields = query.values.keys.map((e) => '$e = :$e').join(', ');
+    final fields = query.data.keys.map((e) => '$e = :$e').join(', ');
 
     queryBuilder.write('UPDATE ${escapeName(query.tableName)}');
 

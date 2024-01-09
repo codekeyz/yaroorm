@@ -57,9 +57,9 @@ abstract class Entity<PkType, Model> {
     return _primaryKeyCache = getEntityPrimaryKey(runtimeType);
   }
 
-  Entity withDriver(DriverContract driver) {
+  Model withDriver(DriverContract driver) {
     _driver = driver;
-    return this;
+    return this as Model;
   }
 
   Query<Model> get query => DB.query<Model>().driver(_driver);

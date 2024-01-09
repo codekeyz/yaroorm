@@ -25,9 +25,9 @@ class QueryImpl<Result> extends Query<Result> {
   }
 
   @override
-  Future<PrimaryKeyKey> insert<PrimaryKeyKey>(Map<String, dynamic> data) async {
-    final recordId = await queryDriver.insert(InsertQuery(tableName, values: data));
-    return recordId as PrimaryKeyKey;
+  Future<PrimaryKey> insert<PrimaryKey>(Map<String, dynamic> data) async {
+    final recordId = await queryDriver.insert(InsertQuery(tableName, data: data));
+    return recordId as PrimaryKey;
   }
 
   @override
