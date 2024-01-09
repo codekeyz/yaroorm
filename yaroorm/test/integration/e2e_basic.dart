@@ -1,27 +1,14 @@
-import 'dart:io';
-
 import 'package:test/test.dart';
 import 'package:yaroorm/yaroorm.dart';
 
+import '../fixtures/migrator.dart';
 import '../fixtures/test_data.dart';
 
-void runIntegrationTest(String connectionName) {
+void runBasicE2ETest(String connectionName) {
   final driver = DB.driver(connectionName);
 
-  Future<void> runMigrator(String command) async {
-    final commands = ['run', 'test/fixtures/migrator.dart', command, '--database=$connectionName'];
-    print('Starting Execution: dart ${commands.join(' ')}');
-
-    final result = await Process.run('dart', commands);
-    stdout.write(result.stdout);
-    stderr.write(result.stderr);
-    expect(result.exitCode, 0);
-  }
-
-  return group('Integration Test with ${driver.type.name} driver', () {
+  return group('with ${driver.type.name} driver', () {
     test('driver should connect', () async {
-      final driver = DB.driver(connectionName);
-
       await driver.connect();
 
       expect(driver.isOpen, isTrue);
@@ -30,18 +17,18 @@ void runIntegrationTest(String connectionName) {
     test('should have no tables', () async {
       final result = await Future.wait([
         driver.hasTable('users'),
-        driver.hasTable('tasks'),
+        driver.hasTable('todos'),
       ]);
 
       expect(result.every((e) => e), isFalse);
     });
 
     test('should execute migration', () async {
-      await runMigrator('migrate');
+      await runMigrator(connectionName, 'migrate');
 
       final result = await Future.wait([
         driver.hasTable('users'),
-        driver.hasTable('tasks'),
+        driver.hasTable('todos'),
       ]);
 
       expect(result.every((e) => e), isTrue);
@@ -159,11 +146,11 @@ void runIntegrationTest(String connectionName) {
     });
 
     test('should drop tables', () async {
-      await runMigrator('migrate:reset');
+      await runMigrator(connectionName, 'migrate:reset');
 
       final result = await Future.wait([
         driver.hasTable('users'),
-        driver.hasTable('tasks'),
+        driver.hasTable('todos'),
       ]);
 
       expect(result.every((e) => e), isFalse);

@@ -924,7 +924,7 @@ void main() {
           ..integer('ownerId');
 
         late ForeignKey key;
-        blueprint.foreign<Article, User>('ownerId', key: (fkey) => key = fkey);
+        blueprint.foreign<Article, User>('ownerId', onKey: (fkey) => key = fkey);
 
         expect(key.table, 'user_articles');
         expect(key.column, 'ownerId');
@@ -936,7 +936,7 @@ void main() {
         final blueprint = SqliteTableBlueprint()..string('userId');
 
         late ForeignKey key;
-        blueprint.foreign<ArticleComment, User>('userId', key: (fkey) => key = fkey);
+        blueprint.foreign<ArticleComment, User>('userId', onKey: (fkey) => key = fkey);
 
         expect(key.table, 'article_comments');
         expect(key.column, 'userId');
@@ -949,7 +949,7 @@ void main() {
 
         late ForeignKey key;
         blueprint.foreign<ArticleComment, Article>('articleId',
-            referenceId: 'custom_article_id_field', key: (fkey) => key = fkey);
+            referenceId: 'custom_article_id_field', onKey: (fkey) => key = fkey);
 
         expect(key.table, 'article_comments');
         expect(key.column, 'articleId');
@@ -963,7 +963,7 @@ void main() {
           ..integer('ownerId');
 
         late ForeignKey key;
-        blueprint.foreign<Article, User>('ownerId', key: (fkey) => key = fkey);
+        blueprint.foreign<Article, User>('ownerId', onKey: (fkey) => key = fkey);
 
         final statement = SqliteSerializer().acceptForeignKey(blueprint, key);
         expect(statement, 'FOREIGN KEY (ownerId) REFERENCES users(id)');
@@ -977,7 +977,7 @@ void main() {
         late ForeignKey key;
         blueprint.foreign<Article, User>(
           'ownerId',
-          key: (fkey) => key = fkey.actions(onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.setNull),
+          onKey: (fkey) => key = fkey.actions(onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.setNull),
         );
 
         final statement = SqliteSerializer().acceptForeignKey(blueprint, key);
@@ -991,7 +991,7 @@ void main() {
             ..integer('ownerId');
 
           late ForeignKey key;
-          blueprint.foreign<Article, User>('ownerId', key: (fkey) => key = fkey.constrained());
+          blueprint.foreign<Article, User>('ownerId', onKey: (fkey) => key = fkey.constrained());
 
           final statement = SqliteSerializer().acceptForeignKey(blueprint, key);
           expect(
@@ -1007,7 +1007,7 @@ void main() {
 
           late ForeignKey key;
           blueprint.foreign<Article, User>('ownerId',
-              key: (fkey) => key = fkey
+              onKey: (fkey) => key = fkey
                   .actions(onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.setNull)
                   .constrained(name: 'fk_articles_users'));
 
@@ -1021,7 +1021,7 @@ void main() {
             return table
               ..id()
               ..string('ownerId')
-              ..foreign<Article, User>('ownerId', key: (key) => key.constrained(name: 'some_constraint'));
+              ..foreign<Article, User>('ownerId', onKey: (key) => key.constrained(name: 'some_constraint'));
           });
 
           expect(
@@ -1034,7 +1034,7 @@ void main() {
               ..id(autoIncrement: false)
               ..string('ownerId')
               ..foreign<Article, User>('ownerId',
-                  key: (key) => key
+                  onKey: (key) => key
                       .constrained(name: 'some_constraint')
                       .actions(onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.cascade));
           });

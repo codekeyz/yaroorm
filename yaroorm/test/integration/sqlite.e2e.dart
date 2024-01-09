@@ -2,7 +2,7 @@ import 'package:test/test.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import '../fixtures/orm_config.dart' as db;
-import 'base.dart';
+import 'e2e_basic.dart';
 import 'sqlite.e2e.reflectable.dart';
 
 void main() async {
@@ -10,5 +10,7 @@ void main() async {
 
   DB.init(db.config);
 
-  group('SQLite', () => runIntegrationTest('foo_sqlite'));
+  group('SQLite', () {
+    group('Basic E2E Test', () => runBasicE2ETest('foo_sqlite'));
+  });
 }

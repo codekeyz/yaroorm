@@ -2,7 +2,7 @@ import 'package:test/test.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import '../fixtures/orm_config.dart' as db;
-import 'base.dart';
+import 'e2e_basic.dart';
 import 'mariadb.e2e.reflectable.dart';
 
 void main() async {
@@ -10,5 +10,5 @@ void main() async {
 
   DB.init(db.config);
 
-  group('MariaDB', () => runIntegrationTest('bar_mariadb'));
+  group('MariaDB', () => runBasicE2ETest('bar_mariadb'));
 }

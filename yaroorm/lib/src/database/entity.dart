@@ -46,12 +46,12 @@ abstract class Entity<PkType, Model> {
     return this;
   }
 
-  Query<Model> get _query => DB.query<Model>(tableName).driver(_driver);
+  Query<Model> get query => DB.query<Model>(tableName).driver(_driver);
 
   WhereClause<Model> _whereId(Query<Model> _) => _.whereEqual(primaryKey, id);
 
   @nonVirtual
-  Future<void> delete() => _query.delete(_whereId).exec();
+  Future<void> delete() => query.delete(_whereId).exec();
 
   @nonVirtual
   Future<Model> save() async {
@@ -60,7 +60,7 @@ abstract class Entity<PkType, Model> {
       createdAt ??= now;
       updatedAt ??= now;
     }
-    final recordId = await _query.insert<PkType>(to_db_data);
+    final recordId = await query.insert<PkType>(to_db_data);
     return (this..id = recordId) as Model;
   }
 
@@ -71,8 +71,8 @@ abstract class Entity<PkType, Model> {
       values[updatedAtColumn] = DateTime.now().toUtc().toIso8601String();
     }
 
-    await _query.update(where: _whereId, values: values).exec();
-    return _query.get();
+    await query.update(where: _whereId, values: values).exec();
+    return query.get();
   }
 
   bool get enableTimestamps => false;

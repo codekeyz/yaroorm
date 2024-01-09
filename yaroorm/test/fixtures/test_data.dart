@@ -65,3 +65,35 @@ final usersTestData = <User>[
   User(firstname: 'Halima', lastname: 'Idris', age: 57, homeAddress: "Lagos, Nigeria"),
   User(firstname: 'Chukwuemeka', lastname: 'Okonkwo', age: 58, homeAddress: "Lagos, Nigeria"),
 ];
+
+class Todo extends Entity<int, Todo> {
+  final String title;
+  final String desc;
+  final bool completed;
+  final int ownerId;
+
+  Todo(
+    this.title,
+    this.desc, {
+    required this.ownerId,
+    this.completed = false,
+  });
+
+  @override
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'id': id,
+        'title': title,
+        'desc': desc,
+        'ownerId': ownerId,
+        'completed': completed,
+      };
+
+  static Todo fromJson(Map<String, dynamic> json) =>
+      Todo(json['title'], json['desc'], ownerId: json['ownerId'], completed: json['completed'])
+        ..id = json['id']
+        ..createdAt = DateTime.tryParse(json['createdAt'])
+        ..updatedAt = DateTime.tryParse(json['updatedAt']);
+
+  @override
+  bool get enableTimestamps => true;
+}

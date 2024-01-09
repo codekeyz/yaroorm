@@ -10,12 +10,12 @@ abstract class TableBlueprint {
   void foreign<Model extends Entity, ReferenceModel extends Entity>(
     String column, {
     String referenceId = 'id',
-    ForeignKey Function(ForeignKey fkey)? key,
+    ForeignKey Function(ForeignKey fkey)? onKey,
   }) {
     final table = getTableName(Model);
     final referenceTable = getTableName(ReferenceModel);
     final fkey = ForeignKey(table, column, foreignTable: referenceTable, foreignTableColumn: referenceId);
-    key?.call(fkey);
+    onKey?.call(fkey);
   }
 
   void string(String name, {bool nullable = false, String? defaultValue});
