@@ -26,9 +26,6 @@ class QueryImpl<Result> extends Query<Result> {
 
   @override
   Future<PrimaryKeyKey> insert<PrimaryKeyKey>(Map<String, dynamic> data) async {
-    for (final entry in data.entries) {
-      data[entry.key] = queryDriver.serializer.acceptDartValue(entry.value);
-    }
     final recordId = await queryDriver.insert(InsertQuery(tableName, values: data));
     return recordId as PrimaryKeyKey;
   }
@@ -55,7 +52,7 @@ class QueryImpl<Result> extends Query<Result> {
 
   @override
   Future<Result?> get([dynamic id]) async {
-    if (id != null) return whereEqual('id', id).findOne();
+    if (id != null) return whereEqual(getEntityPrimaryKey(Result), id).findOne();
     return (await take(1)).firstOrNull;
   }
 

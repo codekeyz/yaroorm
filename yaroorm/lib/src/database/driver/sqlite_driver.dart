@@ -585,13 +585,12 @@ class SqliteTableBlueprint extends TableBlueprint {
   @override
   void foreign<Model extends Entity, ReferenceModel extends Entity>(
     String column, {
-    String referenceId = 'id',
     ForeignKey Function(ForeignKey fkey)? onKey,
   }) {
     late ForeignKey result;
     callback(ForeignKey fkey) => result = onKey?.call(fkey) ?? fkey;
 
-    super.foreign<Model, ReferenceModel>(column, referenceId: referenceId, onKey: callback);
+    super.foreign<Model, ReferenceModel>(column, onKey: callback);
     final statement = _serializer.acceptForeignKey(this, result);
     _foreignKeys.add(statement);
   }

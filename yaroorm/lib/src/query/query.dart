@@ -3,6 +3,7 @@ import 'package:meta/meta.dart';
 import '../database/driver/driver.dart';
 import '../database/entity.dart';
 import '../primitives/where.dart';
+import '../reflection/reflector.dart';
 import '../reflection/util.dart';
 
 part 'query_impl.dart';
