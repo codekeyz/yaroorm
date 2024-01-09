@@ -236,8 +236,8 @@ class SqliteSerializer implements PrimitiveSerializer {
   @override
   String acceptInsertQuery(InsertQuery query) {
     final fields = query.values.keys.map(escapeName);
-    final values = List<String>.filled(fields.length, '?').join(', ');
-    return 'INSERT INTO ${escapeName(query.tableName)} (${fields.join(', ')}) VALUES ($values)$terminator';
+    final params = List<String>.filled(fields.length, '?').join(', ');
+    return 'INSERT INTO ${escapeName(query.tableName)} (${fields.join(', ')}) VALUES ($params)$terminator';
   }
 
   @override
@@ -315,6 +315,7 @@ class SqliteSerializer implements PrimitiveSerializer {
   @override
   dynamic acceptDartValue(dartValue) => switch (dartValue.runtimeType) {
         const (int) || const (double) => dartValue,
+        const (bool) => dartValue == true ? 1 : 0,
         const (List<String>) => '(${dartValue.map((e) => "'$e'").join(', ')})',
         const (List<int>) || const (List<num>) || const (List<double>) => '(${dartValue.join(', ')})',
         _ => "'$dartValue'"
@@ -387,7 +388,10 @@ class SqliteTableBlueprint extends TableBlueprint {
     final sb = StringBuffer()..write('${escapeName(name)} $type');
     if (!nullable) {
       sb.write(' NOT NULL');
-      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
+      if (defaultValue != null) {
+        final value = _serializer.acceptDartValue(defaultValue);
+        sb.write(' DEFAULT $value');
+      }
     }
     return sb.toString();
   }
@@ -582,12 +586,12 @@ class SqliteTableBlueprint extends TableBlueprint {
   void foreign<Model extends Entity, ReferenceModel extends Entity>(
     String column, {
     String referenceId = 'id',
-    ForeignKey Function(ForeignKey fkey)? key,
+    ForeignKey Function(ForeignKey fkey)? onKey,
   }) {
     late ForeignKey result;
-    callback(ForeignKey fkey) => result = key?.call(fkey) ?? fkey;
+    callback(ForeignKey fkey) => result = onKey?.call(fkey) ?? fkey;
 
-    super.foreign<Model, ReferenceModel>(column, referenceId: referenceId, key: callback);
+    super.foreign<Model, ReferenceModel>(column, referenceId: referenceId, onKey: callback);
     final statement = _serializer.acceptForeignKey(this, result);
     _foreignKeys.add(statement);
   }
