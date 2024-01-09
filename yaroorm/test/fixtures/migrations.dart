@@ -33,10 +33,7 @@ class AddTodosTable extends Migration {
         ..string('title')
         ..string('description')
         ..boolean('completed', defaultValue: false)
-        ..foreign<Todo, User>(
-          'ownerId',
-          onKey: (key) => key.actions(onDelete: ForeignKeyAction.cascade, onUpdate: ForeignKeyAction.cascade),
-        );
+        ..foreign<Todo, User>('ownerId');
     });
 
     schemas.add(schema);
