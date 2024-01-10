@@ -83,7 +83,7 @@ abstract class Entity<PkType, Model> {
 
   @nonVirtual
   // ignore: non_constant_identifier_names
-  Map<String, dynamic> get to_db_data => _entityToRecord(this, _driver.typeconverters);
+  Map<String, dynamic> get to_db_data => _entityToRecord(this, converters: _driver.typeconverters);
 }
 
 @Target({TargetKind.classType})
