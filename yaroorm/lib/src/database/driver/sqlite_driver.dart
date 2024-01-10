@@ -12,6 +12,8 @@ import 'driver.dart';
 
 final _serializer = const SqliteSerializer();
 
+const _sqliteTypeConverters = <EntityTypeConverter>[booleanConverter, dateTimeConverter];
+
 @visibleForTesting
 @protected
 class SqliteDriver implements DatabaseDriver {
@@ -108,6 +110,9 @@ class SqliteDriver implements DatabaseDriver {
   TableBlueprint get blueprint => SqliteTableBlueprint();
 
   @override
+  List<EntityTypeConverter> get typeconverters => _sqliteTypeConverters;
+
+  @override
   Future<bool> hasTable(String tableName) async {
     final result = await (await _getDatabase()).rawQuery(
         'SELECT 1 FROM sqlite_master WHERE type = ${wrapString('table')} AND name = ${wrapString(tableName)} LIMIT 1;');
@@ -169,6 +174,9 @@ class _SqliteTransactor implements DriverTransactor {
 
   @override
   PrimitiveSerializer get serializer => _serializer;
+
+  @override
+  List<EntityTypeConverter> get typeconverters => _sqliteTypeConverters;
 }
 
 @protected

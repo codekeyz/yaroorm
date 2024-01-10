@@ -83,7 +83,7 @@ abstract class Entity<PkType, Model> {
 
   @nonVirtual
   // ignore: non_constant_identifier_names
-  Map<String, dynamic> get to_db_data => _entityToRecord(this);
+  Map<String, dynamic> get to_db_data => _entityToRecord(this, _driver.typeconverters);
 }
 
 @Target({TargetKind.classType})
@@ -95,7 +95,7 @@ class EntityMeta {
   final String createdAtColumn;
   final String updatedAtColumn;
 
-  final List<EntityTypeConverter> converters;
+  final List<EntityTypeConverter>? converters;
 
   const EntityMeta({
     required this.table,
@@ -103,7 +103,7 @@ class EntityMeta {
     this.timestamps = false,
     this.createdAtColumn = entityCreatedAtColumnName,
     this.updatedAtColumn = entityUpdatedAtColumnName,
-    this.converters = const [_dateTimeConverter, _booleanConverter],
+    this.converters,
   });
 }
 

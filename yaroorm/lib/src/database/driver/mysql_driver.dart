@@ -2,6 +2,7 @@ import 'package:meta/meta.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:sqflite_common/sql.dart';
 import 'package:yaroorm/migration.dart';
+import 'package:yaroorm/src/database/entity.dart';
 import 'package:yaroorm/src/query/query.dart';
 
 import '../../primitives/serializer.dart';
@@ -9,6 +10,8 @@ import 'driver.dart';
 import 'sqlite_driver.dart';
 
 final _serializer = MySqlPrimitiveSerializer();
+
+const _mysqlTypeConverters = <EntityTypeConverter>[dateTimeConverter];
 
 class MySqlDriver implements DatabaseDriver {
   final DatabaseConnection config;
@@ -116,6 +119,9 @@ class MySqlDriver implements DatabaseDriver {
 
   @override
   PrimitiveSerializer get serializer => _serializer;
+
+  @override
+  List<EntityTypeConverter> get typeconverters => _mysqlTypeConverters;
 }
 
 class _MysqlTransactor extends DriverTransactor {
@@ -164,6 +170,9 @@ class _MysqlTransactor extends DriverTransactor {
 
   @override
   PrimitiveSerializer get serializer => _serializer;
+
+  @override
+  List<EntityTypeConverter> get typeconverters => _mysqlTypeConverters;
 }
 
 @protected
