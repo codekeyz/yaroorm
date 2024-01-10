@@ -5,6 +5,7 @@ class User extends Entity<int, User> {
   final String lastname;
   final int age;
 
+  @EntityProperty(name: 'home_address')
   final String homeAddress;
 
   User({required this.firstname, required this.lastname, required this.age, required this.homeAddress});

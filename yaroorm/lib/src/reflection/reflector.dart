@@ -13,6 +13,7 @@ class ReflectableEntity extends r.Reflectable {
           const r.StaticInvokeCapability('fromJson'),
           r.declarationsCapability,
           r.metadataCapability,
+          r.invokingCapability,
           r.newInstanceCapability,
 
           ///
@@ -36,19 +37,33 @@ String getEntityPrimaryKey(Type type) => getEntityMetaData(type)?.primaryKey ?? 
 
 EntityMeta? getEntityMetaData(Type type) => reflectType(type).metadata.whereType<EntityMeta>().firstOrNull;
 
-Map<String, Type> getEntityProperties(Type type) {
+class EntityPropertyData {
+  final String dartName;
+  final String dbColumnName;
+  final Type type;
+
+  const EntityPropertyData(this.dartName, this.dbColumnName, this.type);
+}
+
+Map<String, EntityPropertyData> getEntityProperties(Type type) {
   final classMirror = reflectType(type);
   final metadata = classMirror.metadata.whereType<EntityMeta>().firstOrNull;
 
-  final methodMirror = classMirror.declarations.values
-      .firstWhere((e) => e is MethodMirror && e.simpleName == type.toString()) as MethodMirror;
-
-  final typeProps =
-      methodMirror.parameters.fold<Map<String, Type>>({}, (prev, curr) => prev..[curr.simpleName] = curr.reflectedType);
+  final typeProps = classMirror.declarations.values
+      .whereType<VariableMirror>()
+      .fold<Map<String, EntityPropertyData>>({}, (prev, curr) {
+    final propertyMeta = curr.metadata.whereType<EntityProperty>().firstOrNull;
+    return prev
+      ..[curr.simpleName] =
+          EntityPropertyData(curr.simpleName, propertyMeta?.name ?? curr.simpleName, curr.reflectedType);
+  });
   if (metadata == null || !metadata.timestamps) return typeProps;
 
-  typeProps[metadata.createdAtColumn] = DateTime;
-  typeProps[metadata.updatedAtColumn] = DateTime;
+  typeProps[metadata.createdAtColumn] ??=
+      EntityPropertyData(metadata.createdAtColumn, metadata.createdAtColumn, DateTime);
+
+  typeProps[metadata.updatedAtColumn] ??=
+      EntityPropertyData(metadata.updatedAtColumn, metadata.updatedAtColumn, DateTime);
 
   return typeProps;
 }

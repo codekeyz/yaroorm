@@ -7,7 +7,6 @@ import 'package:yaroorm/migration.dart';
 import '../../primitives/serializer.dart';
 import '../../primitives/where.dart';
 import '../../query/query.dart';
-import '../../reflection/reflector.dart';
 import '../entity.dart';
 import 'driver.dart';
 
@@ -328,21 +327,9 @@ class SqliteSerializer implements PrimitiveSerializer {
     return data;
   }
 
-  _conformDBTypeToEntity(Type type, dynamic value) => switch (type) {
-        const (bool) => value == 0 ? false : true,
-        _ => value,
-      };
-
   @override
   Map<String, dynamic> conformToEntity(Type type, Map<String, dynamic> dataFromDb) {
-    final props = getEntityProperties(type).entries;
-    final conformedMap = Map<String, dynamic>.from(dataFromDb);
-
-    for (final entry in props) {
-      conformedMap[entry.key] = _conformDBTypeToEntity(entry.value, dataFromDb[entry.key]);
-    }
-
-    return conformedMap;
+    return dataFromDb;
   }
 
   @override

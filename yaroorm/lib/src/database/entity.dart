@@ -5,6 +5,8 @@ import 'package:yaroorm/yaroorm.dart';
 
 import '../primitives/where.dart';
 
+part 'type_converter.dart';
+
 const entity = ReflectableEntity();
 
 const String entityCreatedAtColumnName = 'createdAt';
@@ -37,19 +39,6 @@ abstract class Entity<PkType, Model> {
   EntityMeta get entityMeta {
     if (_entityMetaCache != null) return _entityMetaCache!;
     return _entityMetaCache = getEntityMetaData(Model) ?? EntityMeta(table: getEntityTableName(Model));
-  }
-
-  @nonVirtual
-  // ignore: non_constant_identifier_names
-  Map<String, dynamic> get to_db_data {
-    final mapData = toJson();
-    if (mapData[_primaryKey] == null && !allowInsertIdAsNull) mapData.remove(_primaryKey);
-    if (!entityMeta.timestamps) {
-      mapData
-        ..remove(entityMeta.createdAtColumn)
-        ..remove(entityMeta.updatedAtColumn);
-    }
-    return mapData;
   }
 
   @JsonKey(includeToJson: false, includeFromJson: false)
@@ -99,7 +88,42 @@ abstract class Entity<PkType, Model> {
     return query.get();
   }
 
-  bool get allowInsertIdAsNull => false;
+  @nonVirtual
+  // ignore: non_constant_identifier_names
+  Map<String, dynamic> get to_db_data => _entityToDbData(this);
+
+  Map<String, dynamic> _entityToDbData<T extends Entity>(T instance) {
+    final entityProperties = getEntityProperties(instance.runtimeType);
+    final mappedConverters =
+        entityMeta.converters.fold(<Type, EntityTypeConverter>{}, (preV, e) => preV..[e._dartType] = e);
+
+    /// automatically attach DateTime converter if timestamps enabled
+    if (entityMeta.timestamps && (mappedConverters.isEmpty || mappedConverters[DateTime] == null)) {
+      mappedConverters[DateTime] = _dateTimeConverter;
+    }
+
+    /// add boolean converter
+    if (mappedConverters.isEmpty || mappedConverters[bool] == null) {
+      mappedConverters[bool] = _booleanConverter;
+    }
+
+    final instanceMirror = entity.reflect(instance);
+    final serializedEntityMap = <String, dynamic>{};
+    for (final entry in entityProperties.entries) {
+      final value = instanceMirror.invokeGetter(entry.key);
+      final typeConverter = mappedConverters[entry.value.type];
+      serializedEntityMap[entry.value.dbColumnName] = typeConverter == null ? value : typeConverter.toDbType(value);
+    }
+
+    if (serializedEntityMap[_primaryKey] == null) serializedEntityMap.remove(_primaryKey);
+    if (!entityMeta.timestamps) {
+      serializedEntityMap
+        ..remove(entityMeta.createdAtColumn)
+        ..remove(entityMeta.updatedAtColumn);
+    }
+
+    return serializedEntityMap;
+  }
 }
 
 @Target({TargetKind.classType})
@@ -111,10 +135,20 @@ class EntityMeta {
   final String createdAtColumn;
   final String updatedAtColumn;
 
-  const EntityMeta(
-      {required this.table,
-      this.primaryKey = 'id',
-      this.timestamps = false,
-      this.createdAtColumn = entityCreatedAtColumnName,
-      this.updatedAtColumn = entityUpdatedAtColumnName});
+  final List<EntityTypeConverter> converters;
+
+  const EntityMeta({
+    required this.table,
+    this.primaryKey = 'id',
+    this.timestamps = false,
+    this.createdAtColumn = entityCreatedAtColumnName,
+    this.updatedAtColumn = entityUpdatedAtColumnName,
+    this.converters = const [],
+  });
+}
+
+@Target({TargetKind.field})
+class EntityProperty {
+  final String? name;
+  const EntityProperty({this.name});
 }

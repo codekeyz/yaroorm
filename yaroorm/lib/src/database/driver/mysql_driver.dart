@@ -209,6 +209,11 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
     statements.add(_getColumn(name, 'TIME', nullable: nullable, defaultValue: defaultValue));
   }
 
+  @override
+  void boolean(String name, {bool nullable = false, bool? defaultValue}) {
+    statements.add(_getColumn(name, 'BOOLEAN', nullable: nullable, defaultValue: defaultValue));
+  }
+
   /// NUMERIC TYPES
   /// ----------------------------------------------------------------
 
@@ -373,5 +378,11 @@ class MySqlPrimitiveSerializer extends SqliteSerializer {
       ..write(terminator);
 
     return queryBuilder.toString();
+  }
+
+  @override
+  Map<String, dynamic> conformToEntity(Type type, Map<String, dynamic> dataFromDb) {
+    // TODO: implement conformToEntity
+    return super.conformToEntity(type, dataFromDb);
   }
 }
