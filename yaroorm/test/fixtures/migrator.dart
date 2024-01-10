@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:meta/meta.dart';
+import 'package:test/test.dart';
 import 'package:yaroorm/migration/cli.dart';
 import 'package:yaroorm/yaroorm.dart';
 
@@ -13,4 +17,14 @@ void main(List<String> args) async {
   DB.init(conf.config);
 
   await MigratorCLI.processCmd(args[0], cmdArguments: args.sublist(1));
+}
+
+@visibleForTesting
+Future<void> runMigrator(String connectionName, String command) async {
+  final commands = ['run', 'test/fixtures/migrator.dart', command, '--database=$connectionName'];
+  print('> dart ${commands.join(' ')}\n');
+
+  final result = await Process.run('dart', commands);
+  stderr.write(result.stderr);
+  expect(result.exitCode, 0);
 }

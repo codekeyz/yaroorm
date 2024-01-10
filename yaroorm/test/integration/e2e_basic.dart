@@ -1,27 +1,14 @@
-import 'dart:io';
-
 import 'package:test/test.dart';
 import 'package:yaroorm/yaroorm.dart';
 
+import '../fixtures/migrator.dart';
 import '../fixtures/test_data.dart';
 
-void runIntegrationTest(String connectionName) {
+void runBasicE2ETest(String connectionName) {
   final driver = DB.driver(connectionName);
 
-  Future<void> runMigrator(String command) async {
-    final commands = ['run', 'test/fixtures/migrator.dart', command, '--database=$connectionName'];
-    print('Starting Execution: dart ${commands.join(' ')}');
-
-    final result = await Process.run('dart', commands);
-    stdout.write(result.stdout);
-    stderr.write(result.stderr);
-    expect(result.exitCode, 0);
-  }
-
-  return group('Integration Test with ${driver.type.name} driver', () {
+  return group('with ${driver.type.name} driver', () {
     test('driver should connect', () async {
-      final driver = DB.driver(connectionName);
-
       await driver.connect();
 
       expect(driver.isOpen, isTrue);
@@ -30,18 +17,18 @@ void runIntegrationTest(String connectionName) {
     test('should have no tables', () async {
       final result = await Future.wait([
         driver.hasTable('users'),
-        driver.hasTable('tasks'),
+        driver.hasTable('todos'),
       ]);
 
       expect(result.every((e) => e), isFalse);
     });
 
     test('should execute migration', () async {
-      await runMigrator('migrate');
+      await runMigrator(connectionName, 'migrate');
 
       final result = await Future.wait([
         driver.hasTable('users'),
-        driver.hasTable('tasks'),
+        driver.hasTable('todos'),
       ]);
 
       expect(result.every((e) => e), isTrue);
@@ -57,24 +44,25 @@ void runIntegrationTest(String connectionName) {
 
     test('should insert many users', () async {
       final remainingUsers = usersTestData.sublist(1).map((e) => e.to_db_data).toList();
-      await Query.table<User>().driver(driver).insertMany(remainingUsers);
+      final userQuery = Query.table<User>().driver(driver);
+      await userQuery.insertMany(remainingUsers);
 
-      final users = await Query.table<User>().driver(driver).all();
+      final users = await userQuery.all();
 
       expect(users.length, usersTestData.length);
     });
 
     test('should update user', () async {
-      var user = await Query.table<User>().driver(driver).get();
+      final userQuery = Query.table<User>().driver(driver);
+
+      var user = await userQuery.get();
       expect(user, isNotNull);
       final userId = user?.id;
       expect(userId, 1);
 
-      await Query.table<User>()
-          .driver(driver)
-          .update(where: (where) => where.whereEqual('id', userId), values: {'firstname': 'Red Oil'}).exec();
+      await userQuery.update(where: (where) => where.whereEqual('id', userId), values: {'firstname': 'Red Oil'}).exec();
 
-      user = await Query.table<User>().driver(driver).get(userId);
+      user = await userQuery.get(userId!);
       expect(user, isNotNull);
 
       user as User;
@@ -83,71 +71,76 @@ void runIntegrationTest(String connectionName) {
     });
 
     test('should update many users', () async {
-      final age50Users = Query.table<User>().driver(driver).whereEqual('age', 50);
+      final userQuery = Query.table<User>().driver(driver);
+
+      final age50Users = userQuery.whereEqual('age', 50);
       final usersWithAge50 = await age50Users.findMany();
       expect(usersWithAge50.length, 4);
       expect(usersWithAge50.every((e) => e.age == 50), isTrue);
 
-      await Query.table<User>()
-          .driver(driver)
-          .update(where: (query) => query.whereEqual('age', 50), values: {'home_address': 'Keta Lagoon'}).exec();
+      await userQuery
+          .update(where: (query) => query.whereEqual('age', 50), values: {'home_address': 'Keta, Ghana'}).exec();
 
       final updatedResult = await age50Users.findMany();
       expect(updatedResult.length, 4);
       expect(updatedResult.every((e) => e.age == 50), isTrue);
-      expect(updatedResult.every((e) => e.homeAddress == 'Keta Lagoon'), isTrue);
+      expect(updatedResult.every((e) => e.homeAddress == 'Keta, Ghana'), isTrue);
     });
 
-    test('should fetch only 23 users in Lagos Nigeria', () async {
-      final age50Users = await Query.table<User>()
-          .driver(driver)
-          .whereIn('home_address', ['Lagos, Nigeria'])
-          .orderByDesc('age')
-          .take(23);
+    test('should fetch only users in Ghana', () async {
+      final userQuery = Query.table<User>().driver(driver);
 
-      expect(age50Users.length, 23);
-      expect(age50Users.every((e) => e.homeAddress == 'Lagos, Nigeria'), isTrue);
+      final query = userQuery.whereLike('home_address', '%, Ghana').orderByDesc('age');
+      final usersInGhana = await query.findMany();
+      expect(usersInGhana.length, 10);
+      expect(usersInGhana.every((e) => e.homeAddress.contains('Ghana')), isTrue);
+
+      final take4 = await query.take(4);
+      expect(take4.length, 4);
     });
 
     test('should get all users between age 35 and 50', () async {
-      final age50Users =
-          await Query.table<User>().driver(driver).whereBetween('age', [35, 50]).orderByDesc('age').findMany();
+      final userQuery = Query.table<User>().driver(driver);
+
+      final age50Users = await userQuery.whereBetween('age', [35, 50]).orderByDesc('age').findMany();
       expect(age50Users.length, 19);
       expect(age50Users.first.age, 50);
       expect(age50Users.last.age, 35);
     });
 
     test('should get all users in somewhere in Nigeria', () async {
-      final users = await Query.table<User>()
-          .driver(driver)
-          .whereLike('home_address', '%, Nigeria')
-          .orderByAsc('home_address')
-          .findMany();
+      final userQuery = Query.table<User>().driver(driver);
 
-      expect(users.length, 33);
+      final users = await userQuery.whereLike('home_address', '%, Nigeria').orderByAsc('home_address').findMany();
+
+      expect(users.length, 18);
       expect(users.first.homeAddress, 'Abuja, Nigeria');
       expect(users.last.homeAddress, 'Owerri, Nigeria');
     });
 
     test('should get all users where age is 30 or 52', () async {
-      final users = await Query.table<User>().driver(driver).whereEqual('age', 30).orWhere('age', '=', 52).findMany();
+      final userQuery = Query.table<User>().driver(driver);
+
+      final users = await userQuery.whereEqual('age', 30).orWhere('age', '=', 52).findMany();
       expect(users.every((e) => [30, 52].contains(e.age)), isTrue);
     });
 
     test('should delete user', () async {
-      final query = Query.table<User>().driver(driver);
+      final userQuery = Query.table<User>().driver(driver);
 
-      final userOne = await query.get();
+      final userOne = await userQuery.get();
       expect(userOne, isNotNull);
 
       await userOne!.delete();
 
-      final usersAfterDelete = await query.all();
+      final usersAfterDelete = await userQuery.all();
       expect(usersAfterDelete.any((e) => e.id == userOne.id), isFalse);
     });
 
     test('should delete many users', () async {
-      final query = Query.table<User>().driver(driver).whereIn('home_address', ['Lagos, Nigeria']);
+      final userQuery = Query.table<User>().driver(driver);
+
+      final query = userQuery.whereLike('home_address', '%, Nigeria');
 
       final users = await query.findMany();
       expect(users, isNotEmpty);
@@ -159,12 +152,9 @@ void runIntegrationTest(String connectionName) {
     });
 
     test('should drop tables', () async {
-      await runMigrator('migrate:reset');
+      await runMigrator(connectionName, 'migrate:reset');
 
-      final result = await Future.wait([
-        driver.hasTable('users'),
-        driver.hasTable('tasks'),
-      ]);
+      final result = await Future.wait([driver.hasTable('users'), driver.hasTable('todos')]);
 
       expect(result.every((e) => e), isFalse);
     });

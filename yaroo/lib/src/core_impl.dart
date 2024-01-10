@@ -8,8 +8,6 @@ class _YarooAppImpl implements Application {
 
   ViewEngine? _viewEngine;
 
-  ApplicationExceptionsHandler? _exceptionsHandler;
-
   _YarooAppImpl(this._appConfig, this._spanner);
 
   @override
@@ -27,18 +25,6 @@ class _YarooAppImpl implements Application {
   @override
   void useViewEngine(ViewEngine viewEngine) => _viewEngine = viewEngine;
 
-  FutureOr<Response> onException(Object error, Request request, Response response) {
-    if (_exceptionsHandler != null) return _exceptionsHandler!.call(error, (req: request, res: response));
-
-    if (error is RequestValidationError) {
-      return response.json(error.errorBody, statusCode: HttpStatus.badRequest);
-    } else if (error is SpannerRouteValidatorError) {
-      return response.json({'error': error.toString()}, statusCode: HttpStatus.badRequest);
-    }
-
-    return response.internalServerError(error.toString());
-  }
-
   @override
   AppConfig get config => _appConfig;
 
@@ -51,13 +37,13 @@ class _YarooAppImpl implements Application {
   @override
   int get port => config.port;
 
-  Pharaoh _createPharaohInstance() => Pharaoh()
-    ..useSpanner(_spanner)
-    ..onError(onException)
-    ..viewEngine = _viewEngine;
-
-  @override
-  void useErrorHandler(ApplicationExceptionsHandler handler) {
-    _exceptionsHandler = handler;
+  Pharaoh _createPharaohInstance({
+    FutureOr<Response> Function(Object error, Request req, Response res)? onException,
+  }) {
+    final pharaoh = Pharaoh()
+      ..useSpanner(_spanner)
+      ..viewEngine = _viewEngine;
+    if (onException != null) pharaoh.onError(onException);
+    return pharaoh;
   }
 }
