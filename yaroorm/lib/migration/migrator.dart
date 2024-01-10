@@ -19,9 +19,6 @@ class MigrationData extends Entity<int, MigrationData> {
 
   @override
   Map<String, dynamic> toJson() => {'id': id, 'migration': migration, 'batch': batch};
-
-  @override
-  bool get enableTimestamps => false;
 }
 
 class Migrator {

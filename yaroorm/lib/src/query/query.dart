@@ -9,7 +9,7 @@ import '../reflection/util.dart';
 part 'query_impl.dart';
 
 mixin ReadOperation<Result> {
-  Future<Result?> get([dynamic id]);
+  Future<Result?> get([Object id]);
 
   Future<List<Result>> all();
 }

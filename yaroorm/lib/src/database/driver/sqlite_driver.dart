@@ -7,6 +7,7 @@ import 'package:yaroorm/migration.dart';
 import '../../primitives/serializer.dart';
 import '../../primitives/where.dart';
 import '../../query/query.dart';
+import '../../reflection/reflector.dart';
 import '../entity.dart';
 import 'driver.dart';
 
@@ -73,14 +74,14 @@ class SqliteDriver implements DatabaseDriver {
   @override
   Future<int> update(UpdateQuery query) async {
     final sql = _serializer.acceptUpdateQuery(query);
-    final values = _serializer.conformDartTypeToDbType(query.data).values.toList();
+    final values = _serializer.conformToDBTypes(query.data).values.toList();
     return (await _getDatabase()).rawUpdate(sql, values);
   }
 
   @override
   Future<int> insert(InsertQuery query) async {
     final sql = _serializer.acceptInsertQuery(query);
-    final values = _serializer.conformDartTypeToDbType(query.data).values.toList();
+    final values = _serializer.conformToDBTypes(query.data).values.toList();
     return (await _getDatabase()).rawInsert(sql, values);
   }
 
@@ -148,13 +149,13 @@ class _SqliteTransactor implements DriverTransactor {
   @override
   Future<int> insert(InsertQuery query) {
     final sql = _serializer.acceptInsertQuery(query);
-    return _txn.rawInsert(sql, _serializer.conformDartTypeToDbType(query.data).values.toList());
+    return _txn.rawInsert(sql, _serializer.conformToDBTypes(query.data).values.toList());
   }
 
   @override
   Future<void> update(UpdateQuery query) {
     final sql = _serializer.acceptUpdateQuery(query);
-    return _txn.rawUpdate(sql, _serializer.conformDartTypeToDbType(query.data).values.toList());
+    return _txn.rawUpdate(sql, _serializer.conformToDBTypes(query.data).values.toList());
   }
 
   @override
@@ -319,12 +320,29 @@ class SqliteSerializer implements PrimitiveSerializer {
       };
 
   @override
-  Map<String, dynamic> conformDartTypeToDbType(Map<String, dynamic> data) {
+  Map<String, dynamic> conformToDBTypes(Map<String, dynamic> data) {
     for (final entry in data.entries) {
       final value = entry.value;
       if (value is bool) data[entry.key] = value ? 1 : 0;
     }
     return data;
+  }
+
+  _conformDBTypeToEntity(Type type, dynamic value) => switch (type) {
+        const (bool) => value == 0 ? false : true,
+        _ => value,
+      };
+
+  @override
+  Map<String, dynamic> conformToEntity(Type type, Map<String, dynamic> dataFromDb) {
+    final props = getEntityProperties(type).entries;
+    final conformedMap = Map<String, dynamic>.from(dataFromDb);
+
+    for (final entry in props) {
+      conformedMap[entry.key] = _conformDBTypeToEntity(entry.value, dataFromDb[entry.key]);
+    }
+
+    return conformedMap;
   }
 
   @override

@@ -71,7 +71,7 @@ final usersTestData = <User>[
   User(firstname: 'Nneka', lastname: 'Okoli', age: 45, homeAddress: "Nairobi, Kenya"),
 ];
 
-@EntityMeta(table: 'todos')
+@EntityMeta(table: 'todos', timestamps: true)
 class Todo extends Entity<int, Todo> {
   final String title;
   final String description;
@@ -96,12 +96,10 @@ class Todo extends Entity<int, Todo> {
         'updatedAt': updatedAt?.toIso8601String(),
       };
 
-  static Todo fromJson(Map<String, dynamic> json) =>
-      Todo(json['title'], json['desc'], ownerId: json['ownerId'], completed: json['completed'])
-        ..id = json['id']
-        ..createdAt = DateTime.tryParse(json['createdAt'])
-        ..updatedAt = DateTime.tryParse(json['updatedAt']);
-
-  @override
-  bool get enableTimestamps => true;
+  static Todo fromJson(Map<String, dynamic> json) {
+    return Todo(json['title'], json['description'], ownerId: json['ownerId'], completed: json['completed'])
+      ..id = json['id']
+      ..createdAt = DateTime.tryParse(json['createdAt'])
+      ..updatedAt = DateTime.tryParse(json['updatedAt']);
+  }
 }

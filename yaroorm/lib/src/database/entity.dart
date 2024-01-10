@@ -31,15 +31,23 @@ abstract class Entity<PkType, Model> {
 
   Map<String, dynamic> toJson();
 
+  EntityMeta? _entityMetaCache;
+
+  @visibleForTesting
+  EntityMeta get entityMeta {
+    if (_entityMetaCache != null) return _entityMetaCache!;
+    return _entityMetaCache = getEntityMetaData(Model) ?? EntityMeta(table: getEntityTableName(Model));
+  }
+
   @nonVirtual
   // ignore: non_constant_identifier_names
   Map<String, dynamic> get to_db_data {
     final mapData = toJson();
     if (mapData[_primaryKey] == null && !allowInsertIdAsNull) mapData.remove(_primaryKey);
-    if (!enableTimestamps) {
+    if (!entityMeta.timestamps) {
       mapData
-        ..remove(createdAtColumn)
-        ..remove(updatedAtColumn);
+        ..remove(entityMeta.createdAtColumn)
+        ..remove(entityMeta.updatedAtColumn);
     }
     return mapData;
   }
@@ -54,7 +62,7 @@ abstract class Entity<PkType, Model> {
   String? _primaryKeyCache;
   String get _primaryKey {
     if (_primaryKeyCache != null) return _primaryKeyCache!;
-    return _primaryKeyCache = getEntityPrimaryKey(runtimeType);
+    return _primaryKeyCache = getEntityPrimaryKey(Model);
   }
 
   Model withDriver(DriverContract driver) {
@@ -71,7 +79,7 @@ abstract class Entity<PkType, Model> {
 
   @nonVirtual
   Future<Model> save() async {
-    if (enableTimestamps) {
+    if (entityMeta.timestamps) {
       final now = DateTime.now().toUtc();
       createdAt ??= now;
       updatedAt ??= now;
@@ -82,20 +90,14 @@ abstract class Entity<PkType, Model> {
 
   @nonVirtual
   Future<Model?> update(Map<String, dynamic> values) async {
-    if (enableTimestamps && !values.containsKey(updatedAtColumn)) {
+    if (entityMeta.timestamps && !values.containsKey(entityMeta.updatedAtColumn)) {
       values = Map.from(values);
-      values[updatedAtColumn] = DateTime.now().toUtc().toIso8601String();
+      values[entityMeta.updatedAtColumn] = DateTime.now().toUtc().toIso8601String();
     }
 
     await query.update(where: _whereId, values: values).exec();
     return query.get();
   }
-
-  bool get enableTimestamps => false;
-
-  String get createdAtColumn => entityCreatedAtColumnName;
-
-  String get updatedAtColumn => entityUpdatedAtColumnName;
 
   bool get allowInsertIdAsNull => false;
 }
@@ -104,5 +106,15 @@ abstract class Entity<PkType, Model> {
 class EntityMeta {
   final String table;
   final String primaryKey;
-  const EntityMeta({required this.table, this.primaryKey = 'id'});
+  final bool timestamps;
+
+  final String createdAtColumn;
+  final String updatedAtColumn;
+
+  const EntityMeta(
+      {required this.table,
+      this.primaryKey = 'id',
+      this.timestamps = false,
+      this.createdAtColumn = entityCreatedAtColumnName,
+      this.updatedAtColumn = entityUpdatedAtColumnName});
 }

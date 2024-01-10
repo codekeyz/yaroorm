@@ -357,7 +357,7 @@ class MySqlPrimitiveSerializer extends SqliteSerializer {
   }
 
   @override
-  Map<String, dynamic> conformDartTypeToDbType(Map<String, dynamic> data) => data;
+  Map<String, dynamic> conformToDBTypes(Map<String, dynamic> data) => data;
 
   @override
   String acceptUpdateQuery(UpdateQuery query) {
