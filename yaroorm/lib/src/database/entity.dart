@@ -16,8 +16,6 @@ const entity = ReflectableEntity();
 const String entityCreatedAtColumnName = 'createdAt';
 const String entityUpdatedAtColumnName = 'updatedAt';
 
-const String entityFromJsonStaticFuncName = 'fromJson';
-
 @entity
 abstract class Entity<PkType, Model> {
   Entity() {
