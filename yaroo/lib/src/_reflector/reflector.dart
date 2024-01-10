@@ -17,6 +17,7 @@ class Injectable extends r.Reflectable {
           r.declarationsCapability,
           r.reflectedTypeCapability,
           r.typeRelationsCapability,
+          r.libraryCapability,
           const r.InstanceInvokeCapability('^[^_]'),
           r.subtypeQuantifyCapability,
         );

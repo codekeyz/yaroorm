@@ -6,7 +6,7 @@ import 'package:yaroo/http/meta.dart';
 
 import '../src/core.dart';
 
-abstract class Kernel extends AppInstance {
+abstract class Kernel with AppInstance {
   Kernel();
 
   /// The application's global HTTP middleware stack.
