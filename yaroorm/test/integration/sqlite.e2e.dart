@@ -13,7 +13,7 @@ void main() async {
   DB.init(db.config);
 
   group('SQLite', () {
-    // group('Basic E2E Test', () => runBasicE2ETest('foo_sqlite'));
+    group('Basic E2E Test', () => runBasicE2ETest('foo_sqlite'));
 
     group('Relation E2E Test', () => runRelationsE2ETest('foo_sqlite'));
   });
