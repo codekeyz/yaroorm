@@ -8,7 +8,7 @@ import '_pharaoh.dart';
 export '_pharaoh.dart';
 
 @inject
-abstract class Middleware with AppInstance {
+abstract class Middleware extends AppInstance {
   handle(Request req, Response res, NextFunction next) {
     next();
   }
@@ -17,7 +17,7 @@ abstract class Middleware with AppInstance {
 }
 
 @inject
-abstract class HTTPController with AppInstance {
+abstract class HTTPController extends AppInstance {
   late final Request request;
 
   late final Response response;
@@ -59,7 +59,7 @@ abstract class HTTPController with AppInstance {
 }
 
 @inject
-abstract class ServiceProvider with AppInstance {
+abstract class ServiceProvider extends AppInstance {
   static List<Type> get defaultProviders => [];
 
   void boot() {}

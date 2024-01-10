@@ -18,7 +18,7 @@ typedef RoutesResolver = List<RouteDefinition> Function();
 
 /// This should really be a mixin but due to a bug in reflectable.dart#324
 /// TODO:(codekeyz) make this a mixin when reflectable.dart#324 is fixed
-mixin AppInstance {
+abstract class AppInstance {
   Application get app => Application.instance;
 }
 
