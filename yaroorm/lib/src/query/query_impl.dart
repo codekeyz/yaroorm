@@ -59,8 +59,7 @@ class QueryImpl<Result> extends Query<Result> {
   /// [T] is the expected type passed to [Query] via Query<T>
   T _wrapRawResult<T>(Map<String, dynamic>? result) {
     if (T == dynamic || result == null) return result as dynamic;
-    result = _queryDriver!.serializer.conformToEntity(T, result);
-    return (jsonToEntity<T>(result) as Entity).withDriver(_queryDriver!) as T;
+    return (recordToEntity<T>(result)).withDriver(_queryDriver!) as T;
   }
 
   @override

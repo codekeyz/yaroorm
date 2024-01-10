@@ -1,9 +1,13 @@
+import 'package:collection/collection.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:reflectable/reflectable.dart';
+
+import 'package:yaroorm/yaroorm.dart';
 import 'package:meta/meta.dart';
 import 'package:meta/meta_meta.dart';
-import 'package:yaroorm/yaroorm.dart';
 
 import '../primitives/where.dart';
+import '../reflection/util.dart';
 
 part 'type_converter.dart';
 
@@ -36,10 +40,7 @@ abstract class Entity<PkType, Model> {
   EntityMeta? _entityMetaCache;
 
   @visibleForTesting
-  EntityMeta get entityMeta {
-    if (_entityMetaCache != null) return _entityMetaCache!;
-    return _entityMetaCache = getEntityMetaData(Model) ?? EntityMeta(table: getEntityTableName(Model));
-  }
+  EntityMeta get entityMeta => _entityMetaCache ??= getEntityMetaData(Model);
 
   @JsonKey(includeToJson: false, includeFromJson: false)
   DriverContract _driver = DB.defaultDriver;
@@ -48,12 +49,6 @@ abstract class Entity<PkType, Model> {
   @JsonKey(includeToJson: false, includeFromJson: false)
   String? get connection => null;
 
-  String? _primaryKeyCache;
-  String get _primaryKey {
-    if (_primaryKeyCache != null) return _primaryKeyCache!;
-    return _primaryKeyCache = getEntityPrimaryKey(Model);
-  }
-
   Model withDriver(DriverContract driver) {
     _driver = driver;
     return this as Model;
@@ -61,7 +56,7 @@ abstract class Entity<PkType, Model> {
 
   Query<Model> get query => DB.query<Model>().driver(_driver);
 
-  WhereClause<Model> _whereId(Query<Model> _) => _.whereEqual(_primaryKey, id);
+  WhereClause<Model> _whereId(Query<Model> q) => q.whereEqual(entityMeta.primaryKey, id);
 
   @nonVirtual
   Future<void> delete() => query.delete(_whereId).exec();
@@ -90,40 +85,7 @@ abstract class Entity<PkType, Model> {
 
   @nonVirtual
   // ignore: non_constant_identifier_names
-  Map<String, dynamic> get to_db_data => _entityToDbData(this);
-
-  Map<String, dynamic> _entityToDbData<T extends Entity>(T instance) {
-    final entityProperties = getEntityProperties(instance.runtimeType);
-    final mappedConverters =
-        entityMeta.converters.fold(<Type, EntityTypeConverter>{}, (preV, e) => preV..[e._dartType] = e);
-
-    /// automatically attach DateTime converter if timestamps enabled
-    if (entityMeta.timestamps && (mappedConverters.isEmpty || mappedConverters[DateTime] == null)) {
-      mappedConverters[DateTime] = _dateTimeConverter;
-    }
-
-    /// add boolean converter
-    if (mappedConverters.isEmpty || mappedConverters[bool] == null) {
-      mappedConverters[bool] = _booleanConverter;
-    }
-
-    final instanceMirror = entity.reflect(instance);
-    final serializedEntityMap = <String, dynamic>{};
-    for (final entry in entityProperties.entries) {
-      final value = instanceMirror.invokeGetter(entry.key);
-      final typeConverter = mappedConverters[entry.value.type];
-      serializedEntityMap[entry.value.dbColumnName] = typeConverter == null ? value : typeConverter.toDbType(value);
-    }
-
-    if (serializedEntityMap[_primaryKey] == null) serializedEntityMap.remove(_primaryKey);
-    if (!entityMeta.timestamps) {
-      serializedEntityMap
-        ..remove(entityMeta.createdAtColumn)
-        ..remove(entityMeta.updatedAtColumn);
-    }
-
-    return serializedEntityMap;
-  }
+  Map<String, dynamic> get to_db_data => _entityToRecord(this);
 }
 
 @Target({TargetKind.classType})
@@ -143,7 +105,7 @@ class EntityMeta {
     this.timestamps = false,
     this.createdAtColumn = entityCreatedAtColumnName,
     this.updatedAtColumn = entityUpdatedAtColumnName,
-    this.converters = const [],
+    this.converters = const [_dateTimeConverter, _booleanConverter],
   });
 }
 

@@ -73,15 +73,13 @@ class SqliteDriver implements DatabaseDriver {
   @override
   Future<int> update(UpdateQuery query) async {
     final sql = _serializer.acceptUpdateQuery(query);
-    final values = _serializer.conformToDBTypes(query.data).values.toList();
-    return (await _getDatabase()).rawUpdate(sql, values);
+    return (await _getDatabase()).rawUpdate(sql, query.data.values.toList());
   }
 
   @override
   Future<int> insert(InsertQuery query) async {
     final sql = _serializer.acceptInsertQuery(query);
-    final values = _serializer.conformToDBTypes(query.data).values.toList();
-    return (await _getDatabase()).rawInsert(sql, values);
+    return (await _getDatabase()).rawInsert(sql, query.data.values.toList());
   }
 
   @override
@@ -148,13 +146,13 @@ class _SqliteTransactor implements DriverTransactor {
   @override
   Future<int> insert(InsertQuery query) {
     final sql = _serializer.acceptInsertQuery(query);
-    return _txn.rawInsert(sql, _serializer.conformToDBTypes(query.data).values.toList());
+    return _txn.rawInsert(sql, query.data.values.toList());
   }
 
   @override
   Future<void> update(UpdateQuery query) {
     final sql = _serializer.acceptUpdateQuery(query);
-    return _txn.rawUpdate(sql, _serializer.conformToDBTypes(query.data).values.toList());
+    return _txn.rawUpdate(sql, query.data.values.toList());
   }
 
   @override
@@ -317,20 +315,6 @@ class SqliteSerializer implements PrimitiveSerializer {
         const (List<int>) || const (List<num>) || const (List<double>) => '(${dartValue.join(', ')})',
         _ => "'$dartValue'"
       };
-
-  @override
-  Map<String, dynamic> conformToDBTypes(Map<String, dynamic> data) {
-    for (final entry in data.entries) {
-      final value = entry.value;
-      if (value is bool) data[entry.key] = value ? 1 : 0;
-    }
-    return data;
-  }
-
-  @override
-  Map<String, dynamic> conformToEntity(Type type, Map<String, dynamic> dataFromDb) {
-    return dataFromDb;
-  }
 
   @override
   String acceptWhereClauseValue(WhereClauseValue clauseVal) {

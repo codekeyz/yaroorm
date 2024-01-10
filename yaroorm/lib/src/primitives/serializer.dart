@@ -26,10 +26,6 @@ abstract class PrimitiveSerializer {
 
   dynamic acceptPrimitiveValue(dynamic value);
 
-  Map<String, dynamic> conformToDBTypes(Map<String, dynamic> data);
-
-  Map<String, dynamic> conformToEntity(Type type, Map<String, dynamic> dataFromDb);
-
   String acceptForeignKey(TableBlueprint blueprint, ForeignKey key);
 
   String get terminator;

@@ -31,11 +31,14 @@ r.ClassMirror reflectType(Type type) {
   }
 }
 
-String getEntityTableName(Type type) => getEntityMetaData(type)?.table ?? type.toString().snakeCase.toPlural().first;
+String getEntityTableName(Type type) => getEntityMetaData(type).table;
 
-String getEntityPrimaryKey(Type type) => getEntityMetaData(type)?.primaryKey ?? 'id';
+String getEntityPrimaryKey(Type type) => getEntityMetaData(type).primaryKey;
 
-EntityMeta? getEntityMetaData(Type type) => reflectType(type).metadata.whereType<EntityMeta>().firstOrNull;
+EntityMeta getEntityMetaData(Type type) {
+  return reflectType(type).metadata.whereType<EntityMeta>().firstOrNull ??
+      EntityMeta(table: type.toString().snakeCase.toPlural().first);
+}
 
 class EntityPropertyData {
   final String dartName;
@@ -45,8 +48,9 @@ class EntityPropertyData {
   const EntityPropertyData(this.dartName, this.dbColumnName, this.type);
 }
 
-Map<String, EntityPropertyData> getEntityProperties(Type type) {
-  final classMirror = reflectType(type);
+Map<String, EntityPropertyData> getEntityProperties(Type type, {ClassMirror? classMirror}) {
+  classMirror ??= reflectType(type);
+
   final metadata = classMirror.metadata.whereType<EntityMeta>().firstOrNull;
 
   final typeProps = classMirror.declarations.values

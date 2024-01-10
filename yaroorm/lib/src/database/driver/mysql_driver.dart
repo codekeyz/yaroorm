@@ -362,9 +362,6 @@ class MySqlPrimitiveSerializer extends SqliteSerializer {
   }
 
   @override
-  Map<String, dynamic> conformToDBTypes(Map<String, dynamic> data) => data;
-
-  @override
   String acceptUpdateQuery(UpdateQuery query) {
     final queryBuilder = StringBuffer();
 
@@ -378,11 +375,5 @@ class MySqlPrimitiveSerializer extends SqliteSerializer {
       ..write(terminator);
 
     return queryBuilder.toString();
-  }
-
-  @override
-  Map<String, dynamic> conformToEntity(Type type, Map<String, dynamic> dataFromDb) {
-    // TODO: implement conformToEntity
-    return super.conformToEntity(type, dataFromDb);
   }
 }
