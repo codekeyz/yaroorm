@@ -148,6 +148,6 @@ abstract class ApplicationFactory {
   @visibleForTesting
   Future<spookie.Spookie> get tester {
     final app = (Application.instance as _YarooAppImpl);
-    return spookie.request(app._createPharaohInstance());
+    return spookie.request(app._createPharaohInstance(onException: _appKernel.onApplicationException));
   }
 }
