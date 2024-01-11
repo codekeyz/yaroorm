@@ -40,5 +40,5 @@ final config = YaroormConfig.from({
     },
   },
   'migrations_table': 'migrations',
-  'migrations': [AddUsersTable()]
+  'migrations': [AddUsersTable(), AddTodosTable()]
 });

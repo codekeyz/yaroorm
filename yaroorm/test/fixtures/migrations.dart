@@ -1,5 +1,7 @@
 import 'package:yaroorm/migration.dart';
 
+import 'test_data.dart';
+
 class AddUsersTable extends Migration {
   @override
   void up(List<Schema> schemas) {
@@ -12,21 +14,35 @@ class AddUsersTable extends Migration {
         ..string('home_address');
     });
 
-    final taskSchema = Schema.create('tasks', (table) {
-      return table
-        ..id()
-        ..string('title')
-        ..string('description')
-        ..boolean('completed', defaultValue: false)
-        ..integer('user_id');
-    });
-
-    schemas.addAll([userSchema, taskSchema]);
+    schemas.add(userSchema);
   }
 
   @override
   void down(List<Schema> schemas) {
     schemas.add(Schema.dropIfExists('users'));
-    schemas.add(Schema.dropIfExists('tasks'));
   }
+}
+
+class AddTodosTable extends Migration {
+  @override
+  void up(List<Schema> schemas) {
+    final schema = Schema.create('todos', (table) {
+      return table
+        ..id()
+        ..integer('ownerId')
+        ..string('title')
+        ..string('description')
+        ..boolean('completed', defaultValue: false)
+        ..foreign<Todo, User>(
+          'ownerId',
+          onKey: (key) => key.actions(onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.cascade),
+        )
+        ..timestamps();
+    });
+
+    schemas.add(schema);
+  }
+
+  @override
+  void down(List<Schema> schemas) => schemas.add(Schema.dropIfExists('todos'));
 }

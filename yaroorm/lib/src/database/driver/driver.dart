@@ -5,6 +5,8 @@ import '../../primitives/serializer.dart';
 import '../../query/query.dart';
 import '../../../migration.dart';
 
+import '../entity.dart';
+import 'mysql_driver.dart';
 import 'sqlite_driver.dart';
 
 enum DatabaseDriverType { sqlite, pgsql, mysql, mariadb }
@@ -97,6 +99,8 @@ mixin DriverContract {
   Future<dynamic> insertMany(InsertManyQuery query);
 
   PrimitiveSerializer get serializer;
+
+  List<EntityTypeConverter> get typeconverters => [];
 }
 
 abstract class DriverTransactor with DriverContract {}
