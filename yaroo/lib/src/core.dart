@@ -1,11 +1,9 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'dart:async';
-import 'dart:io';
 
 import 'package:meta/meta.dart';
 import 'package:spookie/spookie.dart' as spookie;
-import 'package:yaroo/http/meta.dart';
 
 import '../../http/http.dart';
 import '../../http/kernel.dart';
@@ -47,8 +45,6 @@ abstract interface class Application {
   void useRoutes(RoutesResolver routeResolver);
 
   void useViewEngine(ViewEngine viewEngine);
-
-  void useErrorHandler(ApplicationExceptionsHandler handler);
 }
 
 abstract class ApplicationFactory {
@@ -69,7 +65,7 @@ abstract class ApplicationFactory {
   Future<void> startServer() async {
     final app = Application.instance as _YarooAppImpl;
 
-    await app._createPharaohInstance().listen(port: app.port);
+    await app._createPharaohInstance(onException: _appKernel.onApplicationException).listen(port: app.port);
   }
 
   Future<void> _bootstrapComponents(AppConfig config) async {
@@ -152,6 +148,6 @@ abstract class ApplicationFactory {
   @visibleForTesting
   Future<spookie.Spookie> get tester {
     final app = (Application.instance as _YarooAppImpl);
-    return spookie.request(app._createPharaohInstance());
+    return spookie.request(app._createPharaohInstance(onException: _appKernel.onApplicationException));
   }
 }
