@@ -28,12 +28,7 @@ class Todo extends Entity<int, Todo> {
 
   final int? userId;
 
-  Todo(
-    this.title,
-    this.description, {
-    this.userId,
-    this.completed = false,
-  });
+  Todo(this.title, this.description, {this.userId, this.completed = false});
 }
 
 final usersTestData = <User>[

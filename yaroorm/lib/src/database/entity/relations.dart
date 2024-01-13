@@ -5,13 +5,9 @@ abstract class EntityRelation<RelatedModel extends Entity> {
 
   EntityRelation(this.owner);
 
-  DriverContract? _driver;
+  DriverContract get _driver => owner._driver;
 
-  DriverContract get driver => _driver ?? owner._driver;
-
-  withDriver(DriverContract d) => _driver = d;
-
-  Query<RelatedModel> get _query => Query.table<RelatedModel>().driver(driver);
+  Query<RelatedModel> get _query => Query.table<RelatedModel>().driver(_driver);
 
   get();
 }
@@ -22,9 +18,11 @@ class HasOne<RelatedModel extends Entity> extends EntityRelation<RelatedModel> {
   HasOne(this.foreignKey, super._owner);
 
   Future<RelatedModel> set(RelatedModel model) async {
+    model.withDriver(_driver);
+
     final data = model.to_db_data..[foreignKey] = owner.id!;
     data[model.entityMeta.primaryKey] = await _query.insert(data);
-    return serializedPropsToEntity<RelatedModel>(data, converters: driver.typeconverters) as RelatedModel;
+    return serializedPropsToEntity<RelatedModel>(data, converters: _driver.typeconverters) as RelatedModel;
   }
 
   @override
