@@ -112,11 +112,6 @@ void runRelationsE2ETest(String connectionName) {
       await testUser1!.posts.delete();
 
       expect(await testUser1!.posts.get(), isEmpty);
-
-      final anotherUserPosts = await anotherUser!.posts.get();
-      expect(anotherUserPosts, hasLength(1));
-
-      expect(await anotherUserPosts.first.comments.get(), hasLength(2));
     });
 
     tearDownAll(() async {

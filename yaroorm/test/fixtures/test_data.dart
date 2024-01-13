@@ -36,8 +36,6 @@ class PostComment extends Entity<String, PostComment> {
   final int? postId;
 
   PostComment(this.comment, {this.postId});
-
-  HasOne<Post> get post => hasOne<Post>();
 }
 
 final usersTestData = <User>[
