@@ -40,18 +40,15 @@ void runRelationsE2ETest(String connectionName) {
     });
 
     test('should delete todo when User deleted ', () async {
-      final todosQuery = Query.table<Todo>().driver(driver).whereEqual('userId', testUser!.id!);
-
-      var userTodos = await todosQuery.findMany();
-      expect(userTodos, isNotEmpty);
+      final todo = await testUser!.todo.get();
+      expect(todo, isNotNull);
 
       await testUser!.delete();
 
+      expect(await testUser!.todo.get(), isNull);
+
       final user = await Query.table<User>().driver(driver).get(testUser!.id!);
       expect(user, isNull);
-
-      userTodos = await todosQuery.findMany();
-      expect(userTodos, isEmpty);
     });
 
     tearDownAll(() async {

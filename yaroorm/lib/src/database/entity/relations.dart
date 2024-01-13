@@ -22,11 +22,16 @@ class HasOne<RelatedModel extends Entity> extends EntityRelation<RelatedModel> {
 
     final data = model.to_db_data..[foreignKey] = owner.id!;
     data[model.entityMeta.primaryKey] = await _query.insert(data);
-    return serializedPropsToEntity<RelatedModel>(data, converters: _driver.typeconverters) as RelatedModel;
+    return serializedPropsToEntity<RelatedModel>(
+      data,
+      converters: _driver.typeconverters,
+    ).withDriver(_driver) as RelatedModel;
   }
 
   @override
   Future<RelatedModel?> get() => _query.whereEqual(foreignKey, owner.id!).findOne();
+
+  Future<void> delete() => _query.whereEqual(foreignKey, owner.id!).delete();
 }
 
 class HasMany<RelatedModel extends Entity> extends EntityRelation<RelatedModel> {
