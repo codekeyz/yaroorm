@@ -15,20 +15,29 @@ class User extends Entity<int, User> {
     required this.homeAddress,
   });
 
-  HasOne<Todo> get todo => hasOne<Todo>();
-
-  HasMany<Todo> get todos => hasMany<Todo>();
+  HasMany<Post> get posts => hasMany<Post>();
 }
 
-@EntityMeta(table: 'todos', timestamps: true)
-class Todo extends Entity<int, Todo> {
+@EntityMeta(table: 'posts', timestamps: true)
+class Post extends Entity<int, Post> {
   final String title;
   final String description;
-  final bool completed;
 
   final int? userId;
 
-  Todo(this.title, this.description, {this.userId, this.completed = false});
+  Post(this.title, this.description, {this.userId});
+
+  HasMany<PostComment> get comments => hasMany<PostComment>();
+}
+
+@EntityMeta(table: 'post_comments', timestamps: true)
+class PostComment extends Entity<String, PostComment> {
+  final String comment;
+  final int? postId;
+
+  PostComment(this.comment, {this.postId});
+
+  HasOne<Post> get post => hasOne<Post>();
 }
 
 final usersTestData = <User>[

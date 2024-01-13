@@ -12,7 +12,7 @@ abstract class TableBlueprint {
     ForeignKey Function(ForeignKey fkey)? onKey,
   }) {
     final table = getEntityTableName(Model);
-    final colName = column ?? '${ReferenceModel.toString().camelCase.toLowerCase()}Id';
+    final colName = column ?? '${ReferenceModel.toString().camelCase}Id';
 
     final referenceTable = getEntityTableName(ReferenceModel);
     final referenceTablePrimaryKey = getEntityPrimaryKey(ReferenceModel);

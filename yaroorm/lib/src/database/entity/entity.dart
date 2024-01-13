@@ -77,7 +77,7 @@ abstract class Entity<PkType, Model extends Object> {
   Map<String, dynamic> get to_db_data {
     if (entityMeta.timestamps) {
       updatedAt = DateTime.now().toUtc();
-      if (id == null) createdAt = updatedAt;
+      createdAt ??= updatedAt;
     }
     return _serializeEntityProps(this, converters: _driver.typeconverters);
   }
@@ -94,7 +94,9 @@ abstract class Entity<PkType, Model extends Object> {
 @Target({TargetKind.classType})
 class EntityMeta {
   final String table;
+
   final String primaryKey;
+
   final bool timestamps;
 
   final String createdAtColumn;

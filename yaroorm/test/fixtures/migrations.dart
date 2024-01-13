@@ -23,24 +23,36 @@ class AddUsersTable extends Migration {
   }
 }
 
-class AddTodosTable extends Migration {
+class AddPostsTable extends Migration {
   @override
   void up(List<Schema> schemas) {
-    final schema = Schema.create('todos', (table) {
+    final postSchema = Schema.create('posts', (table) {
       return table
         ..id()
         ..integer('userId')
         ..string('title')
         ..string('description')
-        ..boolean('completed', defaultValue: false)
-        ..foreign<Todo, User>(
+        ..foreign<Post, User>(
             onKey: (key) => key.actions(onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.cascade))
         ..timestamps();
     });
 
-    schemas.add(schema);
+    final postCommentSchema = Schema.create('post_comments', (table) {
+      return table
+        ..id(type: 'VARCHAR', autoIncrement: false)
+        ..integer('postId')
+        ..string('comment')
+        ..foreign<PostComment, Post>()
+        ..timestamps();
+    });
+
+    schemas.addAll([postSchema, postCommentSchema]);
   }
 
   @override
-  void down(List<Schema> schemas) => schemas.add(Schema.dropIfExists('todos'));
+  void down(List<Schema> schemas) {
+    schemas.add(Schema.dropIfExists('post_comments'));
+
+    schemas.add(Schema.dropIfExists('posts'));
+  }
 }

@@ -10,6 +10,8 @@ abstract class EntityRelation<RelatedModel extends Entity> {
   Query<RelatedModel> get _query => Query.table<RelatedModel>().driver(_driver);
 
   get();
+
+  delete();
 }
 
 class HasOne<RelatedModel extends Entity> extends EntityRelation<RelatedModel> {
@@ -31,6 +33,7 @@ class HasOne<RelatedModel extends Entity> extends EntityRelation<RelatedModel> {
   @override
   Future<RelatedModel?> get() => _query.whereEqual(foreignKey, owner.id!).findOne();
 
+  @override
   Future<void> delete() => _query.whereEqual(foreignKey, owner.id!).delete();
 }
 
@@ -42,8 +45,17 @@ class HasMany<RelatedModel extends Entity> extends EntityRelation<RelatedModel> 
   @override
   Future<List<RelatedModel>> get() => _query.whereEqual(foreignKey, owner.id!).findMany();
 
-  insert(RelatedModel model) {
-    final data = model.to_db_data;
-    data[foreignKey] = owner.id!;
+  Future<RelatedModel?> first() => _query.whereEqual(foreignKey, owner.id!).findOne();
+
+  Map<String, dynamic> _serializeModel(RelatedModel model) {
+    model.withDriver(_driver);
+    return model.to_db_data..[foreignKey] = owner.id!;
   }
+
+  Future<void> add(RelatedModel model) => _query.insert(_serializeModel(model));
+
+  Future<void> addAll(Iterable<RelatedModel> model) => _query.insertMany(model.map(_serializeModel).toList());
+
+  @override
+  Future<void> delete() => _query.whereEqual(foreignKey, owner.id!).delete();
 }
