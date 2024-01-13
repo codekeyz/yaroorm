@@ -10,21 +10,9 @@ class User extends Entity<int, User> {
 
   User({required this.firstname, required this.lastname, required this.age, required this.homeAddress});
 
-  static User fromJson(Map<String, dynamic> json) => User(
-      firstname: json['firstname'] as String,
-      lastname: json['lastname'] as String,
-      age: json['age'] as int,
-      homeAddress: json['home_address'] as String)
-    ..id = json['id'] as int?;
+  HasOne<Todo> get todo => hasOne<Todo>();
 
-  @override
-  Map<String, dynamic> toJson() => <String, dynamic>{
-        'id': id,
-        'firstname': firstname,
-        'lastname': lastname,
-        'age': age,
-        'home_address': homeAddress,
-      };
+  HasMany<Todo> get todos => hasMany<Todo>();
 }
 
 final usersTestData = <User>[
@@ -77,30 +65,7 @@ class Todo extends Entity<int, Todo> {
   final String title;
   final String description;
   final bool completed;
-  final int ownerId;
+  final int userId;
 
-  Todo(
-    this.title,
-    this.description, {
-    required this.ownerId,
-    this.completed = false,
-  });
-
-  @override
-  Map<String, dynamic> toJson() => <String, dynamic>{
-        'id': id,
-        'title': title,
-        'description': description,
-        'ownerId': ownerId,
-        'completed': completed,
-        'createdAt': createdAt?.toIso8601String(),
-        'updatedAt': updatedAt?.toIso8601String(),
-      };
-
-  static Todo fromJson(Map<String, dynamic> json) {
-    return Todo(json['title'], json['description'], ownerId: json['ownerId'], completed: json['completed'])
-      ..id = json['id']
-      ..createdAt = DateTime.tryParse(json['createdAt'])
-      ..updatedAt = DateTime.tryParse(json['updatedAt']);
-  }
+  Todo(this.title, this.description, {required this.userId, this.completed = false});
 }
