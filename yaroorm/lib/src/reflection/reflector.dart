@@ -4,7 +4,7 @@ import 'package:recase/recase.dart';
 import 'package:reflectable/mirrors.dart';
 import 'package:reflectable/reflectable.dart' as r;
 
-import '../database/entity.dart';
+import '../database/entity/entity.dart';
 import 'util.dart';
 
 class ReflectableEntity extends r.Reflectable {

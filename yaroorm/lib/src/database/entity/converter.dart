@@ -107,10 +107,8 @@ Entity recordToEntity<Model>(final Map<String, dynamic> json, {List<EntityTypeCo
       constructorParams.where((e) => !e.isNamed).map((e) => transformedRecordMap[e.simpleName]).toList();
 
   final newEntityInstance = mirror.newInstance('', dependencies, namedDeps);
-  (newEntityInstance as Entity)
+  return (newEntityInstance as Entity)
     ..id = json['id']
     ..createdAt = transformedRecordMap['createdAt']
     ..updatedAt = transformedRecordMap['updatedAt'];
-
-  return newEntityInstance;
 }

@@ -55,14 +55,13 @@ void runBasicE2ETest(String connectionName) {
     test('should update user', () async {
       final userQuery = Query.table<User>().driver(driver);
 
-      var user = await userQuery.get();
-      expect(user, isNotNull);
-      final userId = user?.id;
+      var user = (await userQuery.get());
+      final userId = user!.id!;
       expect(userId, 1);
 
       await userQuery.update(where: (where) => where.whereEqual('id', userId), values: {'firstname': 'Red Oil'}).exec();
 
-      user = await userQuery.get(userId!);
+      user = await userQuery.get(userId);
       expect(user, isNotNull);
 
       user as User;

@@ -29,14 +29,12 @@ class AddTodosTable extends Migration {
     final schema = Schema.create('todos', (table) {
       return table
         ..id()
-        ..integer('ownerId')
+        ..integer('userId')
         ..string('title')
         ..string('description')
         ..boolean('completed', defaultValue: false)
         ..foreign<Todo, User>(
-          'ownerId',
-          onKey: (key) => key.actions(onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.cascade),
-        )
+            onKey: (key) => key.actions(onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.cascade))
         ..timestamps();
     });
 
