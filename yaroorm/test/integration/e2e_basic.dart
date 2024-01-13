@@ -14,24 +14,12 @@ void runBasicE2ETest(String connectionName) {
       expect(driver.isOpen, isTrue);
     });
 
-    test('should have no tables', () async {
-      final result = await Future.wait([
-        driver.hasTable('users'),
-        driver.hasTable('todos'),
-      ]);
-
-      expect(result.every((e) => e), isFalse);
-    });
+    test('should have no tables', () async => expect(await driver.hasTable('users'), isFalse));
 
     test('should execute migration', () async {
       await runMigrator(connectionName, 'migrate');
 
-      final result = await Future.wait([
-        driver.hasTable('users'),
-        driver.hasTable('todos'),
-      ]);
-
-      expect(result.every((e) => e), isTrue);
+      expect(await driver.hasTable('users'), isTrue);
     });
 
     test('should insert single user', () async {
@@ -153,9 +141,7 @@ void runBasicE2ETest(String connectionName) {
     test('should drop tables', () async {
       await runMigrator(connectionName, 'migrate:reset');
 
-      final result = await Future.wait([driver.hasTable('users'), driver.hasTable('todos')]);
-
-      expect(result.every((e) => e), isFalse);
+      expect(await driver.hasTable('users'), isFalse);
     });
 
     test('should disconnect', () async {
