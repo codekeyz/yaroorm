@@ -8,11 +8,32 @@ class User extends Entity<int, User> {
   @EntityProperty(name: 'home_address')
   final String homeAddress;
 
-  User({required this.firstname, required this.lastname, required this.age, required this.homeAddress});
+  User({
+    required this.firstname,
+    required this.lastname,
+    required this.age,
+    required this.homeAddress,
+  });
 
   HasOne<Todo> get todo => hasOne<Todo>();
 
   HasMany<Todo> get todos => hasMany<Todo>();
+}
+
+@EntityMeta(table: 'todos', timestamps: true)
+class Todo extends Entity<int, Todo> {
+  final String title;
+  final String description;
+  final bool completed;
+
+  final int? userId;
+
+  Todo(
+    this.title,
+    this.description, {
+    this.userId,
+    this.completed = false,
+  });
 }
 
 final usersTestData = <User>[
@@ -59,13 +80,3 @@ final usersTestData = <User>[
   User(firstname: 'Ahmed', lastname: 'Umar', age: 44, homeAddress: "Nairobi, Kenya"),
   User(firstname: 'Nneka', lastname: 'Okoli', age: 45, homeAddress: "Nairobi, Kenya"),
 ];
-
-@EntityMeta(table: 'todos', timestamps: true)
-class Todo extends Entity<int, Todo> {
-  final String title;
-  final String description;
-  final bool completed;
-  final int userId;
-
-  Todo(this.title, this.description, {required this.userId, this.completed = false});
-}

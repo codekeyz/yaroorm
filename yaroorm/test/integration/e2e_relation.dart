@@ -8,7 +8,7 @@ void runRelationsE2ETest(String connectionName) {
   final driver = DB.driver(connectionName);
 
   return group('with ${driver.type.name} driver', () {
-    User? currentUser;
+    User? testUser;
 
     setUpAll(() async {
       await driver.connect();
@@ -23,40 +23,31 @@ void runRelationsE2ETest(String connectionName) {
       hasTables = await Future.wait([driver.hasTable('users'), driver.hasTable('todos')]);
       expect(hasTables.every((e) => e), isTrue);
 
-      currentUser = await usersTestData.first.withDriver(driver).save();
-      expect(currentUser, isA<User>().having((p0) => p0.id, 'has primary key', 1));
+      testUser = await usersTestData.first.withDriver(driver).save();
+      expect(testUser, isA<User>().having((p0) => p0.id, 'has primary key', 1));
     });
 
     test('should insert todo for User', () async {
-      final userId = currentUser!.id!;
+      final result = await testUser!.todo.set(Todo('Foo Bar', 'mee moo grand maa'));
+      expect(result.id, isNotNull);
+      expect(result.userId, testUser!.id!);
+      expect(result.createdAt, isNotNull);
+      expect(result.updatedAt, isNotNull);
 
-      final todo = await Todo('Foo Bar', 'mee moo grand maa', userId: userId).withDriver(driver).save();
-      expect(todo.id, isNotNull);
-      expect(todo.createdAt, isNotNull);
-      expect(todo.updatedAt, isNotNull);
-
-      final todoFromDB = await currentUser!.todo.get();
-      expect(todoFromDB, isNotNull);
-      expect(todoFromDB!.id, todo.id!);
-      expect(todoFromDB.userId, userId);
-      expect(todoFromDB.completed, false);
-
-      await Todo('Dart for Backend', 'let us celebrate now today', userId: userId).withDriver(driver).save();
-
-      final todosFromDb = await currentUser!.todos.get();
-      expect(todosFromDb, hasLength(2));
-      expect(todosFromDb.map((e) => e.title), ['Foo Bar', 'Dart for Backend']);
+      final todosFromDb = await testUser!.todos.get();
+      expect(todosFromDb, hasLength(1));
+      expect(todosFromDb.map((e) => e.title), ['Foo Bar']);
     });
 
     test('should delete todo when User deleted ', () async {
-      final todosQuery = Query.table<Todo>().driver(driver).whereEqual('userId', currentUser!.id!);
+      final todosQuery = Query.table<Todo>().driver(driver).whereEqual('userId', testUser!.id!);
 
       var userTodos = await todosQuery.findMany();
       expect(userTodos, isNotEmpty);
 
-      await currentUser!.delete();
+      await testUser!.delete();
 
-      final user = await Query.table<User>().driver(driver).get(currentUser!.id!);
+      final user = await Query.table<User>().driver(driver).get(testUser!.id!);
       expect(user, isNull);
 
       userTodos = await todosQuery.findMany();

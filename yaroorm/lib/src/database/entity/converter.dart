@@ -51,7 +51,8 @@ List<EntityTypeConverter> _combineConverters(
   return converters;
 }
 
-Map<String, dynamic> _entityToRecord<T extends Entity>(T instance, {List<EntityTypeConverter> converters = const []}) {
+Map<String, dynamic> _serializeEntityProps<T extends Entity>(T instance,
+    {List<EntityTypeConverter> converters = const []}) {
   final entityMeta = getEntityMetaData(instance.runtimeType);
 
   final entityProperties = getEntityProperties(instance.runtimeType);
@@ -78,7 +79,10 @@ Map<String, dynamic> _entityToRecord<T extends Entity>(T instance, {List<EntityT
   return serializedEntityMap;
 }
 
-Entity recordToEntity<Model>(final Map<String, dynamic> json, {List<EntityTypeConverter> converters = const []}) {
+Entity serializedPropsToEntity<Model>(
+  final Map<String, dynamic> json, {
+  List<EntityTypeConverter> converters = const [],
+}) {
   final mirror = reflectEntity<Model>();
   final entityMeta = getEntityMetaData(Model);
   final entityProperties = getEntityProperties(Model);

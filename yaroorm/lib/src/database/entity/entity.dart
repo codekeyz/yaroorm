@@ -57,7 +57,6 @@ abstract class Entity<PkType, Model extends Object> {
 
   @nonVirtual
   Future<Model> save() async {
-    if (entityMeta.timestamps) createdAt = updatedAt = DateTime.now().toUtc();
     final recordId = await query.insert<PkType>(to_db_data);
     return (this..id = recordId) as Model;
   }
@@ -75,7 +74,13 @@ abstract class Entity<PkType, Model extends Object> {
 
   @nonVirtual
   // ignore: non_constant_identifier_names
-  Map<String, dynamic> get to_db_data => _entityToRecord(this, converters: _driver.typeconverters);
+  Map<String, dynamic> get to_db_data {
+    if (entityMeta.timestamps) {
+      updatedAt = DateTime.now().toUtc();
+      if (id == null) createdAt = updatedAt;
+    }
+    return _serializeEntityProps(this, converters: _driver.typeconverters);
+  }
 
   String get _foreignKeyForModel => '${Model.toString().camelCase}Id';
 
