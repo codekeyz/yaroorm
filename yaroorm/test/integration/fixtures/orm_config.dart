@@ -13,7 +13,7 @@ final config = YaroormConfig(
         host: 'localhost', username: 'root', password: 'password', port: 3000),
     DatabaseConnection('moo_mysql', 'test_db', DatabaseDriverType.mysql,
         host: 'localhost', username: 'root', password: 'password', port: 3001, secure: true),
-    DatabaseConnection('foo_pgsql', 'test_db', DatabaseDriverType.mysql,
+    DatabaseConnection('foo_pgsql', 'test_db', DatabaseDriverType.pgsql,
         host: 'localhost', username: 'root', password: 'password', port: 3002),
   ],
   migrationsTable: 'migrations',
