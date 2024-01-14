@@ -5,7 +5,6 @@ import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/src/database/driver/mysql_driver.dart';
 import 'package:yaroorm/src/primitives/serializer.dart';
 import 'package:yaroorm/yaroorm.dart';
-import 'sqlite_driver.dart' show SqliteSerializer;
 
 final _primitiveSerializer = PgSqlPrimitiveSerializer();
 
@@ -63,11 +62,10 @@ class PostgreSqlDriver implements DatabaseDriver {
   @override
   Future<int> insert(InsertQuery query) async {
     if (!isOpen) await connect();
-    var primaryKey = await getPrimaryKeyColumn(query.tableName);
-    String sql = _primitiveSerializer.acceptInsertQuery(query);
-    query.values.addAll({'primaryKey': primaryKey});
-    sql = '$sql RETURNING @primaryKey ;';
-    final result = await db?.execute(pg.Sql.named(sql), parameters: query.values);
+    final primaryKey = await _getPrimaryKeyColumn(query.tableName);
+    final values = {...query.data};
+    final sql = _primitiveSerializer.acceptInsertQuery(query, primaryKey: primaryKey);
+    final result = await db?.execute(pg.Sql.named(sql), parameters: values);
     return result?[0][0] as int;
   }
 
@@ -82,8 +80,7 @@ class PostgreSqlDriver implements DatabaseDriver {
 
   @override
   Future<List<Map<String, dynamic>>> update(UpdateQuery query) {
-    final sqlScript = serializer.acceptUpdateQuery(query);
-    return _execRawQuery(sqlScript, parameters: query.values);
+    return _execRawQuery(serializer.acceptUpdateQuery(query), parameters: query.data);
   }
 
   @override
@@ -122,7 +119,7 @@ class PostgreSqlDriver implements DatabaseDriver {
     return result?.expand((x) => x).toList();
   }
 
-  Future<String> getPrimaryKeyColumn(String tableName) async {
+  Future<String> _getPrimaryKeyColumn(String tableName) async {
     final result = await db?.execute('''SELECT pg_attribute.attname 
 FROM pg_index, pg_class, pg_attribute, pg_namespace 
 WHERE 
@@ -136,6 +133,9 @@ WHERE
 
     return result?[0][0] as String;
   }
+
+  @override
+  List<EntityTypeConverter> get typeconverters => [dateTimeConverter];
 }
 
 class _PgSqlDriverTransactor extends DriverTransactor {
@@ -155,7 +155,7 @@ class _PgSqlDriverTransactor extends DriverTransactor {
   @override
   Future<int> insert(InsertQuery query) async {
     final sql = _primitiveSerializer.acceptInsertQuery(query);
-    final result = await txn.execute(sql);
+    final result = await txn.execute(pg.Sql.named(sql), parameters: query.data);
     return result.affectedRows;
   }
 
@@ -188,29 +188,25 @@ class _PgSqlDriverTransactor extends DriverTransactor {
 }
 
 @protected
-class PgSqlPrimitiveSerializer extends SqliteSerializer {
+class PgSqlPrimitiveSerializer extends MySqlPrimitiveSerializer {
   const PgSqlPrimitiveSerializer();
 
   @override
-  String acceptInsertQuery(InsertQuery query) {
-    final keys = query.values.keys.map(escapeName);
-    final values = keys.map((e) => '@$e').join(', ');
-    return 'INSERT INTO ${escapeName(query.tableName)} (${keys.join(', ')}) VALUES ($values)$terminator';
-  }
+  String acceptInsertQuery(InsertQuery query, {String? primaryKey}) {
+    final keys = query.data.keys;
+    final parameters = keys.map((e) => '@$e').join(', ');
 
-  @override
-  String acceptInsertManyQuery(InsertManyQuery query) {
-    final data = query.values;
-    final fields = data.first.keys.join(', ');
-    final values = data.map((e) => '(${e.values.map((e) => acceptDartValue(e)).join(', ')})').join(', ');
-    return 'INSERT INTO ${query.tableName} ($fields) VALUES $values $terminator';
+    var sql = 'INSERT INTO ${escapeName(query.tableName)} (${keys.join(', ')}) VALUES ($parameters)';
+    if (primaryKey == null) return '$sql$terminator';
+
+    return '$sql RETURNING $primaryKey$terminator';
   }
 
   @override
   String acceptUpdateQuery(UpdateQuery query) {
     final queryBuilder = StringBuffer();
 
-    final fields = query.values.keys.map((e) => '$e = @$e').join(', ');
+    final fields = query.data.keys.map((e) => '$e = @$e').join(', ');
 
     queryBuilder.write('UPDATE ${escapeName(query.tableName)}');
 
@@ -265,14 +261,12 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
 
   @override
   void float(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
-    final type = 'DOUBLE PRECISION';
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(_getColumn(name, 'DOUBLE PRECISION', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void double(String name, {bool nullable = false, num? defaultValue, int? precision = 10, int? scale = 0}) {
-    final type = 'NUMERIC($precision, $scale )';
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(_getColumn(name, 'NUMERIC($precision, $scale)', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override

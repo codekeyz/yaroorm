@@ -1,5 +1,4 @@
 import 'package:test/test.dart';
-import 'package:yaroorm/config.dart';
 import 'package:yaroorm/src/database/driver/mysql_driver.dart';
 import 'package:yaroorm/src/database/driver/pgsql_driver.dart';
 import 'package:yaroorm/src/database/driver/sqlite_driver.dart';
@@ -100,38 +99,5 @@ void main() {
       isA<StateError>()
           .having((p0) => p0.message, '', 'Driver not set for query. Make sure you supply a driver using .driver()'),
     );
-  });
-
-  group('Database Config Test', () {
-    test('should require default connection', () {
-      expect(() => YaroormConfig.from({}), throwsArgumentErrorWithMessage('Default database connection not provided'));
-    });
-
-    test('should require connection infos', () {
-      expect(() => YaroormConfig.from({'default': 'sqlite'}),
-          throwsArgumentErrorWithMessage('Database connection infos not provided'));
-    });
-
-    test('should error when default connection info not found ', () {
-      expect(
-          () => YaroormConfig.from({
-                'default': 'sqlite',
-                'connections': {
-                  'mysql': {'driver': 'sqlite', 'database': 'foo.db'}
-                }
-              }),
-          throwsArgumentErrorWithMessage('Database connection info not found for sqlite'));
-    });
-
-    test(
-        'should initialize correctly',
-        () => expect(
-            YaroormConfig.from({
-              'default': 'sqlite',
-              'connections': {
-                'sqlite': {'driver': 'sqlite', 'database': 'foo.db'}
-              }
-            }),
-            isA<YaroormConfig>()));
   });
 }

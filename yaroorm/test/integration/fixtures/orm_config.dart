@@ -1,44 +1,21 @@
 import 'package:path/path.dart' as path;
 import 'package:yaroorm/config.dart';
+import 'package:yaroorm/yaroorm.dart';
 
 import 'migrations.dart';
 
-const _baseConfig = {
-  'database': 'test_db',
-  'host': 'localhost',
-  'username': 'root',
-  'password': 'password',
-};
-
-final config = YaroormConfig.from({
-  'default': 'foo_sqlite',
-  'connections': {
-    'foo_sqlite': {
-      'driver': 'sqlite',
-      'database': path.absolute('test/integration', 'db.sqlite'),
-      'foreign_key_constraints': true,
-    },
-    'bar_mariadb': {
-      'driver': 'mariadb',
-      'port': 3000,
-      ..._baseConfig,
-    },
-    'moo_mysql': {
-      'driver': 'mysql',
-      'port': 3001,
-      'secure': true,
-      ..._baseConfig,
-    },
-    'foo_pgsql': {
-      'driver': 'pgsql',
-      'port': 5432,
-      'database': 'postgres',
-      'host': 'localhost',
-      'username': 'postgres',
-      'password': 'postgres',
-      'timezone': 'GMT',
-    },
-  },
-  'migrations_table': 'migrations',
-  'migrations': [AddUsersTable(), AddPostsTable()]
-});
+final config = YaroormConfig(
+  'foo_sqlite',
+  connections: [
+    DatabaseConnection('foo_sqlite', path.absolute('test/integration', 'db.sqlite'), DatabaseDriverType.sqlite,
+        dbForeignKeys: true),
+    DatabaseConnection('bar_mariadb', 'test_db', DatabaseDriverType.mariadb,
+        host: 'localhost', username: 'root', password: 'password', port: 3000),
+    DatabaseConnection('moo_mysql', 'test_db', DatabaseDriverType.mysql,
+        host: 'localhost', username: 'root', password: 'password', port: 3001, secure: true),
+    DatabaseConnection('foo_pgsql', 'test_db', DatabaseDriverType.pgsql,
+        host: 'localhost', username: 'root', password: 'password', port: 3002),
+  ],
+  migrationsTable: 'migrations',
+  migrations: [AddUsersTable(), AddPostsTable()],
+);
