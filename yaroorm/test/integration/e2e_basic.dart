@@ -1,8 +1,8 @@
 import 'package:test/test.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import '../fixtures/migrator.dart';
-import '../fixtures/test_data.dart';
+import 'fixtures/migrator.dart';
+import 'fixtures/test_data.dart';
 
 void runBasicE2ETest(String connectionName) {
   final driver = DB.driver(connectionName);
@@ -14,24 +14,12 @@ void runBasicE2ETest(String connectionName) {
       expect(driver.isOpen, isTrue);
     });
 
-    test('should have no tables', () async {
-      final result = await Future.wait([
-        driver.hasTable('users'),
-        driver.hasTable('todos'),
-      ]);
-
-      expect(result.every((e) => e), isFalse);
-    });
+    test('should have no tables', () async => expect(await driver.hasTable('users'), isFalse));
 
     test('should execute migration', () async {
       await runMigrator(connectionName, 'migrate');
 
-      final result = await Future.wait([
-        driver.hasTable('users'),
-        driver.hasTable('todos'),
-      ]);
-
-      expect(result.every((e) => e), isTrue);
+      expect(await driver.hasTable('users'), isTrue);
     });
 
     test('should insert single user', () async {
@@ -55,14 +43,13 @@ void runBasicE2ETest(String connectionName) {
     test('should update user', () async {
       final userQuery = Query.table<User>().driver(driver);
 
-      var user = await userQuery.get();
-      expect(user, isNotNull);
-      final userId = user?.id;
+      var user = (await userQuery.get());
+      final userId = user!.id!;
       expect(userId, 1);
 
       await userQuery.update(where: (where) => where.whereEqual('id', userId), values: {'firstname': 'Red Oil'}).exec();
 
-      user = await userQuery.get(userId!);
+      user = await userQuery.get(userId);
       expect(user, isNotNull);
 
       user as User;
@@ -154,9 +141,7 @@ void runBasicE2ETest(String connectionName) {
     test('should drop tables', () async {
       await runMigrator(connectionName, 'migrate:reset');
 
-      final result = await Future.wait([driver.hasTable('users'), driver.hasTable('todos')]);
-
-      expect(result.every((e) => e), isFalse);
+      expect(await driver.hasTable('users'), isFalse);
     });
 
     test('should disconnect', () async {

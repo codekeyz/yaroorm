@@ -10,20 +10,20 @@ abstract class EntityTypeConverter<DartType, DBType> {
   DartType? fromDbType(DBType? value);
 }
 
-class _DateTimeConverter extends EntityTypeConverter<DateTime, String> {
-  const _DateTimeConverter();
+class DateTimeConverter extends EntityTypeConverter<DateTime, String> {
+  const DateTimeConverter();
 
   String padValue(value) => value.toString().padLeft(2, '0');
 
   @override
-  DateTime? fromDbType(String? dbType) => dbType == null ? null : DateTime.parse(dbType);
+  DateTime? fromDbType(String? value) => value == null ? null : DateTime.parse(value);
 
   @override
-  String? toDbType(DateTime? date) {
-    date = date?.toUtc();
-    return date == null
+  String? toDbType(DateTime? value) {
+    value = value?.toUtc();
+    return value == null
         ? null
-        : '${date.year}-${padValue(date.month)}-${padValue(date.day)} ${padValue(date.hour)}:${padValue(date.minute)}:${padValue(date.second)}';
+        : '${value.year}-${padValue(value.month)}-${padValue(value.day)} ${padValue(value.hour)}:${padValue(value.minute)}:${padValue(value.second)}';
   }
 }
 
@@ -37,48 +37,47 @@ class BooleanConverter extends EntityTypeConverter<bool, int> {
   int? toDbType(bool? value) => (value == null || value == false) ? 0 : 1;
 }
 
-const dateTimeConverter = _DateTimeConverter();
+const dateTimeConverter = DateTimeConverter();
 const booleanConverter = BooleanConverter();
 
-List<EntityTypeConverter> _combineConverters(
+Map<Type, EntityTypeConverter> _combineConverters(
   List<EntityTypeConverter> custom,
   List<EntityTypeConverter> driverProvided,
 ) {
-  final converters = <EntityTypeConverter>[...custom];
-  for (final converter in driverProvided) {
-    if (!converters.any((e) => e._dartType == converter._dartType)) converters.add(converter);
-  }
-  return converters;
+  return {
+    for (final converter in [...custom, ...driverProvided]) converter._dartType: converter,
+  };
 }
 
-Map<String, dynamic> _entityToRecord<T extends Entity>(T instance, {List<EntityTypeConverter> converters = const []}) {
+Map<String, dynamic> _serializeEntityProps<T extends Entity>(
+  T instance, {
+  List<EntityTypeConverter> converters = const [],
+}) {
   final entityMeta = getEntityMetaData(instance.runtimeType);
-
   final entityProperties = getEntityProperties(instance.runtimeType);
-  final mappedConverters = _combineConverters(entityMeta.converters ?? [], converters).fold(
-    <Type, EntityTypeConverter>{},
-    (preV, e) => preV..[e._dartType] = e,
-  );
+  if (instance.id != null) {
+    entityProperties['id'] = EntityPropertyData('id', entityMeta.primaryKey, instance.id.runtimeType);
+  }
 
   final instanceMirror = entity.reflect(instance);
-  final serializedEntityMap = <String, dynamic>{};
-  for (final entry in entityProperties.entries) {
+  final mappedConverters = _combineConverters(entityMeta.converters ?? [], converters);
+
+  /// database value conversion back to Dart Types
+  toDartValue(MapEntry<String, EntityPropertyData> entry) {
     final value = instanceMirror.invokeGetter(entry.key);
     final typeConverter = mappedConverters[entry.value.type];
-    serializedEntityMap[entry.value.dbColumnName] = typeConverter == null ? value : typeConverter.toDbType(value);
+    return typeConverter == null ? value : typeConverter.toDbType(value);
   }
 
-  if (serializedEntityMap[entityMeta.primaryKey] == null) serializedEntityMap.remove(entityMeta.primaryKey);
-  if (!entityMeta.timestamps) {
-    serializedEntityMap
-      ..remove(entityMeta.createdAtColumn)
-      ..remove(entityMeta.updatedAtColumn);
-  }
-
-  return serializedEntityMap;
+  return {
+    for (final entry in entityProperties.entries) entry.value.dbColumnName: toDartValue(entry),
+  };
 }
 
-Entity recordToEntity<Model>(final Map<String, dynamic> json, {List<EntityTypeConverter> converters = const []}) {
+Entity serializedPropsToEntity<Model>(
+  final Map<String, dynamic> json, {
+  List<EntityTypeConverter> converters = const [],
+}) {
   final mirror = reflectEntity<Model>();
   final entityMeta = getEntityMetaData(Model);
   final entityProperties = getEntityProperties(Model);
@@ -86,11 +85,9 @@ Entity recordToEntity<Model>(final Map<String, dynamic> json, {List<EntityTypeCo
       mirror.declarations.entries.firstWhereOrNull((e) => e.key == '$Model')?.value as MethodMirror;
   final constructorParams = constructorMethod.parameters;
 
-  final mappedConverters = _combineConverters(entityMeta.converters ?? [], converters).fold(
-    <Type, EntityTypeConverter>{},
-    (preV, e) => preV..[e._dartType] = e,
-  );
+  final mappedConverters = _combineConverters(entityMeta.converters ?? [], converters);
 
+  /// conversion to Database compatible types using [EntityTypeConverter]
   final transformedRecordMap = <String, dynamic>{};
   for (final entry in entityProperties.entries) {
     final value = json[entry.value.dbColumnName];
@@ -107,10 +104,8 @@ Entity recordToEntity<Model>(final Map<String, dynamic> json, {List<EntityTypeCo
       constructorParams.where((e) => !e.isNamed).map((e) => transformedRecordMap[e.simpleName]).toList();
 
   final newEntityInstance = mirror.newInstance('', dependencies, namedDeps);
-  (newEntityInstance as Entity)
+  return (newEntityInstance as Entity)
     ..id = json['id']
     ..createdAt = transformedRecordMap['createdAt']
     ..updatedAt = transformedRecordMap['updatedAt'];
-
-  return newEntityInstance;
 }

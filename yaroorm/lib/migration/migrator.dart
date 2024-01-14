@@ -11,14 +11,6 @@ class MigrationData extends Entity<int, MigrationData> {
   final int batch;
 
   MigrationData(this.migration, this.batch);
-
-  static MigrationData fromJson(Map<String, dynamic> json) => MigrationData(
-        json['migration'] as String,
-        json['batch'] as int,
-      )..id = json['id'] as int?;
-
-  @override
-  Map<String, dynamic> toJson() => {'id': id, 'migration': migration, 'batch': batch};
 }
 
 class Migrator {

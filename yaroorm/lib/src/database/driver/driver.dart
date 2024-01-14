@@ -1,7 +1,7 @@
 import '../../primitives/serializer.dart';
 import '../../query/query.dart';
 import '../../../migration.dart';
-import '../entity.dart';
+import '../entity/entity.dart';
 import 'mysql_driver.dart';
 import 'sqlite_driver.dart';
 
