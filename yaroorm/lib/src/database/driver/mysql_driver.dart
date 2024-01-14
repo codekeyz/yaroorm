@@ -1,6 +1,5 @@
 import 'package:meta/meta.dart';
 import 'package:mysql_client/mysql_client.dart';
-import 'package:sqflite_common/sql.dart';
 import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/src/database/entity/entity.dart';
 import 'package:yaroorm/src/query/query.dart';
@@ -178,7 +177,7 @@ class _MysqlTransactor extends DriverTransactor {
 @protected
 class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
   String _getColumn(String name, String type, {nullable = false, defaultValue}) {
-    final sb = StringBuffer()..write('${escapeName(name)} $type');
+    final sb = StringBuffer()..write('$name $type');
     if (!nullable) {
       sb.write(' NOT NULL');
       if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
@@ -190,7 +189,7 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
   void id({String name = 'id', String? type, bool autoIncrement = true}) {
     type ??= 'INT';
 
-    final sb = StringBuffer()..write('${escapeName(name)} $type NOT NULL PRIMARY KEY');
+    final sb = StringBuffer()..write('$name $type NOT NULL PRIMARY KEY');
     if (autoIncrement) sb.write(' AUTO_INCREMENT');
     statements.add(sb.toString());
   }
@@ -365,11 +364,13 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
 
 @protected
 class MySqlPrimitiveSerializer extends SqliteSerializer {
+  const MySqlPrimitiveSerializer();
+
   @override
   String acceptInsertQuery(InsertQuery query) {
-    final keys = query.data.keys.map(escapeName);
-    final values = keys.map((e) => ':$e').join(', ');
-    return 'INSERT INTO ${escapeName(query.tableName)} (${keys.join(', ')}) VALUES ($values)$terminator';
+    final keys = query.data.keys;
+    final parameters = keys.map((e) => ':$e').join(', ');
+    return 'INSERT INTO ${query.tableName} (${keys.join(', ')}) VALUES ($parameters)$terminator';
   }
 
   @override
@@ -378,7 +379,7 @@ class MySqlPrimitiveSerializer extends SqliteSerializer {
 
     final fields = query.data.keys.map((e) => '$e = :$e').join(', ');
 
-    queryBuilder.write('UPDATE ${escapeName(query.tableName)}');
+    queryBuilder.write('UPDATE ${query.tableName}');
 
     queryBuilder
       ..write(' SET $fields')
