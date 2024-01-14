@@ -107,5 +107,6 @@ Entity serializedPropsToEntity<Model>(
   return (newEntityInstance as Entity)
     ..id = json['id']
     ..createdAt = transformedRecordMap['createdAt']
-    ..updatedAt = transformedRecordMap['updatedAt'];
+    ..updatedAt = transformedRecordMap['updatedAt']
+    .._isLoadedFromDB = true;
 }

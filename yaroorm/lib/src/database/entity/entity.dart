@@ -3,7 +3,6 @@ import 'package:recase/recase.dart';
 import 'package:reflectable/reflectable.dart';
 
 import 'package:yaroorm/yaroorm.dart';
-import 'package:meta/meta.dart';
 import 'package:meta/meta_meta.dart';
 
 import '../../primitives/where.dart';
@@ -36,7 +35,6 @@ abstract class Entity<PkType, Model extends Object> {
 
   EntityMeta? _entityMetaCache;
 
-  @visibleForTesting
   EntityMeta get entityMeta => _entityMetaCache ??= getEntityMetaData(Model);
 
   DriverContract _driver = DB.defaultDriver;
@@ -52,27 +50,22 @@ abstract class Entity<PkType, Model extends Object> {
 
   WhereClause<Model> _whereId(Query<Model> q) => q.whereEqual(entityMeta.primaryKey, id);
 
-  @nonVirtual
+  bool _isLoadedFromDB = false;
+
   Future<void> delete() => query.delete(_whereId).exec();
 
-  @nonVirtual
   Future<Model> save() async {
+    if (_isLoadedFromDB) {
+      assert(id != null, 'Id cannot be null when loaded from database');
+      if (entityMeta.timestamps) updatedAt = DateTime.now().toUtc();
+      await query.update(where: _whereId, values: to_db_data).exec();
+      return this as Model;
+    }
+
     final recordId = await query.insert<PkType>(to_db_data);
     return (this..id = recordId) as Model;
   }
 
-  @nonVirtual
-  Future<Model?> update(Map<String, dynamic> values) async {
-    if (entityMeta.timestamps && !values.containsKey(entityMeta.updatedAtColumn)) {
-      values = Map.from(values);
-      values[entityMeta.updatedAtColumn] = DateTime.now().toUtc().toIso8601String();
-    }
-
-    await query.update(where: _whereId, values: values).exec();
-    return query.get();
-  }
-
-  @nonVirtual
   // ignore: non_constant_identifier_names
   Map<String, dynamic> get to_db_data {
     if (entityMeta.timestamps) {
