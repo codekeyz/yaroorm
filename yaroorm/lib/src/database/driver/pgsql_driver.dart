@@ -136,6 +136,9 @@ WHERE
 
     return result?[0][0] as String;
   }
+
+  @override
+  List<EntityTypeConverter> get typeconverters => [dateTimeConverter];
 }
 
 class _PgSqlDriverTransactor extends DriverTransactor {
