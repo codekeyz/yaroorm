@@ -1,12 +1,12 @@
 import 'package:yaroorm/yaroorm.dart';
 
 class User extends Entity<int, User> {
-  final String firstname;
-  final String lastname;
-  final int age;
+  String firstname;
+  String lastname;
+  int age;
 
   @EntityProperty(name: 'home_address')
-  final String homeAddress;
+  String homeAddress;
 
   User({
     required this.firstname,
@@ -20,8 +20,8 @@ class User extends Entity<int, User> {
 
 @EntityMeta(table: 'posts', timestamps: true)
 class Post extends Entity<int, Post> {
-  final String title;
-  final String description;
+  String title;
+  String description;
 
   final int? userId;
 
