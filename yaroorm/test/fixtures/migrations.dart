@@ -39,7 +39,7 @@ class AddPostsTable extends Migration {
 
     final postCommentSchema = Schema.create('post_comments', (table) {
       return table
-        ..id(type: 'VARCHAR', autoIncrement: false)
+        ..id(type: 'VARCHAR(255)', autoIncrement: false)
         ..integer('postId')
         ..string('comment')
         ..foreign<PostComment, Post>()

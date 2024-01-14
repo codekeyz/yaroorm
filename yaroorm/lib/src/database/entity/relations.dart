@@ -1,20 +1,34 @@
 part of 'entity.dart';
 
+mixin OrderByMixin<K, V extends Entity> on EntityRelation<V> implements OrderByOperation<K> {
+  @override
+  K orderByAsc(String field) {
+    _query.orderByAsc(field);
+    return this as K;
+  }
+
+  @override
+  K orderByDesc(String field) {
+    _query.orderByDesc(field);
+    return this as K;
+  }
+}
+
 abstract class EntityRelation<RelatedModel extends Entity> {
   final Entity owner;
+  late final Query<RelatedModel> _query;
 
-  EntityRelation(this.owner);
+  EntityRelation(this.owner) : _query = Query.table<RelatedModel>().driver(owner._driver);
 
   DriverContract get _driver => owner._driver;
-
-  Query<RelatedModel> get _query => Query.table<RelatedModel>().driver(_driver);
 
   get();
 
   delete();
 }
 
-class HasOne<RelatedModel extends Entity> extends EntityRelation<RelatedModel> {
+class HasOne<RelatedModel extends Entity> extends EntityRelation<RelatedModel>
+    with OrderByMixin<HasOne<RelatedModel>, RelatedModel> {
   final String foreignKey;
 
   HasOne(this.foreignKey, super._owner);
@@ -37,7 +51,8 @@ class HasOne<RelatedModel extends Entity> extends EntityRelation<RelatedModel> {
   Future<void> delete() => _query.whereEqual(foreignKey, owner.id!).delete();
 }
 
-class HasMany<RelatedModel extends Entity> extends EntityRelation<RelatedModel> {
+class HasMany<RelatedModel extends Entity> extends EntityRelation<RelatedModel>
+    with OrderByMixin<HasMany<RelatedModel>, RelatedModel> {
   final String foreignKey;
 
   HasMany(this.foreignKey, super.owner);

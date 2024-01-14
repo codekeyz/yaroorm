@@ -40,13 +40,13 @@ void runRelationsE2ETest(String connectionName) {
 
       await testUser1!.posts.addAll(postsToAdd);
 
-      final posts = await testUser1!.posts.get();
+      final posts = await testUser1!.posts.orderByAsc('title').get();
       expect(posts, hasLength(3));
       expect(posts.every((e) => e.createdAt != null && e.updatedAt != null && e.userId == testUser1!.id), isTrue);
       expect(posts.map((e) => {'id': e.id, 'title': e.title, 'desc': e.description, 'userId': e.userId!}), [
+        {'id': 3, 'title': 'Coo Kie 3', 'desc': 'foo bar 6', 'userId': 1},
         {'id': 1, 'title': 'Foo Bar 1', 'desc': 'foo bar 4', 'userId': 1},
         {'id': 2, 'title': 'Mee Moo 2', 'desc': 'foo bar 5', 'userId': 1},
-        {'id': 3, 'title': 'Coo Kie 3', 'desc': 'foo bar 6', 'userId': 1}
       ]);
     });
 
@@ -66,7 +66,7 @@ void runRelationsE2ETest(String connectionName) {
       ]);
 
       await post.comments.add(PostComment('oh, another comment')..id = 'jagaban_299488474773_uuid_3i848');
-      comments = await post.comments.get();
+      comments = await post.comments.orderByDesc('comment').get();
       expect(comments, hasLength(2));
       expect(comments.map((e) => {'id': e.id, 'comment': e.comment, 'postId': e.postId}), [
         {'id': 'some_random_uuid_32893782738', 'comment': 'this post looks abit old', 'postId': 1},
