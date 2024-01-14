@@ -2,7 +2,7 @@ import 'package:meta/meta.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:sqflite_common/sql.dart';
 import 'package:yaroorm/migration.dart';
-import 'package:yaroorm/src/database/entity.dart';
+import 'package:yaroorm/src/database/entity/entity.dart';
 import 'package:yaroorm/src/query/query.dart';
 
 import '../../primitives/serializer.dart';

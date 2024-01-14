@@ -4,13 +4,12 @@ import 'package:recase/recase.dart';
 import 'package:reflectable/mirrors.dart';
 import 'package:reflectable/reflectable.dart' as r;
 
-import '../database/entity.dart';
+import '../database/entity/entity.dart';
 import 'util.dart';
 
 class ReflectableEntity extends r.Reflectable {
   const ReflectableEntity()
       : super(
-          const r.StaticInvokeCapability('fromJson'),
           r.declarationsCapability,
           r.metadataCapability,
           r.invokingCapability,
@@ -63,11 +62,9 @@ Map<String, EntityPropertyData> getEntityProperties(Type type, {ClassMirror? cla
   });
   if (metadata == null || !metadata.timestamps) return typeProps;
 
-  typeProps[metadata.createdAtColumn] ??=
-      EntityPropertyData(metadata.createdAtColumn, metadata.createdAtColumn, DateTime);
+  typeProps[metadata.createdAtColumn] ??= EntityPropertyData('createdAt', metadata.createdAtColumn, DateTime);
 
-  typeProps[metadata.updatedAtColumn] ??=
-      EntityPropertyData(metadata.updatedAtColumn, metadata.updatedAtColumn, DateTime);
+  typeProps[metadata.updatedAtColumn] ??= EntityPropertyData('updatedAt', metadata.updatedAtColumn, DateTime);
 
   return typeProps;
 }

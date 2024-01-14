@@ -1,7 +1,7 @@
 import 'package:meta/meta.dart';
 
 import '../database/driver/driver.dart';
-import '../database/entity.dart';
+import '../database/entity/entity.dart';
 import '../primitives/where.dart';
 import '../reflection/reflector.dart';
 

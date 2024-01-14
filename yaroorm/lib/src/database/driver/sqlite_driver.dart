@@ -6,7 +6,9 @@ import 'package:yaroorm/migration.dart';
 
 import '../../primitives/serializer.dart';
 import '../../primitives/where.dart';
-import 'package:yaroorm/yaroorm.dart';
+import '../../query/query.dart';
+import '../entity/entity.dart';
+import 'driver.dart';
 
 final _serializer = const SqliteSerializer();
 
@@ -587,14 +589,14 @@ class SqliteTableBlueprint extends TableBlueprint {
   }
 
   @override
-  void foreign<Model extends Entity, ReferenceModel extends Entity>(
-    String column, {
+  void foreign<Model extends Entity, ReferenceModel extends Entity>({
+    String? column,
     ForeignKey Function(ForeignKey fkey)? onKey,
   }) {
     late ForeignKey result;
     callback(ForeignKey fkey) => result = onKey?.call(fkey) ?? fkey;
 
-    super.foreign<Model, ReferenceModel>(column, onKey: callback);
+    super.foreign<Model, ReferenceModel>(column: column, onKey: callback);
     final statement = _serializer.acceptForeignKey(this, result);
     _foreignKeys.add(statement);
   }

@@ -3,8 +3,8 @@ import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/src/database/driver/sqlite_driver.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import '../../fixtures/orm_config.dart' as db;
-import '../../fixtures/test_data.dart';
+import '../../integration/fixtures/orm_config.dart' as db;
+import '../../integration/fixtures/test_data.dart';
 import 'sqlite_test.reflectable.dart';
 
 @EntityMeta(table: 'user_articles', primaryKey: '_id_')
@@ -13,9 +13,6 @@ class Article extends Entity<int, Entity> {
   final int ownerId;
 
   Article(this.name, this.ownerId);
-
-  @override
-  Map<String, dynamic> toJson() => {'name': name, 'ownerId': ownerId};
 }
 
 class ArticleComment extends Entity<String, ArticleComment> {
@@ -23,9 +20,6 @@ class ArticleComment extends Entity<String, ArticleComment> {
   final int userId;
 
   ArticleComment(this.articleId, this.userId);
-
-  @override
-  Map<String, dynamic> toJson() => {'articleId': articleId, 'userId': userId};
 }
 
 void main() {
@@ -921,13 +915,13 @@ void main() {
       test('class with entity meta', () {
         final blueprint = SqliteTableBlueprint()
           ..string('name')
-          ..integer('ownerId');
+          ..integer('userId');
 
         late ForeignKey key;
-        blueprint.foreign<Article, User>('ownerId', onKey: (fkey) => key = fkey);
+        blueprint.foreign<Article, User>(onKey: (fkey) => key = fkey);
 
         expect(key.table, 'user_articles');
-        expect(key.column, 'ownerId');
+        expect(key.column, 'userId');
         expect(key.foreignTable, 'users');
         expect(key.foreignTableColumn, 'id');
       });
@@ -936,7 +930,7 @@ void main() {
         final blueprint = SqliteTableBlueprint()..string('userId');
 
         late ForeignKey key;
-        blueprint.foreign<ArticleComment, User>('userId', onKey: (fkey) => key = fkey);
+        blueprint.foreign<ArticleComment, User>(onKey: (fkey) => key = fkey);
 
         expect(key.table, 'article_comments');
         expect(key.column, 'userId');
@@ -948,7 +942,7 @@ void main() {
         final blueprint = SqliteTableBlueprint()..string('articleId');
 
         late ForeignKey key;
-        blueprint.foreign<ArticleComment, Article>('articleId', onKey: (fkey) => key = fkey);
+        blueprint.foreign<ArticleComment, Article>(column: 'articleId', onKey: (fkey) => key = fkey);
 
         expect(key.table, 'article_comments');
         expect(key.column, 'articleId');
@@ -959,43 +953,42 @@ void main() {
       test('should make statement', () {
         final blueprint = SqliteTableBlueprint()
           ..string('name')
-          ..integer('ownerId');
+          ..integer('userId');
 
         late ForeignKey key;
-        blueprint.foreign<Article, User>('ownerId', onKey: (fkey) => key = fkey);
+        blueprint.foreign<Article, User>(onKey: (fkey) => key = fkey);
 
         final statement = SqliteSerializer().acceptForeignKey(blueprint, key);
-        expect(statement, 'FOREIGN KEY (ownerId) REFERENCES users(id)');
+        expect(statement, 'FOREIGN KEY (userId) REFERENCES users(id)');
       });
 
       test('when custom reference actions', () {
         final blueprint = SqliteTableBlueprint()
           ..string('name')
-          ..integer('ownerId');
+          ..integer('userId');
 
         late ForeignKey key;
         blueprint.foreign<Article, User>(
-          'ownerId',
           onKey: (fkey) => key = fkey.actions(onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.setNull),
         );
 
         final statement = SqliteSerializer().acceptForeignKey(blueprint, key);
-        expect(statement, 'FOREIGN KEY (ownerId) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL');
+        expect(statement, 'FOREIGN KEY (userId) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL');
       });
 
       group('when constrained', () {
         test('with no specified name', () {
           final blueprint = SqliteTableBlueprint()
             ..string('name')
-            ..integer('ownerId');
+            ..integer('userId');
 
           late ForeignKey key;
-          blueprint.foreign<Article, User>('ownerId', onKey: (fkey) => key = fkey.constrained());
+          blueprint.foreign<Article, User>(onKey: (fkey) => key = fkey.constrained());
 
           final statement = SqliteSerializer().acceptForeignKey(blueprint, key);
           expect(
             statement,
-            'CONSTRAINT fk_user_articles_ownerId_to_users_id FOREIGN KEY (ownerId) REFERENCES users(id)',
+            'CONSTRAINT fk_user_articles_userId_to_users_id FOREIGN KEY (userId) REFERENCES users(id)',
           );
         });
 
@@ -1005,7 +998,8 @@ void main() {
             ..integer('ownerId');
 
           late ForeignKey key;
-          blueprint.foreign<Article, User>('ownerId',
+          blueprint.foreign<Article, User>(
+              column: 'ownerId',
               onKey: (fkey) => key = fkey
                   .actions(onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.setNull)
                   .constrained(name: 'fk_articles_users'));
@@ -1019,20 +1013,21 @@ void main() {
           var schema = Schema.create('articles', (table) {
             return table
               ..id()
-              ..string('ownerId')
-              ..foreign<Article, User>('ownerId', onKey: (key) => key.constrained(name: 'some_constraint'));
+              ..string('userId')
+              ..foreign<Article, User>(onKey: (key) => key.constrained(name: 'some_constraint'));
           });
 
           expect(
             schema.toScript(driver.blueprint),
-            'CREATE TABLE articles (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, ownerId VARCHAR NOT NULL, CONSTRAINT some_constraint FOREIGN KEY (ownerId) REFERENCES users(id));',
+            'CREATE TABLE articles (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, userId VARCHAR NOT NULL, CONSTRAINT some_constraint FOREIGN KEY (userId) REFERENCES users(id));',
           );
 
           schema = Schema.create('articles', (table) {
             return table
               ..id(autoIncrement: false)
               ..string('ownerId')
-              ..foreign<Article, User>('ownerId',
+              ..foreign<Article, User>(
+                  column: 'ownerId',
                   onKey: (key) => key
                       .constrained(name: 'some_constraint')
                       .actions(onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.cascade));

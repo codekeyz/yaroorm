@@ -4,8 +4,10 @@ import 'package:meta/meta.dart';
 import 'package:test/test.dart';
 import 'package:yaroorm/migration/cli.dart';
 import 'package:yaroorm/yaroorm.dart';
+
 import '../fixtures/orm_config.dart' as conf;
-import '../integration/mariadb.e2e.reflectable.dart';
+
+import 'migrator.reflectable.dart';
 
 void main(List<String> args) async {
   if (args.isEmpty) throw UnsupportedError('Provide args');
@@ -19,7 +21,7 @@ void main(List<String> args) async {
 
 @visibleForTesting
 Future<void> runMigrator(String connectionName, String command) async {
-  final commands = ['run', 'test/fixtures/migrator.dart', command, '--database=$connectionName'];
+  final commands = ['run', 'test/integration/fixtures/migrator.dart', command, '--database=$connectionName'];
   print('> dart ${commands.join(' ')}\n');
 
   final result = await Process.run('dart', commands);

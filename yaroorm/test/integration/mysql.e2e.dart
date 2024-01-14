@@ -1,7 +1,7 @@
 import 'package:test/test.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import '../fixtures/orm_config.dart' as db;
+import 'fixtures/orm_config.dart' as db;
 import 'e2e_basic.dart';
 import 'e2e_relation.dart';
 import 'mysql.e2e.reflectable.dart';
