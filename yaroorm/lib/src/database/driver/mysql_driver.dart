@@ -2,6 +2,7 @@ import 'package:meta/meta.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:sqflite_common/sql.dart';
 import 'package:yaroorm/migration.dart';
+import 'package:yaroorm/src/database/entity/entity.dart';
 import 'package:yaroorm/src/query/query.dart';
 
 import '../../primitives/serializer.dart';
@@ -9,6 +10,8 @@ import 'driver.dart';
 import 'sqlite_driver.dart';
 
 final _serializer = MySqlPrimitiveSerializer();
+
+const _mysqlTypeConverters = <EntityTypeConverter>[dateTimeConverter];
 
 class MySqlDriver implements DatabaseDriver {
   final DatabaseConnection config;
@@ -78,20 +81,20 @@ class MySqlDriver implements DatabaseDriver {
 
   @override
   Future<List<Map<String, dynamic>>> update(UpdateQuery query) async {
-    final result = await _dbConnection.execute(_serializer.acceptUpdateQuery(query), query.values);
+    final result = await _dbConnection.execute(_serializer.acceptUpdateQuery(query), query.data);
     return result.rows.map((e) => e.typedAssoc()).toList();
   }
 
   @override
   Future<int> insert(InsertQuery query) async {
-    final result = await _dbConnection.execute(_serializer.acceptInsertQuery(query), query.values);
+    final result = await _dbConnection.execute(_serializer.acceptInsertQuery(query), query.data);
     return result.lastInsertID.toInt();
   }
 
   @override
   Future<void> insertMany(InsertManyQuery query) async {
     for (final value in query.values) {
-      await insert(InsertQuery(query.tableName, values: value));
+      await insert(InsertQuery(query.tableName, data: value));
     }
   }
 
@@ -116,6 +119,9 @@ class MySqlDriver implements DatabaseDriver {
 
   @override
   PrimitiveSerializer get serializer => _serializer;
+
+  @override
+  List<EntityTypeConverter> get typeconverters => _mysqlTypeConverters;
 }
 
 class _MysqlTransactor extends DriverTransactor {
@@ -146,24 +152,27 @@ class _MysqlTransactor extends DriverTransactor {
 
   @override
   Future<void> update(UpdateQuery query) async {
-    await _dbConn.execute(_serializer.acceptUpdateQuery(query), query.values);
+    await _dbConn.execute(_serializer.acceptUpdateQuery(query), query.data);
   }
 
   @override
   Future<int> insert(InsertQuery query) async {
-    final result = await _dbConn.execute(_serializer.acceptInsertQuery(query), query.values);
+    final result = await _dbConn.execute(_serializer.acceptInsertQuery(query), query.data);
     return result.lastInsertID.toInt();
   }
 
   @override
   Future<void> insertMany(InsertManyQuery query) async {
     for (final value in query.values) {
-      await insert(InsertQuery(query.tableName, values: value));
+      await insert(InsertQuery(query.tableName, data: value));
     }
   }
 
   @override
   PrimitiveSerializer get serializer => _serializer;
+
+  @override
+  List<EntityTypeConverter> get typeconverters => _mysqlTypeConverters;
 }
 
 @protected
@@ -209,6 +218,11 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
   @override
   void time(String name, {bool nullable = false, DateTime? defaultValue}) {
     statements.add(_getColumn(name, 'TIME', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void boolean(String name, {bool nullable = false, bool? defaultValue}) {
+    statements.add(_getColumn(name, 'BOOLEAN', nullable: nullable, defaultValue: defaultValue));
   }
 
   /// NUMERIC TYPES
@@ -353,7 +367,7 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
 class MySqlPrimitiveSerializer extends SqliteSerializer {
   @override
   String acceptInsertQuery(InsertQuery query) {
-    final keys = query.values.keys.map(escapeName);
+    final keys = query.data.keys.map(escapeName);
     final values = keys.map((e) => ':$e').join(', ');
     return 'INSERT INTO ${escapeName(query.tableName)} (${keys.join(', ')}) VALUES ($values)$terminator';
   }
@@ -362,7 +376,7 @@ class MySqlPrimitiveSerializer extends SqliteSerializer {
   String acceptUpdateQuery(UpdateQuery query) {
     final queryBuilder = StringBuffer();
 
-    final fields = query.values.keys.map((e) => '$e = :$e').join(', ');
+    final fields = query.data.keys.map((e) => '$e = :$e').join(', ');
 
     queryBuilder.write('UPDATE ${escapeName(query.tableName)}');
 

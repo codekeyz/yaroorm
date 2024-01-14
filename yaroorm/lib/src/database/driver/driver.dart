@@ -5,6 +5,7 @@ import '../../primitives/serializer.dart';
 import '../../query/query.dart';
 import '../../../migration.dart';
 
+import '../entity/entity.dart';
 import 'sqlite_driver.dart';
 
 enum DatabaseDriverType { sqlite, pgsql, mysql, mariadb }
@@ -97,6 +98,8 @@ mixin DriverContract {
   Future<dynamic> insertMany(InsertManyQuery query);
 
   PrimitiveSerializer get serializer;
+
+  List<EntityTypeConverter> get typeconverters => [];
 }
 
 abstract class DriverTransactor with DriverContract {}
@@ -107,13 +110,11 @@ abstract interface class DatabaseDriver with DriverContract {
     switch (driver) {
       case DatabaseDriverType.sqlite:
         return SqliteDriver(dbConn);
-      case DatabaseDriverType.pgsql:
-        return PostgreSqlDriver(dbConn);
       case DatabaseDriverType.mariadb:
       case DatabaseDriverType.mysql:
         return MySqlDriver(dbConn, driver);
-      default:
-        throw ArgumentError.value(driver, null, 'Driver not yet supported');
+      case DatabaseDriverType.pgsql:
+        return PostgreSqlDriver(dbConn);
     }
   }
 

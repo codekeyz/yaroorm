@@ -7,15 +7,17 @@ import 'package:yaroorm/yaroorm.dart';
 abstract class TableBlueprint {
   void id({String name = 'id', String? type, bool autoIncrement = true});
 
-  void foreign<Model extends Entity, ReferenceModel extends Entity>(
-    String column, {
-    String referenceId = 'id',
-    ForeignKey Function(ForeignKey fkey)? key,
+  void foreign<Model extends Entity, ReferenceModel extends Entity>({
+    String? column,
+    ForeignKey Function(ForeignKey fkey)? onKey,
   }) {
-    final table = getTableName(Model);
-    final referenceTable = getTableName(ReferenceModel);
-    final fkey = ForeignKey(table, column, foreignTable: referenceTable, foreignTableColumn: referenceId);
-    key?.call(fkey);
+    final table = getEntityTableName(Model);
+    final colName = column ?? '${ReferenceModel.toString().camelCase}Id';
+
+    final referenceTable = getEntityTableName(ReferenceModel);
+    final referenceTablePrimaryKey = getEntityPrimaryKey(ReferenceModel);
+    final fkey = ForeignKey(table, colName, foreignTable: referenceTable, foreignTableColumn: referenceTablePrimaryKey);
+    onKey?.call(fkey);
   }
 
   void string(String name, {bool nullable = false, String? defaultValue});

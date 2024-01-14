@@ -11,17 +11,6 @@ class MigrationData extends Entity<int, MigrationData> {
   final int batch;
 
   MigrationData(this.migration, this.batch);
-
-  static MigrationData fromJson(Map<String, dynamic> json) => MigrationData(
-        json['migration'] as String,
-        json['batch'] as int,
-      )..id = json['id'] as int?;
-
-  @override
-  Map<String, dynamic> toJson() => {'id': id, 'migration': migration, 'batch': batch};
-
-  @override
-  bool get enableTimestamps => false;
 }
 
 class Migrator {
@@ -53,7 +42,7 @@ class Migrator {
           await txnDriver.execute(sql);
         }
 
-        await MigrationData(fileName, batchNos).withTableName(Migrator.tableName).withDriver(txnDriver).save();
+        await Query.table(Migrator.tableName).driver(txnDriver).insert(MigrationData(fileName, batchNos).to_db_data);
 
         print('✔ done:   $fileName');
       });
@@ -74,10 +63,14 @@ class Migrator {
 
     print('------- Resetting migrations  📦 -------\n');
 
-    final rollbacks = migrationsList.map((e) {
-      final found = allTasks.firstWhereOrNull((m) => m.name == e.migration);
-      return found == null ? null : (entry: e, task: found);
-    }).whereNotNull();
+    final rollbacks = migrationsList
+        .map((e) {
+          final found = allTasks.firstWhereOrNull((m) => m.name == e.migration);
+          return found == null ? null : (entry: e, task: found);
+        })
+        .whereNotNull()
+        .toList()
+        .reversed;
 
     await _processRollbacks(driver, rollbacks);
 
@@ -112,7 +105,7 @@ class Migrator {
           }
         }
 
-        await rollback.entry.withTableName(Migrator.tableName).withDriver(transactor).delete();
+        await Query.table(Migrator.tableName).driver(transactor).whereEqual('id', rollback.entry.id!).delete();
       });
 
       print('✔ rolled back: ${rollback.entry.migration}');

@@ -25,9 +25,9 @@ class QueryImpl<Result> extends Query<Result> {
   }
 
   @override
-  Future<PrimaryKeyKey> insert<PrimaryKeyKey>(Map<String, dynamic> data) async {
-    final recordId = await queryDriver.insert(InsertQuery(tableName, values: data));
-    return recordId as PrimaryKeyKey;
+  Future<PrimaryKey> insert<PrimaryKey>(Map<String, dynamic> data) async {
+    final recordId = await queryDriver.insert(InsertQuery(tableName, data: data));
+    return recordId as PrimaryKey;
   }
 
   @override
@@ -52,14 +52,17 @@ class QueryImpl<Result> extends Query<Result> {
 
   @override
   Future<Result?> get([dynamic id]) async {
-    if (id != null) return whereEqual('id', id).findOne();
+    if (id != null) return whereEqual(getEntityPrimaryKey(Result), id).findOne();
     return (await take(1)).firstOrNull;
   }
 
   /// [T] is the expected type passed to [Query] via Query<T>
   T _wrapRawResult<T>(Map<String, dynamic>? result) {
     if (T == dynamic || result == null) return result as dynamic;
-    return (jsonToEntity<T>(result) as Entity).withDriver(_queryDriver!) as T;
+    return (serializedPropsToEntity<T>(
+      result,
+      converters: _queryDriver!.typeconverters,
+    )).withDriver(_queryDriver!) as T;
   }
 
   @override
