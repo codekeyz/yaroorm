@@ -1,8 +1,8 @@
 import 'package:test/test.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import '../fixtures/migrator.dart';
-import '../fixtures/test_data.dart';
+import 'fixtures/migrator.dart';
+import 'fixtures/test_data.dart';
 
 void runBasicE2ETest(String connectionName) {
   final driver = DB.driver(connectionName);

@@ -3,8 +3,8 @@ import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/src/database/driver/sqlite_driver.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import '../../fixtures/orm_config.dart' as db;
-import '../../fixtures/test_data.dart';
+import '../../integration/fixtures/orm_config.dart' as db;
+import '../../integration/fixtures/test_data.dart';
 import 'sqlite_test.reflectable.dart';
 
 @EntityMeta(table: 'user_articles', primaryKey: '_id_')
