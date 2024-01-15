@@ -15,7 +15,8 @@ class PostgreSqlDriver implements DatabaseDriver {
   PostgreSqlDriver(this.config);
 
   @override
-  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection, bool? secure}) async {
+  Future<DatabaseDriver> connect(
+      {int? maxConnections, bool? singleConnection, bool? secure}) async {
     assert(maxConnections == null, 'Postgres max connections not supported');
     secure ??= false;
 
@@ -33,7 +34,9 @@ class PostgreSqlDriver implements DatabaseDriver {
           port: config.port == null ? 5432 : config.port!,
         ),
         settings: pg.ConnectionSettings(
-            sslMode: (config.secure ?? false) ? pg.SslMode.require : pg.SslMode.disable, timeZone: config.timeZone));
+            sslMode: (config.secure ?? false) ? pg.SslMode.require
+                : pg.SslMode.disable,
+            timeZone: config.timeZone));
     return this;
   }
 
@@ -49,10 +52,12 @@ class PostgreSqlDriver implements DatabaseDriver {
     await db?.close();
   }
 
-  Future<List<Map<String, dynamic>>> _execRawQuery(String script, {Map<String, dynamic>? parameters}) async {
+  Future<List<Map<String, dynamic>>> _execRawQuery(String script,
+      {Map<String, dynamic>? parameters}) async {
     parameters ??= {};
     if (!isOpen) await connect();
-    final result = await db?.execute(pg.Sql.named(script), parameters: parameters);
+    final result =
+        await db?.execute(pg.Sql.named(script), parameters: parameters);
     return result?.map((e) => e.toColumnMap()).toList() ?? [];
   }
 
@@ -64,7 +69,8 @@ class PostgreSqlDriver implements DatabaseDriver {
     if (!isOpen) await connect();
     final primaryKey = await _getPrimaryKeyColumn(query.tableName);
     final values = {...query.data};
-    final sql = _primitiveSerializer.acceptInsertQuery(query, primaryKey: primaryKey);
+    final sql =
+        _primitiveSerializer.acceptInsertQuery(query, primaryKey: primaryKey);
     final result = await db?.execute(pg.Sql.named(sql), parameters: values);
     return result?[0][0] as int;
   }
@@ -80,7 +86,8 @@ class PostgreSqlDriver implements DatabaseDriver {
 
   @override
   Future<List<Map<String, dynamic>>> update(UpdateQuery query) {
-    return _execRawQuery(serializer.acceptUpdateQuery(query), parameters: query.data);
+    return _execRawQuery(serializer.acceptUpdateQuery(query),
+        parameters: query.data);
   }
 
   @override
@@ -102,10 +109,12 @@ class PostgreSqlDriver implements DatabaseDriver {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> rawQuery(String script) => _execRawQuery(script);
+  Future<List<Map<String, dynamic>>> rawQuery(String script) =>
+      _execRawQuery(script);
 
   @override
-  Future<void> transaction(void Function(DriverTransactor transactor) func) async {
+  Future<void> transaction(
+      void Function(DriverTransactor transactor) func) async {
     if (!isOpen) await connect();
     if (db == null) return Future.value();
     return db!.runTx((txn) async => func(_PgSqlDriverTransactor(txn)));
@@ -135,7 +144,8 @@ WHERE
   }
 
   @override
-  List<EntityTypeConverter> get typeconverters => [booleanConverter, dateTimeConverter];
+  List<EntityTypeConverter> get typeconverters =>
+      [booleanConverter, dateTimeConverter];
 }
 
 class _PgSqlDriverTransactor extends DriverTransactor {
@@ -231,7 +241,8 @@ class PgSqlPrimitiveSerializer extends MySqlPrimitiveSerializer {
 
 @protected
 class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
-  String _getColumn(String name, String type, {nullable = false, defaultValue}) {
+  String _getColumn(String name, String type,
+      {nullable = false, defaultValue}) {
     final sb = StringBuffer()..write('$name $type');
     if (!nullable) {
       sb.write(' NOT NULL');
@@ -242,17 +253,20 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
 
   @override
   void datetime(String name, {bool nullable = false, DateTime? defaultValue}) {
-    statements.add(_getColumn(name, 'TIMESTAMP', nullable: nullable, defaultValue: defaultValue));
+    statements.add(_getColumn(name, 'TIMESTAMP',
+        nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void blob(String name, {bool nullable = false, defaultValue}) {
-    statements.add(_getColumn(name, "BYTEA", nullable: nullable, defaultValue: null));
+    statements
+        .add(_getColumn(name, "BYTEA", nullable: nullable, defaultValue: null));
   }
 
   @override
   void boolean(String name, {nullable = false, defaultValue}) {
-    statements.add(_getColumn(name, 'BOOLEAN', nullable: nullable, defaultValue: defaultValue));
+    statements.add(_getColumn(name, 'BOOLEAN',
+        nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
@@ -270,13 +284,20 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   }
 
   @override
-  void float(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
-    statements.add(_getColumn(name, 'DOUBLE PRECISION', nullable: nullable, defaultValue: defaultValue));
+  void float(String name,
+      {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+    statements.add(_getColumn(name, 'DOUBLE PRECISION',
+        nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
-  void double(String name, {bool nullable = false, num? defaultValue, int? precision = 10, int? scale = 0}) {
-    statements.add(_getColumn(name, 'NUMERIC($precision, $scale)', nullable: nullable, defaultValue: defaultValue));
+  void double(String name,
+      {bool nullable = false,
+      num? defaultValue,
+      int? precision = 10,
+      int? scale = 0}) {
+    statements.add(_getColumn(name, 'NUMERIC($precision, $scale)',
+        nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
@@ -286,47 +307,80 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
 
   @override
   void mediumInteger(String name, {bool nullable = false, num? defaultValue}) {
-    statements.add(_getColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
+    statements.add(_getColumn(name, 'INTEGER',
+        nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void text(String name,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate, int length = 1}) {
-    statements.add(_getColumn(name, 'TEXT', nullable: nullable, defaultValue: null));
+      {bool nullable = false,
+      String? defaultValue,
+      String? charset,
+      String? collate,
+      int length = 1}) {
+    statements
+        .add(_getColumn(name, 'TEXT', nullable: nullable, defaultValue: null));
   }
 
   @override
-  void longText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+  void longText(String name,
+      {bool nullable = false,
+      String? defaultValue,
+      String? charset,
+      String? collate}) {
     throw UnimplementedError('longText not implemented for Postgres');
   }
 
   @override
-  void mediumText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+  void mediumText(String name,
+      {bool nullable = false,
+      String? defaultValue,
+      String? charset,
+      String? collate}) {
     throw UnimplementedError('mediumText not implemented for Postgres');
   }
 
   @override
-  void tinyText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+  void tinyText(String name,
+      {bool nullable = false,
+      String? defaultValue,
+      String? charset,
+      String? collate}) {
     throw UnimplementedError('tinyText not implemented for Postgres');
   }
 
   @override
   void binary(String name,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate, int size = 1}) {
-    statements.add(_getColumn(name, "BYTEA", nullable: nullable, defaultValue: null));
+      {bool nullable = false,
+      String? defaultValue,
+      String? charset,
+      String? collate,
+      int size = 1}) {
+    statements
+        .add(_getColumn(name, "BYTEA", nullable: nullable, defaultValue: null));
   }
 
   @override
   void varbinary(String name,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate, int size = 1}) {
+      {bool nullable = false,
+      String? defaultValue,
+      String? charset,
+      String? collate,
+      int size = 1}) {
     final type = 'BIT VARYING($size)';
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(
+        _getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void enums(String name, List<String> values,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
-    final sb = StringBuffer()..write('CREATE TYPE $name AS ENUM (${values.map((e) => "'$e'").join(', ')});');
+      {bool nullable = false,
+      String? defaultValue,
+      String? charset,
+      String? collate}) {
+    final sb = StringBuffer()
+      ..write(
+          'CREATE TYPE $name AS ENUM (${values.map((e) => "'$e'").join(', ')});');
     if (!nullable) {
       sb.write(' NOT NULL');
       if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
@@ -336,7 +390,10 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
 
   @override
   void set(String name, List<String> values,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+      {bool nullable = false,
+      String? defaultValue,
+      String? charset,
+      String? collate}) {
     throw UnimplementedError('set not implemented for Postgres');
   }
 }
