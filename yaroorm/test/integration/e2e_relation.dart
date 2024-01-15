@@ -42,7 +42,7 @@ void runRelationsE2ETest(String connectionName) {
 
       final posts = await testUser1!.posts.orderByAsc('title').get();
       expect(posts, hasLength(3));
-      // expect(posts.every((e) => e.createdAt != null && e.updatedAt != null && e.userId == testUser1!.id), isTrue);
+       expect(posts.every((e) => e.createdAt != null && e.updatedAt != null && e.userId == testUser1!.id), isTrue);
       expect(posts.map((e) => {'id': e.id, 'title': e.title, 'desc': e.description, 'userId': e.userId!}), [
         {'id': 3, 'title': 'Coo Kie 3', 'desc': 'foo bar 6', 'userId': 1},
         {'id': 1, 'title': 'Foo Bar 1', 'desc': 'foo bar 4', 'userId': 1},
