@@ -33,7 +33,7 @@ class PostgreSqlDriver implements DatabaseDriver {
           port: config.port == null ? 5432 : config.port!,
         ),
         settings: pg.ConnectionSettings(
-            sslMode: secure ? pg.SslMode.require : pg.SslMode.disable, timeZone: config.timeZone));
+            sslMode: (config.secure ?? false) ? pg.SslMode.require : pg.SslMode.disable, timeZone: config.timeZone));
     return this;
   }
 
@@ -135,7 +135,7 @@ WHERE
   }
 
   @override
-  List<EntityTypeConverter> get typeconverters => [dateTimeConverter];
+  List<EntityTypeConverter> get typeconverters => [booleanConverter, dateTimeConverter];
 }
 
 class _PgSqlDriverTransactor extends DriverTransactor {
@@ -195,10 +195,8 @@ class PgSqlPrimitiveSerializer extends MySqlPrimitiveSerializer {
   String acceptInsertQuery(InsertQuery query, {String? primaryKey}) {
     final keys = query.data.keys;
     final parameters = keys.map((e) => '@$e').join(', ');
-
     var sql = 'INSERT INTO ${escapeName(query.tableName)} (${keys.join(', ')}) VALUES ($parameters)';
     if (primaryKey == null) return '$sql$terminator';
-
     return '$sql RETURNING $primaryKey$terminator';
   }
 
@@ -216,6 +214,18 @@ class PgSqlPrimitiveSerializer extends MySqlPrimitiveSerializer {
       ..write(terminator);
 
     return queryBuilder.toString();
+  }
+
+  @override
+  String acceptInsertManyQuery(InsertManyQuery query) {
+    final fields = query.values.first.keys.join(', ');
+    final values = query.values.map((dataMap) {
+      final values = dataMap.values.map((value) => "'$value'").join(', ');
+      return '($values)';
+    }).join(', ');
+    final sql = 'INSERT INTO ${escapeName(query.tableName)} ($fields) VALUES $values';
+    print(sql);
+    return '$sql$terminator';
   }
 }
 

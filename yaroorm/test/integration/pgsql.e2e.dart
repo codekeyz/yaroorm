@@ -15,5 +15,4 @@ void main() async {
 
     group('Relation E2E Test', () => runRelationsE2ETest('foo_pgsql'));
   });
-
 }
