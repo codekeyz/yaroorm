@@ -389,12 +389,14 @@ class SqliteTableBlueprint extends TableBlueprint {
   final List<String> statements = [];
   final List<String> _foreignKeys = [];
 
+  PrimitiveSerializer get szler => _serializer;
+
   String makeColumn(String name, String type, {nullable = false, defaultValue}) {
-    final sb = StringBuffer()..write('${_serializer.escapeColumnName(name)} $type');
+    final sb = StringBuffer()..write('${szler.escapeColumnName(name)} $type');
     if (!nullable) {
       sb.write(' NOT NULL');
       if (defaultValue != null) {
-        final value = _serializer.acceptPrimitiveValue(defaultValue);
+        final value = szler.acceptPrimitiveValue(defaultValue);
         sb.write(' DEFAULT $value');
       }
     }
@@ -405,7 +407,7 @@ class SqliteTableBlueprint extends TableBlueprint {
   void id({name = 'id', String? type, autoIncrement = true}) {
     type ??= 'INTEGER';
 
-    final sb = StringBuffer()..write('${_serializer.escapeColumnName(name)} $type NOT NULL PRIMARY KEY');
+    final sb = StringBuffer()..write('${szler.escapeColumnName(name)} $type NOT NULL PRIMARY KEY');
     if (autoIncrement) sb.write(' AUTOINCREMENT');
     statements.add(sb.toString());
   }
@@ -562,12 +564,12 @@ class SqliteTableBlueprint extends TableBlueprint {
   @override
   String createScript(String tableName) {
     statements.addAll(_foreignKeys);
-    return 'CREATE TABLE ${_serializer.escapeColumnName(tableName)} (${statements.join(', ')});';
+    return 'CREATE TABLE ${szler.escapeColumnName(tableName)} (${statements.join(', ')});';
   }
 
   @override
   String dropScript(String tableName) {
-    return 'DROP TABLE IF EXISTS ${_serializer.escapeColumnName(tableName)};';
+    return 'DROP TABLE IF EXISTS ${szler.escapeColumnName(tableName)};';
   }
 
   @override
@@ -598,7 +600,7 @@ class SqliteTableBlueprint extends TableBlueprint {
     callback(ForeignKey fkey) => result = onKey?.call(fkey) ?? fkey;
 
     super.foreign<Model, ReferenceModel>(column: column, onKey: callback);
-    final statement = _serializer.acceptForeignKey(this, result);
+    final statement = szler.acceptForeignKey(this, result);
     _foreignKeys.add(statement);
   }
 }

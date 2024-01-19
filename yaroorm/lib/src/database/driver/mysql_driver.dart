@@ -177,6 +177,9 @@ class _MysqlTransactor extends DriverTransactor {
 @protected
 class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
   @override
+  PrimitiveSerializer get szler => _serializer;
+
+  @override
   void id({String name = 'id', String? type, bool autoIncrement = true}) {
     type ??= 'INT';
 
