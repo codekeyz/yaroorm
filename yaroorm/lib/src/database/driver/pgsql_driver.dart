@@ -1,9 +1,11 @@
+import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 import 'package:postgres/postgres.dart' as pg;
 import 'package:sqflite_common/sql.dart';
 import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/src/database/driver/mysql_driver.dart';
 import 'package:yaroorm/src/primitives/serializer.dart';
+import 'package:yaroorm/src/primitives/where.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 final _primitiveSerializer = PgSqlPrimitiveSerializer();
@@ -60,13 +62,12 @@ class PostgreSqlDriver implements DatabaseDriver {
   Future execute(String script) => rawQuery(script);
 
   @override
-  Future<int> insert(InsertQuery query) async {
+  Future<int?> insert(InsertQuery query) async {
     if (!isOpen) await connect();
     final primaryKey = await _getPrimaryKeyColumn(query.tableName);
-    final values = {...query.data};
     final sql = _primitiveSerializer.acceptInsertQuery(query, primaryKey: primaryKey);
-    final result = await db?.execute(pg.Sql.named(sql), parameters: values);
-    return result?[0][0] as int;
+    final result = await db?.execute(sql);
+    return int.tryParse((result?.first.first.toString() ?? ''));
   }
 
   @override
@@ -123,7 +124,7 @@ class PostgreSqlDriver implements DatabaseDriver {
     final result = await db?.execute('''SELECT pg_attribute.attname 
 FROM pg_index, pg_class, pg_attribute, pg_namespace 
 WHERE 
-  pg_class.oid = '$tableName'::regclass AND 
+  pg_class.oid = '"$tableName"'::regclass AND 
   indrelid = pg_class.oid AND 
   nspname = 'public' AND 
   pg_class.relnamespace = pg_namespace.oid AND 
@@ -135,7 +136,7 @@ WHERE
   }
 
   @override
-  List<EntityTypeConverter> get typeconverters => [booleanConverter, dateTimeConverter];
+  List<EntityTypeConverter> get typeconverters => [booleanConverter];
 }
 
 class _PgSqlDriverTransactor extends DriverTransactor {
@@ -155,7 +156,9 @@ class _PgSqlDriverTransactor extends DriverTransactor {
   @override
   Future<int> insert(InsertQuery query) async {
     final sql = _primitiveSerializer.acceptInsertQuery(query);
-    final result = await txn.execute(pg.Sql.named(sql), parameters: query.data);
+    final result = await txn.execute(
+      sql,
+    );
     return result.affectedRows;
   }
 
@@ -192,12 +195,54 @@ class PgSqlPrimitiveSerializer extends MySqlPrimitiveSerializer {
   const PgSqlPrimitiveSerializer();
 
   @override
+  String acceptReadQuery(Query query) {
+    final queryBuilder = StringBuffer();
+
+    /// SELECT
+    final selectStatement = acceptSelect(query.fieldSelections.toList());
+    queryBuilder.write(selectStatement);
+    queryBuilder.write('FROM "${escapeName(query.tableName)}"');
+
+    /// WHERE
+    final clauses = query.whereClauses;
+    if (clauses.isNotEmpty) {
+      final sb = StringBuffer();
+
+      final hasDifferentOperators = clauses.map((e) => e.operators).reduce((val, e) => val..addAll(e)).length > 1;
+
+      for (final clause in clauses) {
+        final result = acceptWhereClause(clause, canGroup: hasDifferentOperators);
+        if (sb.isEmpty) {
+          sb.write(result);
+        } else {
+          sb.write(' ${clause.operator.name} $result');
+        }
+      }
+
+      queryBuilder.write(' WHERE $sb');
+    }
+
+    /// ORDER BY
+    final orderBys = query.orderByProps;
+    if (orderBys.isNotEmpty) {
+      queryBuilder.write(' ORDER BY ${acceptOrderBy(orderBys.toList())}');
+    }
+
+    /// LIMIT
+    final limit = query.limit;
+    if (limit != null) {
+      queryBuilder.write(' LIMIT ${acceptLimit(limit)}');
+    }
+    return '${queryBuilder.toString()}$terminator';
+  }
+
+  @override
   String acceptInsertQuery(InsertQuery query, {String? primaryKey}) {
-    final keys = query.data.keys;
-    final parameters = keys.map((e) => '@$e').join(', ');
-    var sql = 'INSERT INTO ${escapeName(query.tableName)} (${keys.join(', ')}) VALUES ($parameters)';
+    final keys = query.data.keys.map((e) => '"$e"').toList();
+    final parameters = query.data.values.map((e) => "'$e'").join(', ');
+    var sql = 'INSERT INTO "${escapeName(query.tableName)}" (${keys.join(', ')}) VALUES ($parameters)';
     if (primaryKey == null) return '$sql$terminator';
-    return '$sql RETURNING $primaryKey$terminator';
+    return '$sql RETURNING "$primaryKey"$terminator';
   }
 
   @override
@@ -206,7 +251,7 @@ class PgSqlPrimitiveSerializer extends MySqlPrimitiveSerializer {
 
     final fields = query.data.keys.map((e) => '$e = @$e').join(', ');
 
-    queryBuilder.write('UPDATE ${escapeName(query.tableName)}');
+    queryBuilder.write('UPDATE "${escapeName(query.tableName)}"');
 
     queryBuilder
       ..write(' SET $fields')
@@ -218,21 +263,84 @@ class PgSqlPrimitiveSerializer extends MySqlPrimitiveSerializer {
 
   @override
   String acceptInsertManyQuery(InsertManyQuery query) {
-    final fields = query.values.first.keys.join(', ');
+    final fields = query.values.first.keys.map((e) => '"$e"').join(', ');
     final values = query.values.map((dataMap) {
       final values = dataMap.values.map((value) => "'$value'").join(', ');
       return '($values)';
     }).join(', ');
-    final sql = 'INSERT INTO ${escapeName(query.tableName)} ($fields) VALUES $values';
-    print(sql);
+    final sql = 'INSERT INTO "${escapeName(query.tableName)}" ($fields) VALUES $values';
     return '$sql$terminator';
+  }
+
+  @override
+  String acceptForeignKey(TableBlueprint blueprint, ForeignKey key) {
+    blueprint.ensurePresenceOf(key.column);
+    final sb = StringBuffer();
+
+    final constraint = key.constraint;
+    if (constraint != null) sb.write('CONSTRAINT $constraint ');
+
+    sb.write(
+        'FOREIGN KEY ("${escapeName(key.column)}") REFERENCES "${escapeName(key.foreignTable)}"("${escapeName(key.foreignTableColumn)}")');
+
+    if (key.onUpdate != null) {
+      sb.write(' ON UPDATE ${_acceptForeignKeyAction(key.onUpdate!)}');
+    }
+    if (key.onDelete != null) {
+      sb.write(' ON DELETE ${_acceptForeignKeyAction(key.onDelete!)}');
+    }
+    return sb.toString();
+  }
+
+  String _acceptForeignKeyAction(ForeignKeyAction action) {
+    return switch (action) {
+      ForeignKeyAction.cascade => 'CASCADE',
+      ForeignKeyAction.restrict => 'RESTRICT',
+      ForeignKeyAction.setNull => 'SET NULL',
+      ForeignKeyAction.setDefault => 'SET DEFAULT',
+      ForeignKeyAction.noAction => 'NO ACTION',
+    };
+  }
+
+  @override
+  String acceptWhereClauseValue(WhereClauseValue clauseVal) {
+    final field = '"${escapeName(clauseVal.field)}"';
+    final value = clauseVal.comparer.value;
+    final valueOperator = clauseVal.comparer.operator;
+    final wrapped = acceptPrimitiveValue(value);
+
+    return switch (valueOperator) {
+      Operator.LESS_THAN => '$field < $wrapped',
+      Operator.GREAT_THAN => '$field > $wrapped',
+      Operator.LESS_THEN_OR_EQUAL_TO => '$field <= $wrapped',
+      Operator.GREATER_THAN_OR_EQUAL_TO => '$field >= $wrapped',
+      //
+      Operator.EQUAL => '$field = $wrapped',
+      Operator.NOT_EQUAL => '$field != $wrapped',
+      //
+      Operator.IN => '$field IN $wrapped',
+      Operator.NOT_IN => '$field NOT IN $wrapped',
+      //
+      Operator.LIKE => '$field LIKE $wrapped',
+      Operator.NOT_LIKE => '$field NOT LIKE $wrapped',
+      //
+      Operator.NULL => '$field IS NULL',
+      Operator.NOT_NULL => '$field IS NOT NULL',
+      //
+      Operator.BETWEEN => '$field BETWEEN ${acceptPrimitiveValue(value[0])} AND ${acceptPrimitiveValue(value[1])}',
+      Operator.NOT_BETWEEN =>
+        '$field NOT BETWEEN ${acceptPrimitiveValue(value[0])} AND ${acceptPrimitiveValue(value[1])}',
+    };
   }
 }
 
 @protected
-class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
+class PgSqlTableBlueprint extends TableBlueprint {
+  final List<String> statements = [];
+  final List<String> _foreignKeys = [];
+
   String _getColumn(String name, String type, {nullable = false, defaultValue}) {
-    final sb = StringBuffer()..write('$name $type');
+    final sb = StringBuffer()..write('"${escapeName(name)}" $type');
     if (!nullable) {
       sb.write(' NOT NULL');
       if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
@@ -247,7 +355,7 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
 
   @override
   void blob(String name, {bool nullable = false, defaultValue}) {
-    statements.add(_getColumn(name, "BYTEA", nullable: nullable, defaultValue: null));
+    statements.add(_getColumn(name, 'BYTEA', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
@@ -258,15 +366,14 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   @override
   void id({name = 'id', String? type, autoIncrement = true}) {
     type ??= 'SERIAL';
-
-    final sb = StringBuffer()..write(name);
-    sb.write(autoIncrement ? " $type PRIMARY KEY" : " $type PRIMARY KEY");
+    final sb = StringBuffer()..write('"${escapeName(name)}"');
+    sb.write(autoIncrement ? " SERIAL PRIMARY KEY" : " $type PRIMARY KEY");
     statements.add(sb.toString());
   }
 
   @override
   String renameScript(String fromName, String toName) {
-    return 'ALTER TABLE $fromName RENAME TO $toName;';
+    return 'ALTER TABLE "${escapeName(fromName)}" RENAME TO "${escapeName(toName)}";';
   }
 
   @override
@@ -313,7 +420,7 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   @override
   void binary(String name,
       {bool nullable = false, String? defaultValue, String? charset, String? collate, int size = 1}) {
-    statements.add(_getColumn(name, "BYTEA", nullable: nullable, defaultValue: null));
+    statements.add(_getColumn(name, 'BYTEA', nullable: nullable, defaultValue: null));
   }
 
   @override
@@ -326,7 +433,8 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   @override
   void enums(String name, List<String> values,
       {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
-    final sb = StringBuffer()..write('CREATE TYPE $name AS ENUM (${values.map((e) => "'$e'").join(', ')});');
+    final sb = StringBuffer()
+      ..write('CREATE TYPE "${escapeName(name)}" AS ENUM (${values.map((e) => "'$e'").join(', ')});');
     if (!nullable) {
       sb.write(' NOT NULL');
       if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
@@ -338,5 +446,104 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   void set(String name, List<String> values,
       {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
     throw UnimplementedError('set not implemented for Postgres');
+  }
+
+  @override
+  void bigInteger(String name, {bool nullable = false, num? defaultValue}) {
+    statements.add(_getColumn(name, 'BIGINT', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void bit(String name, {bool nullable = false, int? defaultValue}) {
+    statements.add(_getColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void char(String name,
+      {bool nullable = false, int length = 1, String? defaultValue, String? charset, String? collate}) {
+    statements.add(_getColumn(name, 'CHAR($length)', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  String createScript(String tableName) {
+    statements.addAll(_foreignKeys);
+    return '''CREATE TABLE "${escapeName(tableName)}" (${statements.join(', ')});''';
+  }
+
+  @override
+  void date(String name, {bool nullable = false, DateTime? defaultValue}) {
+    datetime(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void decimal(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+    statements.add(_getColumn(name, 'DECIMAL($precision, $scale)', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  String dropScript(String tableName) {
+    return 'DROP TABLE IF EXISTS "${escapeName(tableName)}";';
+  }
+
+  @override
+  String ensurePresenceOf(String column) {
+    final exactLine = statements.firstWhereOrNull((e) => e.startsWith('"$column" '));
+    if (exactLine == null) throw Exception('Column $column not found in table blueprint');
+    return exactLine.split(' ')[1];
+  }
+
+  @override
+  void integer(String name, {bool nullable = false, num? defaultValue}) {
+    statements.add(_getColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void numeric(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+    integer(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void smallInteger(String name, {bool nullable = false, num? defaultValue}) {
+    integer(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void string(String name, {bool nullable = false, String? defaultValue}) {
+    statements.add(_getColumn(name, 'VARCHAR', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void time(String name, {bool nullable = false, DateTime? defaultValue}) {
+    datetime(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void timestamp(String name, {bool nullable = false, DateTime? defaultValue}) {
+    datetime(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void timestamps({String createdAt = entityCreatedAtColumnName, String updatedAt = entityUpdatedAtColumnName}) {
+    timestamp(createdAt);
+    timestamp(updatedAt);
+  }
+
+  @override
+  void varchar(String name,
+      {bool nullable = false, String? defaultValue, int length = 255, String? charset, String? collate}) {
+    string(name, nullable: nullable, defaultValue: defaultValue);
+  }
+
+  @override
+  void foreign<Model extends Entity, ReferenceModel extends Entity>({
+    String? column,
+    ForeignKey Function(ForeignKey fkey)? onKey,
+  }) {
+    late ForeignKey result;
+    callback(ForeignKey fkey) => result = onKey?.call(fkey) ?? fkey;
+
+    super.foreign<Model, ReferenceModel>(column: column, onKey: callback);
+    final statement = _primitiveSerializer.acceptForeignKey(this, result);
+    _foreignKeys.add(statement);
   }
 }
