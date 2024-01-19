@@ -14,9 +14,7 @@ final _serializer = const SqliteSerializer();
 
 const _sqliteTypeConverters = <EntityTypeConverter>[booleanConverter, dateTimeConverter];
 
-@visibleForTesting
-@protected
-class SqliteDriver implements DatabaseDriver {
+final class SqliteDriver implements DatabaseDriver {
   final DatabaseConnection config;
 
   Database? _database;
@@ -190,7 +188,7 @@ class SqliteSerializer implements PrimitiveSerializer {
     /// SELECT
     final selectStatement = acceptSelect(query.fieldSelections.toList());
     queryBuilder.write(selectStatement);
-    queryBuilder.write('FROM ${escapeName(query.tableName)}');
+    queryBuilder.write('FROM ${escapeColumnName(query.tableName)}');
 
     /// WHERE
     final clauses = query.whereClauses;
@@ -230,9 +228,9 @@ class SqliteSerializer implements PrimitiveSerializer {
   String acceptUpdateQuery(UpdateQuery query) {
     final queryBuilder = StringBuffer();
 
-    final fields = query.data.keys.map((e) => '${escapeName(e)} = ?').join(', ');
+    final fields = query.data.keys.map((e) => '${escapeColumnName(e)} = ?').join(', ');
 
-    queryBuilder.write('UPDATE ${escapeName(query.tableName)}');
+    queryBuilder.write('UPDATE ${escapeColumnName(query.tableName)}');
 
     queryBuilder
       ..write(' SET $fields')
@@ -244,9 +242,9 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptInsertQuery(InsertQuery query) {
-    final fields = query.data.keys.map(escapeName);
+    final fields = query.data.keys.map(escapeColumnName);
     final params = List<String>.filled(fields.length, '?').join(', ');
-    return 'INSERT INTO ${escapeName(query.tableName)} (${fields.join(', ')}) VALUES ($params)$terminator';
+    return 'INSERT INTO ${escapeColumnName(query.tableName)} (${fields.join(', ')}) VALUES ($params)$terminator';
   }
 
   @override
@@ -259,7 +257,7 @@ class SqliteSerializer implements PrimitiveSerializer {
     final queryBuilder = StringBuffer();
 
     queryBuilder
-      ..write('DELETE FROM ${escapeName(query.tableName)}')
+      ..write('DELETE FROM ${escapeColumnName(query.tableName)}')
       ..write(' WHERE ${acceptWhereClause(query.whereClause)}')
       ..write(terminator);
 
@@ -268,7 +266,7 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptSelect(List<String> fields) {
-    return fields.isEmpty ? 'SELECT * ' : 'SELECT ${fields.map(escapeName).join(', ')}';
+    return fields.isEmpty ? 'SELECT * ' : 'SELECT ${fields.map(escapeColumnName).join(', ')}';
   }
 
   @override
@@ -374,13 +372,16 @@ class SqliteSerializer implements PrimitiveSerializer {
     if (constraint != null) sb.write('CONSTRAINT $constraint ');
 
     sb.write(
-        'FOREIGN KEY (${escapeName(key.column)}) REFERENCES ${escapeName(key.foreignTable)}(${escapeName(key.foreignTableColumn)})');
+        'FOREIGN KEY (${escapeColumnName(key.column)}) REFERENCES ${escapeColumnName(key.foreignTable)}(${escapeColumnName(key.foreignTableColumn)})');
 
     if (key.onUpdate != null) sb.write(' ON UPDATE ${_acceptForeignKeyAction(key.onUpdate!)}');
     if (key.onDelete != null) sb.write(' ON DELETE ${_acceptForeignKeyAction(key.onDelete!)}');
 
     return sb.toString();
   }
+
+  @override
+  String escapeColumnName(String column) => escapeName(column);
 }
 
 @protected
@@ -388,8 +389,8 @@ class SqliteTableBlueprint extends TableBlueprint {
   final List<String> statements = [];
   final List<String> _foreignKeys = [];
 
-  String _getColumn(String name, String type, {nullable = false, defaultValue}) {
-    final sb = StringBuffer()..write('${escapeName(name)} $type');
+  String makeColumn(String name, String type, {nullable = false, defaultValue}) {
+    final sb = StringBuffer()..write('${_serializer.escapeColumnName(name)} $type');
     if (!nullable) {
       sb.write(' NOT NULL');
       if (defaultValue != null) {
@@ -404,44 +405,44 @@ class SqliteTableBlueprint extends TableBlueprint {
   void id({name = 'id', String? type, autoIncrement = true}) {
     type ??= 'INTEGER';
 
-    final sb = StringBuffer()..write('${escapeName(name)} $type NOT NULL PRIMARY KEY');
+    final sb = StringBuffer()..write('${_serializer.escapeColumnName(name)} $type NOT NULL PRIMARY KEY');
     if (autoIncrement) sb.write(' AUTOINCREMENT');
     statements.add(sb.toString());
   }
 
   @override
   void string(String name, {nullable = false, defaultValue}) {
-    statements.add(_getColumn(name, 'VARCHAR', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'VARCHAR', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void double(String name, {nullable = false, defaultValue, int? precision, int? scale}) {
-    statements.add(_getColumn(name, 'REAL', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'REAL', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void float(String name, {nullable = false, defaultValue, int? precision, int? scale}) {
-    statements.add(_getColumn(name, 'REAL', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'REAL', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void integer(String name, {nullable = false, defaultValue}) {
-    statements.add(_getColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void blob(String name, {nullable = false, defaultValue}) {
-    statements.add(_getColumn(name, 'BLOB', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'BLOB', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void boolean(String name, {nullable = false, defaultValue}) {
-    statements.add(_getColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void datetime(String name, {nullable = false, defaultValue}) {
-    statements.add(_getColumn(name, 'DATETIME', nullable: nullable, defaultValue: defaultValue?.toIso8601String()));
+    statements.add(makeColumn(name, 'DATETIME', nullable: nullable, defaultValue: defaultValue?.toIso8601String()));
   }
 
   @override
@@ -467,35 +468,35 @@ class SqliteTableBlueprint extends TableBlueprint {
 
   @override
   void bigInteger(String name, {bool nullable = false, num? defaultValue}) {
-    statements.add(_getColumn(name, 'BIGINT', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'BIGINT', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void binary(String name,
       {bool nullable = false, int size = 1, String? defaultValue, String? charset, String? collate}) {
-    statements.add(_getColumn(name, 'BLOB', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'BLOB', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void bit(String name, {bool nullable = false, int? defaultValue}) {
-    statements.add(_getColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void char(String name,
       {bool nullable = false, int length = 1, String? defaultValue, String? charset, String? collate}) {
-    statements.add(_getColumn(name, 'CHAR($length)', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'CHAR($length)', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void decimal(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
-    statements.add(_getColumn(name, 'DECIMAL($precision, $scale)', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'DECIMAL($precision, $scale)', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void enums(String name, List<String> values,
       {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
-    statements.add(_getColumn(name, 'TEXT CHECK ($name IN (${values.map((e) => "'$e'").join(', ')}))',
+    statements.add(makeColumn(name, 'TEXT CHECK ($name IN (${values.map((e) => "'$e'").join(', ')}))',
         nullable: nullable, defaultValue: defaultValue));
   }
 
@@ -561,12 +562,12 @@ class SqliteTableBlueprint extends TableBlueprint {
   @override
   String createScript(String tableName) {
     statements.addAll(_foreignKeys);
-    return 'CREATE TABLE ${escapeName(tableName)} (${statements.join(', ')});';
+    return 'CREATE TABLE ${_serializer.escapeColumnName(tableName)} (${statements.join(', ')});';
   }
 
   @override
   String dropScript(String tableName) {
-    return 'DROP TABLE IF EXISTS ${escapeName(tableName)};';
+    return 'DROP TABLE IF EXISTS ${_serializer.escapeColumnName(tableName)};';
   }
 
   @override
