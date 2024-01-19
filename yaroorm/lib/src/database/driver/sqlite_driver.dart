@@ -365,7 +365,7 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptForeignKey(TableBlueprint blueprint, ForeignKey key) {
-    blueprint.ensurePresenceOf(key.column);
+    blueprint.ensurePresenceOf(escapeColumnName(key.column));
     final sb = StringBuffer();
 
     final constraint = key.constraint;

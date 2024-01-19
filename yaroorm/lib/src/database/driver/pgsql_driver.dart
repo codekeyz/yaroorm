@@ -6,9 +6,9 @@ import 'package:yaroorm/src/database/driver/mysql_driver.dart';
 import 'package:yaroorm/src/primitives/serializer.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-final _primitiveSerializer = PgSqlPrimitiveSerializer();
+final _pgsqlSerializer = PgSqlPrimitiveSerializer();
 
-class PostgreSqlDriver implements DatabaseDriver {
+final class PostgreSqlDriver implements DatabaseDriver {
   final DatabaseConnection config;
   pg.Connection? db;
 
@@ -25,15 +25,18 @@ class PostgreSqlDriver implements DatabaseDriver {
     }
 
     db = await pg.Connection.open(
-        pg.Endpoint(
-          host: config.host!,
-          database: config.database,
-          username: config.username,
-          password: config.password,
-          port: config.port == null ? 5432 : config.port!,
-        ),
-        settings: pg.ConnectionSettings(
-            sslMode: (config.secure ?? false) ? pg.SslMode.require : pg.SslMode.disable, timeZone: config.timeZone));
+      pg.Endpoint(
+        host: config.host!,
+        database: config.database,
+        username: config.username,
+        password: config.password,
+        port: config.port == null ? 5432 : config.port!,
+      ),
+      settings: pg.ConnectionSettings(
+        sslMode: secure ? pg.SslMode.require : pg.SslMode.disable,
+        timeZone: config.timeZone,
+      ),
+    );
     return this;
   }
 
@@ -64,7 +67,7 @@ class PostgreSqlDriver implements DatabaseDriver {
     if (!isOpen) await connect();
     final primaryKey = await _getPrimaryKeyColumn(query.tableName);
     final values = {...query.data};
-    final sql = _primitiveSerializer.acceptInsertQuery(query, primaryKey: primaryKey);
+    final sql = _pgsqlSerializer.acceptInsertQuery(query, primaryKey: primaryKey);
     final result = await db?.execute(pg.Sql.named(sql), parameters: values);
     return result?[0][0] as int;
   }
@@ -84,7 +87,7 @@ class PostgreSqlDriver implements DatabaseDriver {
   }
 
   @override
-  PrimitiveSerializer get serializer => _primitiveSerializer;
+  PrimitiveSerializer get serializer => _pgsqlSerializer;
 
   @override
   DatabaseDriverType get type => DatabaseDriverType.pgsql;
@@ -114,7 +117,7 @@ class PostgreSqlDriver implements DatabaseDriver {
   @override
   Future insertMany(InsertManyQuery query) async {
     if (!isOpen) await connect();
-    final sql = _primitiveSerializer.acceptInsertManyQuery(query);
+    final sql = _pgsqlSerializer.acceptInsertManyQuery(query);
     final result = await db?.execute(sql);
     return result?.expand((x) => x).toList();
   }
@@ -145,7 +148,7 @@ class _PgSqlDriverTransactor extends DriverTransactor {
 
   @override
   Future<void> delete(DeleteQuery query) async {
-    final sql = _primitiveSerializer.acceptDeleteQuery(query);
+    final sql = _pgsqlSerializer.acceptDeleteQuery(query);
     await rawQuery(sql);
   }
 
@@ -154,20 +157,20 @@ class _PgSqlDriverTransactor extends DriverTransactor {
 
   @override
   Future<int> insert(InsertQuery query) async {
-    final sql = _primitiveSerializer.acceptInsertQuery(query);
+    final sql = _pgsqlSerializer.acceptInsertQuery(query);
     final result = await txn.execute(pg.Sql.named(sql), parameters: query.data);
     return result.affectedRows;
   }
 
   @override
   Future insertMany(InsertManyQuery query) {
-    final sql = _primitiveSerializer.acceptInsertManyQuery(query);
+    final sql = _pgsqlSerializer.acceptInsertManyQuery(query);
     return rawQuery(sql);
   }
 
   @override
   Future<List<Map<String, dynamic>>> query(Query query) {
-    final sql = _primitiveSerializer.acceptReadQuery(query);
+    final sql = _pgsqlSerializer.acceptReadQuery(query);
     return rawQuery(sql);
   }
 
@@ -178,11 +181,11 @@ class _PgSqlDriverTransactor extends DriverTransactor {
   }
 
   @override
-  PrimitiveSerializer get serializer => _primitiveSerializer;
+  PrimitiveSerializer get serializer => _pgsqlSerializer;
 
   @override
   Future<void> update(UpdateQuery query) async {
-    final sql = _primitiveSerializer.acceptUpdateQuery(query);
+    final sql = _pgsqlSerializer.acceptUpdateQuery(query);
     await rawQuery(sql);
   }
 }
@@ -195,7 +198,7 @@ class PgSqlPrimitiveSerializer extends MySqlPrimitiveSerializer {
   String acceptInsertQuery(InsertQuery query, {String? primaryKey}) {
     final keys = query.data.keys;
     final parameters = keys.map((e) => '@$e').join(', ');
-    var sql = 'INSERT INTO ${escapeName(query.tableName)} (${keys.join(', ')}) VALUES ($parameters)';
+    var sql = 'INSERT INTO ${query.tableName} (${keys.map(escapeColumnName).join(', ')}) VALUES ($parameters)';
     if (primaryKey == null) return '$sql$terminator';
     return '$sql RETURNING $primaryKey$terminator';
   }
@@ -204,7 +207,7 @@ class PgSqlPrimitiveSerializer extends MySqlPrimitiveSerializer {
   String acceptUpdateQuery(UpdateQuery query) {
     final queryBuilder = StringBuffer();
 
-    final fields = query.data.keys.map((e) => '$e = @$e').join(', ');
+    final fields = query.data.keys.map((e) => '${escapeColumnName(e)} = @$e').join(', ');
 
     queryBuilder.write('UPDATE ${escapeName(query.tableName)}');
 
@@ -218,50 +221,45 @@ class PgSqlPrimitiveSerializer extends MySqlPrimitiveSerializer {
 
   @override
   String acceptInsertManyQuery(InsertManyQuery query) {
-    final fields = query.values.first.keys.join(', ');
+    final fields = query.values.first.keys.map(escapeColumnName).join(', ');
     final values = query.values.map((dataMap) {
       final values = dataMap.values.map((value) => "'$value'").join(', ');
       return '($values)';
     }).join(', ');
-    final sql = 'INSERT INTO ${escapeName(query.tableName)} ($fields) VALUES $values';
-    print(sql);
-    return '$sql$terminator';
+    return 'INSERT INTO ${query.tableName} ($fields) VALUES $values$terminator';
   }
+
+  @override
+  String escapeColumnName(String column) => '"${super.escapeColumnName(column)}"';
 }
 
 @protected
 class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
-  String _getColumn(String name, String type, {nullable = false, defaultValue}) {
-    final sb = StringBuffer()..write('$name $type');
-    if (!nullable) {
-      sb.write(' NOT NULL');
-      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
-    }
-    return sb.toString();
-  }
-
   @override
-  void datetime(String name, {bool nullable = false, DateTime? defaultValue}) {
-    statements.add(_getColumn(name, 'TIMESTAMP', nullable: nullable, defaultValue: defaultValue));
-  }
-
-  @override
-  void blob(String name, {bool nullable = false, defaultValue}) {
-    statements.add(_getColumn(name, "BYTEA", nullable: nullable, defaultValue: null));
-  }
-
-  @override
-  void boolean(String name, {nullable = false, defaultValue}) {
-    statements.add(_getColumn(name, 'BOOLEAN', nullable: nullable, defaultValue: defaultValue));
-  }
+  PrimitiveSerializer get szler => _pgsqlSerializer;
 
   @override
   void id({name = 'id', String? type, autoIncrement = true}) {
     type ??= 'SERIAL';
 
-    final sb = StringBuffer()..write(name);
-    sb.write(autoIncrement ? " $type PRIMARY KEY" : " $type PRIMARY KEY");
+    final sb = StringBuffer()..write(szler.escapeColumnName(name));
+    sb.write(autoIncrement ? " SERIAL PRIMARY KEY" : " $type PRIMARY KEY");
     statements.add(sb.toString());
+  }
+
+  @override
+  void datetime(String name, {bool nullable = false, DateTime? defaultValue}) {
+    statements.add(makeColumn(name, 'TIMESTAMP', nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void blob(String name, {bool nullable = false, defaultValue}) {
+    statements.add(makeColumn(name, "BYTEA", nullable: nullable, defaultValue: null));
+  }
+
+  @override
+  void boolean(String name, {nullable = false, defaultValue}) {
+    statements.add(makeColumn(name, 'BOOLEAN', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
@@ -271,62 +269,115 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
 
   @override
   void float(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
-    statements.add(_getColumn(name, 'DOUBLE PRECISION', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'DOUBLE PRECISION', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void double(String name, {bool nullable = false, num? defaultValue, int? precision = 10, int? scale = 0}) {
-    statements.add(_getColumn(name, 'NUMERIC($precision, $scale)', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'NUMERIC($precision, $scale)', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
-  void tinyInt(String name, {bool nullable = false, num? defaultValue}) {
+  void tinyInt(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+  }) {
     throw UnimplementedError('tinyInt not implemented for Postgres');
   }
 
   @override
-  void mediumInteger(String name, {bool nullable = false, num? defaultValue}) {
-    statements.add(_getColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
+  void mediumInteger(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+  }) {
+    statements.add(makeColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
-  void text(String name,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate, int length = 1}) {
-    statements.add(_getColumn(name, 'TEXT', nullable: nullable, defaultValue: null));
+  void text(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    int length = 1,
+  }) {
+    statements.add(makeColumn(name, 'TEXT', nullable: nullable, defaultValue: null));
   }
 
   @override
-  void longText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+  void longText(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+  }) {
     throw UnimplementedError('longText not implemented for Postgres');
   }
 
   @override
-  void mediumText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+  void mediumText(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+  }) {
     throw UnimplementedError('mediumText not implemented for Postgres');
   }
 
   @override
-  void tinyText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+  void tinyText(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+  }) {
     throw UnimplementedError('tinyText not implemented for Postgres');
   }
 
   @override
-  void binary(String name,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate, int size = 1}) {
-    statements.add(_getColumn(name, "BYTEA", nullable: nullable, defaultValue: null));
+  void binary(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    int size = 1,
+  }) {
+    statements.add(makeColumn(name, "BYTEA", nullable: nullable, defaultValue: null));
   }
 
   @override
-  void varbinary(String name,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate, int size = 1}) {
+  void varbinary(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    int size = 1,
+  }) {
     final type = 'BIT VARYING($size)';
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
-  void enums(String name, List<String> values,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
-    final sb = StringBuffer()..write('CREATE TYPE $name AS ENUM (${values.map((e) => "'$e'").join(', ')});');
+  void enums(
+    String name,
+    List<String> values, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+  }) {
+    final sb = StringBuffer()
+      ..write(
+        'CREATE TYPE ${szler.escapeColumnName(name)} AS ENUM (${values.map((e) => "'$e'").join(', ')});',
+      );
     if (!nullable) {
       sb.write(' NOT NULL');
       if (defaultValue != null) sb.write(' DEFAULT $defaultValue');

@@ -69,8 +69,7 @@ class Migrator {
           return found == null ? null : (entry: e, task: found);
         })
         .whereNotNull()
-        .toList()
-        .reversed;
+        .toList();
 
     await _processRollbacks(driver, rollbacks);
 
