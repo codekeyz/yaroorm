@@ -51,7 +51,7 @@ class Migrator {
     print('\n------- Completed DB migration 🚀  ------\n');
   }
 
-  static Future<void> resetMigrations(DatabaseDriver driver, Iterable<MigrationTask> allTasks) async {
+  static Future<void> resetMigrations(DatabaseDriver driver, Iterable<MigrationTask> tasks) async {
     await ensureMigrationsTableReady(driver);
 
     final migrationsList =
@@ -63,9 +63,10 @@ class Migrator {
 
     print('------- Resetting migrations  📦 -------\n');
 
-    final rollbacks = migrationsList.map((e) {
-      final found = allTasks.firstWhereOrNull((m) => m.name == e.migration);
-      return found == null ? null : (entry: e, task: found);
+    /// strictly using the order of migration files
+    final rollbacks = tasks.map((e) {
+      final entry = migrationsList.firstWhereOrNull((entry) => e.name == entry.migration);
+      return entry == null ? null : (entry: entry, task: e);
     }).whereNotNull();
 
     await _processRollbacks(driver, rollbacks);
