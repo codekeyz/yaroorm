@@ -1,37 +1,24 @@
 {
     "name": "Yaroo",
     "logo": "/assets/logo.png",
-    "logoDark": "/assets/logo-dark.png",
+    "logoDark": "/assets/logo.png",
     "twitter": "codekeyz",
-    "anchors": [{ "title": "Discord", "icon": "discord", "link": "https://invertase.link/discord" }],
     "theme": "#1c2834",
     "favicon": "/assets/logo.png",
     "googleAnalytics": "",
     "sidebar": [
       ["Overview", "/"],
       ["Getting Started", "/getting-started"],
-      ["Filters", "/filters"],
       [
-        "Configuration",
+        "Building Blocks",
         [
-          ["Overview", "/configuration/overview"],
-          ["Scripts", "/configuration/scripts"]
+          ["Controllers", "/core/controllers"],
+          ["Middlewares", "/core/middlewares"],
+          ["Request, Response & NextFunction", "/core/req-res-next"],
+          ["Validation using Request DTO", "/core/service-providers"],
+          ["Service Providers", "/core/service-providers"]
         ]
       ],
-      [
-        "Commands",
-        [
-          ["bootstrap", "/commands/bootstrap"],
-          ["clean", "/commands/clean"],
-          ["exec", "/commands/exec"],
-          ["list", "/commands/list"],
-          ["publish", "/commands/publish"],
-          ["run", "/commands/run"],
-          ["version", "/commands/version"]
-        ]
-      ],
-      ["Environment Variables", "/environment-variables"],
-      ["IDE Support", "/ide-support"],
       [
         "Guides",
         [
