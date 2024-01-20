@@ -22,7 +22,7 @@
     [
       "Techniques",
       [
-        ["Database", "techniques/database"],
+        ["Database", "/techniques/database"],
         ["Testing", "/techniques/testing"]
       ]
     ]
