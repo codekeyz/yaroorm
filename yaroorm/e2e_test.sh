@@ -11,6 +11,5 @@ for file in "$TEST_DIRECTORY"/$pattern; do
     filename=$(basename "$file")
     test_name="${filename%%.*}"
     echo "Running tests for: $test_name 📦"
-    dart run build_runner build --delete-conflicting-outputs
     dart test "$file" --coverage=coverage --fail-fast
 done
