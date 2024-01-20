@@ -13,7 +13,7 @@ class YaroormConfig {
   YaroormConfig(
     this.defaultConnName, {
     required this.connections,
-    required this.migrationsTable,
+    this.migrationsTable = 'migrations',
     this.migrations = const [],
   }) {
     final hasDefault = connections.any((e) => e.name == defaultConnName);
