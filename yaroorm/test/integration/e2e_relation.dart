@@ -84,7 +84,7 @@ void runRelationsE2ETest(String connectionName) {
       var anotherUserPosts = await user.posts.get();
       expect(anotherUserPosts, isEmpty);
 
-      await user.posts.add(Post('Another Post', 'wham bamn bamn'));
+      await user.posts.add(Post('Another Post', 'wham bamn'));
       anotherUserPosts = await user.posts.get();
       expect(anotherUserPosts, hasLength(1));
 
