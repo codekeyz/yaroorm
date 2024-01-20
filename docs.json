@@ -1,34 +1,30 @@
 {
-    "name": "Yaroo",
-    "logo": "/assets/logo.png",
-    "logoDark": "/assets/logo.png",
-    "twitter": "codekeyz",
-    "theme": "#1c2834",
-    "favicon": "/assets/logo.png",
-    "googleAnalytics": "",
-    "sidebar": [
-      ["Overview", "/"],
-      ["Getting Started", "/getting-started"],
+  "name": "Yaroo",
+  "logo": "/assets/logo.png",
+  "logoDark": "/assets/logo.png",
+  "twitter": "codekeyz",
+  "theme": "#1c2834",
+  "favicon": "/assets/logo.png",
+  "googleAnalytics": "",
+  "sidebar": [
+    ["Overview", "/"],
+    ["Getting Started", "/getting-started"],
+    [
+      "Building Blocks",
       [
-        "Building Blocks",
-        [
-          ["Controllers", "/core/controllers"],
-          ["Middlewares", "/core/middlewares"],
-          ["Request, Response & NextFunction", "/core/req-res-next"],
-          ["Validation using Request DTO", "/core/service-providers"],
-          ["Service Providers", "/core/service-providers"]
-        ]
-      ],
+        ["Controllers", "/core/controllers"],
+        ["Middlewares", "/core/middlewares"],
+        ["Request, Response & NextFunction", "/core/req-res-next"],
+        ["Request Validation", "/core/validation"],
+        ["Service Providers", "/core/service-providers"]
+      ]
+    ],
+    [
+      "Techniques",
       [
-        "Guides",
-        [
-          [
-            "Manage multi-package Flutter projects",
-            "https://sagarsuri56.medium.com/managing-multi-package-flutter-projects-with-melos-c8ce96fa7c82"
-          ],
-          ["Automated Releases", "/guides/automated-releases"],
-          ["Migrations", "/guides/migrations"]
-        ]
+        ["Database", "techniques/database"],
+        ["Testing", "/guides/automated-releases"]
       ]
     ]
-  }
+  ]
+}
