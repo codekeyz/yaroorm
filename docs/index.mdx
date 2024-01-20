@@ -1,86 +1,56 @@
 ---
-description: A tool for managing Dart projects with multiple packages.
+description: A backend framework with just enough batteries.
 ---
 
 <Image
   src="https://static.invertase.io/assets/melos-logo.png"
-  alt="Melos"
+  alt="Yaroo"
   zoom={false}
-  caption="A tool for managing Dart projects with multiple packages."
+  caption="Unleash the full power of Dart in Backend Development"
 />
 
 ## About
 
-Melos is a [CLI](https://en.wikipedia.org/wiki/Command-line_interface) tool used
-to help manage Dart projects with multiple packages (also known as mono-repos).
-It is in active development and is in use on projects such as
-[FlutterFire](https://github.com/firebase/flutterfire).
+Yaroo is a modern [Server-Side](https://en.wikipedia.org/wiki/Server-side) framework written
+on-top of [Pharaoh](https://github.com/codekeyz/pharaoh) to make backend development in Dart
+easy and peasy. It is very well in active development and is in use on projects such as
+[Dart Blog](https://dart-blog.onrender.com).
 
-Splitting up large code bases into separate independently versioned packages is
-extremely useful for code sharing. However, making changes across many
-repositories is messy and difficult to track, and testing across repositories
-gets complicated. Melos helps solve these issues by allowing multiple packages
+Writing your backend in [Dart](https://dart.dev) can quickly turnout to be a daunting task, maybe
+not worth pursing. Yaroo aims to be a framework that makes the necessary/hard decisions so you can have an easy-time 
+focusing on just enough code that covers your business logic.
+
+The almost non-existence of an excellent database agnostic [ORM](https://en.wikipedia.org/wiki/Object%E2%80%93relational_mapping) that
+is  Yaroo helps solve these issues by allowing multiple packages
 to work together within one repository, whilst being totally independent of each
 other. Features include:
 
-- Automatic versioning & changelog generation.
-- Automated publishing of packages to pub.dev.
-- Local package linking and installation.
-- Executing simultaneous commands across packages.
-- Listing of local packages & their dependencies.
+- Middlewares.
+- Controllers.
+- Database Agnostic ORM (supports MariaDB, MySQL, PostgresSQL & SQLite).
+- Easy Testing.
 
-Melos also works great on CI/CD environments to help automate complex tasks and
-challenges.
+Yaroo is heavily inspired by frameworks like Laravel, NestJS & ExpressJS.
 
-## Projects using Melos
+## Projects using Yaroo
 
-The following projects are using Melos:
+The following projects are using Yaroo:
 
-- [firebase/flutterfire](https://github.com/firebase/flutterfire)
-- [Flame-Engine/Flame](https://github.com/flame-engine/flame)
-- [aws-amplify/amplify-flutter](https://github.com/aws-amplify/amplify-flutter)
-- [fluttercommunity/plus_plugins](https://github.com/fluttercommunity/plus_plugins)
-- [GetStream/stream-chat-flutter](https://github.com/GetStream/stream-chat-flutter)
-- [4itworks/opensource_qwkin_dart](https://github.com/4itworks/opensource_qwkin_dart)
-- [gql-dart/ferry](https://github.com/gql-dart/ferry)
-- [cbl-dart/cbl-dart](https://github.com/cbl-dart/cbl-dart)
-- [ema987/paddinger](https://github.com/ema987/paddinger)
-- [flutter-stripe/flutter_stripe](https://github.com/flutter-stripe/flutter_stripe)
-- [kmartins/groveman](https://github.com/kmartins/groveman)
-- [ApptiveGrid/apptive_grid_flutter](https://github.com/ApptiveGrid/apptive_grid_flutter)
-- [flutternetwork/WiFiFlutter](https://github.com/flutternetwork/WiFiFlutter)
-- [iapicca/yak_packages](https://github.com/iapicca/yak_packages)
-- [atsign-foundation/at_app](https://github.com/atsign-foundation/at_app)
-- [sub6resources/flutter_html](https://github.com/sub6resources/flutter_html)
-- [ferraridamiano/ConverterNOW](https://github.com/ferraridamiano/ConverterNOW)
-- [rrifafauzikomara/youtube_video](https://github.com/rrifafauzikomara/youtube_video)
-- [NetGlade/auto_mappr](https://github.com/netglade/auto_mappr)
-- [myConsciousness/atproto.dart](https://github.com/myConsciousness/atproto.dart)
-- [GrowERP Flutter ERP](https://github.com/growerp/growerp)
-- [mrverdant13/coverde](https://github.com/mrverdant13/coverde)
+- [codekeyz/dart-blog](https://github.com/codekeyz/dart-blog)
 
 <Info>
 
-Submit a PR if you'd like to add your project to the list. Update the
+{/* Submit a PR if you'd like to add your project to the list. Update the
 [README.md](https://github.com/invertase/melos/edit/main/packages/melos/README.md)
-and the [docs](https://github.com/invertase/melos/edit/main/docs/index.mdx).
+and the [docs](https://github.com/invertase/melos/edit/main/docs/index.mdx). */}
 
 You can also add a [README badge](/#README-badge) to your projects README to let
-others know about Melos 💙.
+others know about Yaroo 💛.
 
 </Info>
 
-## README Badge
-
-Using Melos? Add a README badge to show it off:
-
-[![melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg?style=flat-square)](https://github.com/invertase/melos)
-
-```markdown
-[![melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg?style=flat-square)](https://github.com/invertase/melos)
-```
 
 ## License
 
-See [LICENSE](https://github.com/invertase/melos/blob/main/LICENSE) for more
+See [LICENSE](https://github.com/codekeyz/yaroo/blob/main/LICENSE) for more
 information.

@@ -4,9 +4,9 @@
     "logoDark": "/assets/logo-dark.png",
     "twitter": "codekeyz",
     "anchors": [{ "title": "Discord", "icon": "discord", "link": "https://invertase.link/discord" }],
-    "theme": "#FFA03F",
+    "theme": "#1c2834",
     "favicon": "/assets/logo.png",
-    "googleAnalytics": "G-Q7ME6WLFEJ",
+    "googleAnalytics": "",
     "sidebar": [
       ["Overview", "/"],
       ["Getting Started", "/getting-started"],
