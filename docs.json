@@ -23,7 +23,7 @@
       "Techniques",
       [
         ["Database", "techniques/database"],
-        ["Testing", "/guides/automated-releases"]
+        ["Testing", "/techniques/testing"]
       ]
     ]
   ]
