@@ -1,8 +1,11 @@
+import 'package:yaroorm/src/database/driver/mysql_driver.dart';
+import 'package:yaroorm/src/database/driver/pgsql_driver.dart';
+
 import '../../primitives/serializer.dart';
 import '../../query/query.dart';
 import '../../../migration.dart';
+
 import '../entity/entity.dart';
-import 'mysql_driver.dart';
 import 'sqlite_driver.dart';
 
 enum DatabaseDriverType { sqlite, pgsql, mysql, mariadb }
@@ -21,6 +24,7 @@ class DatabaseConnection {
   final bool dbForeignKeys;
   final DatabaseDriverType driver;
   final bool? secure;
+  final String timeZone;
 
   const DatabaseConnection(
     this.name,
@@ -35,6 +39,7 @@ class DatabaseConnection {
     this.username,
     this.dbForeignKeys = true,
     this.secure,
+    this.timeZone = 'UTC',
   });
 
   factory DatabaseConnection.from(String name, Map<String, dynamic> connInfo) {
@@ -51,6 +56,7 @@ class DatabaseConnection {
       url: connInfo['url'],
       secure: connInfo['secure'],
       dbForeignKeys: connInfo['foreign_key_constraints'] ?? true,
+      timeZone: connInfo['timezone'] ?? 'UTC',
     );
   }
 }
@@ -107,8 +113,8 @@ abstract interface class DatabaseDriver with DriverContract {
       case DatabaseDriverType.mariadb:
       case DatabaseDriverType.mysql:
         return MySqlDriver(dbConn, driver);
-      default:
-        throw ArgumentError.value(driver, null, 'Driver not yet supported');
+      case DatabaseDriverType.pgsql:
+        return PostgreSqlDriver(dbConn);
     }
   }
 

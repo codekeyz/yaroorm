@@ -58,8 +58,9 @@ class MigratorCLI {
     Migrator.tableName = dbConfig.migrationsTable;
 
     final tasks = (dbConfig.migrations)
-        .where((e) => e.connection == null ? true : e.connection == connectionToUse)
-        .map((e) => _Task(e));
+        .where((e) => e.connection == null || e.connection == connectionToUse)
+        .map(_Task.new)
+        .toList();
     if (tasks.isEmpty) {
       print('No migrations found for connection: $connectionToUse');
       return;
@@ -68,7 +69,7 @@ class MigratorCLI {
     cmd = cmd.toLowerCase();
     final MigratorAction cmdAction = switch (cmd) {
       MigratorCLI.migrate => (driver) => Migrator.runMigrations(driver, tasks.map((e) => e.up)),
-      MigratorCLI.migrateReset => (driver) => Migrator.resetMigrations(driver, tasks.map((e) => e.down)),
+      MigratorCLI.migrateReset => (driver) => Migrator.resetMigrations(driver, tasks.reversed.map((e) => e.down)),
       MigratorCLI.migrateRollback => (driver) => Migrator.rollBackMigration(driver, tasks.map((e) => e.down)),
       _ => throw UnsupportedError(cmd),
     };

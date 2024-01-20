@@ -1,6 +1,5 @@
 import 'package:meta/meta.dart';
 import 'package:mysql_client/mysql_client.dart';
-import 'package:sqflite_common/sql.dart';
 import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/src/database/entity/entity.dart';
 import 'package:yaroorm/src/query/query.dart';
@@ -13,7 +12,7 @@ final _serializer = MySqlPrimitiveSerializer();
 
 const _mysqlTypeConverters = <EntityTypeConverter>[dateTimeConverter];
 
-class MySqlDriver implements DatabaseDriver {
+final class MySqlDriver implements DatabaseDriver {
   final DatabaseConnection config;
   final DatabaseDriverType _type;
 
@@ -177,50 +176,46 @@ class _MysqlTransactor extends DriverTransactor {
 
 @protected
 class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
-  String _getColumn(String name, String type, {nullable = false, defaultValue}) {
-    final sb = StringBuffer()..write('${escapeName(name)} $type');
-    if (!nullable) {
-      sb.write(' NOT NULL');
-      if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
-    }
-    return sb.toString();
-  }
+  @override
+  PrimitiveSerializer get szler => _serializer;
 
   @override
-  void id({String name = 'id', String type = 'INTEGER', bool autoIncrement = true}) {
-    final sb = StringBuffer()..write('${escapeName(name)} $type NOT NULL PRIMARY KEY');
+  void id({String name = 'id', String? type, bool autoIncrement = true}) {
+    type ??= 'INT';
+
+    final sb = StringBuffer()..write('${_serializer.escapeStr(name)} $type NOT NULL PRIMARY KEY');
     if (autoIncrement) sb.write(' AUTO_INCREMENT');
     statements.add(sb.toString());
   }
 
   @override
-  void string(String name, {bool nullable = false, String? defaultValue}) {
-    statements.add(_getColumn(name, 'VARCHAR(255)', nullable: nullable, defaultValue: defaultValue));
+  void string(String name, {bool nullable = false, String? defaultValue, int length = 255}) {
+    statements.add(makeColumn(name, 'VARCHAR($length)', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void datetime(String name, {bool nullable = false, DateTime? defaultValue}) {
-    statements.add(_getColumn(name, 'DATETIME', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'DATETIME', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void timestamp(String name, {bool nullable = false, DateTime? defaultValue}) {
-    statements.add(_getColumn(name, 'TIMESTAMP', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'TIMESTAMP', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void date(String name, {bool nullable = false, DateTime? defaultValue}) {
-    statements.add(_getColumn(name, 'DATE', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'DATE', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void time(String name, {bool nullable = false, DateTime? defaultValue}) {
-    statements.add(_getColumn(name, 'TIME', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'TIME', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void boolean(String name, {bool nullable = false, bool? defaultValue}) {
-    statements.add(_getColumn(name, 'BOOLEAN', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'BOOLEAN', nullable: nullable, defaultValue: defaultValue));
   }
 
   /// NUMERIC TYPES
@@ -229,50 +224,50 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
   @override
   void float(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
     final type = 'FLOAT(${precision ?? 10}, ${scale ?? 0})';
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void double(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
     final type = 'DOUBLE(${precision ?? 10}, ${scale ?? 0})';
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void tinyInt(String name, {bool nullable = false, num? defaultValue}) {
-    statements.add(_getColumn(name, 'TINYINT', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'TINYINT', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void smallInteger(String name, {bool nullable = false, num? defaultValue}) {
-    statements.add(_getColumn(name, 'SMALLINT', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'SMALLINT', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void mediumInteger(String name, {bool nullable = false, num? defaultValue}) {
-    statements.add(_getColumn(name, 'MEDIUMINT', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'MEDIUMINT', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void bigInteger(String name, {bool nullable = false, num? defaultValue}) {
-    statements.add(_getColumn(name, 'BIGINT', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'BIGINT', nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void decimal(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
     final type = 'DECIMAL(${precision ?? 10}, ${scale ?? 0})';
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void numeric(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
     final type = 'NUMERIC(${precision ?? 10}, ${scale ?? 0})';
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void bit(String name, {bool nullable = false, int? defaultValue}) {
-    statements.add(_getColumn(name, 'BIT', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'BIT', nullable: nullable, defaultValue: defaultValue));
   }
 
   /// STRING TYPES
@@ -289,7 +284,7 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
   @override
   void blob(String name, {bool nullable = false, defaultValue}) {
     final type = _getStringType('BLOB');
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: null));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: null));
   }
 
   /// TEXT type cannot have default values see here: https://dev.mysql.com/doc/refman/8.0/en/blob.html
@@ -297,86 +292,88 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
   void text(String name,
       {bool nullable = false, String? defaultValue, String? charset, String? collate, int length = 1}) {
     final type = _getStringType('TEXT($length)', charset: charset, collate: collate);
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: null));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: null));
   }
 
   @override
   void longText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
     final type = _getStringType('LONGTEXT', charset: charset, collate: collate);
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void mediumText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
     final type = _getStringType('MEDIUMTEXT', charset: charset, collate: collate);
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void tinyText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
     final type = _getStringType('TINYTEXT', charset: charset, collate: collate);
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void char(String name,
-      {bool nullable = false, String? defaultValue, int size = 255, String? charset, String? collate, int length = 1}) {
+      {bool nullable = false, String? defaultValue, String? charset, String? collate, int length = 1}) {
     final type = _getStringType('CHAR($length)', charset: charset, collate: collate);
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void varchar(String name,
-      {bool nullable = false, String? defaultValue, int size = 255, String? charset, String? collate}) {
-    final type = _getStringType('VARCHAR($size)', charset: charset, collate: collate);
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+      {bool nullable = false, String? defaultValue, int length = 255, String? charset, String? collate}) {
+    final type = _getStringType('VARCHAR($length)', charset: charset, collate: collate);
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void enums(String name, List<String> values,
       {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
     final type = _getStringType('ENUM(${values.join(', ')})', charset: charset, collate: collate);
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void set(String name, List<String> values,
       {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
     final type = _getStringType('SET(${values.join(', ')})', charset: charset, collate: collate);
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void binary(String name,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate, int length = 1}) {
-    final type = _getStringType('BINARY($length)', charset: charset, collate: collate);
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+      {bool nullable = false, String? defaultValue, String? charset, String? collate, int size = 1}) {
+    final type = _getStringType('BINARY($size)', charset: charset, collate: collate);
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void varbinary(String name,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate, int length = 1}) {
-    final type = _getStringType('VARBINARY($length)', charset: charset, collate: collate);
-    statements.add(_getColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+      {bool nullable = false, String? defaultValue, String? charset, String? collate, int size = 1}) {
+    final type = _getStringType('VARBINARY($size)', charset: charset, collate: collate);
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
   }
 }
 
 @protected
 class MySqlPrimitiveSerializer extends SqliteSerializer {
+  const MySqlPrimitiveSerializer();
+
   @override
   String acceptInsertQuery(InsertQuery query) {
-    final keys = query.data.keys.map(escapeName);
-    final values = keys.map((e) => ':$e').join(', ');
-    return 'INSERT INTO ${escapeName(query.tableName)} (${keys.join(', ')}) VALUES ($values)$terminator';
+    final keys = query.data.keys;
+    final parameters = keys.map((e) => ':$e').join(', ');
+    return 'INSERT INTO ${query.tableName} (${keys.join(', ')}) VALUES ($parameters)$terminator';
   }
 
   @override
   String acceptUpdateQuery(UpdateQuery query) {
     final queryBuilder = StringBuffer();
 
-    final fields = query.data.keys.map((e) => '$e = :$e').join(', ');
+    final fields = query.data.keys.map((e) => '${escapeStr(e)} = :$e').join(', ');
 
-    queryBuilder.write('UPDATE ${escapeName(query.tableName)}');
+    queryBuilder.write('UPDATE ${escapeStr(query.tableName)}');
 
     queryBuilder
       ..write(' SET $fields')

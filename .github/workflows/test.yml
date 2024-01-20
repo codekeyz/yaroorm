@@ -53,6 +53,14 @@ jobs:
           MYSQL_DATABASE: test_db
         ports:
           - 3001:3306
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_PASSWORD: password
+          POSTGRES_USER: root
+        ports:
+          - 3002:5432
 
     steps:
       - name: Checkout Repository

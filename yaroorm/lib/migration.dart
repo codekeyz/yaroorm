@@ -5,7 +5,7 @@ import 'package:recase/recase.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 abstract class TableBlueprint {
-  void id({String name = 'id', String type = 'INTEGER', bool autoIncrement = true});
+  void id({String name = 'id', String? type, bool autoIncrement = true});
 
   void foreign<Model extends Entity, ReferenceModel extends Entity>({
     String? column,
@@ -84,7 +84,7 @@ abstract class TableBlueprint {
     String name, {
     bool nullable = false,
     String? defaultValue,
-    int size = 255,
+    int length = 255,
     String? charset,
     String? collate,
   });
@@ -116,7 +116,7 @@ abstract class TableBlueprint {
   void binary(
     String name, {
     bool nullable = false,
-    int length = 1,
+    int size = 1,
     String? defaultValue,
     String? charset,
     String? collate,
@@ -125,7 +125,7 @@ abstract class TableBlueprint {
   void varbinary(
     String name, {
     bool nullable = false,
-    int length = 1,
+    int size = 1,
     String? defaultValue,
     String? charset,
     String? collate,

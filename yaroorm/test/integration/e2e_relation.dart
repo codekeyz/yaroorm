@@ -27,7 +27,9 @@ void runRelationsE2ETest(String connectionName) {
       hasTables = await Future.wait(tables.map(driver.hasTable));
       expect(hasTables.every((e) => e), isTrue);
 
-      testUser1 = await usersTestData.first.withDriver(driver).save();
+      testUser1 = await User(firstname: 'Baba', lastname: 'Tunde', age: 29, homeAddress: "Owerri, Nigeria")
+          .withDriver(driver)
+          .save();
       expect(testUser1, isA<User>().having((p0) => p0.id, 'has primary key', 1));
     });
 
@@ -84,7 +86,7 @@ void runRelationsE2ETest(String connectionName) {
       var anotherUserPosts = await user.posts.get();
       expect(anotherUserPosts, isEmpty);
 
-      await user.posts.add(Post('Another Post', 'wham bamn bamn'));
+      await user.posts.add(Post('Another Post', 'wham bamn'));
       anotherUserPosts = await user.posts.get();
       expect(anotherUserPosts, hasLength(1));
 
