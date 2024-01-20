@@ -27,7 +27,9 @@ void runRelationsE2ETest(String connectionName) {
       hasTables = await Future.wait(tables.map(driver.hasTable));
       expect(hasTables.every((e) => e), isTrue);
 
-      testUser1 = await usersTestData.first.withDriver(driver).save();
+      testUser1 = await User(firstname: 'Baba', lastname: 'Tunde', age: 29, homeAddress: "Owerri, Nigeria")
+          .withDriver(driver)
+          .save();
       expect(testUser1, isA<User>().having((p0) => p0.id, 'has primary key', 1));
     });
 

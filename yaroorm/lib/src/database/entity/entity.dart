@@ -63,7 +63,9 @@ abstract class Entity<PkType, Model extends Object> {
     }
 
     final recordId = await query.insert<PkType>(to_db_data);
-    return (this..id = recordId) as Model;
+    return (this
+      ..id = recordId
+      .._isLoadedFromDB = true) as Model;
   }
 
   // ignore: non_constant_identifier_names
