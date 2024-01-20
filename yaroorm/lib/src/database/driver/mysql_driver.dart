@@ -183,7 +183,7 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
   void id({String name = 'id', String? type, bool autoIncrement = true}) {
     type ??= 'INT';
 
-    final sb = StringBuffer()..write('${_serializer.escapeColumnName(name)} $type NOT NULL PRIMARY KEY');
+    final sb = StringBuffer()..write('${_serializer.escapeStr(name)} $type NOT NULL PRIMARY KEY');
     if (autoIncrement) sb.write(' AUTO_INCREMENT');
     statements.add(sb.toString());
   }
@@ -371,9 +371,9 @@ class MySqlPrimitiveSerializer extends SqliteSerializer {
   String acceptUpdateQuery(UpdateQuery query) {
     final queryBuilder = StringBuffer();
 
-    final fields = query.data.keys.map((e) => '${escapeColumnName(e)} = :$e').join(', ');
+    final fields = query.data.keys.map((e) => '${escapeStr(e)} = :$e').join(', ');
 
-    queryBuilder.write('UPDATE ${escapeColumnName(query.tableName)}');
+    queryBuilder.write('UPDATE ${escapeStr(query.tableName)}');
 
     queryBuilder
       ..write(' SET $fields')

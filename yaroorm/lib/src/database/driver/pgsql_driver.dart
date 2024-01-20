@@ -1,10 +1,12 @@
 import 'package:meta/meta.dart';
 import 'package:postgres/postgres.dart' as pg;
-import 'package:sqflite_common/sql.dart';
-import 'package:yaroorm/migration.dart';
-import 'package:yaroorm/src/database/driver/mysql_driver.dart';
-import 'package:yaroorm/src/primitives/serializer.dart';
-import 'package:yaroorm/yaroorm.dart';
+
+import '../../../migration.dart';
+import '../../primitives/serializer.dart';
+import '../../query/query.dart';
+import '../entity/entity.dart';
+import 'driver.dart';
+import 'mysql_driver.dart';
 
 final _pgsqlSerializer = PgSqlPrimitiveSerializer();
 
@@ -55,21 +57,21 @@ final class PostgreSqlDriver implements DatabaseDriver {
   Future<List<Map<String, dynamic>>> _execRawQuery(String script, {Map<String, dynamic>? parameters}) async {
     parameters ??= {};
     if (!isOpen) await connect();
-    final result = await db?.execute(pg.Sql.named(script), parameters: parameters);
-    return result?.map((e) => e.toColumnMap()).toList() ?? [];
+    final result = await db!.execute(pg.Sql.named(script), parameters: parameters);
+    return result.map((e) => e.toColumnMap()).toList();
   }
 
   @override
   Future execute(String script) => rawQuery(script);
 
   @override
-  Future<int> insert(InsertQuery query) async {
+  Future<int?> insert(InsertQuery query) async {
     if (!isOpen) await connect();
     final primaryKey = await _getPrimaryKeyColumn(query.tableName);
     final values = {...query.data};
     final sql = _pgsqlSerializer.acceptInsertQuery(query, primaryKey: primaryKey);
-    final result = await db?.execute(pg.Sql.named(sql), parameters: values);
-    return result?[0][0] as int;
+    final result = await db!.execute(pg.Sql.named(sql), parameters: values);
+    return result[0][0] as int;
   }
 
   @override
@@ -126,7 +128,7 @@ final class PostgreSqlDriver implements DatabaseDriver {
     final result = await db?.execute('''SELECT pg_attribute.attname 
 FROM pg_index, pg_class, pg_attribute, pg_namespace 
 WHERE 
-  pg_class.oid = '$tableName'::regclass AND 
+  pg_class.oid = '"$tableName"'::regclass AND 
   indrelid = pg_class.oid AND 
   nspname = 'public' AND 
   pg_class.relnamespace = pg_namespace.oid AND 
@@ -138,7 +140,7 @@ WHERE
   }
 
   @override
-  List<EntityTypeConverter> get typeconverters => [booleanConverter, dateTimeConverter];
+  List<EntityTypeConverter> get typeconverters => [booleanConverter];
 }
 
 class _PgSqlDriverTransactor extends DriverTransactor {
@@ -198,18 +200,18 @@ class PgSqlPrimitiveSerializer extends MySqlPrimitiveSerializer {
   String acceptInsertQuery(InsertQuery query, {String? primaryKey}) {
     final keys = query.data.keys;
     final parameters = keys.map((e) => '@$e').join(', ');
-    var sql = 'INSERT INTO ${query.tableName} (${keys.map(escapeColumnName).join(', ')}) VALUES ($parameters)';
+    final sql = 'INSERT INTO ${query.tableName} (${keys.map(escapeStr).join(', ')}) VALUES ($parameters)';
     if (primaryKey == null) return '$sql$terminator';
-    return '$sql RETURNING $primaryKey$terminator';
+    return '$sql RETURNING "$primaryKey"$terminator';
   }
 
   @override
   String acceptUpdateQuery(UpdateQuery query) {
     final queryBuilder = StringBuffer();
 
-    final fields = query.data.keys.map((e) => '${escapeColumnName(e)} = @$e').join(', ');
+    final fields = query.data.keys.map((e) => '${escapeStr(e)} = @$e').join(', ');
 
-    queryBuilder.write('UPDATE ${escapeName(query.tableName)}');
+    queryBuilder.write('UPDATE ${escapeStr(query.tableName)}');
 
     queryBuilder
       ..write(' SET $fields')
@@ -221,7 +223,7 @@ class PgSqlPrimitiveSerializer extends MySqlPrimitiveSerializer {
 
   @override
   String acceptInsertManyQuery(InsertManyQuery query) {
-    final fields = query.values.first.keys.map(escapeColumnName).join(', ');
+    final fields = query.values.first.keys.map(escapeStr).join(', ');
     final values = query.values.map((dataMap) {
       final values = dataMap.values.map((value) => "'$value'").join(', ');
       return '($values)';
@@ -230,7 +232,7 @@ class PgSqlPrimitiveSerializer extends MySqlPrimitiveSerializer {
   }
 
   @override
-  String escapeColumnName(String column) => '"${super.escapeColumnName(column)}"';
+  String escapeStr(String column) => '"${super.escapeStr(column)}"';
 }
 
 @protected
@@ -242,7 +244,7 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   void id({name = 'id', String? type, autoIncrement = true}) {
     type ??= 'SERIAL';
 
-    final sb = StringBuffer()..write(szler.escapeColumnName(name));
+    final sb = StringBuffer()..write(szler.escapeStr(name));
     sb.write(autoIncrement ? " SERIAL PRIMARY KEY" : " $type PRIMARY KEY");
     statements.add(sb.toString());
   }
@@ -264,7 +266,7 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
 
   @override
   String renameScript(String fromName, String toName) {
-    return 'ALTER TABLE $fromName RENAME TO $toName;';
+    return 'ALTER TABLE "${szler.escapeStr(fromName)}" RENAME TO "${szler.escapeStr(toName)}";';
   }
 
   @override
@@ -349,7 +351,7 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
     String? collate,
     int size = 1,
   }) {
-    statements.add(makeColumn(name, "BYTEA", nullable: nullable, defaultValue: null));
+    statements.add(makeColumn(name, "BYTEA", nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
@@ -376,7 +378,7 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   }) {
     final sb = StringBuffer()
       ..write(
-        'CREATE TYPE ${szler.escapeColumnName(name)} AS ENUM (${values.map((e) => "'$e'").join(', ')});',
+        'CREATE TYPE ${szler.escapeStr(name)} AS ENUM (${values.map((e) => "'$e'").join(', ')});',
       );
     if (!nullable) {
       sb.write(' NOT NULL');

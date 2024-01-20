@@ -188,7 +188,7 @@ class SqliteSerializer implements PrimitiveSerializer {
     /// SELECT
     final selectStatement = acceptSelect(query.fieldSelections.toList());
     queryBuilder.write(selectStatement);
-    queryBuilder.write('FROM ${escapeColumnName(query.tableName)}');
+    queryBuilder.write('FROM ${escapeStr(query.tableName)}');
 
     /// WHERE
     final clauses = query.whereClauses;
@@ -228,9 +228,9 @@ class SqliteSerializer implements PrimitiveSerializer {
   String acceptUpdateQuery(UpdateQuery query) {
     final queryBuilder = StringBuffer();
 
-    final fields = query.data.keys.map((e) => '${escapeColumnName(e)} = ?').join(', ');
+    final fields = query.data.keys.map((e) => '${escapeStr(e)} = ?').join(', ');
 
-    queryBuilder.write('UPDATE ${escapeColumnName(query.tableName)}');
+    queryBuilder.write('UPDATE ${escapeStr(query.tableName)}');
 
     queryBuilder
       ..write(' SET $fields')
@@ -242,9 +242,9 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptInsertQuery(InsertQuery query) {
-    final fields = query.data.keys.map(escapeColumnName);
+    final fields = query.data.keys.map(escapeStr);
     final params = List<String>.filled(fields.length, '?').join(', ');
-    return 'INSERT INTO ${escapeColumnName(query.tableName)} (${fields.join(', ')}) VALUES ($params)$terminator';
+    return 'INSERT INTO ${escapeStr(query.tableName)} (${fields.join(', ')}) VALUES ($params)$terminator';
   }
 
   @override
@@ -257,7 +257,7 @@ class SqliteSerializer implements PrimitiveSerializer {
     final queryBuilder = StringBuffer();
 
     queryBuilder
-      ..write('DELETE FROM ${escapeColumnName(query.tableName)}')
+      ..write('DELETE FROM ${escapeStr(query.tableName)}')
       ..write(' WHERE ${acceptWhereClause(query.whereClause)}')
       ..write(terminator);
 
@@ -266,7 +266,7 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptSelect(List<String> fields) {
-    return fields.isEmpty ? 'SELECT * ' : 'SELECT ${fields.map(escapeColumnName).join(', ')}';
+    return fields.isEmpty ? 'SELECT * ' : 'SELECT ${fields.map(escapeStr).join(', ')}';
   }
 
   @override
@@ -365,14 +365,14 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptForeignKey(TableBlueprint blueprint, ForeignKey key) {
-    blueprint.ensurePresenceOf(escapeColumnName(key.column));
+    blueprint.ensurePresenceOf(escapeStr(key.column));
     final sb = StringBuffer();
 
     final constraint = key.constraint;
     if (constraint != null) sb.write('CONSTRAINT $constraint ');
 
     sb.write(
-        'FOREIGN KEY (${escapeColumnName(key.column)}) REFERENCES ${escapeColumnName(key.foreignTable)}(${escapeColumnName(key.foreignTableColumn)})');
+        'FOREIGN KEY (${escapeStr(key.column)}) REFERENCES ${escapeStr(key.foreignTable)}(${escapeStr(key.foreignTableColumn)})');
 
     if (key.onUpdate != null) sb.write(' ON UPDATE ${_acceptForeignKeyAction(key.onUpdate!)}');
     if (key.onDelete != null) sb.write(' ON DELETE ${_acceptForeignKeyAction(key.onDelete!)}');
@@ -381,7 +381,7 @@ class SqliteSerializer implements PrimitiveSerializer {
   }
 
   @override
-  String escapeColumnName(String column) => escapeName(column);
+  String escapeStr(String column) => escapeName(column);
 }
 
 @protected
@@ -392,7 +392,7 @@ class SqliteTableBlueprint extends TableBlueprint {
   PrimitiveSerializer get szler => _serializer;
 
   String makeColumn(String name, String type, {nullable = false, defaultValue}) {
-    final sb = StringBuffer()..write('${szler.escapeColumnName(name)} $type');
+    final sb = StringBuffer()..write('${szler.escapeStr(name)} $type');
     if (!nullable) {
       sb.write(' NOT NULL');
       if (defaultValue != null) {
@@ -407,7 +407,7 @@ class SqliteTableBlueprint extends TableBlueprint {
   void id({name = 'id', String? type, autoIncrement = true}) {
     type ??= 'INTEGER';
 
-    final sb = StringBuffer()..write('${szler.escapeColumnName(name)} $type NOT NULL PRIMARY KEY');
+    final sb = StringBuffer()..write('${szler.escapeStr(name)} $type NOT NULL PRIMARY KEY');
     if (autoIncrement) sb.write(' AUTOINCREMENT');
     statements.add(sb.toString());
   }
@@ -564,12 +564,12 @@ class SqliteTableBlueprint extends TableBlueprint {
   @override
   String createScript(String tableName) {
     statements.addAll(_foreignKeys);
-    return 'CREATE TABLE ${szler.escapeColumnName(tableName)} (${statements.join(', ')});';
+    return 'CREATE TABLE ${szler.escapeStr(tableName)} (${statements.join(', ')});';
   }
 
   @override
   String dropScript(String tableName) {
-    return 'DROP TABLE IF EXISTS ${szler.escapeColumnName(tableName)};';
+    return 'DROP TABLE IF EXISTS ${szler.escapeStr(tableName)};';
   }
 
   @override

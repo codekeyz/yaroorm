@@ -28,7 +28,7 @@ abstract class PrimitiveSerializer {
 
   String acceptForeignKey(TableBlueprint blueprint, ForeignKey key);
 
-  String escapeColumnName(String column);
+  String escapeStr(String column);
 
   String get terminator;
 }
