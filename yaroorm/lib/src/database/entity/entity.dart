@@ -52,13 +52,13 @@ abstract class Entity<PkType, Model extends Object> {
 
   bool _isLoadedFromDB = false;
 
-  Future<void> delete() => query.delete(_whereId).exec();
+  Future<void> delete() => query.delete(_whereId).execute();
 
   Future<Model> save() async {
     if (_isLoadedFromDB) {
       assert(id != null, 'Id cannot be null when loaded from database');
       if (entityMeta.timestamps) updatedAt = DateTime.now().toUtc();
-      await query.update(where: _whereId, values: to_db_data).exec();
+      await query.update(where: _whereId, values: to_db_data).execute();
       return this as Model;
     }
 

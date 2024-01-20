@@ -183,7 +183,7 @@ class QueryImpl<Result> extends Query<Result> {
   }
 
   @override
-  Future<void> exec() => queryDriver.execute(statement);
+  Future<void> execute() => queryDriver.execute(statement);
 
   @override
   String get statement => queryDriver.serializer.acceptReadQuery(this);

@@ -85,12 +85,12 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
 
   @override
   Future<void> update(Map<String, dynamic> values) {
-    return UpdateQuery(query.tableName, whereClause: this, data: values).driver(query.queryDriver).exec();
+    return UpdateQuery(query.tableName, whereClause: this, data: values).driver(query.queryDriver).execute();
   }
 
   @override
   Future<void> delete() {
-    return DeleteQuery(query.tableName, whereClause: this).driver(query.queryDriver).exec();
+    return DeleteQuery(query.tableName, whereClause: this).driver(query.queryDriver).execute();
   }
 
   @override

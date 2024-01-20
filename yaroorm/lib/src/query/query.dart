@@ -64,7 +64,7 @@ abstract interface class QueryBase<Owner> {
     return this as Owner;
   }
 
-  Future<void> exec();
+  Future<void> execute();
 
   QueryBase(this.tableName);
 
@@ -124,7 +124,7 @@ class UpdateQuery extends QueryBase<UpdateQuery> {
   String get statement => queryDriver.serializer.acceptUpdateQuery(this);
 
   @override
-  Future<void> exec() => queryDriver.update(this);
+  Future<void> execute() => queryDriver.update(this);
 }
 
 class InsertQuery extends QueryBase<InsertQuery> {
@@ -133,7 +133,7 @@ class InsertQuery extends QueryBase<InsertQuery> {
   InsertQuery(super.tableName, {required this.data});
 
   @override
-  Future<dynamic> exec() => queryDriver.insert(this);
+  Future<dynamic> execute() => queryDriver.insert(this);
 
   @override
   String get statement => queryDriver.serializer.acceptInsertQuery(this);
@@ -148,7 +148,7 @@ class InsertManyQuery extends QueryBase<InsertManyQuery> {
   String get statement => queryDriver.serializer.acceptInsertManyQuery(this);
 
   @override
-  Future<dynamic> exec() => queryDriver.insertMany(this);
+  Future<dynamic> execute() => queryDriver.insertMany(this);
 }
 
 @protected
@@ -161,5 +161,5 @@ class DeleteQuery extends QueryBase<DeleteQuery> {
   String get statement => queryDriver.serializer.acceptDeleteQuery(this);
 
   @override
-  Future<void> exec() => queryDriver.delete(this);
+  Future<void> execute() => queryDriver.delete(this);
 }

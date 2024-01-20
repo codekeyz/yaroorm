@@ -26,8 +26,7 @@ void runBasicE2ETest(String connectionName) {
       final result = await usersTestData.first.withDriver(driver).save();
       expect(result, isA<User>().having((p0) => p0.id, 'has primary key', 1));
 
-      final users = await Query.table<User>().driver(driver).all();
-      expect(users.length, 1);
+      expect(await Query.table<User>().driver(driver).all(), hasLength(1));
     });
 
     test('should insert many users', () async {
@@ -35,9 +34,7 @@ void runBasicE2ETest(String connectionName) {
       final userQuery = Query.table<User>().driver(driver);
       await userQuery.insertMany(remainingUsers);
 
-      final users = await userQuery.all();
-
-      expect(users.length, usersTestData.length);
+      expect(await userQuery.all(), hasLength(usersTestData.length));
     });
 
     test('should update user', () async {
@@ -66,7 +63,7 @@ void runBasicE2ETest(String connectionName) {
       expect(usersWithAge50.every((e) => e.age == 50), isTrue);
 
       await userQuery
-          .update(where: (query) => query.whereEqual('age', 50), values: {'home_address': 'Keta, Ghana'}).exec();
+          .update(where: (query) => query.whereEqual('age', 50), values: {'home_address': 'Keta, Ghana'}).execute();
 
       final updatedResult = await age50Users.findMany();
       expect(updatedResult.length, 4);
@@ -82,8 +79,7 @@ void runBasicE2ETest(String connectionName) {
       expect(usersInGhana.length, 10);
       expect(usersInGhana.every((e) => e.homeAddress.contains('Ghana')), isTrue);
 
-      final take4 = await query.take(4);
-      expect(take4.length, 4);
+      expect(await query.take(4), hasLength(4));
     });
 
     test('should get all users between age 35 and 50', () async {
@@ -128,14 +124,11 @@ void runBasicE2ETest(String connectionName) {
       final userQuery = Query.table<User>().driver(driver);
 
       final query = userQuery.whereLike('home_address', '%, Nigeria');
-
-      final users = await query.findMany();
-      expect(users, isNotEmpty);
+      expect(await query.findMany(), isNotEmpty);
 
       await query.delete();
 
-      final usersAfterDelete = await query.findMany();
-      expect(usersAfterDelete, isEmpty);
+      expect(await query.findMany(), isEmpty);
     });
 
     test('should drop tables', () async {
