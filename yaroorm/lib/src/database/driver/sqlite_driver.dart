@@ -324,7 +324,7 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptWhereClauseValue(WhereClauseValue clauseVal) {
-    final field = clauseVal.field;
+    final field = escapeStr(clauseVal.field);
     final value = clauseVal.comparer.value;
     final valueOperator = clauseVal.comparer.operator;
     final wrapped = acceptPrimitiveValue(value);

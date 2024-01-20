@@ -65,13 +65,13 @@ final class PostgreSqlDriver implements DatabaseDriver {
   Future execute(String script) => rawQuery(script);
 
   @override
-  Future<int?> insert(InsertQuery query) async {
+  Future<dynamic> insert(InsertQuery query) async {
     if (!isOpen) await connect();
     final primaryKey = await _getPrimaryKeyColumn(query.tableName);
     final values = {...query.data};
     final sql = _pgsqlSerializer.acceptInsertQuery(query, primaryKey: primaryKey);
     final result = await db!.execute(pg.Sql.named(sql), parameters: values);
-    return result[0][0] as int;
+    return result[0][0];
   }
 
   @override
