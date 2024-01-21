@@ -1,5 +1,4 @@
 import 'package:path/path.dart' as path;
-import 'package:yaroorm/config.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import 'migrations.dart';

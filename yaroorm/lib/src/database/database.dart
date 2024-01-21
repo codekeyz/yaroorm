@@ -1,7 +1,6 @@
 library database;
 
 import 'package:collection/collection.dart';
-import 'package:yaroorm/config.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 class UseDatabaseConnection {
