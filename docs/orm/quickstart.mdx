@@ -67,10 +67,10 @@ import 'package:path/path.dart' as path;
 import 'create_users_table.dart';
 
 final config = YaroormConfig(
-    'sqlite', // default connection
+    'test_db', // default connection
     connections: [
       DatabaseConnection(
-        'sqlite',
+        'test_db',
         DatabaseDriverType.sqlite,
         database: path.absolute('database', 'db.sqlite'),
       ),
