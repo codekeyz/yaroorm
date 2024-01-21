@@ -6,21 +6,21 @@ export 'app.dart';
 
 DotEnv? _env;
 
-T? env<T>(String name, [T? defaultValue]) {
+T env<T>(String name, {required T defaultValue}) {
   _env ??= DotEnv(quiet: true, includePlatformEnvironment: true)..load();
   final strVal = _env![name];
-
   if (strVal == null) return defaultValue;
+
   final parsedVal = switch (T) {
     const (String) => strVal,
-    const (int) => int.tryParse(strVal),
-    const (num) => num.tryParse(strVal),
-    const (bool) => bool.tryParse(strVal),
-    const (double) => double.tryParse(strVal),
+    const (int) => int.parse(strVal),
+    const (num) => num.parse(strVal),
+    const (bool) => bool.parse(strVal),
+    const (double) => double.parse(strVal),
     const (List<String>) => jsonDecode(strVal),
     _ => throw ArgumentError.value(T, null, 'Unsupported Type used in `env` call.'),
   };
-  return (parsedVal ?? defaultValue) as T;
+  return parsedVal as T;
 }
 
 extension ConfigExtension on Map<String, dynamic> {

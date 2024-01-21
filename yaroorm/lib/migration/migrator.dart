@@ -14,11 +14,7 @@ class MigrationData extends Entity<int, MigrationData> {
 }
 
 class Migrator {
-  /// config keys for migrations
-  static const migrationsTableNameKeyInConfig = 'migrationsTableName';
-  static const migrationsKeyInConfig = 'migrations';
-
-  static String tableName = 'migrations';
+  static String tableName = throw StateError('Migrations tableName not set');
 
   static Future<void> runMigrations(DatabaseDriver driver, Iterable<MigrationTask> migrations) async {
     await ensureMigrationsTableReady(driver);

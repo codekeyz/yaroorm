@@ -28,8 +28,8 @@ class DatabaseConnection {
 
   const DatabaseConnection(
     this.name,
-    this.database,
     this.driver, {
+    required this.database,
     this.charset,
     this.collation,
     this.host,
@@ -45,8 +45,8 @@ class DatabaseConnection {
   factory DatabaseConnection.from(String name, Map<String, dynamic> connInfo) {
     return DatabaseConnection(
       name,
-      connInfo['database'],
       _getDriverType(connInfo),
+      database: connInfo['database'],
       host: connInfo['host'],
       port: connInfo['port'],
       charset: connInfo['charset'],
