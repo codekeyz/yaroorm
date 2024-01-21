@@ -22,3 +22,32 @@ To get started, add yaroorm as a dependency and build_runner as a dev dependency
 dart pub add yaroorm
 dart pub add build_runner --dev
 ```
+
+## Migrations
+
+Migrations are like teamwork tools for databases, ensuring everyone's on the same page when making changes without the need for manual adjustments.
+
+```dart
+import 'package:yaroorm/migration.dart';
+
+class CreateUsersTable extends Migration {
+  @override
+  void up(List schemas) {
+    final userSchema = Schema.create('users', (table) {
+      return table
+        ..id()
+        ..string('name')
+        ..string('email')
+        ..string('password')
+        ..timestamps();
+    });
+
+    schemas.add(userSchema);
+  }
+
+  @override
+  void down(List schemas) {
+    schemas.add(Schema.dropIfExists('users'));
+  }
+}
+```
