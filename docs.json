@@ -23,7 +23,7 @@
     [
       "ORM",
       [
-        ["Getting Started", "/orm/getting-started"],
+        ["Quickstart", "/orm/quickstart"],
         ["Relationships", "/orm/relationships"],
         ["Migrations", "/orm/migrations"]
       ]
