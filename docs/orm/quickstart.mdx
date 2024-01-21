@@ -56,14 +56,18 @@ class CreateUsersTable extends Migration {
 
 ## Configuration
 
+Specify database connections for `yaroorm`, multiple connections are also supported.
+
+Add a new file `orm_config.dart` and add this code. 
+
 ```dart
 import 'package:yaroorm/config.dart';
+import 'package:yaroorm/yaroorm.dart';
 import 'package:path/path.dart' as path;
 
 import 'create_users_table.dart';
 
-void main() {
-  final config = YaroormConfig(
+final config = YaroormConfig(
     'sqlite', // default connection
     connections: [
       DatabaseConnection(
@@ -74,6 +78,5 @@ void main() {
       //... you can have many connections here
     ],
     migrations: [CreateUsersTable()],
-  );
-}
+);
 ```
