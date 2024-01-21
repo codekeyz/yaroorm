@@ -79,3 +79,29 @@ final config = YaroormConfig(
     migrations: [CreateUsersTable()],
 );
 ```
+### Setup Migrations Runner
+
+Add a new file `migrator.dart` and add this code. 
+
+```dart
+import 'package:yaroorm/migration/cli.dart';
+import 'package:yaroorm/yaroorm.dart';
+
+import 'migrator.reflectable.dart';
+
+void main(List<String> args) async {
+  if (args.isEmpty) return print('Nothing to do here');
+
+  initializeReflectable();
+
+  DB.init(db.config);
+
+  await MigratorCLI.processCmd(args[0], cmdArguments: args.sublist(1));
+}
+```
+
+Yaroorm relies on code-gen & hence we will need to do some code generation before proceeding. Copy & run the command below in your terminal
+
+```shell
+dart run build_runner build --delete-conflicting-outputs
+```
