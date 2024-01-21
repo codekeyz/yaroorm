@@ -87,6 +87,8 @@ Add a new file `migrator.dart` and add this code.
 import 'package:yaroorm/migration/cli.dart';
 import 'package:yaroorm/yaroorm.dart';
 
+import 'orm_config.dart' as orm;
+
 import 'migrator.reflectable.dart';
 
 void main(List<String> args) async {
@@ -94,7 +96,7 @@ void main(List<String> args) async {
 
   initializeReflectable();
 
-  DB.init(db.config);
+  DB.init(orm.config);
 
   await MigratorCLI.processCmd(args[0], cmdArguments: args.sublist(1));
 }
