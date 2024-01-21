@@ -3,7 +3,7 @@ title: Yaroorm
 description: Learn more yaroorm for database access.
 ---
 
-# Introduction
+# Quickstart
 
 <Info>This package is still in active development. If you have any feedback or feature requests, write me and issue on github.</Info>
 
@@ -23,9 +23,9 @@ dart pub add yaroorm
 dart pub add build_runner --dev
 ```
 
-## Migrations
+## Migration
 
-Migrations in `yaroorm` keep your database structure in sync effortlessly. With Yaroorm, you get database-agnostic support for creating and tweaking tables.
+Migrations in `yaroorm` keep your database structure in sync effortlessly. With `yaroorm`, you get database-agnostic support for creating and tweaking tables.
 
 ```dart
 import 'package:yaroorm/migration.dart';
@@ -49,5 +49,27 @@ class CreateUsersTable extends Migration {
   void down(List schemas) {
     schemas.add(Schema.dropIfExists('users'));
   }
+}
+```
+
+## Configuration
+
+```dart
+import 'package:yaroorm/config.dart';
+import 'package:path/path.dart' as path;
+
+void main() {
+  final config = YaroormConfig(
+    'sqlite', // default connection
+    connections: [
+      DatabaseConnection(
+        'sqlite',
+        DatabaseDriverType.sqlite,
+        database: path.absolute('database', 'db.sqlite'),
+      ),
+      //... you can have many connections here
+    ],
+    migrations: [CreateUsersTable()],
+  );
 }
 ```
