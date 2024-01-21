@@ -2,6 +2,7 @@ library router;
 
 import 'package:grammer/grammer.dart';
 import 'package:yaroo/http/http.dart';
+import 'package:yaroo/src/core.dart';
 
 import 'definition.dart';
 
@@ -44,7 +45,7 @@ abstract interface class Route {
 
   static RouteGroupDefinition group(String name, {String? prefix}) => RouteGroupDefinition(name, prefix: prefix);
 
-  static UseRouteMiddlewareGroup middleware(String name) => UseRouteMiddlewareGroup(name);
+  static UseAliasedMiddleware middleware(String name) => UseAliasedMiddleware(name);
 
   static RouteGroupDefinition resource(String resource, Type controller, {String? parameterName}) {
     resource = resource.toLowerCase();
@@ -61,9 +62,15 @@ abstract interface class Route {
     ]);
   }
 
-  static FunctionalRouteDefinition handler(HTTPMethod method, String path, RequestHandlerWithApp handler) =>
-      FunctionalRouteDefinition(method, path, handler);
+  static FunctionalRouteDefinition route(HTTPMethod method, String path, RequestHandlerWithApp handler) =>
+      FunctionalRouteDefinition.route(method, path, (req, res) => handler.call(Application.instance, req, res));
+
+  static FunctionalRouteDefinition use(String path, HandlerFunc handler) =>
+      FunctionalRouteDefinition.middleware(path, handler);
 
   static FunctionalRouteDefinition notFound(RequestHandlerWithApp handler, [HTTPMethod method = HTTPMethod.ALL]) =>
-      FunctionalRouteDefinition(method, '/*', handler);
+      Route.route(method, '/*', handler);
 }
+
+HandlerFunc useAliasedMiddleware(String alias) =>
+    ApplicationFactory.resolveMiddlewareForGroup(alias).reduce((val, e) => val.chain(e));
