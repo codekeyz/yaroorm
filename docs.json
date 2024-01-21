@@ -10,20 +10,22 @@
     ["Overview", "/"],
     ["Getting Started", "/getting-started"],
     [
-      "Building Blocks",
+      "The Basics",
       [
+        ["Routing", "/core/routing"],
+        ["HTTP Middleware", "/core/middleware"],
         ["Controllers", "/core/controllers"],
-        ["Middlewares", "/core/middlewares"],
-        ["Request, Response & NextFunction", "/core/req-res-next"],
-        ["Request Validation", "/core/validation"],
-        ["Service Providers", "/core/service-providers"]
+        ["Request", "/core/request"],
+        ["Response", "/core/response"],
+        ["Validation", "/core/validation"]
       ]
     ],
     [
-      "Techniques",
+      "ORM",
       [
-        ["Database", "/techniques/database"],
-        ["Testing", "/techniques/testing"]
+        ["Getting Started", "/orm/getting-started"],
+        ["Relationships", "/orm/relationships"],
+        ["Migrations", "/orm/migrations"]
       ]
     ]
   ]
