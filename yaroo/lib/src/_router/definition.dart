@@ -34,15 +34,15 @@ abstract class RouteDefinition {
   RouteDefinition _prefix(String prefix) => this..route = route.prefix(prefix);
 }
 
-class UseRouteMiddlewareGroup {
+class UseAliasedMiddleware {
   final String alias;
 
-  UseRouteMiddlewareGroup(this.alias);
+  UseAliasedMiddleware(this.alias);
 
-  RouteGroupDefinition group(String name, {String? prefix}) {
-    final middlewares = ApplicationFactory.resolveMiddlewareForGroup(alias);
-    return RouteGroupDefinition(name, prefix: prefix, middlewares: middlewares);
-  }
+  Iterable<HandlerFunc> get middlewares => ApplicationFactory.resolveMiddlewareForGroup(alias);
+
+  RouteGroupDefinition group(String name, {String? prefix}) =>
+      RouteGroupDefinition(name, prefix: prefix, middlewares: middlewares);
 }
 
 class _MiddlewareDefinition extends RouteDefinition {
@@ -120,7 +120,7 @@ class RouteGroupDefinition extends RouteDefinition {
     }
 
     /// add routes
-    _unwrapRoutes(definitions);
+    if (definitions.isNotEmpty) _unwrapRoutes(definitions);
   }
 
   void _unwrapRoutes(Iterable<RouteDefinition> routes) {
@@ -151,17 +151,33 @@ class RouteGroupDefinition extends RouteDefinition {
 typedef RequestHandlerWithApp = Function(Application app, Request req, Response res);
 
 class FunctionalRouteDefinition extends RouteDefinition {
-  final RequestHandlerWithApp handler;
   final HTTPMethod method;
   final String path;
 
-  FunctionalRouteDefinition(this.method, this.path, this.handler) : super(RouteDefinitionType.route) {
+  final HandlerFunc? _middleware;
+  final HandlerFunc? _requestHandler;
+
+  FunctionalRouteDefinition.route(this.method, this.path, RequestHandler handler)
+      : _middleware = null,
+        _requestHandler = useRequestHandler(handler),
+        super(RouteDefinitionType.route) {
+    route = RouteMapping([method], path);
+  }
+
+  FunctionalRouteDefinition.middleware(this.path, HandlerFunc handler)
+      : _requestHandler = null,
+        _middleware = handler,
+        method = HTTPMethod.ALL,
+        super(RouteDefinitionType.middleware) {
     route = RouteMapping([method], path);
   }
 
   @override
   void commit(Spanner spanner) {
-    wrap(req, res) => handler(Application.instance, req, res);
-    spanner.addRoute(method, path, useRequestHandler(wrap));
+    if (_middleware != null) {
+      spanner.addMiddleware<HandlerFunc>(path, _middleware!);
+    } else if (_requestHandler != null) {
+      spanner.addRoute<HandlerFunc>(method, path, _requestHandler!);
+    }
   }
 }
