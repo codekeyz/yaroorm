@@ -27,7 +27,9 @@ dart pub add build_runner --dev
 
 Migrations in `yaroorm` keep your database structure in sync effortlessly. With `yaroorm`, you get database-agnostic support for creating and tweaking tables.
 
-```dart create_users_table.dart
+Add a new file `create_users_table.dart` and add this code. 
+
+```dart
 import 'package:yaroorm/migration.dart';
 
 class CreateUsersTable extends Migration {
