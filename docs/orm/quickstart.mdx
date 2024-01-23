@@ -1,0 +1,109 @@
+---
+title: Yaroorm
+description: Learn more yaroorm for database access.
+---
+
+# Quickstart
+
+<Info>This package is still in active development. If you have any feedback or feature requests, write me and issue on github.</Info>
+
+Yaroorm makes it easy to interact with databases. Currently, it provides official support for the following four databases:
+
+- SQLite
+- MariaDB
+- MySQL
+- PostgreSQL
+
+## Installation
+
+To get started, add `yaroorm` as a dependency and build_runner as a dev dependency:
+
+```shell
+dart pub add yaroorm
+dart pub add build_runner --dev
+```
+
+## Migration
+
+Migrations in `yaroorm` keep your database structure in sync effortlessly. With `yaroorm`, you get database-agnostic support for creating and tweaking tables.
+
+Add a new file `create_users_table.dart` and add this code. 
+
+```dart
+import 'package:yaroorm/migration.dart';
+
+class CreateUsersTable extends Migration {
+  @override
+  void up(List<Schema> schemas) {
+    final userSchema = Schema.create('users', (table) {
+      return table
+        ..id()
+        ..string('name')
+        ..string('email')
+        ..string('password')
+        ..timestamps();
+    });
+
+    schemas.add(userSchema);
+  }
+
+  @override
+  void down(List schemas) {
+    schemas.add(Schema.dropIfExists('users'));
+  }
+}
+```
+
+## Configuration
+
+Specify database connections for `yaroorm`, multiple connections are also supported.
+
+Add a new file `orm_config.dart` and add this code. 
+
+```dart
+import 'package:yaroorm/yaroorm.dart';
+import 'package:path/path.dart' as path;
+
+import 'create_users_table.dart';
+
+final config = YaroormConfig(
+    'test_db', // default connection
+    connections: [
+      DatabaseConnection(
+        'test_db',
+        DatabaseDriverType.sqlite,
+        database: path.absolute('database', 'db.sqlite'),
+      ),
+      //... you can have many connections here
+    ],
+    migrations: [CreateUsersTable()],
+);
+```
+### Setup Migrations Runner
+
+Add a new file `migrator.dart` and add this code. 
+
+```dart
+import 'package:yaroorm/migration/cli.dart';
+import 'package:yaroorm/yaroorm.dart';
+
+import 'orm_config.dart' as orm;
+
+import 'migrator.reflectable.dart';
+
+void main(List<String> args) async {
+  if (args.isEmpty) return print('Nothing to do here');
+
+  initializeReflectable();
+
+  DB.init(orm.config);
+
+  await MigratorCLI.processCmd(args[0], cmdArguments: args.sublist(1));
+}
+```
+
+We will need to do some code generation before proceeding. Copy & run the command below in your terminal
+
+```shell
+dart run build_runner build --delete-conflicting-outputs
+```

@@ -1,5 +1,5 @@
-import 'src/database/driver/driver.dart';
-import 'migration.dart';
+import 'database/driver/driver.dart';
+import '../migration.dart';
 
 class YaroormConfig {
   final String defaultConnName;

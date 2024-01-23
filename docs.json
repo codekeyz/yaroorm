@@ -1,0 +1,32 @@
+{
+  "name": "Yaroo",
+  "logo": "/assets/logo.png",
+  "logoDark": "/assets/logo.png",
+  "twitter": "codekeyz",
+  "theme": "#1c2834",
+  "favicon": "/assets/logo.png",
+  "googleAnalytics": "",
+  "sidebar": [
+    ["Overview", "/"],
+    ["Getting Started", "/getting-started"],
+    [
+      "The Basics",
+      [
+        ["Routing", "/core/routing"],
+        ["HTTP Middleware", "/core/middleware"],
+        ["Controllers", "/core/controllers"],
+        ["Request", "/core/request"],
+        ["Response", "/core/response"],
+        ["Validation", "/core/validation"]
+      ]
+    ],
+    [
+      "ORM",
+      [
+        ["Quickstart", "/orm/quickstart"],
+        ["Relationships", "/orm/relationships"],
+        ["Migrations", "/orm/migrations"]
+      ]
+    ]
+  ]
+}
