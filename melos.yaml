@@ -1,8 +1,7 @@
 name: yaroodev
 
 packages:
-  - yaroo
-  - yaroorm
+  - packages/**
 
 command:
   version:
@@ -11,8 +10,6 @@ command:
 
   bootstrap:
     runPubGetInParallel: false
-
-
 
 scripts:
   tests:
