@@ -23,7 +23,7 @@ void main() {
   group('Router', () {
     group('when route group', () {
       test('with routes', () {
-        final group = Route.group('merchants').routes([
+        final group = Route.group('merchants', [
           Route.get('/get', (TestController, #index)),
           Route.delete('/delete', (TestController, #delete)),
           Route.put('/update', (TestController, #update)),
@@ -37,11 +37,15 @@ void main() {
       });
 
       test('with prefix', () {
-        final group = Route.group('Merchants', prefix: 'foo').routes([
-          Route.get('/foo', (TestController, #index)),
-          Route.delete('/bar', (TestController, #delete)),
-          Route.put('/moo', (TestController, #update)),
-        ]);
+        final group = Route.group(
+          'Merchants',
+          [
+            Route.get('/foo', (TestController, #index)),
+            Route.delete('/bar', (TestController, #delete)),
+            Route.put('/moo', (TestController, #update)),
+          ],
+          prefix: 'foo',
+        );
 
         expect(group.paths, [
           '[GET]: /foo/foo',
@@ -51,19 +55,19 @@ void main() {
       });
 
       test('with handler', () {
-        final group = Route.group('users').routes([
-          Route.route(HTTPMethod.GET, '/my-name', (_, req, res) => null),
+        final group = Route.group('users', [
+          Route.route(HTTPMethod.GET, '/my-name', (req, res) => null),
         ]);
         expect(group.paths, ['[GET]: /users/my-name']);
       });
 
       test('with sub groups', () {
-        final group = Route.group('users').routes([
+        final group = Route.group('users', [
           Route.get('/get', (TestController, #index)),
           Route.delete('/delete', (TestController, #delete)),
           Route.put('/update', (TestController, #update)),
           //
-          Route.group('customers').routes([
+          Route.group('customers', [
             Route.get('/foo', (TestController, #index)),
             Route.delete('/bar', (TestController, #delete)),
             Route.put('/set', (TestController, #update)),
@@ -82,12 +86,12 @@ void main() {
 
       group('when middlewares used', () {
         test('should add to routes', () {
-          final group = Route.group('users').routes([
+          final group = Route.group('users', [
             Route.get('/get', (TestController, #index)),
             Route.delete('/delete', (TestController, #delete)),
             Route.put('/update', (TestController, #update)),
             //
-            Route.group('customers').routes([
+            Route.group('customers', [
               Route.get('/foo', (TestController, #index)),
               Route.delete('/bar', (TestController, #delete)),
               Route.put('/set', (TestController, #update)),
@@ -104,13 +108,13 @@ void main() {
           ]);
         });
 
-        test('should chain multiple into one', () {
-          final group = Route.group('users').routes([
+        test('should handle nested groups', () {
+          final group = Route.group('users', [
             Route.get('/get', (TestController, #index)),
             Route.delete('/delete', (TestController, #delete)),
             Route.put('/update', (TestController, #update)),
             //
-            Route.group('customers').routes([
+            Route.group('customers', [
               Route.get('/foo', (TestController, #index)),
               Route.delete('/bar', (TestController, #delete)),
               Route.put('/set', (TestController, #update)),
@@ -128,31 +132,49 @@ void main() {
         });
       });
 
-      test('when route resource is used', () {
-        final group = Route.group('merchants').routes([
-          Route.resource('photos', TestController),
+      test('when handle route resource', () {
+        final group = Route.group('foo', [Route.resource('bar', TestController)])
+          ..middleware([
+            (req, res, next) => next(),
+            (req, res, next) => next(),
+          ]);
+
+        expect(group.paths, [
+          '[ALL]: /foo',
+          '[GET]: /foo/bar/',
+          '[GET]: /foo/bar/<barId>',
+          '[POST]: /foo/bar/',
+          '[PUT]: /foo/bar/<barId>',
+          '[PATCH]: /foo/bar/<barId>',
+          '[DELETE]: /foo/bar/<barId>'
+        ]);
+      });
+
+      test('when handle route resource', () {
+        final group = Route.group('foo', [
+          Route.resource('bar', TestController),
         ]);
 
         expect(group.paths, [
-          '[GET]: /merchants/photos/',
-          '[GET]: /merchants/photos/<photoId>',
-          '[POST]: /merchants/photos/',
-          '[PUT]: /merchants/photos/<photoId>',
-          '[PATCH]: /merchants/photos/<photoId>',
-          '[DELETE]: /merchants/photos/<photoId>'
+          '[GET]: /foo/bar/',
+          '[GET]: /foo/bar/<barId>',
+          '[POST]: /foo/bar/',
+          '[PUT]: /foo/bar/<barId>',
+          '[PATCH]: /foo/bar/<barId>',
+          '[DELETE]: /foo/bar/<barId>'
         ]);
       });
 
       test('when used with middleware', () {
         TestKidsApp(TestAppKernel([]));
 
-        final group = Route.middleware('api').group('merchants').routes([
-          Route.route(HTTPMethod.GET, '/create', (_, req, res) => null),
-          Route.group('users').routes([
+        final group = Route.middleware('api').group('merchants', [
+          Route.route(HTTPMethod.GET, '/create', (req, res) => null),
+          Route.group('users', [
             Route.get('/get', (TestController, #index)),
             Route.delete('/delete', (TestController, #delete)),
             Route.put('/update', (TestController, #update)),
-            Route.middleware('api').group('hello').routes([
+            Route.middleware('api').group('hello', [
               Route.get('/world', (TestController, #index)),
             ])
           ]),
@@ -172,7 +194,7 @@ void main() {
 
     test('should error when controller method not found', () {
       expect(
-        () => Route.group('Merchants', prefix: 'foo').routes([Route.get('/foo', (TestController, #foobar))]),
+        () => Route.group('Merchants', [Route.get('/foo', (TestController, #foobar))], prefix: 'foo'),
         throwsA(isA<ArgumentError>().having((p0) => p0.message, '', 'TestController does not have method  #foobar')),
       );
     });

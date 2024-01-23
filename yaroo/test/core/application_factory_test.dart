@@ -1,8 +1,7 @@
 import 'package:spookie/spookie.dart';
 import 'package:yaroo/http/http.dart';
 import 'package:yaroo/http/meta.dart';
-import 'package:yaroo/src/_router/definition.dart';
-import 'package:yaroo/src/core.dart';
+import 'package:yaroo/yaroo.dart';
 
 import 'application_factory_test.reflectable.dart';
 
