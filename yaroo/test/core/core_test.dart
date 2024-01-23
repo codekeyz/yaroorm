@@ -53,8 +53,8 @@ void main() {
 
       group('when middleware group', () {
         test('should resolve', () {
-          final group = Route.middleware('api').group('Users').routes([
-            Route.route(HTTPMethod.GET, '/', (_, req, res) => null),
+          final group = Route.middleware('api').group('Users', [
+            Route.route(HTTPMethod.GET, '/', (req, res) => null),
           ]);
 
           expect(group.paths, ['[ALL]: /users', '[GET]: /users/']);
@@ -62,11 +62,12 @@ void main() {
 
         test('should error when not exist', () {
           expect(
-            () => Route.middleware('foo').group('Users').routes([
-              Route.route(HTTPMethod.GET, '/', (_, req, res) => null),
+            () => Route.middleware('foo').group('Users', [
+              Route.route(HTTPMethod.GET, '/', (req, res) => null),
             ]),
             throwsA(
-                isA<ArgumentError>().having((p0) => p0.message, 'message', 'Middleware group `foo` does not exist')),
+              isA<ArgumentError>().having((p0) => p0.message, 'message', 'Middleware group `foo` does not exist'),
+            ),
           );
         });
       });

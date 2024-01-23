@@ -1,11 +1,4 @@
-import 'package:meta/meta.dart';
-import 'package:yaroo/foundation/validation.dart';
-import 'package:yaroo/http/_pharaoh.dart';
-import 'package:yaroo/http/meta.dart';
-
-import '../_reflector/reflector.dart';
-import '../core.dart';
-import 'utils.dart';
+part of 'router.dart';
 
 enum RouteDefinitionType { route, group, middleware }
 
@@ -39,10 +32,10 @@ class UseAliasedMiddleware {
 
   UseAliasedMiddleware(this.alias);
 
-  Iterable<HandlerFunc> get middlewares => ApplicationFactory.resolveMiddlewareForGroup(alias);
+  Iterable<HandlerFunc> get mdw => ApplicationFactory.resolveMiddlewareForGroup(alias);
 
-  RouteGroupDefinition group(String name, {String? prefix}) =>
-      RouteGroupDefinition(name, prefix: prefix, middlewares: middlewares);
+  RouteGroupDefinition group(String name, List<RouteDefinition> routes, {String? prefix}) =>
+      RouteGroupDefinition._(name, prefix: prefix, definitions: routes)..middleware(mdw);
 }
 
 class _MiddlewareDefinition extends RouteDefinition {
@@ -105,22 +98,16 @@ class RouteGroupDefinition extends RouteDefinition {
 
   List<String> get paths => defns.map((e) => e.route.stringVal).toList();
 
-  RouteGroupDefinition(
+  RouteGroupDefinition._(
     this.name, {
     String? prefix,
-    Iterable<HandlerFunc> middlewares = const [],
     Iterable<RouteDefinition> definitions = const [],
   }) : super(RouteDefinitionType.group) {
     route = RouteMapping([HTTPMethod.ALL], '/${prefix ?? name.toLowerCase()}');
-
-    /// add middlewares
-    if (middlewares.isNotEmpty) {
-      final groupMdw = middlewares.reduce((value, e) => value.chain(e));
-      defns.add(_MiddlewareDefinition(groupMdw, route));
+    if (definitions.isEmpty) {
+      throw StateError('Route definitions not provided for group');
     }
-
-    /// add routes
-    if (definitions.isNotEmpty) _unwrapRoutes(definitions);
+    _unwrapRoutes(definitions);
   }
 
   void _unwrapRoutes(Iterable<RouteDefinition> routes) {
@@ -136,8 +123,9 @@ class RouteGroupDefinition extends RouteDefinition {
     }
   }
 
-  RouteGroupDefinition routes(List<RouteDefinition> subRoutes) {
-    return this.._unwrapRoutes(subRoutes);
+  void middleware(Iterable<HandlerFunc> func) {
+    final mdwDefn = _MiddlewareDefinition(func.reduce((val, e) => val.chain(e)), route);
+    defns.insert(0, mdwDefn);
   }
 
   @override

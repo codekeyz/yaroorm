@@ -18,6 +18,9 @@ class TestSingleOptional extends BaseDTO {
 
   @ezOptional(String)
   String? get address;
+
+  @ezOptional(String, defaultValue: 'Ghana')
+  String get country;
 }
 
 class DTOTypeMismatch extends BaseDTO {
@@ -134,7 +137,8 @@ void main() {
       final app = pharaoh
         ..post('/optional', (req, res) {
           dto.make(req);
-          return res.json({'nationality': dto.nationality, 'address': dto.address});
+
+          return res.json({'nationality': dto.nationality, 'address': dto.address, 'country': dto.country});
         });
 
       await (await request(app))
@@ -149,7 +153,7 @@ void main() {
       await (await request(app))
           .post('/optional', {'nationality': 'Ghanaian'})
           .expectStatus(200)
-          .expectJsonBody({'nationality': 'Ghanaian', 'address': null})
+          .expectJsonBody({'nationality': 'Ghanaian', 'address': null, 'country': 'Ghana'})
           .test();
 
       await (await request(app))
@@ -164,7 +168,7 @@ void main() {
       await (await request(app))
           .post('/optional', {'nationality': 'Ghanaian', 'address': 'Terminalia Street'})
           .expectStatus(200)
-          .expectJsonBody({'nationality': 'Ghanaian', 'address': 'Terminalia Street'})
+          .expectJsonBody({'nationality': 'Ghanaian', 'address': 'Terminalia Street', 'country': 'Ghana'})
           .test();
     });
 

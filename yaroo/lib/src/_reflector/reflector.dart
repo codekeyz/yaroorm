@@ -5,7 +5,7 @@ import 'package:yaroo/http/meta.dart';
 
 import '../../../http/http.dart';
 import '../_container/container.dart';
-import '../_router/definition.dart';
+import '../_router/router.dart';
 import '../_router/utils.dart';
 
 class Injectable extends r.Reflectable {

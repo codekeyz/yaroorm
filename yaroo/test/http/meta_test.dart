@@ -4,7 +4,7 @@ import 'package:spookie/spookie.dart';
 import 'package:yaroo/foundation/validation.dart';
 import 'package:yaroo/http/http.dart';
 import 'package:yaroo/http/meta.dart';
-import 'package:yaroo/src/_router/definition.dart';
+import 'package:yaroo/yaroo.dart';
 
 import 'meta_test.reflectable.dart';
 

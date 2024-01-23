@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:ez_validator/ez_validator.dart';
 import 'package:yaroo/http/http.dart';
-import 'package:yaroo/src/_router/definition.dart';
+import 'package:yaroo/yaroo.dart';
 
 abstract class RequestAnnotation<T> {
   final String? name;

@@ -1,14 +1,20 @@
 library router;
 
 import 'package:grammer/grammer.dart';
+import 'package:meta/meta.dart';
+import 'package:yaroo/foundation/validation.dart';
 import 'package:yaroo/http/http.dart';
+import 'package:yaroo/http/meta.dart';
 import 'package:yaroo/src/core.dart';
 
-import 'definition.dart';
+import '../_reflector/reflector.dart';
+import 'utils.dart';
 
-export 'definition.dart' show RouteDefinition;
+part 'definition.dart';
 
 abstract interface class Route {
+  static UseAliasedMiddleware middleware(String name) => UseAliasedMiddleware(name);
+
   static ControllerRouteMethodDefinition get(String path, ControllerMethodDefinition defn) =>
       ControllerRouteMethodDefinition(defn, RouteMapping([HTTPMethod.GET], path));
 
@@ -43,16 +49,15 @@ abstract interface class Route {
     return ControllerRouteMethodDefinition(defn, mapping);
   }
 
-  static RouteGroupDefinition group(String name, {String? prefix}) => RouteGroupDefinition(name, prefix: prefix);
-
-  static UseAliasedMiddleware middleware(String name) => UseAliasedMiddleware(name);
+  static RouteGroupDefinition group(String name, List<RouteDefinition> routes, {String? prefix}) =>
+      RouteGroupDefinition._(name, definitions: routes, prefix: prefix);
 
   static RouteGroupDefinition resource(String resource, Type controller, {String? parameterName}) {
     resource = resource.toLowerCase();
 
     final resourceId = '${(parameterName ?? resource).toSingular().toLowerCase()}Id';
 
-    return Route.group(resource).routes([
+    return Route.group(resource, [
       Route.get('/', (controller, #index)),
       Route.get('/<$resourceId>', (controller, #show)),
       Route.post('/', (controller, #create)),
@@ -62,13 +67,10 @@ abstract interface class Route {
     ]);
   }
 
-  static FunctionalRouteDefinition route(HTTPMethod method, String path, RequestHandlerWithApp handler) =>
-      FunctionalRouteDefinition.route(method, path, (req, res) => handler.call(Application.instance, req, res));
+  static FunctionalRouteDefinition route(HTTPMethod method, String path, RequestHandler handler) =>
+      FunctionalRouteDefinition.route(method, path, handler);
 
-  static FunctionalRouteDefinition use(String path, HandlerFunc handler) =>
-      FunctionalRouteDefinition.middleware(path, handler);
-
-  static FunctionalRouteDefinition notFound(RequestHandlerWithApp handler, [HTTPMethod method = HTTPMethod.ALL]) =>
+  static FunctionalRouteDefinition notFound(RequestHandler handler, [HTTPMethod method = HTTPMethod.ALL]) =>
       Route.route(method, '/*', handler);
 }
 

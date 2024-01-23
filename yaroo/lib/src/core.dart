@@ -9,7 +9,7 @@ import '../../http/http.dart';
 import '../../http/kernel.dart';
 import '_container/container.dart';
 import '_reflector/reflector.dart';
-import '_router/definition.dart';
+import '_router/router.dart';
 import 'config/config.dart';
 
 part './core_impl.dart';

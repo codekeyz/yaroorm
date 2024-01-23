@@ -34,6 +34,6 @@ abstract interface class _BaseDTOImpl {
 
     final entriesToMap =
         entries.fold<Map<String, EzValidator<dynamic>>>({}, (prev, curr) => prev..[curr.key] = curr.value);
-    return _schemaCache = EzSchema.shape(entriesToMap, fillSchema: false);
+    return _schemaCache = EzSchema.shape(entriesToMap);
   }
 }

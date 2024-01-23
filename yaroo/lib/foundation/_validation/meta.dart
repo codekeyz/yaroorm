@@ -2,7 +2,7 @@
 
 import 'package:ez_validator/ez_validator.dart';
 
-abstract class ClassPropertyValidator<T> {
+abstract class ClassPropertyValidator<T extends Object> {
   final String? name;
 
   /// TODO: we need to be able to infer nullability also from the type
@@ -66,7 +66,7 @@ class ezMaxLength extends ClassPropertyValidator<String> {
   EzValidator<String> get validator => super.validator.maxLength(value);
 }
 
-class ezRequired<T> extends ClassPropertyValidator<T> {
+class ezRequired<T extends Object> extends ClassPropertyValidator<T> {
   final Type? type;
 
   const ezRequired([this.type]);
@@ -77,7 +77,7 @@ class ezRequired<T> extends ClassPropertyValidator<T> {
 
 class ezOptional extends ClassPropertyValidator {
   final Type type;
-  final dynamic defaultValue;
+  final Object? defaultValue;
 
   const ezOptional(this.type, {this.defaultValue}) : super(defaultVal: defaultValue);
 
