@@ -17,10 +17,12 @@ dependencies:
   collection: ^1.18.0
   grammer: ^1.0.3
   recase: ^4.1.0
+  yaml: ^3.1.2
   reflectable:
     git:
       url: https://github.com/codekeyz/reflectable.dart.git
       path: reflectable
+  mason_logger: ^0.2.11
 
 dev_dependencies:
   lints: ^3.0.0
