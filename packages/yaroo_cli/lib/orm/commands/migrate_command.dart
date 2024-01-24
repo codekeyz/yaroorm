@@ -44,7 +44,4 @@ class MigrateCommand extends OrmCommand {
 
     logger.info(backgroundBlack.wrap('\n               Completed DB migration 🚀                \n'));
   }
-
-  @override
-  String get usage => '';
 }
