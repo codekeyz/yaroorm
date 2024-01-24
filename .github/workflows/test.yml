@@ -80,7 +80,7 @@ jobs:
         run: melos tests:ci
 
       - name: Run E2E Tests
-        run: cd yaroorm && "./e2e_test.sh"
+        run: cd packages/yaroorm && "./e2e_test.sh"
 
       - name: Combine Coverage
         run: melos coverage

@@ -1,25 +1,19 @@
 import 'dart:io';
 
 import 'package:test/test.dart';
-import 'package:yaroorm/migration/cli.dart';
-import 'package:yaroorm/yaroorm.dart';
+import 'package:yaroo_cli/orm/runner.dart';
 
 import '../fixtures/orm_config.dart' as conf;
 
 import 'migrator.reflectable.dart';
 
 void main(List<String> args) async {
-  if (args.isEmpty) throw UnsupportedError('Provide args');
-
   initializeReflectable();
-
-  DB.init(conf.config);
-
-  await MigratorCLI.processCmd(args[0], cmdArguments: args.sublist(1));
+  await OrmCLIRunner.start(args, conf.config);
 }
 
 Future<void> runMigrator(String connectionName, String command) async {
-  final commands = ['run', 'test/integration/fixtures/migrator.dart', command, '--database=$connectionName'];
+  final commands = ['run', 'test/integration/fixtures/migrator.dart', command, '--conn=$connectionName'];
   print('> dart ${commands.join(' ')}\n');
 
   final result = await Process.run('dart', commands);
