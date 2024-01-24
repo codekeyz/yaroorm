@@ -1,7 +1,7 @@
 import 'database/driver/driver.dart';
 import '../migration.dart';
 
-class YaroormConfig {
+sealed class YaroormConfig {
   final String defaultConnName;
   final List<DatabaseConnection> connections;
 

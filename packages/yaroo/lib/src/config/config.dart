@@ -6,7 +6,7 @@ export 'app.dart';
 
 DotEnv? _env;
 
-T env<T>(String name, {required T defaultValue}) {
+T env<T extends Object>(String name, T defaultValue) {
   _env ??= DotEnv(quiet: true, includePlatformEnvironment: true)..load();
   final strVal = _env![name];
   if (strVal == null) return defaultValue;

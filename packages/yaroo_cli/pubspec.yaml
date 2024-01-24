@@ -9,16 +9,14 @@ environment:
 dependencies:
   args: ^2.4.2
   cli_completion: ^0.4.0
-  cli_util: ^0.4.1
   collection: ^1.18.0
-  mason_logger: ^0.2.11
   meta: ^1.11.0
   path: ^1.9.0
   yaroorm:
     path: ../yaroorm
+  mason_logger: ^0.2.11
 
 dev_dependencies:
-  build_runner: ^2.4.7
   test: ^1.24.0
   lints:
 

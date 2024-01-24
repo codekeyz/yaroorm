@@ -42,13 +42,13 @@ class DatabaseConnection {
     this.timeZone = 'UTC',
   });
 
-  factory DatabaseConnection.from(String name, Map<String, dynamic> connInfo) {
+  factory DatabaseConnection.fromJson(Map<String, dynamic> connInfo) {
     return DatabaseConnection(
-      name,
-      _getDriverType(connInfo),
+      connInfo['name'],
+      getDriverType(connInfo['driver']),
       database: connInfo['database'],
       host: connInfo['host'],
-      port: connInfo['port'],
+      port: connInfo['port'] == null ? null : int.tryParse(connInfo['port']),
       charset: connInfo['charset'],
       collation: connInfo['collation'],
       password: connInfo['password'],
@@ -59,18 +59,16 @@ class DatabaseConnection {
       timeZone: connInfo['timezone'] ?? 'UTC',
     );
   }
-}
 
-DatabaseDriverType _getDriverType(Map<String, dynamic> connInfo) {
-  final value = connInfo['driver'];
-  return switch (value) {
-    'sqlite' => DatabaseDriverType.sqlite,
-    'pgsql' => DatabaseDriverType.pgsql,
-    'mysql' => DatabaseDriverType.mysql,
-    'mariadb' => DatabaseDriverType.mariadb,
-    null => throw ArgumentError.notNull('Database Driver'),
-    _ => throw ArgumentError.value(value, null, 'Invalid Database Driver provided in configuration')
-  };
+  static DatabaseDriverType getDriverType(String driver) {
+    return switch (driver) {
+      'sqlite' => DatabaseDriverType.sqlite,
+      'pgsql' => DatabaseDriverType.pgsql,
+      'mysql' => DatabaseDriverType.mysql,
+      'mariadb' => DatabaseDriverType.mariadb,
+      _ => throw ArgumentError.value(driver, null, 'Invalid Database Driver provided in configuration')
+    };
+  }
 }
 
 mixin DriverContract {
