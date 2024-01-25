@@ -48,12 +48,13 @@ abstract interface class Application {
 }
 
 abstract class ApplicationFactory {
-  static late final Kernel _appKernel;
+  static late Kernel _appKernel;
 
   final AppConfig appConfig;
 
   ApplicationFactory(Kernel kernel, this.appConfig) {
     _appKernel = kernel;
+    providers.forEach(validateProvider);
   }
 
   Future<void> bootstrap({bool listen = true}) async {
@@ -72,18 +73,18 @@ abstract class ApplicationFactory {
     final spanner = Spanner()..addMiddleware('/', bodyParser);
     Application.instance = _YarooAppImpl(config, spanner);
 
-    final providers = config.providers.map((e) => createNewInstance<ServiceProvider>(e));
+    final providerInstances = providers.map(createNewInstance<ServiceProvider>);
 
     /// register dependencies
-    for (final provider in providers) {
-      await Future.sync(provider.register);
+    for (final instance in providerInstances) {
+      await Future.sync(instance.register);
     }
 
     final globalMdw = ApplicationFactory.globalMiddleware;
     if (globalMdw != null) spanner.addMiddleware<HandlerFunc>('/', globalMdw);
 
     /// boot providers
-    for (final provider in providers) {
+    for (final provider in providerInstances) {
       await Future.sync(provider.boot);
     }
   }
@@ -150,4 +151,6 @@ abstract class ApplicationFactory {
     final app = (Application.instance as _YarooAppImpl);
     return spookie.request(app._createPharaohInstance(onException: _appKernel.onApplicationException));
   }
+
+  List<Type> get providers;
 }

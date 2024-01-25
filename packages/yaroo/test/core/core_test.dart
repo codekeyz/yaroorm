@@ -5,13 +5,14 @@ import 'package:yaroo/yaroo.dart';
 
 import 'core_test.reflectable.dart';
 
-final appConfig = AppConfig(
-    name: 'Test App',
-    environment: 'production',
-    isDebug: false,
-    url: 'http://localhost',
-    port: 3000,
-    key: 'askdfjal;ksdjkajl;j');
+const appConfig = AppConfig(
+  name: 'Test App',
+  environment: 'production',
+  isDebug: false,
+  url: 'http://localhost',
+  port: 3000,
+  key: 'askdfjal;ksdjkajl;j',
+);
 
 class TestMiddleware extends Middleware {}
 
@@ -36,19 +37,28 @@ class TestAppKernel extends Kernel {
 }
 
 class TestKidsApp extends ApplicationFactory {
-  TestKidsApp(Kernel kernel) : super(kernel, appConfig);
+  final List<Type> serviceProvs;
+  final AppConfig? config;
+
+  TestKidsApp(
+    Kernel kernel,
+    this.serviceProvs, {
+    this.config,
+  }) : super(kernel, config ?? appConfig);
+
+  @override
+  List<Type> get providers => serviceProvs;
 }
 
 void main() {
   initializeReflectable();
 
   group('Core', () {
-    final testApp = TestKidsApp(TestAppKernel([TestMiddleware]));
+    final testApp = TestKidsApp(TestAppKernel([TestMiddleware]), []);
 
     group('Kernel', () {
       test('should resolve global middleware', () {
-        final globalMiddleware = ApplicationFactory.globalMiddleware;
-        expect(globalMiddleware, isA<HandlerFunc>());
+        expect(ApplicationFactory.globalMiddleware, isA<HandlerFunc>());
       });
 
       group('when middleware group', () {

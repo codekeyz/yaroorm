@@ -126,3 +126,13 @@ BaseDTO? _tryResolveDtoInstance(Type type) {
     return null;
   }
 }
+
+void validateProvider(Type providerType) {
+  try {
+    final type = reflectType(providerType);
+    if (type.superclass!.reflectedType != ServiceProvider) throw Exception();
+  } catch (e) {
+    throw ArgumentError.value(
+        providerType, 'Invalid provider type provided', 'Ensure your provider extends `ServiceProvider` class');
+  }
+}
