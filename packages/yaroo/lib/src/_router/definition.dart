@@ -124,6 +124,7 @@ class RouteGroupDefinition extends RouteDefinition {
   }
 
   void middleware(Iterable<HandlerFunc> func) {
+    if (func.isEmpty) return;
     final mdwDefn = _MiddlewareDefinition(func.reduce((val, e) => val.chain(e)), route);
     defns.insert(0, mdwDefn);
   }
