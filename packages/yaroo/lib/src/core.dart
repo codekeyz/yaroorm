@@ -1,12 +1,13 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:meta/meta.dart';
 import 'package:spookie/spookie.dart' as spookie;
+import 'package:yaroo/http/meta.dart';
 
 import '../../http/http.dart';
-import '../../http/kernel.dart';
 import '_container/container.dart';
 import '_reflector/reflector.dart';
 import '_router/router.dart';
@@ -48,13 +49,37 @@ abstract interface class Application {
 }
 
 abstract class ApplicationFactory {
-  static late Kernel _appKernel;
-
   final AppConfig appConfig;
 
-  ApplicationFactory(Kernel kernel, this.appConfig) {
-    _appKernel = kernel;
-    providers.forEach(validateProvider);
+  List<Type> get providers;
+
+  /// The application's global HTTP middleware stack.
+  ///
+  /// These middleware are run during every request to your application.
+  /// Types here must extends [Middleware].
+  List<Type> get middlewares;
+
+  /// The application's route middleware groups.
+  ///
+  /// Types here must extends [Middleware].
+  final Map<String, List<Type>> middlewareGroups = {};
+
+  static Map<String, List<Type>> _middlewareGroups = {};
+
+  HandlerFunc? _globalMdwCache;
+  @nonVirtual
+  HandlerFunc? get globalMiddleware {
+    if (_globalMdwCache != null) return _globalMdwCache!;
+    if (middlewares.isEmpty) return null;
+    return _globalMdwCache = middlewares.map(_buildHandlerFunc).reduce((val, e) => val.chain(e));
+  }
+
+  ApplicationFactory(this.appConfig) {
+    providers.forEach(ensureIsSubTypeOf<ServiceProvider>);
+    middlewares.forEach(ensureIsSubTypeOf<Middleware>);
+    // ignore: avoid_function_literals_in_foreach_calls
+    middlewareGroups.values.forEach((types) => types.map(ensureIsSubTypeOf<Middleware>));
+    _middlewareGroups = middlewareGroups;
   }
 
   Future<void> bootstrap({bool listen = true}) async {
@@ -66,7 +91,7 @@ abstract class ApplicationFactory {
   Future<void> startServer() async {
     final app = Application.instance as _YarooAppImpl;
 
-    await app._createPharaohInstance(onException: _appKernel.onApplicationException).listen(port: app.port);
+    await app._createPharaohInstance(onException: onApplicationException).listen(port: app.port);
   }
 
   Future<void> _bootstrapComponents(AppConfig config) async {
@@ -80,8 +105,9 @@ abstract class ApplicationFactory {
       await Future.sync(instance.register);
     }
 
-    final globalMdw = ApplicationFactory.globalMiddleware;
-    if (globalMdw != null) spanner.addMiddleware<HandlerFunc>('/', globalMdw);
+    if (globalMiddleware != null) {
+      spanner.addMiddleware<HandlerFunc>('/', globalMiddleware!);
+    }
 
     /// boot providers
     for (final provider in providerInstances) {
@@ -130,15 +156,9 @@ abstract class ApplicationFactory {
   }
 
   static Iterable<HandlerFunc> resolveMiddlewareForGroup(String group) {
-    final middlewareGroup = ApplicationFactory._appKernel.middlewareGroups[group];
+    final middlewareGroup = ApplicationFactory._middlewareGroups[group];
     if (middlewareGroup == null) throw ArgumentError('Middleware group `$group` does not exist');
     return middlewareGroup.map(_buildHandlerFunc);
-  }
-
-  static HandlerFunc? get globalMiddleware {
-    final middleware = ApplicationFactory._appKernel.middleware;
-    if (middleware.isEmpty) return null;
-    return ApplicationFactory._appKernel.middleware.map(_buildHandlerFunc).reduce((val, e) => val.chain(e));
   }
 
   static HandlerFunc _buildHandlerFunc(Type type) {
@@ -149,8 +169,17 @@ abstract class ApplicationFactory {
   @visibleForTesting
   Future<spookie.Spookie> get tester {
     final app = (Application.instance as _YarooAppImpl);
-    return spookie.request(app._createPharaohInstance(onException: _appKernel.onApplicationException));
+    return spookie.request(app._createPharaohInstance(onException: onApplicationException));
   }
 
-  List<Type> get providers;
+  FutureOr<Response> onApplicationException(Object error, Request request, Response response) async {
+    if (error is RequestValidationError) {
+      return response.json(error.errorBody, statusCode: HttpStatus.badRequest);
+    } else if (error is SpannerRouteValidatorError) {
+      return response.json({
+        'errors': [error.toString()]
+      }, statusCode: HttpStatus.badRequest);
+    }
+    return response.internalServerError(error.toString());
+  }
 }

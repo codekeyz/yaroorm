@@ -1,8 +1,8 @@
 import 'package:spookie/spookie.dart';
 import 'package:yaroo/http/http.dart';
-import 'package:yaroo/http/kernel.dart';
 import 'package:yaroo/yaroo.dart';
 
+import '../config/config_test.dart';
 import 'core_test.reflectable.dart';
 
 const appConfig = AppConfig(
@@ -21,13 +21,20 @@ class FoobarMiddleware extends Middleware {
   HandlerFunc get handler => (req, res, next) => next();
 }
 
-class TestAppKernel extends Kernel {
-  final List<Type> middlewares;
+class TestKidsApp extends ApplicationFactory {
+  final AppConfig? config;
 
-  TestAppKernel(this.middlewares);
+  TestKidsApp({
+    this.providers = const [],
+    this.middlewares = const [],
+    this.config,
+  }) : super(config ?? appConfig);
 
   @override
-  List<Type> get middleware => middlewares;
+  final List<Type> providers;
+
+  @override
+  final List<Type> middlewares;
 
   @override
   Map<String, List<Type>> get middlewareGroups => {
@@ -36,60 +43,56 @@ class TestAppKernel extends Kernel {
       };
 }
 
-class TestKidsApp extends ApplicationFactory {
-  final List<Type> serviceProvs;
-  final AppConfig? config;
-
-  TestKidsApp(
-    Kernel kernel,
-    this.serviceProvs, {
-    this.config,
-  }) : super(kernel, config ?? appConfig);
-
-  @override
-  List<Type> get providers => serviceProvs;
-}
-
 void main() {
   initializeReflectable();
 
   group('Core', () {
-    final testApp = TestKidsApp(TestAppKernel([TestMiddleware]), []);
+    final testApp = TestKidsApp(middlewares: [TestMiddleware]);
 
-    group('Kernel', () {
-      test('should resolve global middleware', () {
-        expect(ApplicationFactory.globalMiddleware, isA<HandlerFunc>());
+    group('should error', () {
+      test('when invalid provider type passed', () {
+        expect(() => TestKidsApp(middlewares: [TestMiddleware], providers: [String]),
+            throwsArgumentErrorWithMessage('Ensure your class extends `ServiceProvider` class'));
       });
 
-      group('when middleware group', () {
-        test('should resolve', () {
-          final group = Route.middleware('api').group('Users', [
+      test('when invalid middleware type passed middlewares is not valid', () {
+        expect(() => TestKidsApp(middlewares: [String], providers: [AppServiceProvider]),
+            throwsArgumentErrorWithMessage('Ensure your class extends `Middleware` class'));
+      });
+    });
+
+    test('should resolve global middleware', () {
+      expect(testApp.globalMiddleware, isA<HandlerFunc>());
+    });
+
+    group('when middleware group', () {
+      test('should resolve', () {
+        final group = Route.middleware('api').group('Users', [
+          Route.route(HTTPMethod.GET, '/', (req, res) => null),
+        ]);
+
+        expect(group.paths, ['[ALL]: /users', '[GET]: /users/']);
+      });
+
+      test('should error when not exist', () {
+        expect(
+          () => Route.middleware('foo').group('Users', [
             Route.route(HTTPMethod.GET, '/', (req, res) => null),
-          ]);
-
-          expect(group.paths, ['[ALL]: /users', '[GET]: /users/']);
-        });
-
-        test('should error when not exist', () {
-          expect(
-            () => Route.middleware('foo').group('Users', [
-              Route.route(HTTPMethod.GET, '/', (req, res) => null),
-            ]),
-            throwsA(
-              isA<ArgumentError>().having((p0) => p0.message, 'message', 'Middleware group `foo` does not exist'),
-            ),
-          );
-        });
+          ]),
+          throwsA(
+            isA<ArgumentError>().having((p0) => p0.message, 'message', 'Middleware group `foo` does not exist'),
+          ),
+        );
       });
+    });
 
-      test('should throw if type is not subtype of Middleware', () {
-        final middlewares = ApplicationFactory.resolveMiddlewareForGroup('api');
-        expect(middlewares, isA<Iterable<HandlerFunc>>());
+    test('should throw if type is not subtype of Middleware', () {
+      final middlewares = ApplicationFactory.resolveMiddlewareForGroup('api');
+      expect(middlewares, isA<Iterable<HandlerFunc>>());
 
-        expect(middlewares.length, 1);
+      expect(middlewares.length, 1);
 
-        expect(() => ApplicationFactory.resolveMiddlewareForGroup('web'), throwsA(isA<UnsupportedError>()));
-      });
+      expect(() => ApplicationFactory.resolveMiddlewareForGroup('web'), throwsA(isA<UnsupportedError>()));
     });
 
     test('should return tester', () async {

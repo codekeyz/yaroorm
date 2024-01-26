@@ -14,15 +14,8 @@ void main() {
   setUpAll(() => r.initializeReflectable());
 
   group('App Config Test', () {
-    group('should error', () {
-      test('when providers is not subtype of `ServiceProvider`', () {
-        expect(() => TestKidsApp(TestAppKernel([TestMiddleware]), [String]),
-            throwsArgumentErrorWithMessage('Ensure your provider extends `ServiceProvider` class'));
-      });
-    });
-
     test('should return AppConfig instance', () async {
-      final testApp = TestKidsApp(TestAppKernel([TestMiddleware]), [AppServiceProvider]);
+      final testApp = TestKidsApp(middlewares: [TestMiddleware], providers: [AppServiceProvider]);
       expect(testApp, isNotNull);
     });
 
