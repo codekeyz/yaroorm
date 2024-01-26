@@ -166,7 +166,7 @@ void main() {
       });
 
       test('when used with middleware', () {
-        TestKidsApp(TestAppKernel([]), []);
+        TestKidsApp();
 
         final group = Route.middleware('api').group('merchants', [
           Route.route(HTTPMethod.GET, '/create', (req, res) => null),

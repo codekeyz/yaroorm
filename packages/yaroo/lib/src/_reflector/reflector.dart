@@ -127,12 +127,11 @@ BaseDTO? _tryResolveDtoInstance(Type type) {
   }
 }
 
-void validateProvider(Type providerType) {
+void ensureIsSubTypeOf<Parent extends Object>(Type objectType) {
   try {
-    final type = reflectType(providerType);
-    if (type.superclass!.reflectedType != ServiceProvider) throw Exception();
+    final type = reflectType(objectType);
+    if (type.superclass!.reflectedType != Parent) throw Exception();
   } catch (e) {
-    throw ArgumentError.value(
-        providerType, 'Invalid provider type provided', 'Ensure your provider extends `ServiceProvider` class');
+    throw ArgumentError.value(objectType, 'Invalid Type provided', 'Ensure your class extends `$Parent` class');
   }
 }
