@@ -9,4 +9,4 @@ Yaroorm makes it easy to interact with databases. Currently, it provides officia
 
 ## Documentation
 
-Find the quickstart & documentation here: https://docs.yaroo.dev/
+Find the quickstart & documentation here: https://docs.yaroo.dev/orm/quickstart
