@@ -6,7 +6,6 @@ repository: https://github.com/codekeyz/yaroo
 
 topics:
   - yaroo
-  - orm
   - postgres
   - mariadb
   - mysql
