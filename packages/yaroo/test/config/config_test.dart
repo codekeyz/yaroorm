@@ -1,4 +1,3 @@
-import 'package:spookie/spookie.dart';
 import 'package:yaroo/http/http.dart';
 import 'package:yaroo/yaroo.dart';
 
