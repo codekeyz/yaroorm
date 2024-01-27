@@ -2,7 +2,13 @@ name: yaroorm
 description: Easy migrations, query-builder & ORM for Postgres, SQLite, MySQL & MariaDB.
 version: 0.0.1
 
-publish_to: none
+topics:
+  - yaroo
+  - orm
+  - postgres
+  - mariadb
+  - mysql
+  - sqlite
 
 environment:
   sdk: ^3.0.0
