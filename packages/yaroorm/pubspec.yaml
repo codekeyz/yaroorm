@@ -1,6 +1,8 @@
 name: yaroorm
 description: Easy migrations, query-builder & ORM for Postgres, SQLite, MySQL & MariaDB.
 version: 0.0.1
+homepage: https://docs.yaroo.dev/orm/quickstart
+repository: https://github.com/codekeyz/yaroo
 
 topics:
   - yaroo
