@@ -206,4 +206,53 @@ class QueryImpl<Result> extends Query<Result> {
 
   @override
   String get statement => queryDriver.serializer.acceptReadQuery(this);
+
+  @override
+  Future<Result?> average(String field) async {
+    final query = queryDriver.serializer.acceptAverage(super.tableName, field);
+    final result = await queryDriver.rawQuery(query);
+    return result as Result?;
+  }
+
+  @override
+  Future<Result?> count(String field) async {
+    final query = queryDriver.serializer.acceptCount(super.tableName, field);
+    final result = await queryDriver.rawQuery(query);
+    return result as Result?;
+  }
+
+  @override
+  Future<Result?> groupConcat(String field) async {
+    final query = queryDriver.serializer.acceptGroupConcat(super.tableName, field);
+    final result = await queryDriver.rawQuery(query);
+    return result as Result?;
+  }
+
+  @override
+  Future<Result?> max(String field) async {
+    final query = queryDriver.serializer.acceptMax(super.tableName, field);
+    final result = await queryDriver.rawQuery(query);
+    return result as Result?;
+  }
+
+  @override
+  Future<Result?> min(String field) async {
+    final query = queryDriver.serializer.acceptAverage(super.tableName, field);
+    final result = await queryDriver.rawQuery(query);
+    return result as Result?;
+  }
+
+  @override
+  Future<Result?> sum(String field) async {
+    final query = queryDriver.serializer.acceptSum(super.tableName, field);
+    final result = await queryDriver.rawQuery(query);
+    return result as Result?;
+  }
+
+  @override
+  Future<Result?> total(String field) async {
+    final query = queryDriver.serializer.acceptTotal(super.tableName, field);
+    final result = await queryDriver.rawQuery(query);
+    return result as Result?;
+  }
 }

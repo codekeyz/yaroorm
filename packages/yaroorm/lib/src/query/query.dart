@@ -82,7 +82,8 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
         OrderByOperation<Query<EntityType>>,
         InsertOperation,
         DeleteOperation<EntityType>,
-        UpdateOperation<EntityType> {
+        UpdateOperation<EntityType>,
+        AggregateOperation<EntityType> {
   late final Set<String> fieldSelections;
   late final Set<OrderBy> orderByProps;
   late final List<WhereClause<EntityType>> whereClauses;
@@ -118,6 +119,22 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
     return UpdateQuery(tableName, whereClause: where(this), data: values)
         .driver(queryDriver);
   }
+}
+
+mixin AggregateOperation<Result> {
+  Future<Result?> count(String field);
+
+  Future<Result?> average(String field);
+
+  Future<Result?> sum(String field);
+
+  Future<Result?> max(String field);
+
+  Future<Result?> min(String field);
+
+  Future<Result?> total(String field);
+
+  Future<Result?> groupConcat(String field);
 }
 
 @protected
