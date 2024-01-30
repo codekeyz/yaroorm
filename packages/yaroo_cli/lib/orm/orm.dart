@@ -1,5 +1,12 @@
+import 'package:cli_completion/cli_completion.dart';
+import 'package:yaroo_cli/src/utils.dart';
 import 'package:yaroorm/yaroorm.dart';
-import 'package:yaroorm/migration.dart';
+
+import '../src/logger.dart';
+import 'commands/command.dart';
+import 'commands/migrate_command.dart';
+import 'commands/migrate_reset_command.dart';
+import 'commands/migrate_rollback_command.dart';
 
 class MigrationData extends Entity<int, MigrationData> {
   final String migration;
@@ -8,30 +15,37 @@ class MigrationData extends Entity<int, MigrationData> {
   MigrationData(this.migration, this.batch);
 }
 
-final _migrationsSchema = Schema.create('migrations', ($table) {
-  return $table
-    ..id()
-    ..string('migration')
-    ..integer('batch');
-});
-
-Future<void> ensureMigrationsTableReady(DatabaseDriver driver) async {
-  final hasTable = await driver.hasTable(DB.config.migrationsTable);
-  if (hasTable) return;
-
-  final script = _migrationsSchema.toScript(driver.blueprint);
-  await driver.execute(script);
-}
-
-Future<bool> hasAlreadyMigratedScript(String scriptName, DatabaseDriver driver) async {
-  final result = await Query.table(
-    DB.config.migrationsTable,
-  ).driver(driver).whereEqual('migration', scriptName).findOne();
-  return result != null;
-}
-
-Future<int> getLastBatchNumber(DatabaseDriver driver, String migrationsTable) async {
+Future<int> getLastBatchNumber(
+    DatabaseDriver driver, String migrationsTable) async {
   /// TODO:(codekeyz) rewrite this with the ORM.
-  final result = await driver.rawQuery('SELECT MAX(batch) as max_batch FROM $migrationsTable');
+  final result = await driver
+      .rawQuery('SELECT MAX(batch) as max_batch FROM $migrationsTable');
   return result.first['max_batch'] ?? 0;
+}
+
+const executableName = 'yaroo orm';
+const packageName = 'yaroo_cli';
+const description = 'yaroorm command-line tool';
+
+class OrmCLIRunner extends CompletionCommandRunner<int> {
+  static Future<void> start(List<String> args, YaroormConfig config) async {
+    return flushThenExit(await OrmCLIRunner._(config).run(args) ?? 0);
+  }
+
+  OrmCLIRunner._(YaroormConfig config) : super(executableName, description) {
+    argParser.addOption(
+      OrmCommand.connectionArg,
+      abbr: 'c',
+      help: 'specify database connection',
+    );
+
+    DB.init(config);
+
+    addCommand(MigrateCommand());
+    addCommand(MigrationRollbackCommand());
+    addCommand(MigrationResetCommand());
+  }
+
+  @override
+  void printUsage() => logger.info(usage);
 }

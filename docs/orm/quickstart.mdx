@@ -20,7 +20,6 @@ To get started, add `yaroorm` as a dependency and build_runner as a dev dependen
 
 ```shell
 dart pub add yaroorm
-dart pub add build_runner --dev
 ```
 
 ## Migration
@@ -84,7 +83,7 @@ final config = YaroormConfig(
 Add a new file `migrator.dart` and add this code. 
 
 ```dart
-import 'package:yaroorm/migration/cli.dart';
+import 'package:yaroo_cli/orm/runner.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import 'orm_config.dart' as orm;
@@ -92,13 +91,8 @@ import 'orm_config.dart' as orm;
 import 'migrator.reflectable.dart';
 
 void main(List<String> args) async {
-  if (args.isEmpty) return print('Nothing to do here');
-
   initializeReflectable();
-
-  DB.init(orm.config);
-
-  await MigratorCLI.processCmd(args[0], cmdArguments: args.sublist(1));
+  await OrmCLIRunner.start(args, conf.config);
 }
 ```
 
