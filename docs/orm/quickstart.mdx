@@ -102,6 +102,13 @@ We will need to do some code generation before proceeding. Copy & run the comman
 dart run build_runner build --delete-conflicting-outputs
 ```
 
+Below are the migrator commands and what they do
+
+- `migrate`                       # execute migrations on the database
+- `migrate:reset`                 # reset all database migrations
+- `migrate:rollback`              # rollback last migration batch
+- `migrate:fresh`                 # reset & re-run database migrations
+
 ### Add User Entity class
 
 ```dart
