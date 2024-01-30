@@ -26,3 +26,13 @@ Future<bool> hasAlreadyMigratedScript(
       .findOne();
   return result != null;
 }
+
+Future<int> getLastBatchNumber(
+  DatabaseDriver driver,
+  String migrationsTable,
+) async {
+  /// TODO:(codekeyz) rewrite this with the ORM.
+  final result = await driver
+      .rawQuery('SELECT MAX(batch) as max_batch FROM $migrationsTable');
+  return result.first['max_batch'] ?? 0;
+}

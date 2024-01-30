@@ -1,4 +1,5 @@
 import 'package:cli_completion/cli_completion.dart';
+import 'package:yaroo_cli/orm/commands/migrate_fresh_command.dart';
 import 'package:yaroo_cli/src/utils.dart';
 import 'package:yaroorm/yaroorm.dart';
 
@@ -13,14 +14,6 @@ class MigrationData extends Entity<int, MigrationData> {
   final int batch;
 
   MigrationData(this.migration, this.batch);
-}
-
-Future<int> getLastBatchNumber(
-    DatabaseDriver driver, String migrationsTable) async {
-  /// TODO:(codekeyz) rewrite this with the ORM.
-  final result = await driver
-      .rawQuery('SELECT MAX(batch) as max_batch FROM $migrationsTable');
-  return result.first['max_batch'] ?? 0;
 }
 
 const executableName = 'yaroo orm';
@@ -42,6 +35,7 @@ class OrmCLIRunner extends CompletionCommandRunner<int> {
     DB.init(config);
 
     addCommand(MigrateCommand());
+    addCommand(MigrateFreshCommand());
     addCommand(MigrationRollbackCommand());
     addCommand(MigrationResetCommand());
   }
