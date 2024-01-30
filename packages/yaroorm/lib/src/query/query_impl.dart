@@ -223,7 +223,8 @@ class QueryImpl<Result> extends Query<Result> {
 
   @override
   Future<Result?> groupConcat(String field) async {
-    final query = queryDriver.serializer.acceptGroupConcat(super.tableName, field);
+    final query =
+        queryDriver.serializer.acceptGroupConcat(super.tableName, field);
     final result = await queryDriver.rawQuery(query);
     return result as Result?;
   }
@@ -243,11 +244,7 @@ class QueryImpl<Result> extends Query<Result> {
   }
 
   @override
-  Future<Result?> sum(String field) async {
-    final query = queryDriver.serializer.acceptSum(super.tableName, field);
-    final result = await queryDriver.rawQuery(query);
-    return result as Result?;
-  }
+  Future<Result?> sum(String field) async => SumAggregate(driver).get();
 
   @override
   Future<Result?> total(String field) async {

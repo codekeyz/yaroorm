@@ -117,7 +117,8 @@ abstract class WhereClause<Result>
         WhereOperation<Result>,
         FindOperation<Result>,
         LimitOperation<Result>,
-        OrderByOperation<WhereClause<Result>> {
+        OrderByOperation<WhereClause<Result>>,
+        AggregateOperation {
   final List<CombineClause<WhereClause<Result>>> children = [];
 
   List<CombineClause<WhereClause<Result>>> get group => children.isEmpty

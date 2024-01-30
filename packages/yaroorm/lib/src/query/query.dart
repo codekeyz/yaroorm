@@ -1,4 +1,6 @@
 import 'package:meta/meta.dart';
+import 'package:postgres/postgres.dart';
+import 'package:yaroorm/src/query/aggregates.dart';
 
 import '../database/driver/driver.dart';
 import '../database/entity/entity.dart';
@@ -106,6 +108,11 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
 
   int? get limit => _limit;
 
+  Query<EntityType> select(List<String> selections) {
+    fieldSelections.addAll(selections);
+    return this;
+  }
+
   @override
   DeleteQuery delete(
       WhereClause<EntityType> Function(Query<EntityType> query) where) {
@@ -126,7 +133,7 @@ mixin AggregateOperation<Result> {
 
   Future<Result?> average(String field);
 
-  Future<Result?> sum(String field);
+  Future<Result?> sum();
 
   Future<Result?> max(String field);
 

@@ -3,6 +3,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common/sql.dart';
 import 'package:collection/collection.dart';
 import 'package:yaroorm/migration.dart';
+import 'package:yaroorm/src/query/aggregates.dart';
 
 import '../../primitives/serializer.dart';
 import '../../primitives/where.dart';
@@ -192,6 +193,43 @@ class SqliteSerializer implements PrimitiveSerializer {
   const SqliteSerializer();
 
   @override
+  String acceptAggregate(AggregateFunction aggregate) {
+    final queryBuilder = StringBuffer();
+
+    Query.table().select(['username', 'chima']).sum();
+
+    /// SELECT
+    final selections =
+        aggregate.selections.isEmpty ? '*' : aggregate.selections.join(', ');
+    queryBuilder.write(
+        'SELECT ${aggregate.name}($selections) FROM ${escapeStr(query.tableName)}');
+
+    /// WHERE
+    final clauses = aggregate.whereClauses;
+    if (clauses.isNotEmpty) {
+      final sb = StringBuffer();
+
+      final hasDifferentOperators = clauses
+              .map((e) => e.operators)
+              .reduce((val, e) => val..addAll(e))
+              .length >
+          1;
+
+      for (final clause in clauses) {
+        final result =
+            acceptWhereClause(clause, canGroup: hasDifferentOperators);
+        if (sb.isEmpty) {
+          sb.write(result);
+        } else {
+          sb.write(' ${clause.operator.name} $result');
+        }
+      }
+
+      queryBuilder.write(' WHERE $sb');
+    }
+  }
+
+  @override
   String acceptReadQuery(Query query) {
     final queryBuilder = StringBuffer();
 
@@ -294,8 +332,11 @@ class SqliteSerializer implements PrimitiveSerializer {
 
     final whereBb = StringBuffer();
 
-    final List<(LogicalOperator operator, WhereClause clause)> groupMembers =
-        clause.group;
+    final List<
+        (
+          LogicalOperator operator,
+          WhereClause clause,
+        )> groupMembers = clause.group;
 
     final shouldAddParenthesis = canGroup && groupMembers.length > 1;
 
