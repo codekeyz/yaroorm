@@ -92,7 +92,7 @@ import 'migrator.reflectable.dart';
 
 void main(List<String> args) async {
   initializeReflectable();
-  await OrmCLIRunner.start(args, conf.config);
+  await OrmCLIRunner.start(args, orm.config);
 }
 ```
 
@@ -100,4 +100,19 @@ We will need to do some code generation before proceeding. Copy & run the comman
 
 ```shell
 dart run build_runner build --delete-conflicting-outputs
+```
+
+### Add User Entity class
+
+```dart
+import 'package:yaroorm/yaroorm.dart';
+
+@EntityMeta(table: 'users', timestamps: true)
+class User extends Entity<int, User> {
+  String name;
+  int age;
+  String email;
+
+  User(this.name, this.email, this.age);
+}
 ```
