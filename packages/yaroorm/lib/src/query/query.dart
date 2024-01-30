@@ -1,4 +1,6 @@
 import 'package:meta/meta.dart';
+import 'package:postgres/postgres.dart';
+import 'package:yaroorm/src/query/aggregates.dart';
 
 import '../database/driver/driver.dart';
 import '../database/entity/entity.dart';
@@ -30,7 +32,9 @@ mixin LimitOperation<ReturnType> {
 }
 
 mixin UpdateOperation<Result> {
-  UpdateQuery update({required WhereClause<Result> Function(Query query) where, required Map<String, dynamic> values});
+  UpdateQuery update(
+      {required WhereClause<Result> Function(Query query) where,
+      required Map<String, dynamic> values});
 }
 
 mixin DeleteOperation<Result> {
@@ -54,7 +58,8 @@ abstract interface class QueryBase<Owner> {
 
   DriverContract get queryDriver {
     if (_queryDriver == null) {
-      throw StateError('Driver not set for query. Make sure you supply a driver using .driver()');
+      throw StateError(
+          'Driver not set for query. Make sure you supply a driver using .driver()');
     }
     return _queryDriver!;
   }
@@ -94,15 +99,22 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
         _limit = null;
 
   static Query<Model> table<Model>([String? tableName]) {
-    if (Model != Entity && Model != dynamic) tableName ??= getEntityTableName(Model);
+    if (Model != Entity && Model != dynamic)
+      tableName ??= getEntityTableName(Model);
     assert(tableName != null, 'Either provide Entity Type or tableName');
     return QueryImpl<Model>(tableName!);
   }
 
   int? get limit => _limit;
 
+  Query<EntityType> select(List<String> selections) {
+    fieldSelections.addAll(selections);
+    return this;
+  }
+
   @override
-  DeleteQuery delete(WhereClause<EntityType> Function(Query<EntityType> query) where) {
+  DeleteQuery delete(
+      WhereClause<EntityType> Function(Query<EntityType> query) where) {
     return DeleteQuery(tableName, whereClause: where(this)).driver(queryDriver);
   }
 
@@ -110,7 +122,8 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
   UpdateQuery update(
       {required WhereClause<EntityType> Function(Query<EntityType> query) where,
       required Map<String, dynamic> values}) {
-    return UpdateQuery(tableName, whereClause: where(this), data: values).driver(queryDriver);
+    return UpdateQuery(tableName, whereClause: where(this), data: values)
+        .driver(queryDriver);
   }
 }
 
@@ -119,7 +132,7 @@ mixin AggregateOperation<Result> {
 
   Future<Result?> average(String field);
 
-  Future<Result?> sum(String field);
+  Future<Result?> sum();
 
   Future<Result?> max(String field);
 

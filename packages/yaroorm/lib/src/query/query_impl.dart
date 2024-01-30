@@ -6,8 +6,10 @@ class QueryImpl<Result> extends Query<Result> {
   QueryImpl(super.tableName);
 
   @override
-  WhereClause<Result> where<Value>(String field, String condition, [Value? value]) {
-    final newClause = WhereClause.create<Result>(this, value: WhereClauseValue.from(field, condition, value));
+  WhereClause<Result> where<Value>(String field, String condition,
+      [Value? value]) {
+    final newClause = WhereClause.create<Result>(this,
+        value: WhereClauseValue.from(field, condition, value));
     whereClauses.add(newClause);
     return newClause;
   }
@@ -26,7 +28,8 @@ class QueryImpl<Result> extends Query<Result> {
 
   @override
   Future<PrimaryKey> insert<PrimaryKey>(Map<String, dynamic> data) async {
-    final recordId = await queryDriver.insert(InsertQuery(tableName, data: data));
+    final recordId =
+        await queryDriver.insert(InsertQuery(tableName, data: data));
     return recordId as PrimaryKey;
   }
 
@@ -52,7 +55,8 @@ class QueryImpl<Result> extends Query<Result> {
 
   @override
   Future<Result?> get([dynamic id]) async {
-    if (id != null) return whereEqual(getEntityPrimaryKey(Result), id).findOne();
+    if (id != null)
+      return whereEqual(getEntityPrimaryKey(Result), id).findOne();
     return (await take(1)).firstOrNull;
   }
 
@@ -66,18 +70,22 @@ class QueryImpl<Result> extends Query<Result> {
   }
 
   @override
-  WhereClause<Result> orWhere<Value>(String field, String condition, [Value? value]) {
-    throw StateError('Cannot use `orWhere` directly on a Query you need a WHERE clause first');
+  WhereClause<Result> orWhere<Value>(String field, String condition,
+      [Value? value]) {
+    throw StateError(
+        'Cannot use `orWhere` directly on a Query you need a WHERE clause first');
   }
 
   @override
   Query<Result> orWhereFunc(Function(Query<Result> query) builder) {
-    if (whereClauses.isEmpty) throw StateError('Cannot use `orWhereFunc` without a where clause');
+    if (whereClauses.isEmpty)
+      throw StateError('Cannot use `orWhereFunc` without a where clause');
 
     final newQuery = QueryImpl<Result>(tableName);
     builder(newQuery);
 
-    final newGroup = WhereClause.create<Result>(this, operator: LogicalOperator.OR);
+    final newGroup =
+        WhereClause.create<Result>(this, operator: LogicalOperator.OR);
     for (final clause in newQuery.whereClauses) {
       newGroup.children.add((clause.operator, clause));
     }
@@ -92,7 +100,8 @@ class QueryImpl<Result> extends Query<Result> {
     final newQuery = QueryImpl<Result>(tableName);
     builder(newQuery);
 
-    final newGroup = WhereClause.create<Result>(this, operator: LogicalOperator.AND);
+    final newGroup =
+        WhereClause.create<Result>(this, operator: LogicalOperator.AND);
     for (final clause in newQuery.whereClauses) {
       newGroup.children.add((clause.operator, clause));
     }
@@ -104,72 +113,79 @@ class QueryImpl<Result> extends Query<Result> {
 
   @override
   WhereClause<Result> whereEqual<Value>(String field, Value value) {
-    final newClause =
-        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.EQUAL, value: value)));
+    final newClause = WhereClause.create<Result>(this,
+        value:
+            WhereClauseValue(field, (operator: Operator.EQUAL, value: value)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   WhereClause<Result> whereNotEqual<Value>(String field, Value value) {
-    final newClause =
-        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.NOT_EQUAL, value: value)));
+    final newClause = WhereClause.create<Result>(this,
+        value: WhereClauseValue(
+            field, (operator: Operator.NOT_EQUAL, value: value)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   WhereClause<Result> whereIn<Value>(String field, List<Value> values) {
-    final newClause =
-        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.IN, value: values)));
+    final newClause = WhereClause.create<Result>(this,
+        value: WhereClauseValue(field, (operator: Operator.IN, value: values)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   WhereClause<Result> whereNotIn<Value>(String field, List<Value> values) {
-    final newClause =
-        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.NOT_IN, value: values)));
+    final newClause = WhereClause.create<Result>(this,
+        value: WhereClauseValue(
+            field, (operator: Operator.NOT_IN, value: values)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   WhereClause<Result> whereLike<Value>(String field, String pattern) {
-    final newClause =
-        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.LIKE, value: pattern)));
+    final newClause = WhereClause.create<Result>(this,
+        value:
+            WhereClauseValue(field, (operator: Operator.LIKE, value: pattern)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   WhereClause<Result> whereNotLike<Value>(String field, String pattern) {
-    final newClause =
-        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.NOT_LIKE, value: pattern)));
+    final newClause = WhereClause.create<Result>(this,
+        value: WhereClauseValue(
+            field, (operator: Operator.NOT_LIKE, value: pattern)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   WhereClause<Result> whereNull(String field) {
-    final newClause =
-        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.NULL, value: null)));
+    final newClause = WhereClause.create<Result>(this,
+        value: WhereClauseValue(field, (operator: Operator.NULL, value: null)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   WhereClause<Result> whereNotNull(String field) {
-    final newClause =
-        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.NOT_NULL, value: null)));
+    final newClause = WhereClause.create<Result>(this,
+        value: WhereClauseValue(
+            field, (operator: Operator.NOT_NULL, value: null)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
   WhereClause<Result> whereBetween<Value>(String field, List<Value> values) {
-    final newClause =
-        WhereClause.create<Result>(this, value: WhereClauseValue(field, (operator: Operator.BETWEEN, value: values)));
+    final newClause = WhereClause.create<Result>(this,
+        value: WhereClauseValue(
+            field, (operator: Operator.BETWEEN, value: values)));
     whereClauses.add(newClause);
     return newClause;
   }
@@ -177,7 +193,8 @@ class QueryImpl<Result> extends Query<Result> {
   @override
   WhereClause<Result> whereNotBetween<Value>(String field, List<Value> values) {
     final newClause = WhereClause.create<Result>(this,
-        value: WhereClauseValue(field, (operator: Operator.NOT_BETWEEN, value: values)));
+        value: WhereClauseValue(
+            field, (operator: Operator.NOT_BETWEEN, value: values)));
     whereClauses.add(newClause);
     return newClause;
   }
@@ -204,7 +221,8 @@ class QueryImpl<Result> extends Query<Result> {
 
   @override
   Future<Result?> groupConcat(String field) async {
-    final query = queryDriver.serializer.acceptGroupConcat(super.tableName, field);
+    final query =
+        queryDriver.serializer.acceptGroupConcat(super.tableName, field);
     final result = await queryDriver.rawQuery(query);
     return result as Result?;
   }
@@ -224,11 +242,7 @@ class QueryImpl<Result> extends Query<Result> {
   }
 
   @override
-  Future<Result?> sum(String field) async {
-    final query = queryDriver.serializer.acceptSum(super.tableName, field);
-    final result = await queryDriver.rawQuery(query);
-    return result as Result?;
-  }
+  Future<Result?> sum(String field) async => SumAggregate(driver).get();
 
   @override
   Future<Result?> total(String field) async {
