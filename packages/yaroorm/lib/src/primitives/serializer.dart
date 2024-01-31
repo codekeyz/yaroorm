@@ -33,19 +33,5 @@ abstract class PrimitiveSerializer {
 
   String escapeStr(String column);
 
-  String acceptCountQuery(String table, String field);
-
-  String acceptGroupConcatQuery(String table, String field);
-
-  String acceptMaxQuery(String table, String field);
-
-  String acceptMinQuery(String table, String field);
-
-  String acceptSumQuery(String table, String field);
-
-  String acceptTotalQuery(String table, String field);
-
-  String acceptAverageQuery(String table, String field);
-
   String get terminator;
 }

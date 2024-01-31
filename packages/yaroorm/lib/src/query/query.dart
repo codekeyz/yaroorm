@@ -1,5 +1,4 @@
 import 'package:meta/meta.dart';
-import 'package:postgres/postgres.dart';
 import 'package:yaroorm/src/query/aggregates.dart';
 
 import '../database/driver/driver.dart';
@@ -129,17 +128,17 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
 }
 
 mixin AggregateOperation<Result> {
-  Future<Result?> count(String field);
+  Future<num?> count();
 
-  Future<Result?> average(String field);
+  Future<num?> average(String field);
 
-  Future<Result?> sum();
+  Future<num?> sum();
 
-  Future<Result?> max(String field);
+  Future<num?> max(String field);
 
-  Future<Result?> min(String field);
+  Future<num?> min(String field);
 
-  Future<Result?> total(String field);
+  Future<num?> total(String field);
 
   Future<Result?> groupConcat(String field);
 }
