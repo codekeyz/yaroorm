@@ -197,8 +197,10 @@ class SqliteSerializer implements PrimitiveSerializer {
     final queryBuilder = StringBuffer();
 
     /// SELECT
-    final selections = aggregate.selections.isEmpty ? '*' : aggregate.selections.join(', ');
-    queryBuilder.write('SELECT ${aggregate.name}($selections) FROM ${escapeStr(aggregate.tableName)}');
+    final selections =
+        aggregate.selections.isEmpty ? '*' : aggregate.selections.join(', ');
+    queryBuilder.write(
+        'SELECT ${aggregate.name}($selections) FROM ${escapeStr(aggregate.tableName)}');
 
     /// WHERE
     final whereClause = aggregate.where;
@@ -312,11 +314,8 @@ class SqliteSerializer implements PrimitiveSerializer {
 
     final whereBb = StringBuffer();
 
-    final List<
-        (
-          LogicalOperator operator,
-          WhereClause clause,
-        )> groupMembers = clause.group;
+    final List<(LogicalOperator operator, WhereClause clause)> groupMembers =
+        clause.group;
 
     final shouldAddParenthesis = canGroup && groupMembers.length > 1;
 
