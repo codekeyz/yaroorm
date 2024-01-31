@@ -39,7 +39,8 @@ class RequestValidationError extends Error {
 
   Map<String, dynamic> get errorBody => {
         'location': location.name,
-        if (errors != null) 'errors': errors!.entries.map((e) => '${e.key}: ${e.value}').toList(),
+        if (errors != null)
+          'errors': errors!.entries.map((e) => '${e.key}: ${e.value}').toList(),
         if (message.isNotEmpty) 'errors': [message],
       };
 
@@ -59,7 +60,8 @@ class Body extends RequestAnnotation {
     final body = request.body;
     if (body == null) {
       if (methodParam.optional) return null;
-      throw RequestValidationError.body(EzValidator.globalLocale.required('body'));
+      throw RequestValidationError.body(
+          EzValidator.globalLocale.required('body'));
     }
 
     final dtoInstance = methodParam.dto;
@@ -67,7 +69,8 @@ class Body extends RequestAnnotation {
 
     final type = methodParam.type;
     if (type != dynamic && body.runtimeType != type) {
-      throw RequestValidationError.body(EzValidator.globalLocale.isTypeOf('${methodParam.type}', 'body'));
+      throw RequestValidationError.body(
+          EzValidator.globalLocale.isTypeOf('${methodParam.type}', 'body'));
     }
 
     return body;
@@ -87,7 +90,8 @@ class Param extends RequestAnnotation {
     final value = request.params[paramName] ?? methodParam.defaultValue;
     final parsedValue = _parseValue(value, methodParam.type);
     if (parsedValue == null) {
-      throw RequestValidationError.param(EzValidator.globalLocale.isTypeOf('${methodParam.type}', paramName));
+      throw RequestValidationError.param(
+          EzValidator.globalLocale.isTypeOf('${methodParam.type}', paramName));
     }
     return parsedValue;
   }
@@ -105,12 +109,14 @@ class Query extends RequestAnnotation {
     final paramName = name ?? methodParam.name;
     final value = request.query[paramName] ?? methodParam.defaultValue;
     if (!methodParam.optional && value == null) {
-      throw RequestValidationError.query(EzValidator.globalLocale.required(paramName));
+      throw RequestValidationError.query(
+          EzValidator.globalLocale.required(paramName));
     }
 
     final parsedValue = _parseValue(value, methodParam.type);
     if (parsedValue == null) {
-      throw RequestValidationError.query(EzValidator.globalLocale.isTypeOf('${methodParam.type}', paramName));
+      throw RequestValidationError.query(
+          EzValidator.globalLocale.isTypeOf('${methodParam.type}', paramName));
     }
     return parsedValue;
   }
@@ -124,12 +130,14 @@ class Header extends RequestAnnotation {
     final paramName = name ?? methodParam.name;
     final value = request.headers[paramName] ?? methodParam.defaultValue;
     if (!methodParam.optional && value == null) {
-      throw RequestValidationError.header(EzValidator.globalLocale.required(paramName));
+      throw RequestValidationError.header(
+          EzValidator.globalLocale.required(paramName));
     }
 
     final parsedValue = _parseValue(value, methodParam.type);
     if (parsedValue == null) {
-      throw RequestValidationError.header(EzValidator.globalLocale.isTypeOf('${methodParam.type}', paramName));
+      throw RequestValidationError.header(
+          EzValidator.globalLocale.isTypeOf('${methodParam.type}', paramName));
     }
     return parsedValue;
   }
