@@ -1,5 +1,13 @@
+import 'package:cli_completion/cli_completion.dart';
+import 'package:yaroo_cli/orm/commands/migrate_fresh_command.dart';
+import 'package:yaroo_cli/src/utils.dart';
 import 'package:yaroorm/yaroorm.dart';
-import 'package:yaroorm/migration.dart';
+
+import '../src/logger.dart';
+import 'commands/command.dart';
+import 'commands/migrate_command.dart';
+import 'commands/migrate_reset_command.dart';
+import 'commands/migrate_rollback_command.dart';
 
 class MigrationData extends Entity<int, MigrationData> {
   final String migration;
@@ -8,30 +16,30 @@ class MigrationData extends Entity<int, MigrationData> {
   MigrationData(this.migration, this.batch);
 }
 
-final _migrationsSchema = Schema.create('migrations', ($table) {
-  return $table
-    ..id()
-    ..string('migration')
-    ..integer('batch');
-});
+const executableName = 'yaroo orm';
+const packageName = 'yaroo_cli';
+const description = 'yaroorm command-line tool';
 
-Future<void> ensureMigrationsTableReady(DatabaseDriver driver) async {
-  final hasTable = await driver.hasTable(DB.config.migrationsTable);
-  if (hasTable) return;
+class OrmCLIRunner extends CompletionCommandRunner<int> {
+  static Future<void> start(List<String> args, YaroormConfig config) async {
+    return flushThenExit(await OrmCLIRunner._(config).run(args) ?? 0);
+  }
 
-  final script = _migrationsSchema.toScript(driver.blueprint);
-  await driver.execute(script);
-}
+  OrmCLIRunner._(YaroormConfig config) : super(executableName, description) {
+    argParser.addOption(
+      OrmCommand.connectionArg,
+      abbr: 'c',
+      help: 'specify database connection',
+    );
 
-Future<bool> hasAlreadyMigratedScript(String scriptName, DatabaseDriver driver) async {
-  final result = await Query.table(
-    DB.config.migrationsTable,
-  ).driver(driver).whereEqual('migration', scriptName).findOne();
-  return result != null;
-}
+    DB.init(config);
 
-Future<int> getLastBatchNumber(DatabaseDriver driver, String migrationsTable) async {
-  /// TODO:(codekeyz) rewrite this with the ORM.
-  final result = await driver.rawQuery('SELECT MAX(batch) as max_batch FROM $migrationsTable');
-  return result.first['max_batch'] ?? 0;
+    addCommand(MigrateCommand());
+    addCommand(MigrateFreshCommand());
+    addCommand(MigrationRollbackCommand());
+    addCommand(MigrationResetCommand());
+  }
+
+  @override
+  void printUsage() => logger.info(usage);
 }

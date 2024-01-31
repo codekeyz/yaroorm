@@ -1,5 +1,6 @@
 String cleanRoute(String route) {
-  final result = route.replaceAll(RegExp(r'/+'), '/').replaceAll(RegExp(r'/$'), '');
+  final result =
+      route.replaceAll(RegExp(r'/+'), '/').replaceAll(RegExp(r'/$'), '');
   return result.isEmpty ? '/' : result;
 }
 
