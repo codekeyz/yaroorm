@@ -193,23 +193,23 @@ class QueryImpl<Result> extends Query<Result> {
   String get statement => queryDriver.serializer.acceptReadQuery(this);
 
   @override
-  Future<num?> average(String field) => AverageAggregate(queryDriver, tableName).get();
+  Future<num?> average() => AverageAggregate(queryDriver, tableName).get();
 
   @override
   Future<num?> count() => CountAggregate(queryDriver, tableName).get();
 
   @override
-  Future<Result?> concat(String field) => ConcatAggregate<Result?>(queryDriver, tableName).get();
+  Future<Result?> concat() => ConcatAggregate<Result?>(queryDriver, tableName).get();
 
   @override
-  Future<num?> max(String field) => MaxAggregate(queryDriver, tableName).get();
+  Future<num?> max() => MaxAggregate(queryDriver, tableName).get();
 
   @override
-  Future<num?> min(String field) => MinAggregate(queryDriver, tableName).get();
+  Future<num?> min() => MinAggregate(queryDriver, tableName).get();
 
   @override
   Future<num?> sum() async => SumAggregate(queryDriver, tableName).get();
 
   @override
-  Future<num?> total(String field) => TotalAggregate(queryDriver, tableName).get();
+  Future<num?> total() => TotalAggregate(queryDriver, tableName).get();
 }

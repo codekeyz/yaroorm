@@ -125,17 +125,17 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
 mixin AggregateOperation<Result> {
   Future<num?> count();
 
-  Future<num?> average(String field);
+  Future<num?> average();
 
   Future<num?> sum();
 
-  Future<num?> max(String field);
+  Future<num?> max();
 
-  Future<num?> min(String field);
+  Future<num?> min();
 
-  Future<num?> total(String field);
+  Future<num?> total();
 
-  Future<Result?> concat(String field);
+  Future<Result?> concat();
 }
 
 @protected
