@@ -6,8 +6,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   @override
   WhereClause<Result> whereEqual<Value>(String field, Value value) {
     final newChild = _WhereClauseImpl(query)
-      ..clauseValue =
-          WhereClauseValue(field, (operator: Operator.EQUAL, value: value));
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.EQUAL, value: value));
     children.add((LogicalOperator.AND, newChild));
     return this;
   }
@@ -15,8 +14,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   @override
   WhereClause<Result> whereNotEqual<Value>(String field, Value value) {
     final newChild = _WhereClauseImpl(query)
-      ..clauseValue =
-          WhereClauseValue(field, (operator: Operator.NOT_EQUAL, value: value));
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_EQUAL, value: value));
     children.add((LogicalOperator.AND, newChild));
     return this;
   }
@@ -24,8 +22,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   @override
   WhereClause<Result> whereIn<Value>(String field, List<Value> values) {
     final newChild = _WhereClauseImpl(query)
-      ..clauseValue =
-          WhereClauseValue(field, (operator: Operator.IN, value: values));
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.IN, value: values));
     children.add((LogicalOperator.AND, newChild));
     return this;
   }
@@ -33,8 +30,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   @override
   WhereClause<Result> whereNotIn<Value>(String field, List<Value> values) {
     final newChild = _WhereClauseImpl(query)
-      ..clauseValue =
-          WhereClauseValue(field, (operator: Operator.NOT_IN, value: values));
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_IN, value: values));
     children.add((LogicalOperator.AND, newChild));
     return this;
   }
@@ -42,8 +38,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   @override
   WhereClause<Result> whereBetween<Value>(String field, List<Value> values) {
     final newChild = _WhereClauseImpl(query)
-      ..clauseValue =
-          WhereClauseValue(field, (operator: Operator.BETWEEN, value: values));
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.BETWEEN, value: values));
     children.add((LogicalOperator.AND, newChild));
     return this;
   }
@@ -51,8 +46,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   @override
   WhereClause<Result> whereNotBetween<Value>(String field, List<Value> values) {
     final newChild = _WhereClauseImpl(query)
-      ..clauseValue = WhereClauseValue(
-          field, (operator: Operator.NOT_BETWEEN, value: values));
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_BETWEEN, value: values));
     children.add((LogicalOperator.AND, newChild));
     return this;
   }
@@ -60,8 +54,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   @override
   WhereClause<Result> whereLike<Value>(String field, String pattern) {
     final newChild = _WhereClauseImpl(query)
-      ..clauseValue =
-          WhereClauseValue(field, (operator: Operator.LIKE, value: pattern));
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.LIKE, value: pattern));
     children.add((LogicalOperator.AND, newChild));
     return this;
   }
@@ -69,8 +62,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   @override
   WhereClause<Result> whereNotLike<Value>(String field, String pattern) {
     final newChild = _WhereClauseImpl(query)
-      ..clauseValue = WhereClauseValue(
-          field, (operator: Operator.NOT_LIKE, value: pattern));
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_LIKE, value: pattern));
     children.add((LogicalOperator.AND, newChild));
     return this;
   }
@@ -78,8 +70,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   @override
   WhereClause<Result> whereNull(String field) {
     final newChild = _WhereClauseImpl(query)
-      ..clauseValue =
-          WhereClauseValue(field, (operator: Operator.NULL, value: null));
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.NULL, value: null));
     children.add((LogicalOperator.AND, newChild));
     return this;
   }
@@ -87,24 +78,19 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   @override
   WhereClause<Result> whereNotNull(String field) {
     final newChild = _WhereClauseImpl(query)
-      ..clauseValue =
-          WhereClauseValue(field, (operator: Operator.NOT_NULL, value: null));
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_NULL, value: null));
     children.add((LogicalOperator.AND, newChild));
     return this;
   }
 
   @override
   Future<void> update(Map<String, dynamic> values) {
-    return UpdateQuery(query.tableName, whereClause: this, data: values)
-        .driver(query.queryDriver)
-        .execute();
+    return UpdateQuery(query.tableName, whereClause: this, data: values).driver(query.queryDriver).execute();
   }
 
   @override
   Future<void> delete() {
-    return DeleteQuery(query.tableName, whereClause: this)
-        .driver(query.queryDriver)
-        .execute();
+    return DeleteQuery(query.tableName, whereClause: this).driver(query.queryDriver).execute();
   }
 
   @override
@@ -132,20 +118,16 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   String get statement => query.statement;
 
   @override
-  WhereClause<Result> where<Value>(String field, String condition,
-      [Value? value]) {
-    final newChild = _WhereClauseImpl<Result>(query)
-      ..clauseValue = WhereClauseValue.from(field, condition, value);
+  WhereClause<Result> where<Value>(String field, String condition, [Value? value]) {
+    final newChild = _WhereClauseImpl<Result>(query)..clauseValue = WhereClauseValue.from(field, condition, value);
     children.add((LogicalOperator.AND, newChild));
     return this;
   }
 
   @override
-  WhereClause<Result> orWhere<Value>(String field, String condition,
-      [Value? value]) {
-    final newChild =
-        _WhereClauseImpl<Result>(query, operator: LogicalOperator.OR)
-          ..clauseValue = WhereClauseValue.from(field, condition, value);
+  WhereClause<Result> orWhere<Value>(String field, String condition, [Value? value]) {
+    final newChild = _WhereClauseImpl<Result>(query, operator: LogicalOperator.OR)
+      ..clauseValue = WhereClauseValue.from(field, condition, value);
     query.whereClauses.add(newChild);
     return newChild;
   }

@@ -16,8 +16,7 @@ ClassMirror reflectEntity<Model>() {
   try {
     mirror = (reflectType(Model));
   } catch (e) {
-    throw EntityValidationException(
-        "Either $Model is not a subtype of Entity or re-run your build_runner command");
+    throw EntityValidationException("Either $Model is not a subtype of Entity or re-run your build_runner command");
   }
   return mirror;
 }

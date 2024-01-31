@@ -9,8 +9,7 @@ class UseDatabaseConnection {
 
   UseDatabaseConnection(this.info) : driver = DB.driver(info.name);
 
-  Query<Model> query<Model>([String? table]) =>
-      Query.table<Model>(table).driver(driver)..database = info.database;
+  Query<Model> query<Model>([String? table]) => Query.table<Model>(table).driver(driver)..database = info.database;
 }
 
 const String pleaseInitializeMessage = 'DB has not been initialized.\n'
@@ -27,12 +26,10 @@ class DB {
 
   static DatabaseDriver get defaultDriver => defaultConnection.driver;
 
-  static Query<Model> query<Model>([String? table]) =>
-      defaultConnection.query<Model>(table);
+  static Query<Model> query<Model>([String? table]) => defaultConnection.query<Model>(table);
 
   static UseDatabaseConnection connection(String connName) =>
-      UseDatabaseConnection(
-          config.connections.firstWhere((e) => e.name == connName));
+      UseDatabaseConnection(config.connections.firstWhere((e) => e.name == connName));
 
   /// This call returns the driver for a connection
   ///
@@ -41,8 +38,7 @@ class DB {
     if (connName == 'default') return defaultDriver;
     final instance = _driverInstances[connName];
     if (instance != null) return instance;
-    final connInfo =
-        config.connections.firstWhereOrNull((e) => e.name == connName);
+    final connInfo = config.connections.firstWhereOrNull((e) => e.name == connName);
     if (connInfo == null) {
       throw ArgumentError.value(
         connName,
