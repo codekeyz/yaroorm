@@ -132,12 +132,11 @@ void main() {
       });
 
       test('when handle route resource', () {
-        final group =
-            Route.group('foo', [Route.resource('bar', TestController)])
-              ..middleware([
-                (req, res, next) => next(),
-                (req, res, next) => next(),
-              ]);
+        final group = Route.group('foo', [Route.resource('bar', TestController)])
+          ..middleware([
+            (req, res, next) => next(),
+            (req, res, next) => next(),
+          ]);
 
         expect(group.paths, [
           '[ALL]: /foo',
@@ -194,11 +193,8 @@ void main() {
 
     test('should error when controller method not found', () {
       expect(
-        () => Route.group(
-            'Merchants', [Route.get('/foo', (TestController, #foobar))],
-            prefix: 'foo'),
-        throwsA(isA<ArgumentError>().having((p0) => p0.message, '',
-            'TestController does not have method  #foobar')),
+        () => Route.group('Merchants', [Route.get('/foo', (TestController, #foobar))], prefix: 'foo'),
+        throwsA(isA<ArgumentError>().having((p0) => p0.message, '', 'TestController does not have method  #foobar')),
       );
     });
   });
