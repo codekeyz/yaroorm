@@ -197,6 +197,7 @@ class SqliteSerializer implements PrimitiveSerializer {
     final queryBuilder = StringBuffer();
 
     Query.table().select(['username', 'chima']).sum();
+   // Query.table().sum();
 
     /// SELECT
     final selections =
