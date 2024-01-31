@@ -26,8 +26,7 @@ r.ClassMirror reflectType(Type type) {
   try {
     return entity.reflectType(type) as r.ClassMirror;
   } catch (e) {
-    throw EntityValidationException(
-        'Unable to reflect on $type. Re-run your build command');
+    throw EntityValidationException('Unable to reflect on $type. Re-run your build command');
   }
 }
 
@@ -48,8 +47,7 @@ class EntityPropertyData {
   const EntityPropertyData(this.dartName, this.dbColumnName, this.type);
 }
 
-Map<String, EntityPropertyData> getEntityProperties(Type type,
-    {ClassMirror? classMirror}) {
+Map<String, EntityPropertyData> getEntityProperties(Type type, {ClassMirror? classMirror}) {
   classMirror ??= reflectType(type);
 
   final metadata = classMirror.metadata.whereType<EntityMeta>().firstOrNull;
@@ -59,16 +57,14 @@ Map<String, EntityPropertyData> getEntityProperties(Type type,
       .fold<Map<String, EntityPropertyData>>({}, (prev, curr) {
     final propertyMeta = curr.metadata.whereType<EntityProperty>().firstOrNull;
     return prev
-      ..[curr.simpleName] = EntityPropertyData(curr.simpleName,
-          propertyMeta?.name ?? curr.simpleName, curr.reflectedType);
+      ..[curr.simpleName] =
+          EntityPropertyData(curr.simpleName, propertyMeta?.name ?? curr.simpleName, curr.reflectedType);
   });
   if (metadata == null || !metadata.timestamps) return typeProps;
 
-  typeProps[metadata.createdAtColumn] ??=
-      EntityPropertyData('createdAt', metadata.createdAtColumn, DateTime);
+  typeProps[metadata.createdAtColumn] ??= EntityPropertyData('createdAt', metadata.createdAtColumn, DateTime);
 
-  typeProps[metadata.updatedAtColumn] ??=
-      EntityPropertyData('updatedAt', metadata.updatedAtColumn, DateTime);
+  typeProps[metadata.updatedAtColumn] ??= EntityPropertyData('updatedAt', metadata.updatedAtColumn, DateTime);
 
   return typeProps;
 }

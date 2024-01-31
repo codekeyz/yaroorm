@@ -8,8 +8,7 @@ class YaroormConfig {
   final String migrationsTable;
   final List<Migration> migrations;
 
-  DatabaseConnection get defaultDBConn =>
-      connections.firstWhere((e) => e.name == defaultConnName);
+  DatabaseConnection get defaultDBConn => connections.firstWhere((e) => e.name == defaultConnName);
 
   YaroormConfig(
     this.defaultConnName, {
@@ -19,8 +18,7 @@ class YaroormConfig {
   }) {
     final hasDefault = connections.any((e) => e.name == defaultConnName);
     if (!hasDefault) {
-      throw ArgumentError(
-          'Database connection info not found for $defaultConnName');
+      throw ArgumentError('Database connection info not found for $defaultConnName');
     }
   }
 }
