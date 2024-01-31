@@ -382,5 +382,4 @@ class MySqlPrimitiveSerializer extends SqliteSerializer {
 
     return queryBuilder.toString();
   }
-
 }

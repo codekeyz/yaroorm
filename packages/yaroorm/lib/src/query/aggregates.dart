@@ -10,7 +10,8 @@ abstract interface class AggregateFunction<T> {
   String get name;
 
   const AggregateFunction(
-    this.driver,this.tableName, {
+    this.driver,
+    this.tableName, {
     this.selections = const {'*'},
     this.where,
   });
@@ -22,7 +23,7 @@ abstract interface class AggregateFunction<T> {
 }
 
 class SumAggregate extends AggregateFunction<num> {
-  SumAggregate(super.driver, super.tableName) ;
+  SumAggregate(super.driver, super.tableName);
 
   @override
   String get name => 'SUM';
