@@ -55,8 +55,9 @@ class QueryImpl<Result> extends Query<Result> {
 
   @override
   Future<Result?> get([dynamic id]) async {
-    if (id != null)
+    if (id != null) {
       return whereEqual(getEntityPrimaryKey(Result), id).findOne();
+    }
     return (await take(1)).firstOrNull;
   }
 
@@ -78,8 +79,9 @@ class QueryImpl<Result> extends Query<Result> {
 
   @override
   Query<Result> orWhereFunc(Function(Query<Result> query) builder) {
-    if (whereClauses.isEmpty)
+    if (whereClauses.isEmpty) {
       throw StateError('Cannot use `orWhereFunc` without a where clause');
+    }
 
     final newQuery = QueryImpl<Result>(tableName);
     builder(newQuery);
@@ -213,12 +215,7 @@ class QueryImpl<Result> extends Query<Result> {
   Future<num?> count()  => CountAggregate(queryDriver).get();
 
   @override
-  Future<Result?> groupConcat(String field) async {
-    final query =
-        queryDriver.serializer.acceptGroupConcat(super.tableName, field);
-    final result = await queryDriver.rawQuery(query);
-    return result as Result?;
-  }
+  Future<Result?> concat(String field) =>  ConcatAggregate<Result?>(queryDriver).get();
 
   @override
   Future<num?> max(String field) => MaxAggregate(queryDriver).get();

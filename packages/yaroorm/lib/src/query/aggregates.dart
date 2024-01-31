@@ -1,6 +1,5 @@
 import 'package:yaroorm/src/database/driver/driver.dart';
 import 'package:yaroorm/src/primitives/where.dart';
-import 'package:yaroorm/src/query/query.dart';
 
 abstract interface class AggregateFunction<T> {
   final Set<String> selections;
@@ -63,8 +62,8 @@ class TotalAggregate extends AggregateFunction<num> {
   String get name => 'TOTAL';
 }
 
-class GroupConcatAggregate extends AggregateFunction<num> {
-  GroupConcatAggregate(super.driver);
+class ConcatAggregate<T> extends AggregateFunction<T> {
+  ConcatAggregate(super.driver);
 
   @override
   String get name => 'GROUP_CONCAT';

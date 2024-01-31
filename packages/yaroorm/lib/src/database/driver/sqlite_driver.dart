@@ -196,14 +196,15 @@ class SqliteSerializer implements PrimitiveSerializer {
   String acceptAggregate(AggregateFunction aggregate) {
     final queryBuilder = StringBuffer();
 
+
     Query.table().select(['username', 'chima']).sum();
-   // Query.table().sum();
+    Query.table().sum();
 
     /// SELECT
     final selections =
         aggregate.selections.isEmpty ? '*' : aggregate.selections.join(', ');
     queryBuilder.write(
-        'SELECT ${aggregate.name}($selections) FROM ${escapeStr(query.tableName)}');
+        'SELECT ${aggregate.name}($selections) FROM ${escapeStr(AggregateFunction.tableName)}');
 
     /// WHERE
     final clauses = aggregate.whereClauses;
@@ -327,8 +328,9 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptWhereClause(WhereClause clause, {bool canGroup = false}) {
-    if (clause.children.isEmpty)
+    if (clause.children.isEmpty) {
       return acceptWhereClauseValue(clause.clauseValue!);
+    }
 
     final whereBb = StringBuffer();
 
@@ -441,10 +443,12 @@ class SqliteSerializer implements PrimitiveSerializer {
     sb.write(
         'FOREIGN KEY (${escapeStr(key.column)}) REFERENCES ${escapeStr(key.foreignTable)}(${escapeStr(key.foreignTableColumn)})');
 
-    if (key.onUpdate != null)
+    if (key.onUpdate != null) {
       sb.write(' ON UPDATE ${_acceptForeignKeyAction(key.onUpdate!)}');
-    if (key.onDelete != null)
+    }
+    if (key.onDelete != null) {
       sb.write(' ON DELETE ${_acceptForeignKeyAction(key.onDelete!)}');
+    }
 
     return sb.toString();
   }
@@ -717,8 +721,9 @@ class SqliteTableBlueprint extends TableBlueprint {
   String ensurePresenceOf(String column) {
     final exactLine =
         statements.firstWhereOrNull((e) => e.startsWith('$column '));
-    if (exactLine == null)
+    if (exactLine == null) {
       throw Exception('Column $column not found in table blueprint');
+    }
     return exactLine.split(' ')[1];
   }
 
