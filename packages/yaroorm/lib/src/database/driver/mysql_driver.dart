@@ -469,11 +469,4 @@ class MySqlPrimitiveSerializer extends SqliteSerializer {
     return queryBuilder.toString();
   }
 
-  @override
-  String acceptCountQuery(
-    String tableName,
-    String field,
-  ) {
-    return 'SELECT COUNT($tableName) FROM $field $terminator';
-  }
 }

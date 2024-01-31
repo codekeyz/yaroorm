@@ -159,4 +159,46 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   Query<Result> orWhereFunc(Function(Query<Result> query) builder) {
     return query.orWhereFunc(builder);
   }
+
+  @override
+  Future<num?> average(String field) {
+    // TODO: implement average
+    throw UnimplementedError();
+  }
+
+  @override
+  Future concat(String field) {
+    // TODO: implement concat
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<num?> count() {
+    // TODO: implement count
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<num?> max(String field) {
+    // TODO: implement max
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<num?> min(String field) {
+    // TODO: implement min
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<num?> sum() {
+    // TODO: implement sum
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<num?> total(String field) {
+    // TODO: implement total
+    throw UnimplementedError();
+  }
 }

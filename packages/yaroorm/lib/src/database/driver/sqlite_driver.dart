@@ -196,14 +196,15 @@ class SqliteSerializer implements PrimitiveSerializer {
   String acceptAggregate(AggregateFunction aggregate) {
     final queryBuilder = StringBuffer();
 
+
     Query.table().select(['username', 'chima']).sum();
-   // Query.table().sum();
+    Query.table().sum();
 
     /// SELECT
     final selections =
         aggregate.selections.isEmpty ? '*' : aggregate.selections.join(', ');
     queryBuilder.write(
-        'SELECT ${aggregate.name}($selections) FROM ${escapeStr(query.tableName)}');
+        'SELECT ${aggregate.name}($selections) FROM ${escapeStr(AggregateFunction.tableName)}');
 
     /// WHERE
     final clauses = aggregate.whereClauses;

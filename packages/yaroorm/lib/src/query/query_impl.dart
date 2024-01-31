@@ -215,12 +215,7 @@ class QueryImpl<Result> extends Query<Result> {
   Future<num?> count()  => CountAggregate(queryDriver).get();
 
   @override
-  Future<Result?> groupConcat(String field) async {
-    final query =
-        queryDriver.serializer.acceptGroupConcat(super.tableName, field);
-    final result = await queryDriver.rawQuery(query);
-    return result as Result?;
-  }
+  Future<Result?> concat(String field) =>  ConcatAggregate<Result?>(queryDriver).get();
 
   @override
   Future<num?> max(String field) => MaxAggregate(queryDriver).get();

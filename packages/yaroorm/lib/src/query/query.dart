@@ -140,7 +140,7 @@ mixin AggregateOperation<Result> {
 
   Future<num?> total(String field);
 
-  Future<Result?> groupConcat(String field);
+  Future<Result?> concat(String field);
 }
 
 @protected
