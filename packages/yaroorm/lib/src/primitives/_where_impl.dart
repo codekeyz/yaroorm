@@ -143,44 +143,23 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   }
 
   @override
-  Future<num?> average(String field) {
-    // TODO: implement average
-    throw UnimplementedError();
-  }
+  Future<num?> average() => query.average();
 
   @override
-  Future concat(String field) {
-    // TODO: implement concat
-    throw UnimplementedError();
-  }
+  Future concat() => query.concat();
 
   @override
-  Future<num?> count() {
-    // TODO: implement count
-    throw UnimplementedError();
-  }
+  Future<num?> count() => query.count();
 
   @override
-  Future<num?> max(String field) {
-    // TODO: implement max
-    throw UnimplementedError();
-  }
+  Future<num?> max() => query.max();
 
   @override
-  Future<num?> min(String field) {
-    // TODO: implement min
-    throw UnimplementedError();
-  }
+  Future<num?> min() => query.min();
 
   @override
-  Future<num?> sum() {
-    // TODO: implement sum
-    throw UnimplementedError();
-  }
+  Future<num?> sum() => query.sum();
 
   @override
-  Future<num?> total(String field) {
-    // TODO: implement total
-    throw UnimplementedError();
-  }
+  Future<num?> total() => query.total();
 }
