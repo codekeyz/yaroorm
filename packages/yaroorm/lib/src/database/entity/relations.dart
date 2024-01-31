@@ -1,6 +1,7 @@
 part of 'entity.dart';
 
-mixin OrderByMixin<K, V extends Entity> on EntityRelation<V> implements OrderByOperation<K> {
+mixin OrderByMixin<K, V extends Entity> on EntityRelation<V>
+    implements OrderByOperation<K> {
   @override
   K orderByAsc(String field) {
     _query.orderByAsc(field);
@@ -18,7 +19,8 @@ abstract class EntityRelation<RelatedModel extends Entity> {
   final Entity owner;
   late final Query<RelatedModel> _query;
 
-  EntityRelation(this.owner) : _query = Query.table<RelatedModel>().driver(owner._driver);
+  EntityRelation(this.owner)
+      : _query = Query.table<RelatedModel>().driver(owner._driver);
 
   DriverContract get _driver => owner._driver;
 
@@ -45,7 +47,8 @@ class HasOne<RelatedModel extends Entity> extends EntityRelation<RelatedModel>
   }
 
   @override
-  Future<RelatedModel?> get() => _query.whereEqual(foreignKey, owner.id!).findOne();
+  Future<RelatedModel?> get() =>
+      _query.whereEqual(foreignKey, owner.id!).findOne();
 
   @override
   Future<void> delete() => _query.whereEqual(foreignKey, owner.id!).delete();
@@ -58,9 +61,11 @@ class HasMany<RelatedModel extends Entity> extends EntityRelation<RelatedModel>
   HasMany(this.foreignKey, super.owner);
 
   @override
-  Future<List<RelatedModel>> get() => _query.whereEqual(foreignKey, owner.id!).findMany();
+  Future<List<RelatedModel>> get() =>
+      _query.whereEqual(foreignKey, owner.id!).findMany();
 
-  Future<RelatedModel?> first() => _query.whereEqual(foreignKey, owner.id!).findOne();
+  Future<RelatedModel?> first() =>
+      _query.whereEqual(foreignKey, owner.id!).findOne();
 
   Map<String, dynamic> _serializeModel(RelatedModel model) {
     model.withDriver(_driver);
@@ -69,7 +74,8 @@ class HasMany<RelatedModel extends Entity> extends EntityRelation<RelatedModel>
 
   Future<void> add(RelatedModel model) => _query.insert(_serializeModel(model));
 
-  Future<void> addAll(Iterable<RelatedModel> model) => _query.insertMany(model.map(_serializeModel).toList());
+  Future<void> addAll(Iterable<RelatedModel> model) =>
+      _query.insertMany(model.map(_serializeModel).toList());
 
   @override
   Future<void> delete() => _query.whereEqual(foreignKey, owner.id!).delete();

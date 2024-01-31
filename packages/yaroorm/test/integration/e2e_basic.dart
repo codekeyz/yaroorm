@@ -14,7 +14,8 @@ void runBasicE2ETest(String connectionName) {
       expect(db.driver.isOpen, isTrue);
     });
 
-    test('should have no tables', () async => expect(await db.driver.hasTable('users'), isFalse));
+    test('should have no tables',
+        () async => expect(await db.driver.hasTable('users'), isFalse));
 
     test('should execute migration', () async {
       await runMigrator(connectionName, 'migrate');
@@ -30,7 +31,8 @@ void runBasicE2ETest(String connectionName) {
     });
 
     test('should insert many users', () async {
-      final remainingUsers = usersTestData.sublist(1).map((e) => e.to_db_data).toList();
+      final remainingUsers =
+          usersTestData.sublist(1).map((e) => e.to_db_data).toList();
       final userQuery = db.query<User>();
       await userQuery.insertMany(remainingUsers);
 
@@ -60,34 +62,47 @@ void runBasicE2ETest(String connectionName) {
       expect(usersWithAge50.length, 4);
       expect(usersWithAge50.every((e) => e.age == 50), isTrue);
 
-      await userQuery
-          .update(where: (query) => query.whereEqual('age', 50), values: {'home_address': 'Keta, Ghana'}).execute();
+      await userQuery.update(
+          where: (query) => query.whereEqual('age', 50),
+          values: {'home_address': 'Keta, Ghana'}).execute();
 
       final updatedResult = await age50Users.findMany();
       expect(updatedResult.length, 4);
       expect(updatedResult.every((e) => e.age == 50), isTrue);
-      expect(updatedResult.every((e) => e.homeAddress == 'Keta, Ghana'), isTrue);
+      expect(
+          updatedResult.every((e) => e.homeAddress == 'Keta, Ghana'), isTrue);
     });
 
     test('should fetch only users in Ghana', () async {
-      final query = db.query<User>().whereLike('home_address', '%, Ghana').orderByDesc('age');
+      final query = db
+          .query<User>()
+          .whereLike('home_address', '%, Ghana')
+          .orderByDesc('age');
       final usersInGhana = await query.findMany();
       expect(usersInGhana.length, 10);
-      expect(usersInGhana.every((e) => e.homeAddress.contains('Ghana')), isTrue);
+      expect(
+          usersInGhana.every((e) => e.homeAddress.contains('Ghana')), isTrue);
 
       expect(await query.take(4), hasLength(4));
     });
 
     test('should get all users between age 35 and 50', () async {
-      final age50Users = await db.query<User>().whereBetween('age', [35, 50]).orderByDesc('age').findMany();
+      final age50Users = await db
+          .query<User>()
+          .whereBetween('age', [35, 50])
+          .orderByDesc('age')
+          .findMany();
       expect(age50Users.length, 19);
       expect(age50Users.first.age, 50);
       expect(age50Users.last.age, 35);
     });
 
     test('should get all users in somewhere in Nigeria', () async {
-      final users =
-          await db.query<User>().whereLike('home_address', '%, Nigeria').orderByAsc('home_address').findMany();
+      final users = await db
+          .query<User>()
+          .whereLike('home_address', '%, Nigeria')
+          .orderByAsc('home_address')
+          .findMany();
 
       expect(users.length, 18);
       expect(users.first.homeAddress, 'Abuja, Nigeria');
@@ -95,7 +110,11 @@ void runBasicE2ETest(String connectionName) {
     });
 
     test('should get all users where age is 30 or 52', () async {
-      final users = await db.query<User>().whereEqual('age', 30).orWhere('age', '=', 52).findMany();
+      final users = await db
+          .query<User>()
+          .whereEqual('age', 30)
+          .orWhere('age', '=', 52)
+          .findMany();
       expect(users.every((e) => [30, 52].contains(e.age)), isTrue);
     });
 

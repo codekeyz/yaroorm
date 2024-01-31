@@ -12,7 +12,10 @@ import 'driver.dart';
 
 final _serializer = const SqliteSerializer();
 
-const _sqliteTypeConverters = <EntityTypeConverter>[booleanConverter, dateTimeConverter];
+const _sqliteTypeConverters = <EntityTypeConverter>[
+  booleanConverter,
+  dateTimeConverter
+];
 
 final class SqliteDriver implements DatabaseDriver {
   final DatabaseConnection config;
@@ -22,13 +25,16 @@ final class SqliteDriver implements DatabaseDriver {
   SqliteDriver(this.config);
 
   @override
-  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection}) async {
+  Future<DatabaseDriver> connect(
+      {int? maxConnections, bool? singleConnection}) async {
     assert(maxConnections == null, 'Sqlite does not support max connections');
-    assert(singleConnection == null, 'Sqlite does not support single connection');
+    assert(
+        singleConnection == null, 'Sqlite does not support single connection');
 
     sqfliteFfiInit();
     var databaseFactory = databaseFactoryFfi;
-    _database = await databaseFactory.openDatabase(config.database, options: OpenDatabaseOptions(onOpen: (db) async {
+    _database = await databaseFactory.openDatabase(config.database,
+        options: OpenDatabaseOptions(onOpen: (db) async {
       if (config.dbForeignKeys) {
         await db.execute('PRAGMA foreign_keys = ON;');
       }
@@ -88,7 +94,8 @@ final class SqliteDriver implements DatabaseDriver {
     final batch = db.batch();
 
     for (final entry in query.values) {
-      final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, data: entry));
+      final sql = _serializer
+          .acceptInsertQuery(InsertQuery(query.tableName, data: entry));
       batch.rawInsert(sql, entry.values.toList());
     }
 
@@ -119,7 +126,8 @@ final class SqliteDriver implements DatabaseDriver {
 
   @override
   Future<void> transaction(Function(DriverTransactor transactor) func) async {
-    return (await _getDatabase()).transaction((txn) => func(_SqliteTransactor(txn)));
+    return (await _getDatabase())
+        .transaction((txn) => func(_SqliteTransactor(txn)));
   }
 }
 
@@ -132,7 +140,8 @@ class _SqliteTransactor implements DriverTransactor {
   Future<void> execute(String script) => _txn.execute(script);
 
   @override
-  Future<List<Map<String, dynamic>>> rawQuery(String script) => _txn.rawQuery(script);
+  Future<List<Map<String, dynamic>>> rawQuery(String script) =>
+      _txn.rawQuery(script);
 
   @override
   Future<List<Map<String, dynamic>>> query(Query query) async {
@@ -163,7 +172,8 @@ class _SqliteTransactor implements DriverTransactor {
     final batch = _txn.batch();
 
     for (final entry in query.values) {
-      final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, data: entry));
+      final sql = _serializer
+          .acceptInsertQuery(InsertQuery(query.tableName, data: entry));
       batch.rawInsert(sql, entry.values.toList());
     }
 
@@ -195,10 +205,15 @@ class SqliteSerializer implements PrimitiveSerializer {
     if (clauses.isNotEmpty) {
       final sb = StringBuffer();
 
-      final hasDifferentOperators = clauses.map((e) => e.operators).reduce((val, e) => val..addAll(e)).length > 1;
+      final hasDifferentOperators = clauses
+              .map((e) => e.operators)
+              .reduce((val, e) => val..addAll(e))
+              .length >
+          1;
 
       for (final clause in clauses) {
-        final result = acceptWhereClause(clause, canGroup: hasDifferentOperators);
+        final result =
+            acceptWhereClause(clause, canGroup: hasDifferentOperators);
         if (sb.isEmpty) {
           sb.write(result);
         } else {
@@ -266,16 +281,21 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptSelect(List<String> fields) {
-    return fields.isEmpty ? 'SELECT * ' : 'SELECT ${fields.map(escapeStr).join(', ')}';
+    return fields.isEmpty
+        ? 'SELECT * '
+        : 'SELECT ${fields.map(escapeStr).join(', ')}';
   }
 
   @override
   String acceptWhereClause(WhereClause clause, {bool canGroup = false}) {
-    if (clause.children.isEmpty) return acceptWhereClauseValue(clause.clauseValue!);
+    if (clause.children.isEmpty) {
+      return acceptWhereClauseValue(clause.clauseValue!);
+    }
 
     final whereBb = StringBuffer();
 
-    final List<(LogicalOperator operator, WhereClause clause)> groupMembers = clause.group;
+    final List<(LogicalOperator operator, WhereClause clause)> groupMembers =
+        clause.group;
 
     final shouldAddParenthesis = canGroup && groupMembers.length > 1;
 
@@ -293,7 +313,9 @@ class SqliteSerializer implements PrimitiveSerializer {
       final childSerialized = acceptWhereClause(childValue);
 
       /// wrap sub clauses in parenthesis
-      shouldWrapChild ? whereBb.write('($childSerialized)') : whereBb.write(childSerialized);
+      shouldWrapChild
+          ? whereBb.write('($childSerialized)')
+          : whereBb.write(childSerialized);
 
       if (!isLast) whereBb.write(' ');
     }
@@ -304,8 +326,11 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptOrderBy(List<OrderBy> orderBys) {
-    direction(OrderByDirection dir) => dir == OrderByDirection.asc ? 'ASC' : 'DESC';
-    return orderBys.map((e) => '${e.field} ${direction(e.direction)}').join(', ');
+    direction(OrderByDirection dir) =>
+        dir == OrderByDirection.asc ? 'ASC' : 'DESC';
+    return orderBys
+        .map((e) => '${e.field} ${direction(e.direction)}')
+        .join(', ');
   }
 
   @override
@@ -318,7 +343,10 @@ class SqliteSerializer implements PrimitiveSerializer {
   dynamic acceptPrimitiveValue(dartValue) => switch (dartValue.runtimeType) {
         const (int) || const (double) => dartValue,
         const (List<String>) => '(${dartValue.map((e) => "'$e'").join(', ')})',
-        const (List<int>) || const (List<num>) || const (List<double>) => '(${dartValue.join(', ')})',
+        const (List<int>) ||
+        const (List<num>) ||
+        const (List<double>) =>
+          '(${dartValue.join(', ')})',
         _ => "'$dartValue'"
       };
 
@@ -347,7 +375,8 @@ class SqliteSerializer implements PrimitiveSerializer {
       Operator.NULL => '$field IS NULL',
       Operator.NOT_NULL => '$field IS NOT NULL',
       //
-      Operator.BETWEEN => '$field BETWEEN ${acceptPrimitiveValue(value[0])} AND ${acceptPrimitiveValue(value[1])}',
+      Operator.BETWEEN =>
+        '$field BETWEEN ${acceptPrimitiveValue(value[0])} AND ${acceptPrimitiveValue(value[1])}',
       Operator.NOT_BETWEEN =>
         '$field NOT BETWEEN ${acceptPrimitiveValue(value[0])} AND ${acceptPrimitiveValue(value[1])}',
     };
@@ -374,8 +403,12 @@ class SqliteSerializer implements PrimitiveSerializer {
     sb.write(
         'FOREIGN KEY (${escapeStr(key.column)}) REFERENCES ${escapeStr(key.foreignTable)}(${escapeStr(key.foreignTableColumn)})');
 
-    if (key.onUpdate != null) sb.write(' ON UPDATE ${_acceptForeignKeyAction(key.onUpdate!)}');
-    if (key.onDelete != null) sb.write(' ON DELETE ${_acceptForeignKeyAction(key.onDelete!)}');
+    if (key.onUpdate != null) {
+      sb.write(' ON UPDATE ${_acceptForeignKeyAction(key.onUpdate!)}');
+    }
+    if (key.onDelete != null) {
+      sb.write(' ON DELETE ${_acceptForeignKeyAction(key.onDelete!)}');
+    }
 
     return sb.toString();
   }
@@ -391,7 +424,8 @@ class SqliteTableBlueprint extends TableBlueprint {
 
   PrimitiveSerializer get szler => _serializer;
 
-  String makeColumn(String name, String type, {nullable = false, defaultValue}) {
+  String makeColumn(String name, String type,
+      {nullable = false, defaultValue}) {
     final sb = StringBuffer()..write('${szler.escapeStr(name)} $type');
     if (!nullable) {
       sb.write(' NOT NULL');
@@ -407,44 +441,54 @@ class SqliteTableBlueprint extends TableBlueprint {
   void id({name = 'id', String? type, autoIncrement = true}) {
     type ??= 'INTEGER';
 
-    final sb = StringBuffer()..write('${szler.escapeStr(name)} $type NOT NULL PRIMARY KEY');
+    final sb = StringBuffer()
+      ..write('${szler.escapeStr(name)} $type NOT NULL PRIMARY KEY');
     if (autoIncrement) sb.write(' AUTOINCREMENT');
     statements.add(sb.toString());
   }
 
   @override
   void string(String name, {nullable = false, defaultValue}) {
-    statements.add(makeColumn(name, 'VARCHAR', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'VARCHAR',
+        nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
-  void double(String name, {nullable = false, defaultValue, int? precision, int? scale}) {
-    statements.add(makeColumn(name, 'REAL', nullable: nullable, defaultValue: defaultValue));
+  void double(String name,
+      {nullable = false, defaultValue, int? precision, int? scale}) {
+    statements.add(makeColumn(name, 'REAL',
+        nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
-  void float(String name, {nullable = false, defaultValue, int? precision, int? scale}) {
-    statements.add(makeColumn(name, 'REAL', nullable: nullable, defaultValue: defaultValue));
+  void float(String name,
+      {nullable = false, defaultValue, int? precision, int? scale}) {
+    statements.add(makeColumn(name, 'REAL',
+        nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void integer(String name, {nullable = false, defaultValue}) {
-    statements.add(makeColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'INTEGER',
+        nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void blob(String name, {nullable = false, defaultValue}) {
-    statements.add(makeColumn(name, 'BLOB', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'BLOB',
+        nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void boolean(String name, {nullable = false, defaultValue}) {
-    statements.add(makeColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, 'INTEGER',
+        nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
   void datetime(String name, {nullable = false, defaultValue}) {
-    statements.add(makeColumn(name, 'DATETIME', nullable: nullable, defaultValue: defaultValue?.toIso8601String()));
+    statements.add(makeColumn(name, 'DATETIME',
+        nullable: nullable, defaultValue: defaultValue?.toIso8601String()));
   }
 
   @override
@@ -463,52 +507,80 @@ class SqliteTableBlueprint extends TableBlueprint {
   }
 
   @override
-  void timestamps({String createdAt = entityCreatedAtColumnName, String updatedAt = entityUpdatedAtColumnName}) {
+  void timestamps(
+      {String createdAt = entityCreatedAtColumnName,
+      String updatedAt = entityUpdatedAtColumnName}) {
     timestamp(createdAt);
     timestamp(updatedAt);
   }
 
   @override
   void bigInteger(String name, {bool nullable = false, num? defaultValue}) {
-    statements.add(makeColumn(name, 'BIGINT', nullable: nullable, defaultValue: defaultValue));
-  }
-
-  @override
-  void binary(String name,
-      {bool nullable = false, int size = 1, String? defaultValue, String? charset, String? collate}) {
-    statements.add(makeColumn(name, 'BLOB', nullable: nullable, defaultValue: defaultValue));
-  }
-
-  @override
-  void bit(String name, {bool nullable = false, int? defaultValue}) {
-    statements.add(makeColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
-  }
-
-  @override
-  void char(String name,
-      {bool nullable = false, int length = 1, String? defaultValue, String? charset, String? collate}) {
-    statements.add(makeColumn(name, 'CHAR($length)', nullable: nullable, defaultValue: defaultValue));
-  }
-
-  @override
-  void decimal(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
-    statements.add(makeColumn(name, 'DECIMAL($precision, $scale)', nullable: nullable, defaultValue: defaultValue));
-  }
-
-  @override
-  void enums(String name, List<String> values,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
-    statements.add(makeColumn(name, 'TEXT CHECK ($name IN (${values.map((e) => "'$e'").join(', ')}))',
+    statements.add(makeColumn(name, 'BIGINT',
         nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
-  void mediumText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+  void binary(String name,
+      {bool nullable = false,
+      int size = 1,
+      String? defaultValue,
+      String? charset,
+      String? collate}) {
+    statements.add(makeColumn(name, 'BLOB',
+        nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void bit(String name, {bool nullable = false, int? defaultValue}) {
+    statements.add(makeColumn(name, 'INTEGER',
+        nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void char(String name,
+      {bool nullable = false,
+      int length = 1,
+      String? defaultValue,
+      String? charset,
+      String? collate}) {
+    statements.add(makeColumn(name, 'CHAR($length)',
+        nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void decimal(String name,
+      {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+    statements.add(makeColumn(name, 'DECIMAL($precision, $scale)',
+        nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void enums(String name, List<String> values,
+      {bool nullable = false,
+      String? defaultValue,
+      String? charset,
+      String? collate}) {
+    statements.add(makeColumn(
+        name, 'TEXT CHECK ($name IN (${values.map((e) => "'$e'").join(', ')}))',
+        nullable: nullable, defaultValue: defaultValue));
+  }
+
+  @override
+  void mediumText(String name,
+      {bool nullable = false,
+      String? defaultValue,
+      String? charset,
+      String? collate}) {
     string(name, nullable: nullable, defaultValue: defaultValue);
   }
 
   @override
-  void longText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+  void longText(String name,
+      {bool nullable = false,
+      String? defaultValue,
+      String? charset,
+      String? collate}) {
     string(name, nullable: nullable, defaultValue: defaultValue);
   }
 
@@ -518,13 +590,17 @@ class SqliteTableBlueprint extends TableBlueprint {
   }
 
   @override
-  void numeric(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+  void numeric(String name,
+      {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
     integer(name, nullable: nullable, defaultValue: defaultValue);
   }
 
   @override
   void set(String name, List<String> values,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+      {bool nullable = false,
+      String? defaultValue,
+      String? charset,
+      String? collate}) {
     throw UnimplementedError();
   }
 
@@ -535,7 +611,11 @@ class SqliteTableBlueprint extends TableBlueprint {
 
   @override
   void text(String name,
-      {int length = 1, bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+      {int length = 1,
+      bool nullable = false,
+      String? defaultValue,
+      String? charset,
+      String? collate}) {
     string(name, nullable: nullable, defaultValue: defaultValue);
   }
 
@@ -545,19 +625,31 @@ class SqliteTableBlueprint extends TableBlueprint {
   }
 
   @override
-  void tinyText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+  void tinyText(String name,
+      {bool nullable = false,
+      String? defaultValue,
+      String? charset,
+      String? collate}) {
     string(name, nullable: nullable, defaultValue: defaultValue);
   }
 
   @override
   void varbinary(String name,
-      {bool nullable = false, int size = 1, String? defaultValue, String? charset, String? collate}) {
+      {bool nullable = false,
+      int size = 1,
+      String? defaultValue,
+      String? charset,
+      String? collate}) {
     binary(name, nullable: nullable, defaultValue: defaultValue);
   }
 
   @override
   void varchar(String name,
-      {bool nullable = false, String? defaultValue, int length = 255, String? charset, String? collate}) {
+      {bool nullable = false,
+      String? defaultValue,
+      int length = 255,
+      String? charset,
+      String? collate}) {
     string(name, nullable: nullable, defaultValue: defaultValue);
   }
 
@@ -576,7 +668,8 @@ class SqliteTableBlueprint extends TableBlueprint {
   String renameScript(String fromName, String toName) {
     final StringBuffer renameScript = StringBuffer();
     renameScript
-      ..writeln('CREATE TABLE temp_info AS SELECT * FROM PRAGMA table_info(\'$fromName\');')
+      ..writeln(
+          'CREATE TABLE temp_info AS SELECT * FROM PRAGMA table_info(\'$fromName\');')
       ..writeln('CREATE TABLE temp_data AS SELECT * FROM $fromName;')
       ..writeln('CREATE TABLE $toName AS SELECT * FROM temp_data WHERE 1 = 0;')
       ..writeln('INSERT INTO $toName SELECT * FROM temp_data;')
@@ -586,8 +679,11 @@ class SqliteTableBlueprint extends TableBlueprint {
 
   @override
   String ensurePresenceOf(String column) {
-    final exactLine = statements.firstWhereOrNull((e) => e.startsWith('$column '));
-    if (exactLine == null) throw Exception('Column $column not found in table blueprint');
+    final exactLine =
+        statements.firstWhereOrNull((e) => e.startsWith('$column '));
+    if (exactLine == null) {
+      throw Exception('Column $column not found in table blueprint');
+    }
     return exactLine.split(' ')[1];
   }
 
