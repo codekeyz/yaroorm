@@ -18,8 +18,7 @@ T env<T extends Object>(String name, T defaultValue) {
     const (bool) => bool.parse(strVal),
     const (double) => double.parse(strVal),
     const (List<String>) => jsonDecode(strVal),
-    _ => throw ArgumentError.value(
-        T, null, 'Unsupported Type used in `env` call.'),
+    _ => throw ArgumentError.value(T, null, 'Unsupported Type used in `env` call.'),
   };
   return parsedVal as T;
 }
@@ -28,12 +27,10 @@ extension ConfigExtension on Map<String, dynamic> {
   T getValue<T>(String name, {T? defaultValue, bool allowEmpty = false}) {
     final value = this[name] ?? defaultValue;
     if (value is! T) {
-      throw ArgumentError.value(
-          value, null, 'Invalid value provided for $name');
+      throw ArgumentError.value(value, null, 'Invalid value provided for $name');
     }
     if (value != null && value.toString().trim().isEmpty && !allowEmpty) {
-      throw ArgumentError.value(
-          value, null, 'Empty value not allowed for $name');
+      throw ArgumentError.value(value, null, 'Empty value not allowed for $name');
     }
     return value;
   }
