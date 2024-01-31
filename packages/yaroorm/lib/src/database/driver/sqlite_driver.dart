@@ -196,39 +196,17 @@ class SqliteSerializer implements PrimitiveSerializer {
   String acceptAggregate(AggregateFunction aggregate) {
     final queryBuilder = StringBuffer();
 
-
-    Query.table().select(['username', 'chima']).sum();
-    Query.table().sum();
-
     /// SELECT
-    final selections =
-        aggregate.selections.isEmpty ? '*' : aggregate.selections.join(', ');
-    queryBuilder.write(
-        'SELECT ${aggregate.name}($selections) FROM ${escapeStr(AggregateFunction.tableName)}');
+    final selections = aggregate.selections.isEmpty ? '*' : aggregate.selections.join(', ');
+    queryBuilder.write('SELECT ${aggregate.name}($selections) FROM ${escapeStr(aggregate.tableName)}');
 
     /// WHERE
-    final clauses = aggregate.whereClauses;
-    if (clauses.isNotEmpty) {
-      final sb = StringBuffer();
-
-      final hasDifferentOperators = clauses
-              .map((e) => e.operators)
-              .reduce((val, e) => val..addAll(e))
-              .length >
-          1;
-
-      for (final clause in clauses) {
-        final result =
-            acceptWhereClause(clause, canGroup: hasDifferentOperators);
-        if (sb.isEmpty) {
-          sb.write(result);
-        } else {
-          sb.write(' ${clause.operator.name} $result');
-        }
-      }
-
-      queryBuilder.write(' WHERE $sb');
+    final whereClause = aggregate.where;
+    if (whereClause != null) {
+      final result = acceptWhereClause(whereClause);
+      queryBuilder.write(' WHERE $result');
     }
+    return '${queryBuilder.toString()}$terminator';
   }
 
   @override
