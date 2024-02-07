@@ -15,14 +15,11 @@ abstract class ClassPropertyValidator<T extends Object> {
 
   Type get propertyType => T;
 
-  const ClassPropertyValidator(
-      {this.name, this.defaultVal, this.optional = false});
+  const ClassPropertyValidator({this.name, this.defaultVal, this.optional = false});
 
   EzValidator<T> get validator {
     final base = EzValidator<T>(defaultValue: defaultVal, optional: optional);
-    return optional
-        ? base.isType(propertyType)
-        : base.required().isType(propertyType);
+    return optional ? base.isType(propertyType) : base.required().isType(propertyType);
   }
 }
 
@@ -40,13 +37,7 @@ class ezDateTime extends ClassPropertyValidator<DateTime> {
 
   final DateTime? minDate, maxDate;
 
-  const ezDateTime(
-      {super.name,
-      super.defaultVal,
-      super.optional,
-      this.message,
-      this.maxDate,
-      this.minDate});
+  const ezDateTime({super.name, super.defaultVal, super.optional, this.message, this.maxDate, this.minDate});
 
   @override
   EzValidator<DateTime> get validator {
@@ -88,8 +79,7 @@ class ezOptional extends ClassPropertyValidator {
   final Type type;
   final Object? defaultValue;
 
-  const ezOptional(this.type, {this.defaultValue})
-      : super(defaultVal: defaultValue);
+  const ezOptional(this.type, {this.defaultValue}) : super(defaultVal: defaultValue);
 
   @override
   Type get propertyType => type;

@@ -18,12 +18,10 @@ class MigrateCommand extends OrmCommand {
   Future<void> execute(DatabaseDriver driver) async {
     await ensureMigrationsTableReady(driver);
 
-    final lastBatchNumber =
-        await getLastBatchNumber(driver, migrationTableName);
+    final lastBatchNumber = await getLastBatchNumber(driver, migrationTableName);
     final batchNos = lastBatchNumber + 1;
 
-    logger.info(backgroundBlack
-        .wrap('               Starting DB migration  📦                \n'));
+    logger.info(backgroundBlack.wrap('               Starting DB migration  📦                \n'));
 
     for (final migration in migrationDefinitions) {
       final fileName = migration.name;
@@ -39,15 +37,12 @@ class MigrateCommand extends OrmCommand {
           await txnDriver.execute(sql);
         }
 
-        await Query.table(migrationTableName)
-            .driver(txnDriver)
-            .insert(MigrationData(fileName, batchNos).to_db_data);
+        await Query.table(migrationTableName).driver(txnDriver).insert(MigrationData(fileName, batchNos).to_db_data);
 
         print('✔ done:   $fileName');
       });
     }
 
-    logger.info(backgroundBlack
-        .wrap('\n               Completed DB migration 🚀                \n'));
+    logger.info(backgroundBlack.wrap('\n               Completed DB migration 🚀                \n'));
   }
 }
