@@ -24,8 +24,7 @@ abstract class AppInstance {
 }
 
 /// Use this to override the application exceptiosn handler
-typedef ApplicationExceptionsHandler = FutureOr<Response> Function(
-    Object exception, ReqRes reqRes);
+typedef ApplicationExceptionsHandler = FutureOr<Response> Function(Object exception, ReqRes reqRes);
 
 abstract interface class Application {
   Application(AppConfig config);
@@ -72,8 +71,7 @@ abstract class ApplicationFactory {
   HandlerFunc? get globalMiddleware {
     if (_globalMdwCache != null) return _globalMdwCache!;
     if (middlewares.isEmpty) return null;
-    return _globalMdwCache =
-        middlewares.map(_buildHandlerFunc).reduce((val, e) => val.chain(e));
+    return _globalMdwCache = middlewares.map(_buildHandlerFunc).reduce((val, e) => val.chain(e));
   }
 
   ApplicationFactory(this.appConfig) {
@@ -94,9 +92,7 @@ abstract class ApplicationFactory {
   Future<void> startServer() async {
     final app = Application.instance as _YarooAppImpl;
 
-    await app
-        ._createPharaohInstance(onException: onApplicationException)
-        .listen(port: app.port);
+    await app._createPharaohInstance(onException: onApplicationException).listen(port: app.port);
   }
 
   Future<void> _bootstrapComponents(AppConfig config) async {
@@ -145,8 +141,7 @@ abstract class ApplicationFactory {
     };
   }
 
-  static List<Object> _resolveControllerMethodArgs(
-      Request request, ControllerMethod method) {
+  static List<Object> _resolveControllerMethodArgs(Request request, ControllerMethod method) {
     if (method.params.isEmpty) return [];
 
     final args = <Object>[];
@@ -177,12 +172,10 @@ abstract class ApplicationFactory {
   @visibleForTesting
   Future<spookie.Spookie> get tester {
     final app = (Application.instance as _YarooAppImpl);
-    return spookie.request(
-        app._createPharaohInstance(onException: onApplicationException));
+    return spookie.request(app._createPharaohInstance(onException: onApplicationException));
   }
 
-  FutureOr<Response> onApplicationException(
-      Object error, Request request, Response response) async {
+  FutureOr<Response> onApplicationException(Object error, Request request, Response response) async {
     if (error is RequestValidationError) {
       return response.json(error.errorBody, statusCode: HttpStatus.badRequest);
     } else if (error is SpannerRouteValidatorError) {

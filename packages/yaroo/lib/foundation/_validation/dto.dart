@@ -16,14 +16,8 @@ const _instanceInvoke = r.InstanceInvokeCapability('^[^_]');
 
 class DtoReflector extends r.Reflectable {
   const DtoReflector()
-      : super(
-            r.typeCapability,
-            r.metadataCapability,
-            r.newInstanceCapability,
-            r.declarationsCapability,
-            r.reflectedTypeCapability,
-            _instanceInvoke,
-            r.subtypeQuantifyCapability);
+      : super(r.typeCapability, r.metadataCapability, r.newInstanceCapability, r.declarationsCapability,
+            r.reflectedTypeCapability, _instanceInvoke, r.subtypeQuantifyCapability);
 }
 
 @protected

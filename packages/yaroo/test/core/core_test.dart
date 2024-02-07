@@ -50,19 +50,13 @@ void main() {
 
     group('should error', () {
       test('when invalid provider type passed', () {
-        expect(
-            () =>
-                TestKidsApp(middlewares: [TestMiddleware], providers: [String]),
-            throwsArgumentErrorWithMessage(
-                'Ensure your class extends `ServiceProvider` class'));
+        expect(() => TestKidsApp(middlewares: [TestMiddleware], providers: [String]),
+            throwsArgumentErrorWithMessage('Ensure your class extends `ServiceProvider` class'));
       });
 
       test('when invalid middleware type passed middlewares is not valid', () {
-        expect(
-            () => TestKidsApp(
-                middlewares: [String], providers: [AppServiceProvider]),
-            throwsArgumentErrorWithMessage(
-                'Ensure your class extends `Middleware` class'));
+        expect(() => TestKidsApp(middlewares: [String], providers: [AppServiceProvider]),
+            throwsArgumentErrorWithMessage('Ensure your class extends `Middleware` class'));
       });
     });
 
@@ -85,8 +79,7 @@ void main() {
             Route.route(HTTPMethod.GET, '/', (req, res) => null),
           ]),
           throwsA(
-            isA<ArgumentError>().having((p0) => p0.message, 'message',
-                'Middleware group `foo` does not exist'),
+            isA<ArgumentError>().having((p0) => p0.message, 'message', 'Middleware group `foo` does not exist'),
           ),
         );
       });
@@ -98,8 +91,7 @@ void main() {
 
       expect(middlewares.length, 1);
 
-      expect(() => ApplicationFactory.resolveMiddlewareForGroup('web'),
-          throwsA(isA<UnsupportedError>()));
+      expect(() => ApplicationFactory.resolveMiddlewareForGroup('web'), throwsA(isA<UnsupportedError>()));
     });
 
     test('should return tester', () async {

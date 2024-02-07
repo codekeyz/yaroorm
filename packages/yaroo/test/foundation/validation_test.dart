@@ -78,8 +78,7 @@ void main() {
 
     test('when `ezMaxLength`', () {
       final val1 = ezMaxLength(10).validator.build();
-      expect(val1('foobasdfkasdfasdf'),
-          'The field must be at most 10 characters long');
+      expect(val1('foobasdfkasdfasdf'), 'The field must be at most 10 characters long');
       expect(val1('foobasdfk'), isNull);
     });
 
@@ -117,11 +116,7 @@ void main() {
       final app = pharaoh
         ..post('/', (req, res) {
           dto.make(req);
-          return res.json({
-            'firstname': dto.username,
-            'lastname': dto.lastname,
-            'age': dto.age
-          });
+          return res.json({'firstname': dto.username, 'lastname': dto.lastname, 'age': dto.age});
         });
 
       await appTester
@@ -140,8 +135,7 @@ void main() {
       await (await request(app))
           .post('/', testData)
           .expectStatus(200)
-          .expectJsonBody(
-              {'firstname': 'Foo', 'lastname': 'Bar', 'age': 22}).test();
+          .expectJsonBody({'firstname': 'Foo', 'lastname': 'Bar', 'age': 22}).test();
     });
 
     test('when single property optional', () async {
@@ -151,11 +145,7 @@ void main() {
         ..post('/optional', (req, res) {
           dto.make(req);
 
-          return res.json({
-            'nationality': dto.nationality,
-            'address': dto.address,
-            'country': dto.country
-          });
+          return res.json({'nationality': dto.nationality, 'address': dto.address, 'country': dto.country});
         });
 
       await (await request(app))
@@ -170,8 +160,7 @@ void main() {
       await (await request(app))
           .post('/optional', {'nationality': 'Ghanaian'})
           .expectStatus(200)
-          .expectJsonBody(
-              {'nationality': 'Ghanaian', 'address': null, 'country': 'Ghana'})
+          .expectJsonBody({'nationality': 'Ghanaian', 'address': null, 'country': 'Ghana'})
           .test();
 
       await (await request(app))
@@ -184,14 +173,9 @@ void main() {
           .test();
 
       await (await request(app))
-          .post('/optional',
-              {'nationality': 'Ghanaian', 'address': 'Terminalia Street'})
+          .post('/optional', {'nationality': 'Ghanaian', 'address': 'Terminalia Street'})
           .expectStatus(200)
-          .expectJsonBody({
-            'nationality': 'Ghanaian',
-            'address': 'Terminalia Street',
-            'country': 'Ghana'
-          })
+          .expectJsonBody({'nationality': 'Ghanaian', 'address': 'Terminalia Street', 'country': 'Ghana'})
           .test();
     });
 
