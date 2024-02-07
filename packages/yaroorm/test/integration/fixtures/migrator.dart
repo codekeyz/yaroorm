@@ -13,7 +13,12 @@ void main(List<String> args) async {
 }
 
 Future<void> runMigrator(String connectionName, String command) async {
-  final commands = ['run', 'test/integration/fixtures/migrator.dart', command, '--connection=$connectionName'];
+  final commands = [
+    'run',
+    'test/integration/fixtures/migrator.dart',
+    command,
+    '--connection=$connectionName'
+  ];
   print('> dart ${commands.join(' ')}\n');
 
   final result = await Process.run('dart', commands);

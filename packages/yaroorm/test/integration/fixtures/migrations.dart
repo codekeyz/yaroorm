@@ -33,7 +33,9 @@ class AddPostsTable extends Migration {
         ..string('title')
         ..string('description')
         ..foreign<Post, User>(
-            onKey: (key) => key.actions(onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.cascade))
+            onKey: (key) => key.actions(
+                onUpdate: ForeignKeyAction.cascade,
+                onDelete: ForeignKeyAction.cascade))
         ..timestamps();
     });
 
