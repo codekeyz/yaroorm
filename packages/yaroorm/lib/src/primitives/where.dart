@@ -84,7 +84,8 @@ Operator _strToOperator(String condition) => switch (condition) {
       //
       'between' => Operator.BETWEEN,
       'not between' => Operator.NOT_BETWEEN,
-      _ => throw ArgumentError.value(condition, null, 'Condition $condition is not known')
+      _ => throw ArgumentError.value(
+          condition, null, 'Condition $condition is not known')
     };
 
 class WhereClauseValue<ValueType> {
@@ -124,11 +125,16 @@ abstract class WhereClause<Result>
       ? const []
       : [
           if (clauseValue != null)
-            (operator, WhereClause.create<Result>(query, operator: operator)..clauseValue = clauseValue),
+            (
+              operator,
+              WhereClause.create<Result>(query, operator: operator)
+                ..clauseValue = clauseValue
+            ),
           ...children
         ];
 
-  Set<LogicalOperator> get operators => {operator, if (children.isNotEmpty) ...children.map((e) => e.$1)};
+  Set<LogicalOperator> get operators =>
+      {operator, if (children.isNotEmpty) ...children.map((e) => e.$1)};
 
   final Query<Result> query;
 
