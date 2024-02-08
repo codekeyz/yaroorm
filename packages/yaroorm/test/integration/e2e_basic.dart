@@ -14,7 +14,8 @@ void runBasicE2ETest(String connectionName) {
       expect(db.driver.isOpen, isTrue);
     });
 
-    test('should have no tables', () async => expect(await db.driver.hasTable('users'), isFalse));
+    test('should have no tables',
+        () async => expect(await db.driver.hasTable('users'), isFalse));
 
     test('should execute migration', () async {
       await runMigrator(connectionName, 'migrate');
@@ -30,7 +31,8 @@ void runBasicE2ETest(String connectionName) {
     });
 
     test('should insert many users', () async {
-      final remainingUsers = usersTestData.sublist(1).map((e) => e.to_db_data).toList();
+      final remainingUsers =
+          usersTestData.sublist(1).map((e) => e.to_db_data).toList();
       final userQuery = db.query<User>();
       await userQuery.insertMany(remainingUsers);
 
@@ -60,34 +62,47 @@ void runBasicE2ETest(String connectionName) {
       expect(usersWithAge50.length, 4);
       expect(usersWithAge50.every((e) => e.age == 50), isTrue);
 
-      await userQuery
-          .update(where: (query) => query.whereEqual('age', 50), values: {'home_address': 'Keta, Ghana'}).execute();
+      await userQuery.update(
+          where: (query) => query.whereEqual('age', 50),
+          values: {'home_address': 'Keta, Ghana'}).execute();
 
       final updatedResult = await age50Users.findMany();
       expect(updatedResult.length, 4);
       expect(updatedResult.every((e) => e.age == 50), isTrue);
-      expect(updatedResult.every((e) => e.homeAddress == 'Keta, Ghana'), isTrue);
+      expect(
+          updatedResult.every((e) => e.homeAddress == 'Keta, Ghana'), isTrue);
     });
 
     test('should fetch only users in Ghana', () async {
-      final query = db.query<User>().whereLike('home_address', '%, Ghana').orderByDesc('age');
+      final query = db
+          .query<User>()
+          .whereLike('home_address', '%, Ghana')
+          .orderByDesc('age');
       final usersInGhana = await query.findMany();
       expect(usersInGhana.length, 10);
-      expect(usersInGhana.every((e) => e.homeAddress.contains('Ghana')), isTrue);
+      expect(
+          usersInGhana.every((e) => e.homeAddress.contains('Ghana')), isTrue);
 
       expect(await query.take(4), hasLength(4));
     });
 
     test('should get all users between age 35 and 50', () async {
-      final age50Users = await db.query<User>().whereBetween('age', [35, 50]).orderByDesc('age').findMany();
+      final age50Users = await db
+          .query<User>()
+          .whereBetween('age', [35, 50])
+          .orderByDesc('age')
+          .findMany();
       expect(age50Users.length, 19);
       expect(age50Users.first.age, 50);
       expect(age50Users.last.age, 35);
     });
 
     test('should get all users in somewhere in Nigeria', () async {
-      final users =
-          await db.query<User>().whereLike('home_address', '%, Nigeria').orderByAsc('home_address').findMany();
+      final users = await db
+          .query<User>()
+          .whereLike('home_address', '%, Nigeria')
+          .orderByAsc('home_address')
+          .findMany();
 
       expect(users.length, 18);
       expect(users.first.homeAddress, 'Abuja, Nigeria');
@@ -95,8 +110,115 @@ void runBasicE2ETest(String connectionName) {
     });
 
     test('should get all users where age is 30 or 52', () async {
-      final users = await db.query<User>().whereEqual('age', 30).orWhere('age', '=', 52).findMany();
+      final users = await db
+          .query<User>()
+          .whereEqual('age', 30)
+          .orWhere('age', '=', 52)
+          .findMany();
       expect(users.every((e) => [30, 52].contains(e.age)), isTrue);
+    });
+
+    test('should fetch Sum', () async {
+      final sum = await db.query<User>().sum('age');
+      expect(sum, isA<int>());
+      expect(sum, equals(1896));
+    });
+
+    test('should fetch Count', () async {
+      final count = await db.query<User>().count();
+      expect(count, isA<int>());
+      expect(count, equals(37));
+    });
+
+    test('should fetch Average', () async {
+      final average = await db.query<User>().average('age');
+      expect(average, isA<double>());
+      expect(average, equals(51.24));
+    });
+
+    test('should fetch Max', () async {
+      final max = await db.query<User>().max('age');
+      expect(max, isA<int>());
+      expect(max, equals(58));
+    });
+
+    test('should fetch Min', () async {
+      final min = await db.query<User>().min('age');
+      expect(min, isA<int>());
+      expect(min, equals(22));
+    });
+
+    test('should fetch Total', () async {
+      final total = await db.query<User>().total('age');
+      expect(total, isA<int>());
+      expect(total, equals(1896));
+    });
+
+    test('should fetch Concat', () async {
+      final concat = await db.query<User>().concat('home_address');
+      expect(concat, isA<String>());
+    });
+    test('should fetch Sum using a where clause', () async {
+      final sum = await db
+          .query<User>()
+          .whereEqual('home_address', 'Accra, Ghana')
+          .sum('age');
+      expect(sum, isA<int>());
+      expect(sum, equals(147));
+    });
+
+    test('should fetch Count', () async {
+      final count = await db
+          .query<User>()
+          .whereEqual('home_address', 'Accra, Ghana')
+          .count(field: 'id');
+      expect(count, isA<int>());
+      expect(count, equals(4));
+    });
+
+    test('should fetch Average using a where clause', () async {
+      final average = await db
+          .query<User>()
+          .whereEqual('home_address', 'Accra, Ghana')
+          .average('age');
+      expect(average, isA<double>());
+      expect(average, equals(36.75));
+    });
+
+    test('should fetch Max function using a where clause', () async {
+      final max = await db
+          .query<User>()
+          .whereEqual('home_address', 'Accra, Ghana')
+          .max('age');
+      expect(max, isA<int>());
+      expect(max, equals(27));
+    });
+
+    test('should fetch Min function using a where clause', () async {
+      final min = await db
+          .query<User>()
+          .whereEqual('home_address', 'Accra, Ghana')
+          .min('age');
+      expect(min, isA<int>());
+      expect(min, equals(22));
+    });
+
+    test('should fetch Total function using a where clause', () async {
+      final total = await db
+          .query<User>()
+          .whereEqual('home_address', 'Accra, Ghana')
+          .total('age');
+      expect(total, isA<int>());
+      expect(total, equals(147));
+    });
+
+    test('should fetch Concat function using a where clause', () async {
+      final concat = await db
+          .query<User>()
+          .whereEqual('home_address', 'Accra, Ghana')
+          .concat('firstname');
+      expect(concat, isA<String>());
+      expect(concat, equals('Kofi,Kee,Poo,Merh'));
     });
 
     test('should delete user', () async {

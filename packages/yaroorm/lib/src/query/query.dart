@@ -128,19 +128,19 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
 }
 
 mixin AggregateOperation<Result> {
-  Future<num?> count();
+  Future<Result> count({String field, bool distinct = false});
 
-  Future<num?> average();
+  Future<Result> average(String field);
 
-  Future<num?> sum();
+  Future<Result> sum(String field);
 
-  Future<num?> max();
+  Future<Result> max(String field);
 
-  Future<num?> min();
+  Future<Result> min(String field);
 
-  Future<num?> total();
+  Future<Result> total(String field);
 
-  Future<Result?> concat();
+  Future<Result> concat(String field);
 }
 
 @protected
@@ -192,4 +192,17 @@ class DeleteQuery extends QueryBase<DeleteQuery> {
 
   @override
   Future<void> execute() => queryDriver.delete(this);
+}
+
+@protected
+class AggregateQuery<T> extends QueryBase<AggregateQuery<T>> {
+  final AggregateFunction<T> aggregateFunction;
+
+  AggregateQuery(super.tableName, this.aggregateFunction);
+
+  @override
+  String get statement => aggregateFunction.statement;
+
+  @override
+  Future<T> execute() => aggregateFunction.get();
 }
