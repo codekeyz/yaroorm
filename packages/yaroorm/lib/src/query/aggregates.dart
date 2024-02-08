@@ -2,17 +2,17 @@ import 'package:yaroorm/src/database/driver/driver.dart';
 import 'package:yaroorm/src/primitives/where.dart';
 
 abstract interface class AggregateFunction<T> {
-  final Set<String> selections;
+  final String selections;
   final WhereClause? where;
-  final DriverContract driver;
   final String tableName;
+  final DriverContract driver;
 
   String get name;
 
-  const AggregateFunction(
+  AggregateFunction(
     this.driver,
-    this.tableName, {
-    this.selections = const {'*'},
+    this.tableName,
+    this.selections, {
     this.where,
   });
 
@@ -20,52 +20,54 @@ abstract interface class AggregateFunction<T> {
     final statement = driver.serializer.acceptAggregate(this);
     return await driver.execute(statement) as T;
   }
+
+  String get statement => driver.serializer.acceptAggregate(this);
 }
 
-class SumAggregate extends AggregateFunction<num> {
-  SumAggregate(super.driver, super.tableName);
+class SumAggregate<T> extends AggregateFunction<T> {
+  SumAggregate(super.driver, super.tableName, super.selections);
 
   @override
   String get name => 'SUM';
 }
 
-class CountAggregate extends AggregateFunction<num> {
-  CountAggregate(super.driver, super.tableName);
+class CountAggregate<T> extends AggregateFunction<T> {
+  CountAggregate(super.driver, super.tableName, super.selections);
 
   @override
   String get name => 'COUNT';
 }
 
-class AverageAggregate extends AggregateFunction<num> {
-  AverageAggregate(super.driver, super.tableName);
+class AverageAggregate<T> extends AggregateFunction<T> {
+  AverageAggregate(super.driver, super.tableName, super.selections);
 
   @override
   String get name => 'AVG';
 }
 
-class MaxAggregate extends AggregateFunction<num> {
-  MaxAggregate(super.driver, super.tableName);
+class MaxAggregate<T> extends AggregateFunction<T> {
+  MaxAggregate(super.driver, super.tableName, super.selections);
 
   @override
   String get name => 'MAX';
 }
 
-class MinAggregate extends AggregateFunction<num> {
-  MinAggregate(super.driver, super.tableName);
+class MinAggregate<T> extends AggregateFunction<T> {
+  MinAggregate(super.driver, super.tableName, super.selections);
 
   @override
   String get name => 'MIN';
 }
 
-class TotalAggregate extends AggregateFunction<num> {
-  TotalAggregate(super.driver, super.tableName);
+class TotalAggregate<T> extends AggregateFunction<T> {
+  TotalAggregate(super.driver, super.tableName, super.selections);
 
   @override
   String get name => 'TOTAL';
 }
 
 class ConcatAggregate<T> extends AggregateFunction<T> {
-  ConcatAggregate(super.driver, super.tableName);
+  ConcatAggregate(super.driver, super.tableName, super.selections);
 
   @override
   String get name => 'GROUP_CONCAT';
