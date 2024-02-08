@@ -197,8 +197,7 @@ class SqliteSerializer implements PrimitiveSerializer {
     final queryBuilder = StringBuffer();
 
     /// SELECT
-    final selections =
-        aggregate.selections.isEmpty ? '*' : aggregate.selections.join(', ');
+    final selections = aggregate.selections;
     queryBuilder.write(
         'SELECT ${aggregate.name}($selections) FROM ${escapeStr(aggregate.tableName)}');
 

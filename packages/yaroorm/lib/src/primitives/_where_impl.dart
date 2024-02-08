@@ -161,23 +161,24 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   }
 
   @override
-  Future<num?> average() => query.average();
+  Future<Result> average(String column) => query.average(column);
 
   @override
-  Future concat() => query.concat();
+  Future concat(String column) => query.concat(column);
 
   @override
-  Future<num?> count() => query.count();
+  Future<Result> count({String field = '*', bool distinct = false}) =>
+      query.count(field: field, distinct: distinct);
 
   @override
-  Future<num?> max() => query.max();
+  Future<Result> max(String field) => query.max(field);
 
   @override
-  Future<num?> min() => query.min();
+  Future<Result> min(String field) => query.min(field);
 
   @override
-  Future<num?> sum() => query.sum();
+  Future<Result> sum(String field) => query.sum(field);
 
   @override
-  Future<num?> total() => query.total();
+  Future<Result> total(String field) => query.total(field);
 }
