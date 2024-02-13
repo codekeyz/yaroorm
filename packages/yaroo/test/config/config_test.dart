@@ -14,7 +14,8 @@ void main() {
 
   group('App Config Test', () {
     test('should return AppConfig instance', () async {
-      final testApp = TestKidsApp(middlewares: [TestMiddleware], providers: [AppServiceProvider]);
+      final testApp = TestKidsApp(
+          middlewares: [TestMiddleware], providers: [AppServiceProvider]);
       expect(testApp, isNotNull);
     });
 

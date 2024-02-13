@@ -24,7 +24,9 @@ abstract interface class _BaseDTOImpl {
 
     final entries = properties.map((prop) {
       final returnType = prop.reflectedReturnType;
-      final meta = prop.metadata.whereType<ClassPropertyValidator>().firstOrNull ?? ezRequired(returnType);
+      final meta =
+          prop.metadata.whereType<ClassPropertyValidator>().firstOrNull ??
+              ezRequired(returnType);
 
       if (meta.propertyType != returnType) {
         throw ArgumentError(
@@ -34,8 +36,8 @@ abstract interface class _BaseDTOImpl {
       return MapEntry(meta.name ?? prop.simpleName, meta.validator);
     });
 
-    final entriesToMap =
-        entries.fold<Map<String, EzValidator<dynamic>>>({}, (prev, curr) => prev..[curr.key] = curr.value);
+    final entriesToMap = entries.fold<Map<String, EzValidator<dynamic>>>(
+        {}, (prev, curr) => prev..[curr.key] = curr.value);
     return _schemaCache = EzSchema.shape(entriesToMap);
   }
 }

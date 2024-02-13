@@ -39,10 +39,16 @@ void main() {
             return res.ok(actualParam.process(req, ctrlMethodParam));
           });
 
-        await (await request(app)).get('/234/hello').expectStatus(200).expectBody('234').test();
+        await (await request(app))
+            .get('/234/hello')
+            .expectStatus(200)
+            .expectBody('234')
+            .test();
       });
 
-      test('should use controller method property name if meta name not provided', () async {
+      test(
+          'should use controller method property name if meta name not provided',
+          () async {
         final app = pharaohWithErrorHdler
           ..get('/boys/<user>', (req, res) {
             const ctrlMethodParam = ControllerMethodParam('user', String);
@@ -51,7 +57,11 @@ void main() {
             return res.ok(result);
           });
 
-        await (await request(app)).get('/boys/499').expectStatus(200).expectBody('499').test();
+        await (await request(app))
+            .get('/boys/499')
+            .expectStatus(200)
+            .expectBody('499')
+            .test();
       });
 
       test('when param value not valid', () async {
@@ -63,12 +73,19 @@ void main() {
             return res.ok(result.toString());
           });
 
-        await (await request(app)).get('/test/asfkd').expectStatus(422).expectJsonBody({
+        await (await request(app))
+            .get('/test/asfkd')
+            .expectStatus(422)
+            .expectJsonBody({
           'location': 'param',
           'errors': ['userId must be a int type']
         }).test();
 
-        await (await request(app)).get('/test/2345').expectStatus(200).expectBody('2345').test();
+        await (await request(app))
+            .get('/test/2345')
+            .expectStatus(200)
+            .expectBody('2345')
+            .test();
       });
     });
 
@@ -83,10 +100,16 @@ void main() {
             return res.ok(result);
           });
 
-        await (await request(app)).get('/foo?userId=Chima').expectStatus(200).expectBody('Chima').test();
+        await (await request(app))
+            .get('/foo?userId=Chima')
+            .expectStatus(200)
+            .expectBody('Chima')
+            .test();
       });
 
-      test('should use controller method property name if Query name not provided', () async {
+      test(
+          'should use controller method property name if Query name not provided',
+          () async {
         final app = pharaohWithErrorHdler
           ..get('/bar', (req, res) {
             const ctrlMethodParam = ControllerMethodParam('userId', String);
@@ -95,7 +118,11 @@ void main() {
             return res.ok(result);
           });
 
-        await (await request(app)).get('/bar?userId=Precious').expectStatus(200).expectBody('Precious').test();
+        await (await request(app))
+            .get('/bar?userId=Precious')
+            .expectStatus(200)
+            .expectBody('Precious')
+            .test();
       });
 
       test('when Query value not valid', () async {
@@ -107,7 +134,10 @@ void main() {
             return res.ok(result.toString());
           });
 
-        await (await request(app)).get('/moo?name=Chima').expectStatus(422).expectJsonBody({
+        await (await request(app))
+            .get('/moo?name=Chima')
+            .expectStatus(422)
+            .expectJsonBody({
           'location': 'query',
           'errors': ['name must be a int type']
         }).test();
@@ -118,7 +148,11 @@ void main() {
             .expectBody('{"location":"query","errors":["name is required"]}')
             .test();
 
-        await (await request(app)).get('/moo?name=244').expectStatus(200).expectBody('244').test();
+        await (await request(app))
+            .get('/moo?name=244')
+            .expectStatus(200)
+            .expectBody('244')
+            .test();
       });
     });
 
@@ -142,10 +176,13 @@ void main() {
             .test();
       });
 
-      test('should use controller method property name if meta name not provided', () async {
+      test(
+          'should use controller method property name if meta name not provided',
+          () async {
         final app = pharaohWithErrorHdler
           ..get('/bar', (req, res) {
-            final result = header.process(req, ControllerMethodParam('token', String));
+            final result =
+                header.process(req, ControllerMethodParam('token', String));
             return res.ok(result);
           });
 
@@ -159,7 +196,8 @@ void main() {
       test('when Header value not valid', () async {
         final app = pharaohWithErrorHdler
           ..get('/moo', (req, res) {
-            final result = header.process(req, ControllerMethodParam('age_max', String));
+            final result =
+                header.process(req, ControllerMethodParam('age_max', String));
             return res.ok(result.toString());
           });
 
@@ -172,7 +210,8 @@ void main() {
         await (await request(app))
             .get('/moo')
             .expectStatus(422)
-            .expectBody('{"location":"header","errors":["age_max is required"]}')
+            .expectBody(
+                '{"location":"header","errors":["age_max is required"]}')
             .test();
       });
     });
@@ -182,7 +221,8 @@ void main() {
         final app = pharaohWithErrorHdler
           ..post('/hello', (req, res) {
             final actualParam = Body();
-            final result = actualParam.process(req, ControllerMethodParam('reqBody', dynamic));
+            final result = actualParam.process(
+                req, ControllerMethodParam('reqBody', dynamic));
             return res.json(result);
           });
         await (await request(app))
@@ -195,16 +235,24 @@ void main() {
       test('when body not provided', () async {
         final app = pharaohWithErrorHdler
           ..post('/test', (req, res) {
-            final result = body.process(req, ControllerMethodParam('reqBody', dynamic));
+            final result =
+                body.process(req, ControllerMethodParam('reqBody', dynamic));
             return res.ok(result.toString());
           });
 
-        await (await request(app)).post('/test', null).expectStatus(422).expectJsonBody({
+        await (await request(app))
+            .post('/test', null)
+            .expectStatus(422)
+            .expectJsonBody({
           'location': 'body',
           'errors': ['body is required']
         }).test();
 
-        await (await request(app)).post('/test', {'hello': 'Foo'}).expectStatus(200).expectBody('{hello: Foo}').test();
+        await (await request(app))
+            .post('/test', {'hello': 'Foo'})
+            .expectStatus(200)
+            .expectBody('{hello: Foo}')
+            .test();
       });
 
       test('when dto provided', () async {
@@ -214,8 +262,10 @@ void main() {
         final app = pharaohWithErrorHdler
           ..post('/mongo', (req, res) {
             final actualParam = Body();
-            final result = actualParam.process(req, ControllerMethodParam('reqBody', TestDTO, dto: dto));
-            return res.json({'username': result is TestDTO ? result.username : null});
+            final result = actualParam.process(
+                req, ControllerMethodParam('reqBody', TestDTO, dto: dto));
+            return res
+                .json({'username': result is TestDTO ? result.username : null});
           });
 
         await (await request(app))

@@ -17,7 +17,7 @@ Future<void> runMigrator(String connectionName, String command) async {
     'run',
     'test/integration/fixtures/migrator.dart',
     command,
-    '--connection=$connectionName'
+    '--conn=$connectionName'
   ];
   print('> dart ${commands.join(' ')}\n');
 
