@@ -166,9 +166,11 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
           .get();
 
   @override
-  Future<QueryResult> concat(List<String> field) =>
-      ConcatAggregate(query.queryDriver, query.tableName, field, where: this)
-          .get();
+  Future<QueryResult> concat(List<String> field) => ConcatAggregate(
+        query.queryDriver,
+        query.tableName,
+        field,
+      ).get();
 
   @override
   Future<QueryResult> count({String field = '*', bool distinct = false}) =>

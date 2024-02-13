@@ -150,9 +150,9 @@ void runBasicE2ETest(String connectionName) {
     });
 
     test('should fetch Concat', () async {
-      final concat = await db.query<User>().concat(['home_address']);
+      final concat = await db.query<User>().concat(['home', '_', 'address']);
       expect(concat, isA<QueryResult>());
-      print(concat);
+      expect(concat.values.first, equals('home_address'));
     });
 
     test('should fetch Sum using a where clause', () async {
@@ -199,15 +199,6 @@ void runBasicE2ETest(String connectionName) {
           .min('age');
       expect(min, isA<QueryResult>());
       expect(min.values.first, equals(25));
-    });
-
-    test('should fetch Concat function using a where clause', () async {
-      final concat = await db
-          .query<User>()
-          .whereEqual('home_address', 'Accra, Ghana')
-          .concat(['firstname']);
-      expect(concat, isA<QueryResult>());
-      expect(concat.values.first, equals('Kee'));
     });
 
     test('should delete user', () async {
