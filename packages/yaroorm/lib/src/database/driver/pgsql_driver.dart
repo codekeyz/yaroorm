@@ -1,6 +1,5 @@
 import 'package:meta/meta.dart';
 import 'package:postgres/postgres.dart' as pg;
-import 'package:yaroorm/src/query/aggregates.dart';
 
 import '../../../migration.dart';
 import '../../primitives/serializer.dart';
@@ -204,23 +203,6 @@ class _PgSqlDriverTransactor extends DriverTransactor {
 class PgSqlPrimitiveSerializer extends MySqlPrimitiveSerializer {
   const PgSqlPrimitiveSerializer();
 
-  @override
-  String acceptAggregate(AggregateFunction aggregate) {
-    final queryBuilder = StringBuffer();
-
-    /// SELECT
-    final selections = aggregate.selections;
-    queryBuilder.write(
-        'SELECT ${aggregate.name}($selections) FROM ${escapeStr(aggregate.tableName)}');
-
-    /// WHERE
-    final whereClause = aggregate.where;
-    if (whereClause != null) {
-      final result = acceptWhereClause(whereClause);
-      queryBuilder.write(' WHERE $result');
-    }
-    return '${queryBuilder.toString()}$terminator';
-  }
   @override
   String acceptInsertQuery(InsertQuery query, {String? primaryKey}) {
     final keys = query.data.keys;
