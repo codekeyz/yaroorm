@@ -87,12 +87,7 @@ class MinAggregate<T> extends AggregateFunction {
 }
 
 class ConcatAggregate<T> extends AggregateFunction {
-  ConcatAggregate(
-    super.driver,
-    super.tableName,
-    super.selections, {
-    super.where,
-  });
+  ConcatAggregate(super.driver, super.tableName, super.selections);
 
   @override
   String get name => 'CONCAT';

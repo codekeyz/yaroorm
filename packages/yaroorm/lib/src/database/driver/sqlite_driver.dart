@@ -195,7 +195,19 @@ class SqliteSerializer implements PrimitiveSerializer {
   @override
   String acceptAggregate(AggregateFunction aggregate) {
     final queryBuilder = StringBuffer();
+    if (aggregate is ConcatAggregate) {
+      final selections = aggregate.selections.map((e) => "'$e'").join(', ');
+      queryBuilder.write(
+          'SELECT ${aggregate.name}($selections) FROM ${escapeStr(aggregate.tableName)}');
+      return '${queryBuilder.toString()}$terminator';
+    }
 
+    /// SELECT
+    return acceptAggregateFunction(aggregate, queryBuilder);
+  }
+
+  String acceptAggregateFunction(
+      AggregateFunction<dynamic> aggregate, StringBuffer queryBuilder) {
     /// SELECT
     final selections = aggregate.selections
         .map((x) => x == '*' ? '*' : escapeStr(x))
