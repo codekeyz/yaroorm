@@ -42,6 +42,8 @@ mixin DeleteOperation<Result> {
 
 typedef OrderBy = ({String field, OrderByDirection direction});
 
+typedef QueryResult = Map<String, dynamic>;
+
 mixin OrderByOperation<ReturnType> {
   ReturnType orderByAsc(String field);
 
@@ -127,20 +129,18 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
   }
 }
 
-mixin AggregateOperation<Result> {
-  Future<Result> count({String field, bool distinct = false});
+mixin AggregateOperation<T> {
+  Future<QueryResult> count({String field, bool distinct = false});
 
-  Future<Result> average(String field);
+  Future<QueryResult> average(String field);
 
-  Future<Result> sum(String field);
+  Future<QueryResult> sum(String field);
 
-  Future<Result> max(String field);
+  Future<QueryResult> max(String field);
 
-  Future<Result> min(String field);
+  Future<QueryResult> min(String field);
 
-  Future<Result> total(String field);
-
-  Future<Result> concat(String field);
+  Future<QueryResult> concat(List<String> field);
 }
 
 @protected
@@ -192,17 +192,4 @@ class DeleteQuery extends QueryBase<DeleteQuery> {
 
   @override
   Future<void> execute() => queryDriver.delete(this);
-}
-
-@protected
-class AggregateQuery<T> extends QueryBase<AggregateQuery<T>> {
-  final AggregateFunction<T> aggregateFunction;
-
-  AggregateQuery(super.tableName, this.aggregateFunction);
-
-  @override
-  String get statement => aggregateFunction.statement;
-
-  @override
-  Future<T> execute() => aggregateFunction.get();
 }
