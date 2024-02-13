@@ -279,14 +279,12 @@ void main() {
     group('when handwritten operator', () {
       test('should error if unknown operator', () {
         expect(
-                () =>
-            Query
-                .table('users')
+            () => Query.table('users')
                 .driver(driver)
                 .where('age', 'foo-bar', '23')
                 .statement,
             throwsA(isA<ArgumentError>().having(
-                    (p0) => p0.message, '', 'Condition foo-bar is not known')));
+                (p0) => p0.message, '', 'Condition foo-bar is not known')));
       });
 
       test('=', () {
@@ -323,14 +321,14 @@ void main() {
 
       test('>=', () {
         final query =
-        Query.table('users').driver(driver).where('age', '>=', 223);
+            Query.table('users').driver(driver).where('age', '>=', 223);
 
         expect(query.statement, 'SELECT * FROM users WHERE age >= 223;');
       });
 
       test('<=', () {
         final query =
-        Query.table('users').driver(driver).where('age', '<=', 34.3);
+            Query.table('users').driver(driver).where('age', '<=', 34.3);
 
         expect(query.statement, 'SELECT * FROM users WHERE age <= 34.3;');
       });
@@ -359,7 +357,7 @@ void main() {
 
       test('null', () {
         final query =
-        Query.table('users').driver(driver).where('places', 'null');
+            Query.table('users').driver(driver).where('places', 'null');
 
         expect(
           query.statement,
@@ -369,7 +367,7 @@ void main() {
 
       test('not null', () {
         final query =
-        Query.table('users').driver(driver).where('places', 'not null');
+            Query.table('users').driver(driver).where('places', 'not null');
 
         expect(
           query.statement,
@@ -525,19 +523,16 @@ void main() {
     group('when .whereBetween', () {
       test('should error if not supplied List with length 2', () {
         expect(
-                () =>
-            Query
-                .table('users')
+            () => Query.table('users')
                 .driver(driver)
-                .whereBetween('age', [22])
-                .statement,
+                .whereBetween('age', [22]).statement,
             throwsA(isA<ArgumentError>().having((p0) => p0.message, '',
                 'BETWEEN requires a List with length 2 (val1, val2)')));
       });
 
       test('of level 1', () {
         final query =
-        Query.table('users').driver(driver).whereBetween('age', [22, 70]);
+            Query.table('users').driver(driver).whereBetween('age', [22, 70]);
 
         expect(
           query.statement,
@@ -549,7 +544,7 @@ void main() {
         final query = Query.table('users')
             .driver(driver)
             .whereBetween('places', ['Accra', 'Tamale']).where(
-            'lastname', 'between', [2, 100]);
+                'lastname', 'between', [2, 100]);
 
         expect(
           query.statement,
@@ -561,7 +556,7 @@ void main() {
         final query = Query.table('users')
             .driver(driver)
             .whereIn('places', ['Accra', 'Tamale']).whereBetween(
-            'lastname', [22, 48]).where('names', 'like', 'Hello%');
+                'lastname', [22, 48]).where('names', 'like', 'Hello%');
 
         expect(
           query.statement,
@@ -587,12 +582,9 @@ void main() {
     group('when .whereNotBetween', () {
       test('should error if not supplied List with length 2', () {
         expect(
-                () =>
-            Query
-                .table('users')
+            () => Query.table('users')
                 .driver(driver)
-                .whereNotBetween('age', [22])
-                .statement,
+                .whereNotBetween('age', [22]).statement,
             throwsA(isA<ArgumentError>().having((p0) => p0.message, '',
                 'NOT_BETWEEN requires a List with length 2 (val1, val2)')));
       });
@@ -612,7 +604,7 @@ void main() {
         final query = Query.table('users')
             .driver(driver)
             .whereNotBetween('places', ['Accra', 'Tamale']).where(
-            'lastname', 'between', [2, 100]);
+                'lastname', 'between', [2, 100]);
 
         expect(
           query.statement,
@@ -624,7 +616,7 @@ void main() {
         final query = Query.table('users')
             .driver(driver)
             .whereIn('places', ['Accra', 'Tamale']).whereNotBetween(
-            'lastname', [22, 48]).where('names', 'like', 'Hello%');
+                'lastname', [22, 48]).where('names', 'like', 'Hello%');
 
         expect(
           query.statement,
@@ -754,7 +746,7 @@ void main() {
     group('when .whereNull', () {
       test('of level 1', () {
         final query =
-        Query.table('users').driver(driver).whereNull('firstname');
+            Query.table('users').driver(driver).whereNull('firstname');
 
         expect(query.statement, 'SELECT * FROM users WHERE firstname IS NULL;');
       });
@@ -802,7 +794,7 @@ void main() {
     group('when .whereNotNull', () {
       test('of level 1', () {
         final query =
-        Query.table('users').driver(driver).whereNotNull('firstname');
+            Query.table('users').driver(driver).whereNotNull('firstname');
 
         expect(
           query.statement,
@@ -855,7 +847,7 @@ void main() {
           .driver(driver)
           .where('name', '=', 'John')
           .whereFunc((query) =>
-          query.where('votes', '>', 100).orWhere('title', '=', 'Admin'));
+              query.where('votes', '>', 100).orWhere('title', '=', 'Admin'));
 
       expect(
         query.statement,
@@ -869,7 +861,7 @@ void main() {
             .driver(driver)
             .where('votes', '>', 100)
             .orWhereFunc((query) =>
-            query.where('name', '=', 'Abigail').where('votes', '>', 50));
+                query.where('name', '=', 'Abigail').where('votes', '>', 50));
 
         expect(
           query.statement,
@@ -882,9 +874,9 @@ void main() {
             .driver(driver)
             .where('votes', '>', 100)
             .orWhereFunc((query) =>
-            query.where('name', '=', 'Abigail').where('votes', '>', 50))
+                query.where('name', '=', 'Abigail').where('votes', '>', 50))
             .orWhereFunc((query) =>
-            query.where('price', '=', 'GHC200').where('votes', 'not null'));
+                query.where('price', '=', 'GHC200').where('votes', 'not null'));
 
         expect(
           query.statement,
@@ -897,7 +889,7 @@ void main() {
             .driver(driver)
             .where('votes', '>', 100)
             .orWhereFunc((query) =>
-            query.where('name', '=', 'Abigail').where('votes', '>', 50))
+                query.where('name', '=', 'Abigail').where('votes', '>', 50))
             .where('name', '=', 22)
             .orWhereFunc((query) => query.where('name', '=', 'Abigail'));
 
@@ -912,10 +904,9 @@ void main() {
       group('when used at start of query', () {
         test('when .orWhereFunc', () {
           expect(
-                () =>
-                Query.table('users')
-                    .driver(driver)
-                    .orWhereFunc((query) => query.where('name', '=', 'Abigail')),
+            () => Query.table('users')
+                .driver(driver)
+                .orWhereFunc((query) => query.where('name', '=', 'Abigail')),
             throwsStateError,
           );
         });
@@ -937,7 +928,7 @@ void main() {
             .driver(driver)
             .whereFunc((query) => query.where('name', '=', 'Abigail'))
             .orWhereFunc((query) =>
-            query.where('age', '<', 24).where('names', 'not null'));
+                query.where('age', '<', 24).where('names', 'not null'));
 
         expect(
           query.statement,
@@ -951,12 +942,11 @@ void main() {
               .driver(driver)
               .where('name', '=', 'Chima')
               .orWhereFunc(
-                (query) =>
-                query
+                (query) => query
                     .where('biscuit', '=', 'hello-world')
                     .orWhere('car_type', '=', 'lamborgini server')
                     .where('image', 'like', 'Image&&'),
-          );
+              );
 
           expect(
             query.statement,
@@ -969,14 +959,12 @@ void main() {
               .driver(driver)
               .where('name', '=', 'Chima')
               .orWhereFunc(
-                (query) =>
-                query
+                (query) => query
                     .where('biscuit', '=', 'hello-world')
                     .orWhere('car_type', '=', 'lamborgini server')
                     .where('image', 'like', 'Image&&'),
-          )
-              .whereFunc((query) =>
-              query
+              )
+              .whereFunc((query) => query
                   .whereIn('fruits', ['oranges', 'apples'])
                   .whereBetween('price', [20, 100])
                   .whereEqual('status', 'available')
@@ -997,23 +985,19 @@ void main() {
               .driver(driver)
               .where('name', '=', 'Chima')
               .orWhereFunc(
-                (query) =>
-                query
+                (query) => query
                     .where('biscuit', '=', 'hello-world')
                     .orWhere('car_type', '=', 'lamborgini server')
                     .where('image', 'like', 'Image&&'),
-          )
-              .whereFunc((query) =>
-              query
+              )
+              .whereFunc((query) => query
                   .whereIn('fruits', ['oranges', 'apples'])
                   .whereBetween('price', [20, 100])
                   .whereEqual('status', 'available')
                   .whereLike('stores', 'Accra, %%'))
-              .orWhereFunc((query) =>
-              query
+              .orWhereFunc((query) => query
                   .where('languages', 'in', ['python', 'cobra']).orWhereFunc(
-                      (query) =>
-                      query
+                      (query) => query
                           .where('job_status', '=', 'available')
                           .where('location', '=', 'Accra')
                           .whereNotBetween('salary', [8000, 16000])));
@@ -1052,8 +1036,7 @@ void main() {
       });
 
       test('class with no meta', () {
-        final blueprint = SqliteTableBlueprint()
-          ..string('userId');
+        final blueprint = SqliteTableBlueprint()..string('userId');
 
         late ForeignKey key;
         blueprint.foreign<ArticleComment, User>(onKey: (fkey) => key = fkey);
@@ -1065,8 +1048,7 @@ void main() {
       });
 
       test('custom foreign reference column', () {
-        final blueprint = SqliteTableBlueprint()
-          ..string('articleId');
+        final blueprint = SqliteTableBlueprint()..string('articleId');
 
         late ForeignKey key;
         blueprint.foreign<ArticleComment, Article>(
@@ -1097,8 +1079,7 @@ void main() {
 
         late ForeignKey key;
         blueprint.foreign<Article, User>(
-          onKey: (fkey) =>
-          key = fkey.actions(
+          onKey: (fkey) => key = fkey.actions(
               onUpdate: ForeignKeyAction.cascade,
               onDelete: ForeignKeyAction.setNull),
         );
@@ -1133,11 +1114,10 @@ void main() {
           late ForeignKey key;
           blueprint.foreign<Article, User>(
               column: 'ownerId',
-              onKey: (fkey) =>
-              key = fkey
+              onKey: (fkey) => key = fkey
                   .actions(
-                  onUpdate: ForeignKeyAction.cascade,
-                  onDelete: ForeignKeyAction.setNull)
+                      onUpdate: ForeignKeyAction.cascade,
+                      onDelete: ForeignKeyAction.setNull)
                   .constrained(name: 'fk_articles_users'));
 
           final statement = SqliteSerializer().acceptForeignKey(blueprint, key);
@@ -1165,10 +1145,9 @@ void main() {
               ..string('ownerId')
               ..foreign<Article, User>(
                   column: 'ownerId',
-                  onKey: (key) =>
-                      key
-                          .constrained(name: 'some_constraint')
-                          .actions(
+                  onKey: (key) => key
+                      .constrained(name: 'some_constraint')
+                      .actions(
                           onUpdate: ForeignKeyAction.cascade,
                           onDelete: ForeignKeyAction.cascade));
           });
