@@ -38,7 +38,8 @@ class _YarooAppImpl implements Application {
   int get port => config.port;
 
   Pharaoh _createPharaohInstance({
-    FutureOr<Response> Function(Object error, Request req, Response res)? onException,
+    FutureOr<Response> Function(Object error, Request req, Response res)?
+        onException,
   }) {
     final pharaoh = Pharaoh()
       ..useSpanner(_spanner)

@@ -35,7 +35,9 @@ abstract class OrmCommand extends Command<int> {
     final defaultConn = ormConfig.defaultConnName;
     final args = globalResults;
     if (args == null) return defaultConn;
-    return args.wasParsed(OrmCommand.connectionArg) ? args[OrmCommand.connectionArg] : defaultConn;
+    return args.wasParsed(OrmCommand.connectionArg)
+        ? args[OrmCommand.connectionArg]
+        : defaultConn;
   }
 
   List<MigrationDefn> get migrationDefinitions {
