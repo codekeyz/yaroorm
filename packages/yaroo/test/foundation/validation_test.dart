@@ -99,7 +99,7 @@ void main() {
   group('when used in a class', () {
     final pharaoh = Pharaoh()
       ..onError((error, req, res) {
-        final actualError = error.exception;
+        final actualError = error;
         if (actualError is RequestValidationError) {
           return res.json(actualError.errorBody, statusCode: 422);
         }
