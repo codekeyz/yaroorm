@@ -18,7 +18,8 @@ class OrmCLIRunner extends CompletionCommandRunner<int> {
   }
 
   OrmCLIRunner._(YaroormConfig config) : super(executableName, description) {
-    argParser.addOption(OrmCommand.connectionArg, abbr: 'c', help: 'specify database connection');
+    argParser.addOption(OrmCommand.connectionArg,
+        abbr: 'c', help: 'specify database connection');
 
     DB.init(config);
 

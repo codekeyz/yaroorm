@@ -14,7 +14,8 @@ class MigrationDefn {
     down = _accumulate(migration.name, migration.down);
   }
 
-  List<Schema> _accumulate(String scriptName, Function(List<Schema> schemas) func) {
+  List<Schema> _accumulate(
+      String scriptName, Function(List<Schema> schemas) func) {
     final result = <Schema>[];
     func(result);
     return result;
@@ -32,7 +33,9 @@ abstract class OrmCommand extends Command<int> {
     final defaultConn = ormConfig.defaultConnName;
     final args = globalResults;
     if (args == null) return defaultConn;
-    return args.wasParsed(OrmCommand.connectionArg) ? args[OrmCommand.connectionArg] : defaultConn;
+    return args.wasParsed(OrmCommand.connectionArg)
+        ? args[OrmCommand.connectionArg]
+        : defaultConn;
   }
 
   List<MigrationDefn> get migrationDefinitions {

@@ -32,16 +32,20 @@ class UseAliasedMiddleware {
 
   UseAliasedMiddleware(this.alias);
 
-  Iterable<HandlerFunc> get mdw => ApplicationFactory.resolveMiddlewareForGroup(alias);
+  Iterable<HandlerFunc> get mdw =>
+      ApplicationFactory.resolveMiddlewareForGroup(alias);
 
-  RouteGroupDefinition group(String name, List<RouteDefinition> routes, {String? prefix}) =>
-      RouteGroupDefinition._(name, prefix: prefix, definitions: routes)..middleware(mdw);
+  RouteGroupDefinition group(String name, List<RouteDefinition> routes,
+          {String? prefix}) =>
+      RouteGroupDefinition._(name, prefix: prefix, definitions: routes)
+        ..middleware(mdw);
 }
 
 class _MiddlewareDefinition extends RouteDefinition {
   final HandlerFunc mdw;
 
-  _MiddlewareDefinition(this.mdw, RouteMapping route) : super(RouteDefinitionType.middleware) {
+  _MiddlewareDefinition(this.mdw, RouteMapping route)
+      : super(RouteDefinitionType.middleware) {
     this.route = route;
   }
 
@@ -71,13 +75,15 @@ class ControllerMethodParam {
 
   final BaseDTO? dto;
 
-  const ControllerMethodParam(this.name, this.type, {this.meta, this.optional = false, this.defaultValue, this.dto});
+  const ControllerMethodParam(this.name, this.type,
+      {this.meta, this.optional = false, this.defaultValue, this.dto});
 }
 
 class ControllerRouteMethodDefinition extends RouteDefinition {
   final ControllerMethod method;
 
-  ControllerRouteMethodDefinition(ControllerMethodDefinition defn, RouteMapping mapping)
+  ControllerRouteMethodDefinition(
+      ControllerMethodDefinition defn, RouteMapping mapping)
       : method = parseControllerMethod(defn),
         super(RouteDefinitionType.route) {
     route = mapping;
@@ -125,7 +131,8 @@ class RouteGroupDefinition extends RouteDefinition {
 
   void middleware(Iterable<HandlerFunc> func) {
     if (func.isEmpty) return;
-    final mdwDefn = _MiddlewareDefinition(func.reduce((val, e) => val.chain(e)), route);
+    final mdwDefn =
+        _MiddlewareDefinition(func.reduce((val, e) => val.chain(e)), route);
     defns.insert(0, mdwDefn);
   }
 
@@ -137,7 +144,8 @@ class RouteGroupDefinition extends RouteDefinition {
   }
 }
 
-typedef RequestHandlerWithApp = Function(Application app, Request req, Response res);
+typedef RequestHandlerWithApp = Function(
+    Application app, Request req, Response res);
 
 class FunctionalRouteDefinition extends RouteDefinition {
   final HTTPMethod method;
@@ -146,7 +154,8 @@ class FunctionalRouteDefinition extends RouteDefinition {
   final HandlerFunc? _middleware;
   final HandlerFunc? _requestHandler;
 
-  FunctionalRouteDefinition.route(this.method, this.path, RequestHandler handler)
+  FunctionalRouteDefinition.route(
+      this.method, this.path, RequestHandler handler)
       : _middleware = null,
         _requestHandler = useRequestHandler(handler),
         super(RouteDefinitionType.route) {
