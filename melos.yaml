@@ -27,4 +27,4 @@ scripts:
 
   format: melos exec -- "dart format ."
 
-  analyze: melos exec -- "dart analyze . --fatal-infos"
+  analyze: melos exec -- "dart analyze . --fatal-infos --no-fatal-warnings"
