@@ -19,9 +19,11 @@ const String entityUpdatedAtColumnName = 'updatedAt';
 @entity
 abstract class Entity<PkType, Model extends Object> {
   Entity() {
-    assert(runtimeType == Model, 'Type Mismatch on Entity<$PkType, $Model>. $runtimeType expected');
+    assert(runtimeType == Model,
+        'Type Mismatch on Entity<$PkType, $Model>. $runtimeType expected');
     if (PkType == dynamic) {
-      throw Exception('Entity Primary Key Data Type is required. Use either `extends Entity<int>` or `Entity<String>`');
+      throw Exception(
+          'Entity Primary Key Data Type is required. Use either `extends Entity<int>` or `Entity<String>`');
     }
 
     if (connection != null) _driver = DB.driver(connection!);
@@ -48,7 +50,8 @@ abstract class Entity<PkType, Model extends Object> {
 
   Query<Model> get query => DB.query<Model>().driver(_driver);
 
-  WhereClause<Model> _whereId(Query<Model> q) => q.whereEqual(entityMeta.primaryKey, id);
+  WhereClause<Model> _whereId(Query<Model> q) =>
+      q.whereEqual(entityMeta.primaryKey, id);
 
   bool _isLoadedFromDB = false;
 
@@ -79,10 +82,12 @@ abstract class Entity<PkType, Model extends Object> {
 
   String get _foreignKeyForModel => '${Model.toString().camelCase}Id';
 
-  HasOne<RelatedModel> hasOne<RelatedModel extends Entity>({String? foreignKey}) =>
+  HasOne<RelatedModel> hasOne<RelatedModel extends Entity>(
+          {String? foreignKey}) =>
       HasOne<RelatedModel>(foreignKey ?? _foreignKeyForModel, this);
 
-  HasMany<RelatedModel> hasMany<RelatedModel extends Entity>({String? foreignKey}) =>
+  HasMany<RelatedModel> hasMany<RelatedModel extends Entity>(
+          {String? foreignKey}) =>
       HasMany<RelatedModel>(foreignKey ?? _foreignKeyForModel, this);
 }
 
