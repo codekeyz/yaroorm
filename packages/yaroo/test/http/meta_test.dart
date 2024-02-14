@@ -17,7 +17,7 @@ class TestDTO extends BaseDTO {
 
 Pharaoh get pharaohWithErrorHdler => Pharaoh()
   ..onError((error, req, res) {
-    final exception = error;
+    final exception = error.exception;
     if (exception is RequestValidationError) {
       return res.json(exception.errorBody, statusCode: 422);
     }
