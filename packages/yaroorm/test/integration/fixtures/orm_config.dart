@@ -38,7 +38,7 @@ final config = YaroormConfig(
       host: 'localhost',
       username: 'root',
       password: 'password',
-      port: 5432,
+      port: 3002,
     ),
   ],
   migrations: [AddUsersTable(), AddPostsTable()],
