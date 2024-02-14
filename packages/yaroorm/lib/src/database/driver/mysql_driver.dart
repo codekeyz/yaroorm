@@ -2,6 +2,7 @@ import 'package:meta/meta.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/src/database/entity/entity.dart';
+import 'package:yaroorm/src/query/aggregates.dart';
 import 'package:yaroorm/src/query/query.dart';
 
 import '../../primitives/serializer.dart';
@@ -446,6 +447,16 @@ class MySqlPrimitiveSerializer extends SqliteSerializer {
   const MySqlPrimitiveSerializer();
 
   @override
+  String acceptAggregate(AggregateFunction aggregate) {
+    final queryBuilder = StringBuffer();
+    if (aggregate is ConcatAggregate) {
+      return acceptConcat(aggregate, queryBuilder);
+    }
+
+    return acceptAggregateFunction(aggregate, queryBuilder);
+  }
+
+  @override
   String acceptInsertQuery(InsertQuery query) {
     final keys = query.data.keys;
     final parameters = keys.map((e) => ':$e').join(', ');
@@ -467,5 +478,14 @@ class MySqlPrimitiveSerializer extends SqliteSerializer {
       ..write(terminator);
 
     return queryBuilder.toString();
+  }
+
+  @override
+  String acceptConcat(
+      ConcatAggregate<dynamic> aggregate, StringBuffer queryBuilder) {
+    final selections = aggregate.selections.map((e) => "'$e'").join(', ');
+    queryBuilder.write(
+        'SELECT ${aggregate.name}($selections) FROM ${escapeStr(aggregate.tableName)}');
+    return '${queryBuilder.toString()}$terminator';
   }
 }

@@ -19,7 +19,7 @@ abstract interface class AggregateFunction<T> {
 
   Future<QueryResult> get() async {
     final statement = driver.serializer.acceptAggregate(this);
-    var result = await driver.execute(statement);
+    var result = await driver.rawQuery(statement);
     return result[0];
   }
 

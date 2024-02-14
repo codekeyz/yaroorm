@@ -133,7 +133,7 @@ void runBasicE2ETest(String connectionName) {
     test('should fetch Average', () async {
       final average = await db.query<User>().average('age');
       expect(average, isA<QueryResult>());
-      expect(double.parse(average.values.first).toStringAsFixed(2),
+      expect(double.parse(average.values.first.toString()).toStringAsFixed(2),
           equals('41.95'));
     });
 
