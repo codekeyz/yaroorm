@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:test/test.dart';
-import 'package:yaroo_cli/orm/runner.dart';
+import 'package:yaroo_cli/orm/orm.dart';
 import '../fixtures/orm_config.dart' as conf;
 import 'migrator.reflectable.dart';
 
@@ -15,7 +15,7 @@ Future<void> runMigrator(String connectionName, String command) async {
     'run',
     'test/integration/fixtures/migrator.dart',
     command,
-    '--conn=$connectionName'
+    '--connection=$connectionName'
   ];
   print('> dart ${commands.join(' ')}\n');
 
