@@ -36,7 +36,7 @@ final config = YaroormConfig(
       DatabaseDriverType.pgsql,
       database: 'test_db',
       host: 'localhost',
-      username: 'postgres',
+      username: 'root',
       password: 'password',
       port: 5432,
     ),

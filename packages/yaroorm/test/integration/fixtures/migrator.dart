@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:test/test.dart';
-import 'package:yaroo_cli/orm/orm.dart';
+import 'package:yaroo_cli/orm/runner.dart';
 import '../fixtures/orm_config.dart' as conf;
 import 'migrator.reflectable.dart';
 
