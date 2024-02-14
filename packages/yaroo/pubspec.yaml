@@ -10,7 +10,8 @@ environment:
 
 dependencies:
   meta: any
-  spookie: ^1.0.2+1
+  spookie: ^1.0.2+3
+  pharaoh: ^0.0.6+2
   grammer: ^1.0.3
   collection: ^1.18.0
   dotenv: ^4.2.0
@@ -25,10 +26,6 @@ dependencies:
     git:
       url: https://github.com/codekeyz/reflectable.dart.git
       path: reflectable
-  pharaoh:
-    git:
-      url: https://github.com/codekeyz/pharaoh.git
-      path: packages/pharaoh
 
 dev_dependencies:
   lints: ^3.0.0
