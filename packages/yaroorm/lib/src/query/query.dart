@@ -42,8 +42,6 @@ mixin DeleteOperation<Result> {
 
 typedef OrderBy = ({String field, OrderByDirection direction});
 
-typedef QueryResult = Map<String, dynamic>;
-
 mixin OrderByOperation<ReturnType> {
   ReturnType orderByAsc(String field);
 
@@ -130,17 +128,17 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
 }
 
 mixin AggregateOperation<T> {
-  Future<QueryResult> count({String field, bool distinct = false});
+  Future<num> count({String field, bool distinct = false});
 
-  Future<QueryResult> average(String field);
+  Future<num> average(String field);
 
-  Future<QueryResult> sum(String field);
+  Future<num> sum(String field);
 
-  Future<QueryResult> max(String field);
+  Future<num> max(String field);
 
-  Future<QueryResult> min(String field);
+  Future<num> min(String field);
 
-  Future<QueryResult> concat(List<String> field);
+  Future<String> concat(List<String> field);
 }
 
 @protected

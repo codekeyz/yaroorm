@@ -1,6 +1,5 @@
 import 'package:yaroorm/src/database/driver/driver.dart';
 import 'package:yaroorm/src/primitives/where.dart';
-import 'package:yaroorm/src/query/query.dart';
 
 abstract interface class AggregateFunction<T> {
   final List<String> selections;
@@ -17,16 +16,16 @@ abstract interface class AggregateFunction<T> {
     this.where,
   });
 
-  Future<QueryResult> get() async {
+  Future<T> get() async {
     final statement = driver.serializer.acceptAggregate(this);
-    var result = await driver.rawQuery(statement);
-    return result[0];
+    final result = await driver.rawQuery(statement);
+    return result[0] as T;
   }
 
   String get statement => driver.serializer.acceptAggregate(this);
 }
 
-class SumAggregate<T> extends AggregateFunction {
+class SumAggregate extends AggregateFunction<num> {
   SumAggregate(
     super.driver,
     super.tableName,
@@ -38,7 +37,7 @@ class SumAggregate<T> extends AggregateFunction {
   String get name => 'SUM';
 }
 
-class CountAggregate<T> extends AggregateFunction {
+class CountAggregate extends AggregateFunction<int> {
   CountAggregate(
     super.driver,
     super.tableName,
@@ -50,7 +49,7 @@ class CountAggregate<T> extends AggregateFunction {
   String get name => 'COUNT';
 }
 
-class AverageAggregate<T> extends AggregateFunction {
+class AverageAggregate extends AggregateFunction<num> {
   AverageAggregate(
     super.driver,
     super.tableName,
@@ -62,7 +61,7 @@ class AverageAggregate<T> extends AggregateFunction {
   String get name => 'AVG';
 }
 
-class MaxAggregate<T> extends AggregateFunction {
+class MaxAggregate extends AggregateFunction<num> {
   MaxAggregate(
     super.driver,
     super.tableName,
@@ -74,7 +73,7 @@ class MaxAggregate<T> extends AggregateFunction {
   String get name => 'MAX';
 }
 
-class MinAggregate<T> extends AggregateFunction {
+class MinAggregate extends AggregateFunction<num> {
   MinAggregate(
     super.driver,
     super.tableName,
@@ -86,7 +85,7 @@ class MinAggregate<T> extends AggregateFunction {
   String get name => 'MIN';
 }
 
-class ConcatAggregate<T> extends AggregateFunction {
+class ConcatAggregate extends AggregateFunction<String> {
   ConcatAggregate(super.driver, super.tableName, super.selections);
 
   @override
