@@ -16,9 +16,12 @@ abstract class TableBlueprint {
 
     final referenceTable = getEntityTableName(ReferenceModel);
     final referenceTablePrimaryKey = getEntityPrimaryKey(ReferenceModel);
-    final fkey = ForeignKey(table, colName,
-        foreignTable: referenceTable,
-        foreignTableColumn: referenceTablePrimaryKey);
+    final fkey = ForeignKey(
+      table,
+      colName,
+      foreignTable: referenceTable,
+      foreignTableColumn: referenceTablePrimaryKey,
+    );
     onKey?.call(fkey);
   }
 
@@ -36,36 +39,77 @@ abstract class TableBlueprint {
 
   void blob(String name, {bool nullable = false, String? defaultValue});
 
-  void timestamps(
-      {String createdAt = entityCreatedAtColumnName,
-      String updatedAt = entityUpdatedAtColumnName});
+  void timestamps({
+    String createdAt = entityCreatedAtColumnName,
+    String updatedAt = entityUpdatedAtColumnName,
+  });
 
   /// NUMBER TYPES
   /// ----------------------------------------------------------------
 
   void integer(String name, {bool nullable = false, num? defaultValue});
 
-  void double(String name,
-      {bool nullable = false, num? defaultValue, int? precision, int? scale});
+  void double(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+    int? precision,
+    int? scale,
+  });
 
-  void float(String name,
-      {bool nullable = false, num? defaultValue, int? precision, int? scale});
+  void float(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+    int? precision,
+    int? scale,
+  });
 
-  void tinyInt(String name, {bool nullable = false, num? defaultValue});
+  void tinyInt(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+  });
 
-  void smallInteger(String name, {bool nullable = false, num? defaultValue});
+  void smallInteger(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+  });
 
-  void mediumInteger(String name, {bool nullable = false, num? defaultValue});
+  void mediumInteger(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+  });
 
-  void bigInteger(String name, {bool nullable = false, num? defaultValue});
+  void bigInteger(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+  });
 
-  void decimal(String name,
-      {bool nullable = false, num? defaultValue, int? precision, int? scale});
+  void decimal(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+    int? precision,
+    int? scale,
+  });
 
-  void numeric(String name,
-      {bool nullable = false, num? defaultValue, int? precision, int? scale});
+  void numeric(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+    int? precision,
+    int? scale,
+  });
 
-  void bit(String name, {bool nullable = false, int? defaultValue});
+  void bit(
+    String name, {
+    bool nullable = false,
+    int? defaultValue,
+  });
 
   /// STRING TYPES
   /// ----------------------------------------------------------------
@@ -244,22 +288,30 @@ class ForeignKey {
     this.constraint,
   });
 
-  ForeignKey actions(
-          {ForeignKeyAction? onUpdate, ForeignKeyAction? onDelete}) =>
-      ForeignKey(table, column,
-          foreignTable: foreignTable,
-          foreignTableColumn: foreignTableColumn,
-          nullable: nullable,
-          constraint: constraint,
-          onUpdate: onUpdate ?? this.onUpdate,
-          onDelete: onDelete ?? this.onDelete);
+  ForeignKey actions({ForeignKeyAction? onUpdate, ForeignKeyAction? onDelete}) {
+    return ForeignKey(
+      table,
+      column,
+      foreignTable: foreignTable,
+      foreignTableColumn: foreignTableColumn,
+      nullable: nullable,
+      constraint: constraint,
+      onUpdate: onUpdate ?? this.onUpdate,
+      onDelete: onDelete ?? this.onDelete,
+    );
+  }
 
-  ForeignKey constrained({String? name}) => ForeignKey(table, column,
+  ForeignKey constrained({String? name}) {
+    return ForeignKey(
+      table,
+      column,
       foreignTable: foreignTable,
       foreignTableColumn: foreignTableColumn,
       nullable: nullable,
       onUpdate: onUpdate,
       onDelete: onDelete,
       constraint: name ??
-          'fk_${table}_${column}_to_${foreignTable}_$foreignTableColumn');
+          'fk_${table}_${column}_to_${foreignTable}_$foreignTableColumn',
+    );
+  }
 }
