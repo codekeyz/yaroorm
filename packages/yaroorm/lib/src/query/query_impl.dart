@@ -6,8 +6,11 @@ class QueryImpl<Result> extends Query<Result> {
   QueryImpl(super.tableName);
 
   @override
-  WhereClause<Result> where<Value>(String field, String condition,
-      [Value? value]) {
+  WhereClause<Result> where<Value>(
+    String field,
+    String condition, [
+    Value? value,
+  ]) {
     final newClause = WhereClause.create<Result>(this,
         value: WhereClauseValue.from(field, condition, value));
     whereClauses.add(newClause);
@@ -66,8 +69,8 @@ class QueryImpl<Result> extends Query<Result> {
     if (T == dynamic || result == null) return result as dynamic;
     return (serializedPropsToEntity<T>(
       result,
-      converters: _queryDriver!.typeconverters,
-    )).withDriver(_queryDriver!) as T;
+      converters: _queryDriver.typeconverters,
+    )).withDriver(_queryDriver) as T;
   }
 
   @override
@@ -209,31 +212,25 @@ class QueryImpl<Result> extends Query<Result> {
 
   @override
   Future<num> average(String field) {
-    return AverageAggregate(queryDriver, tableName, [field]).get();
+    return AverageAggregate(this, field).get();
   }
 
   @override
-  Future<int> count({String field = '*', bool distinct = false}) {
-    return CountAggregate(queryDriver, tableName, [field]).get();
+  Future<int> count({String field = "*", bool distinct = false}) {
+    return CountAggregate(this, field).get();
   }
 
   @override
-  Future<String> concat(List<String> field) {
-    return ConcatAggregate(queryDriver, tableName, field).get();
+  Future<String> concat(String field, {String? separator}) {
+    return GroupConcatAggregate(this, field, separator: separator).get();
   }
 
   @override
-  Future<num> max(String field) {
-    return MaxAggregate(queryDriver, tableName, [field]).get();
-  }
+  Future<num> max(String field) => MaxAggregate(this, field).get();
 
   @override
-  Future<num> min(String field) {
-    return MinAggregate(queryDriver, tableName, [field]).get();
-  }
+  Future<num> min(String field) => MinAggregate(this, field).get();
 
   @override
-  Future<num> sum(String field) {
-    return SumAggregate(queryDriver, tableName, [field]).get();
-  }
+  Future<num> sum(String field) => SumAggregate(this, field).get();
 }

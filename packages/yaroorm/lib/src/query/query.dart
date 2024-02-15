@@ -53,15 +53,11 @@ abstract interface class QueryBase<Owner> {
 
   String? database;
 
-  DriverContract? _queryDriver;
+  DriverContract _queryDriver = throw StateError(
+    'Driver not set for query. Make sure you supply a driver using .driver()',
+  );
 
-  DriverContract get queryDriver {
-    if (_queryDriver == null) {
-      throw StateError(
-          'Driver not set for query. Make sure you supply a driver using .driver()');
-    }
-    return _queryDriver!;
-  }
+  DriverContract get queryDriver => _queryDriver;
 
   Owner driver(DriverContract driver) {
     _queryDriver = driver;
@@ -84,7 +80,7 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
         InsertOperation,
         DeleteOperation<EntityType>,
         UpdateOperation<EntityType>,
-        AggregateOperation<EntityType> {
+        AggregateOperation {
   late final Set<String> fieldSelections;
   late final Set<OrderBy> orderByProps;
   late final List<WhereClause<EntityType>> whereClauses;
@@ -127,7 +123,7 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
   }
 }
 
-mixin AggregateOperation<T> {
+mixin AggregateOperation {
   Future<int> count({String field, bool distinct = false});
 
   Future<num> average(String field);
@@ -138,7 +134,7 @@ mixin AggregateOperation<T> {
 
   Future<num> min(String field);
 
-  Future<String> concat(List<String> field);
+  Future<String> concat(String field, {String? separator});
 }
 
 @protected

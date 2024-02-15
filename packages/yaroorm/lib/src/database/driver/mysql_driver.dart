@@ -448,12 +448,11 @@ class MySqlPrimitiveSerializer extends SqliteSerializer {
 
   @override
   String acceptAggregate(AggregateFunction aggregate) {
-    final queryBuilder = StringBuffer();
-    if (aggregate is ConcatAggregate) {
-      return acceptConcat(aggregate, queryBuilder);
+    if (aggregate is GroupConcatAggregate) {
+      return acceptConcat(aggregate);
     }
 
-    return acceptAggregateFunction(aggregate, queryBuilder);
+    return acceptAggregateFunction(aggregate);
   }
 
   @override
@@ -478,13 +477,5 @@ class MySqlPrimitiveSerializer extends SqliteSerializer {
       ..write(terminator);
 
     return queryBuilder.toString();
-  }
-
-  @override
-  String acceptConcat(ConcatAggregate aggregate, StringBuffer queryBuilder) {
-    final selections = aggregate.selections.map((e) => "'$e'").join(', ');
-    queryBuilder.write(
-        'SELECT ${aggregate.name}($selections) FROM ${escapeStr(aggregate.tableName)}');
-    return '${queryBuilder.toString()}$terminator';
   }
 }

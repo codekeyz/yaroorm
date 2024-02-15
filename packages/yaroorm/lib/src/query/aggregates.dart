@@ -1,20 +1,31 @@
 import 'package:yaroorm/src/database/driver/driver.dart';
 import 'package:yaroorm/src/primitives/where.dart';
 
+import 'query.dart';
+
 abstract interface class AggregateFunction<T> {
   final List<String> selections;
-  final WhereClause? where;
+  final List<WhereClause> whereClauses;
   final String tableName;
   final DriverContract driver;
 
   String get name;
 
-  AggregateFunction(
+  const AggregateFunction(
     this.driver,
-    this.tableName,
-    this.selections, {
-    this.where,
+    this.tableName, {
+    this.selections = const [],
+    this.whereClauses = const [],
   });
+
+  AggregateFunction._init(Query query, this.selections)
+      : driver = query.queryDriver,
+        tableName = query.tableName,
+        whereClauses = query.whereClauses,
+        assert(
+          query.fieldSelections.isEmpty,
+          'You can not use selections with aggregate functions',
+        );
 
   Future<T> get() async {
     final statement = driver.serializer.acceptAggregate(this);
@@ -35,68 +46,46 @@ abstract interface class AggregateFunction<T> {
 }
 
 class SumAggregate extends AggregateFunction<num> {
-  SumAggregate(
-    super.driver,
-    super.tableName,
-    super.selections, {
-    super.where,
-  });
+  SumAggregate(Query query, String field) : super._init(query, [field]);
 
   @override
   String get name => 'SUM';
 }
 
 class CountAggregate extends AggregateFunction<int> {
-  CountAggregate(
-    super.driver,
-    super.tableName,
-    super.selections, {
-    super.where,
-  });
+  CountAggregate(Query query, String field) : super._init(query, [field]);
 
   @override
   String get name => 'COUNT';
 }
 
 class AverageAggregate extends AggregateFunction<num> {
-  AverageAggregate(
-    super.driver,
-    super.tableName,
-    super.selections, {
-    super.where,
-  });
+  AverageAggregate(Query query, String field) : super._init(query, [field]);
 
   @override
   String get name => 'AVG';
 }
 
 class MaxAggregate extends AggregateFunction<num> {
-  MaxAggregate(
-    super.driver,
-    super.tableName,
-    super.selections, {
-    super.where,
-  });
+  MaxAggregate(Query query, String field) : super._init(query, [field]);
 
   @override
   String get name => 'MAX';
 }
 
 class MinAggregate extends AggregateFunction<num> {
-  MinAggregate(
-    super.driver,
-    super.tableName,
-    super.selections, {
-    super.where,
-  });
+  MinAggregate(Query query, String field) : super._init(query, [field]);
 
   @override
   String get name => 'MIN';
 }
 
-class ConcatAggregate extends AggregateFunction<String> {
-  ConcatAggregate(super.driver, super.tableName, super.selections);
+class GroupConcatAggregate extends AggregateFunction<String> {
+  final String? separator;
+
+  GroupConcatAggregate(Query query, String field, {this.separator})
+      : super._init(query, [field]);
 
   @override
-  String get name => 'CONCAT';
+  String get name => 'GROUP_CONCAT';
 }

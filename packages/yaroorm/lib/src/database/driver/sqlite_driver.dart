@@ -194,36 +194,39 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptAggregate(AggregateFunction aggregate) {
-    final queryBuilder = StringBuffer();
-    if (aggregate is ConcatAggregate) {
-      return acceptConcat(aggregate, queryBuilder);
-    }
-
-    return acceptAggregateFunction(aggregate, queryBuilder);
+    return switch (aggregate.runtimeType) {
+      const (GroupConcatAggregate) => acceptConcat(
+          aggregate as GroupConcatAggregate,
+        ),
+      _ => acceptAggregateFunction(aggregate)
+    };
   }
 
-  String acceptConcat(ConcatAggregate aggregate, StringBuffer queryBuilder) {
+  String acceptConcat(GroupConcatAggregate aggregate) {
+    final queryBuilder = StringBuffer();
     final selections = aggregate.selections.map((e) => "'$e'").join('|| ');
     queryBuilder
         .write('SELECT $selections FROM ${escapeStr(aggregate.tableName)}');
     return '${queryBuilder.toString()}$terminator';
   }
 
-  String acceptAggregateFunction(
-      AggregateFunction<dynamic> aggregate, StringBuffer queryBuilder) {
+  String acceptAggregateFunction(AggregateFunction aggregate) {
+    final queryBuilder = StringBuffer();
+
     /// SELECT
-    final selections = aggregate.selections
-        .map((x) => x == '*' ? '*' : escapeStr(x))
-        .join(', ');
+    final selections = aggregate.selections.isEmpty
+        ? '*'
+        : aggregate.selections.map(escapeStr).join(', ');
+
     queryBuilder.write(
         'SELECT ${aggregate.name}($selections) FROM ${escapeStr(aggregate.tableName)}');
 
     /// WHERE
-    final whereClause = aggregate.where;
-    if (whereClause != null) {
-      final result = acceptWhereClause(whereClause);
-      queryBuilder.write(' WHERE $result');
+    final clauses = aggregate.whereClauses;
+    if (clauses.isNotEmpty) {
+      queryBuilder.write(' WHERE ${_serializeWhereClauses(clauses)}');
     }
+
     return '${queryBuilder.toString()}$terminator';
   }
 
@@ -239,25 +242,7 @@ class SqliteSerializer implements PrimitiveSerializer {
     /// WHERE
     final clauses = query.whereClauses;
     if (clauses.isNotEmpty) {
-      final sb = StringBuffer();
-
-      final hasDifferentOperators = clauses
-              .map((e) => e.operators)
-              .reduce((val, e) => val..addAll(e))
-              .length >
-          1;
-
-      for (final clause in clauses) {
-        final result =
-            acceptWhereClause(clause, canGroup: hasDifferentOperators);
-        if (sb.isEmpty) {
-          sb.write(result);
-        } else {
-          sb.write(' ${clause.operator.name} $result');
-        }
-      }
-
-      queryBuilder.write(' WHERE $sb');
+      queryBuilder.write(' WHERE ${_serializeWhereClauses(clauses)}');
     }
 
     /// ORDER BY
@@ -273,6 +258,26 @@ class SqliteSerializer implements PrimitiveSerializer {
     }
 
     return '${queryBuilder.toString()}$terminator';
+  }
+
+  String _serializeWhereClauses(List<WhereClause> clauses) {
+    final sb = StringBuffer();
+
+    final hasDifferentOperators = clauses
+            .map((e) => e.operators)
+            .reduce((val, e) => val..addAll(e))
+            .length >
+        1;
+
+    for (final clause in clauses) {
+      final result = acceptWhereClause(clause, canGroup: hasDifferentOperators);
+      if (sb.isEmpty) {
+        sb.write(result);
+      } else {
+        sb.write(' ${clause.operator.name} $result');
+      }
+    }
+    return sb.toString();
   }
 
   @override

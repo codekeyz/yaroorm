@@ -150,7 +150,7 @@ void runBasicE2ETest(String connectionName) {
       });
 
       test('concat', () async {
-        final concat = await db.query<User>().concat(['home', '_', 'address']);
+        final concat = await db.query<User>().concat('age', separator: '_');
         expect(concat, isA<String>());
         expect(concat, equals('home_address'));
       });

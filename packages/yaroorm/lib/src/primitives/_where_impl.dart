@@ -164,50 +164,24 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   }
 
   @override
-  Future<num> average(String field) => AverageAggregate(
-        query.queryDriver,
-        query.tableName,
-        [field],
-        where: this,
-      ).get();
+  Future<num> average(String field) => AverageAggregate(query, field).get();
 
   @override
-  Future<String> concat(List<String> field) => ConcatAggregate(
-        query.queryDriver,
-        query.tableName,
-        field,
-      ).get();
+  Future<String> concat(String field, {String? separator}) {
+    return GroupConcatAggregate(query, field, separator: separator).get();
+  }
 
   @override
-  Future<int> count({String field = '*', bool distinct = false}) =>
-      CountAggregate(
-        query.queryDriver,
-        query.tableName,
-        [field],
-        where: this,
-      ).get();
+  Future<int> count({String field = '*', bool distinct = false}) {
+    return CountAggregate(query, field).get();
+  }
 
   @override
-  Future<num> max(String field) => MaxAggregate(
-        query.queryDriver,
-        query.tableName,
-        [field],
-        where: this,
-      ).get();
+  Future<num> max(String field) => MaxAggregate(query, field).get();
 
   @override
-  Future<num> min(String field) => MinAggregate(
-        query.queryDriver,
-        query.tableName,
-        [field],
-        where: this,
-      ).get();
+  Future<num> min(String field) => MinAggregate(query, field).get();
 
   @override
-  Future<num> sum(String field) => SumAggregate(
-        query.queryDriver,
-        query.tableName,
-        [field],
-        where: this,
-      ).get();
+  Future<num> sum(String field) => SumAggregate(query, field).get();
 }
