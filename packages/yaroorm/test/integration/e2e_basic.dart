@@ -120,39 +120,38 @@ void runBasicE2ETest(String connectionName) {
 
     test('should fetch Sum', () async {
       final sum = await db.query<User>().sum('age');
-      expect(sum, isA<QueryResult>());
-      expect(int.parse(sum.values.first.toString()), equals(1552));
+      expect(sum, isA<num>());
+      expect(sum, equals(1552));
     });
 
     test('should fetch Count', () async {
       final count = await db.query<User>().count();
-      expect(count, isA<QueryResult>());
-      expect(count.values.first, equals(37));
+      expect(count, isA<int>());
+      expect(count, equals(37));
     });
 
     test('should fetch Average', () async {
       final average = await db.query<User>().average('age');
-      expect(average, isA<QueryResult>());
-      expect(double.parse(average.values.first.toString()).toStringAsFixed(2),
-          equals('41.95'));
+      expect(average, isA<num>());
+      expect(average.toStringAsFixed(2), equals('41.95'));
     });
 
     test('should fetch Max', () async {
       final max = await db.query<User>().max('age');
-      expect(max, isA<QueryResult>());
-      expect(max.values.first, equals(100));
+      expect(max, isA<num>());
+      expect(max, equals(100));
     });
 
     test('should fetch Min', () async {
       final min = await db.query<User>().min('age');
-      expect(min, isA<QueryResult>());
-      expect(min.values.first, equals(23));
+      expect(min, isA<num>());
+      expect(min, equals(23));
     });
 
     test('should fetch Concat', () async {
       final concat = await db.query<User>().concat(['home', '_', 'address']);
-      expect(concat, isA<QueryResult>());
-      expect(concat.values.first, equals('home_address'));
+      expect(concat, isA<String>());
+      expect(concat, equals('home_address'));
     });
 
     test('should fetch Sum using a where clause', () async {
@@ -160,8 +159,8 @@ void runBasicE2ETest(String connectionName) {
           .query<User>()
           .whereEqual('home_address', 'Accra, Ghana')
           .sum('age');
-      expect(sum, isA<QueryResult>());
-      expect(int.parse(sum.values.first.toString()), equals(178));
+      expect(sum, isA<num>());
+      expect(sum, equals(178));
     });
 
     test('should fetch Count', () async {
@@ -169,8 +168,8 @@ void runBasicE2ETest(String connectionName) {
           .query<User>()
           .whereEqual('home_address', 'Accra, Ghana')
           .count(field: 'id');
-      expect(count, isA<QueryResult>());
-      expect(count.values.first, equals(4));
+      expect(count, isA<int>());
+      expect(count, equals(4));
     });
 
     test('should fetch Average using a where clause', () async {
@@ -178,9 +177,8 @@ void runBasicE2ETest(String connectionName) {
           .query<User>()
           .whereEqual('home_address', 'Accra, Ghana')
           .average('age');
-      expect(average, isA<QueryResult>());
-      expect(double.parse(average.values.first.toString()),
-          equals(double.parse('44.5')));
+      expect(average, isA<num>());
+      expect(average, equals(double.parse('44.5')));
     });
 
     test('should fetch Max function using a where clause', () async {
@@ -188,8 +186,8 @@ void runBasicE2ETest(String connectionName) {
           .query<User>()
           .whereEqual('home_address', 'Accra, Ghana')
           .max('age');
-      expect(max, isA<QueryResult>());
-      expect(max.values.first, equals(100));
+      expect(max, isA<num>());
+      expect(max, equals(100));
     });
 
     test('should fetch Min function using a where clause', () async {
@@ -197,8 +195,8 @@ void runBasicE2ETest(String connectionName) {
           .query<User>()
           .whereEqual('home_address', 'Accra, Ghana')
           .min('age');
-      expect(min, isA<QueryResult>());
-      expect(min.values.first, equals(25));
+      expect(min, isA<num>());
+      expect(min, equals(25));
     });
 
     test('should delete user', () async {

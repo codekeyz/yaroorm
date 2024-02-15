@@ -481,8 +481,7 @@ class MySqlPrimitiveSerializer extends SqliteSerializer {
   }
 
   @override
-  String acceptConcat(
-      ConcatAggregate<dynamic> aggregate, StringBuffer queryBuilder) {
+  String acceptConcat(ConcatAggregate aggregate, StringBuffer queryBuilder) {
     final selections = aggregate.selections.map((e) => "'$e'").join(', ');
     queryBuilder.write(
         'SELECT ${aggregate.name}($selections) FROM ${escapeStr(aggregate.tableName)}');

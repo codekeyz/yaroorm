@@ -19,7 +19,11 @@ abstract interface class AggregateFunction<T> {
   Future<T> get() async {
     final statement = driver.serializer.acceptAggregate(this);
     final result = await driver.rawQuery(statement);
-    return result[0] as T;
+    var value = result[0].values.first;
+    if (T == num && value is String) {
+      return num.parse(value) as T;
+    }
+    return value as T;
   }
 
   String get statement => driver.serializer.acceptAggregate(this);
