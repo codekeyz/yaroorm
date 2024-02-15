@@ -128,7 +128,7 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
 }
 
 mixin AggregateOperation<T> {
-  Future<num> count({String field, bool distinct = false});
+  Future<int> count({String field, bool distinct = false});
 
   Future<num> average(String field);
 

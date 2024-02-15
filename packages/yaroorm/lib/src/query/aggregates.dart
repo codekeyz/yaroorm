@@ -19,11 +19,16 @@ abstract interface class AggregateFunction<T> {
   Future<T> get() async {
     final statement = driver.serializer.acceptAggregate(this);
     final result = await driver.rawQuery(statement);
-    var value = result[0].values.first;
-    if (T == num && value is String) {
-      return num.parse(value) as T;
-    }
-    return value as T;
+    final value = result[0].values.first;
+    if (value is T) return value;
+    return switch (T) {
+      const (int) ||
+      const (double) ||
+      const (num) =>
+        value == null ? 0 : num.parse(value.toString()),
+      const (String) => value.toString(),
+      _ => throw Exception('Null value returned for aggregate: $statement'),
+    } as T;
   }
 
   String get statement => driver.serializer.acceptAggregate(this);
