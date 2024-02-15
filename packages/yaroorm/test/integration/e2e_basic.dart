@@ -118,85 +118,87 @@ void runBasicE2ETest(String connectionName) {
       expect(users.every((e) => [30, 52].contains(e.age)), isTrue);
     });
 
-    test('should fetch Sum', () async {
-      final sum = await db.query<User>().sum('age');
-      expect(sum, isA<num>());
-      expect(sum, equals(1552));
-    });
+    group('aggregate function', () {
+      test('sum', () async {
+        final sum = await db.query<User>().sum('age');
+        expect(sum, isA<num>());
+        expect(sum, equals(1552));
+      });
 
-    test('should fetch Count', () async {
-      final count = await db.query<User>().count();
-      expect(count, isA<int>());
-      expect(count, equals(37));
-    });
+      test('count', () async {
+        final count = await db.query<User>().count();
+        expect(count, isA<int>());
+        expect(count, equals(37));
+      });
 
-    test('should fetch Average', () async {
-      final average = await db.query<User>().average('age');
-      expect(average, isA<num>());
-      expect(average.toStringAsFixed(2), equals('41.95'));
-    });
+      test('average', () async {
+        final average = await db.query<User>().average('age');
+        expect(average, isA<num>());
+        expect(average.toStringAsFixed(2), equals('41.95'));
+      });
 
-    test('should fetch Max', () async {
-      final max = await db.query<User>().max('age');
-      expect(max, isA<num>());
-      expect(max, equals(100));
-    });
+      test('max', () async {
+        final max = await db.query<User>().max('age');
+        expect(max, isA<num>());
+        expect(max, equals(100));
+      });
 
-    test('should fetch Min', () async {
-      final min = await db.query<User>().min('age');
-      expect(min, isA<num>());
-      expect(min, equals(23));
-    });
+      test('min', () async {
+        final min = await db.query<User>().min('age');
+        expect(min, isA<num>());
+        expect(min, equals(23));
+      });
 
-    test('should fetch Concat', () async {
-      final concat = await db.query<User>().concat(['home', '_', 'address']);
-      expect(concat, isA<String>());
-      expect(concat, equals('home_address'));
-    });
+      test('concat', () async {
+        final concat = await db.query<User>().concat(['home', '_', 'address']);
+        expect(concat, isA<String>());
+        expect(concat, equals('home_address'));
+      });
 
-    test('should fetch Sum using a where clause', () async {
-      final sum = await db
-          .query<User>()
-          .whereEqual('home_address', 'Accra, Ghana')
-          .sum('age');
-      expect(sum, isA<num>());
-      expect(sum, equals(178));
-    });
+      test('should fetch Sum using a where clause', () async {
+        final sum = await db
+            .query<User>()
+            .whereEqual('home_address', 'Accra, Ghana')
+            .sum('age');
+        expect(sum, isA<num>());
+        expect(sum, equals(178));
+      });
 
-    test('should fetch Count', () async {
-      final count = await db
-          .query<User>()
-          .whereEqual('home_address', 'Accra, Ghana')
-          .count(field: 'id');
-      expect(count, isA<int>());
-      expect(count, equals(4));
-    });
+      test('should fetch Count', () async {
+        final count = await db
+            .query<User>()
+            .whereEqual('home_address', 'Accra, Ghana')
+            .count(field: 'id');
+        expect(count, isA<int>());
+        expect(count, equals(4));
+      });
 
-    test('should fetch Average using a where clause', () async {
-      final average = await db
-          .query<User>()
-          .whereEqual('home_address', 'Accra, Ghana')
-          .average('age');
-      expect(average, isA<num>());
-      expect(average, equals(double.parse('44.5')));
-    });
+      test('should fetch Average using a where clause', () async {
+        final average = await db
+            .query<User>()
+            .whereEqual('home_address', 'Accra, Ghana')
+            .average('age');
+        expect(average, isA<num>());
+        expect(average, equals(double.parse('44.5')));
+      });
 
-    test('should fetch Max function using a where clause', () async {
-      final max = await db
-          .query<User>()
-          .whereEqual('home_address', 'Accra, Ghana')
-          .max('age');
-      expect(max, isA<num>());
-      expect(max, equals(100));
-    });
+      test('should fetch Max function using a where clause', () async {
+        final max = await db
+            .query<User>()
+            .whereEqual('home_address', 'Accra, Ghana')
+            .max('age');
+        expect(max, isA<num>());
+        expect(max, equals(100));
+      });
 
-    test('should fetch Min function using a where clause', () async {
-      final min = await db
-          .query<User>()
-          .whereEqual('home_address', 'Accra, Ghana')
-          .min('age');
-      expect(min, isA<num>());
-      expect(min, equals(25));
+      test('should fetch Min function using a where clause', () async {
+        final min = await db
+            .query<User>()
+            .whereEqual('home_address', 'Accra, Ghana')
+            .min('age');
+        expect(min, isA<num>());
+        expect(min, equals(25));
+      });
     });
 
     test('should delete user', () async {
