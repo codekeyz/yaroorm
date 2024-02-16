@@ -156,13 +156,14 @@ void runBasicE2ETest(String connectionName) {
 
       test('concat', () async {
         Matcher matcher([String? separator]) {
-          final ages = usersInGhana.map((e) => e.age);
-          if (separator == null) return equals(ages.join(','));
-          if (db.driver.type == DatabaseDriverType.sqlite) {
-            return equals(ages.join(separator));
+          if (db.driver.type == DatabaseDriverType.sqlite ||
+              separator == null) {
+            separator ??= ',';
+            return equals(usersInGhana.map((e) => e.age).join(separator));
           }
 
-          return equals(ages.join('$separator,'));
+          return equals(
+              usersInGhana.map((e) => '${e.age}$separator').join(','));
         }
 
         expect(await query.concat('age', separator: '--'), matcher('--'));
