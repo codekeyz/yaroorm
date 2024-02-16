@@ -55,9 +55,15 @@ sealed class QueryBase<Owner> {
 
   String? database;
 
-  late DriverContract _queryDriver;
+  DriverContract? _queryDriver;
 
-  DriverContract get runner => _queryDriver;
+  DriverContract get runner {
+    if (_queryDriver == null) {
+      throw StateError(
+          'Driver not set for query. Make sure you supply a driver using .driver()');
+    }
+    return _queryDriver!;
+  }
 
   Owner driver(DriverContract driver) {
     _queryDriver = driver;
