@@ -147,7 +147,7 @@ mixin AggregateOperation {
 
   Future<num> min(String field);
 
-  Future<String> concat(String field, {String separator = ','});
+  Future<String> concat(String field, {String? separator});
 }
 
 @protected

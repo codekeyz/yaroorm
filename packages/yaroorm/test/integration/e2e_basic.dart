@@ -155,11 +155,20 @@ void runBasicE2ETest(String connectionName) {
       });
 
       test('concat', () async {
-        final concatAges = usersInGhana.map((e) => e.age).join('_');
-        final concatFirstnames = usersInGhana.map((e) => e.firstname).join(',');
+        Matcher matcher([String? separator]) {
+          final ages = usersInGhana.map((e) => e.age);
+          if (separator == null) return equals(ages.join(','));
 
-        expect(await query.concat('age', separator: '_'), equals(concatAges));
-        expect(await query.concat('firstname'), equals(concatFirstnames));
+          if (db.driver.type == DatabaseDriverType.mysql) {
+            return equals(ages.join('$separator,'));
+          }
+
+          return equals(ages.join(separator));
+        }
+
+        expect(await query.concat('age', separator: '--'), matcher('--'));
+
+        expect(await query.concat('age'), matcher());
       });
     });
 

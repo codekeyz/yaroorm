@@ -219,7 +219,7 @@ class QueryImpl<Result> extends Query<Result> {
   }
 
   @override
-  Future<String> concat(String field, {String separator = ','}) {
+  Future<String> concat(String field, {String? separator}) {
     return GroupConcatAggregate(this, field, separator: separator).get();
   }
 
