@@ -135,8 +135,10 @@ abstract class WhereClause<Result>
           ...children
         ];
 
-  Set<LogicalOperator> get operators =>
-      {operator, if (children.isNotEmpty) ...children.map((e) => e.$1)};
+  Set<LogicalOperator> get operators => {
+        operator,
+        if (children.isNotEmpty) ...children.map((e) => e.$1),
+      };
 
   final Query<Result> query;
 
@@ -150,8 +152,10 @@ abstract class WhereClause<Result>
     Query<Result> query, {
     LogicalOperator operator = LogicalOperator.AND,
     WhereClauseValue? value,
-  }) =>
-      _WhereClauseImpl<Result>(query, operator: operator)..clauseValue = value;
+  }) {
+    return _WhereClauseImpl<Result>(query, operator: operator)
+      ..clauseValue = value;
+  }
 
   Future<void> update(Map<String, dynamic> values);
 

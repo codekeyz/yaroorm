@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:test/test.dart';
 import 'package:yaroorm/yaroorm.dart';
 
@@ -24,7 +25,7 @@ void runBasicE2ETest(String connectionName) {
     });
 
     test('should insert single user', () async {
-      final result = await usersTestData.first.withDriver(db.driver).save();
+      final result = await usersList.first.withDriver(db.driver).save();
       expect(result, isA<User>().having((p0) => p0.id, 'has primary key', 1));
 
       expect(await db.query<User>().all(), hasLength(1));
@@ -32,11 +33,11 @@ void runBasicE2ETest(String connectionName) {
 
     test('should insert many users', () async {
       final remainingUsers =
-          usersTestData.sublist(1).map((e) => e.to_db_data).toList();
+          usersList.sublist(1).map((e) => e.to_db_data).toList();
       final userQuery = db.query<User>();
       await userQuery.insertMany(remainingUsers);
 
-      expect(await userQuery.all(), hasLength(usersTestData.length));
+      expect(await userQuery.all(), hasLength(usersList.length));
     });
 
     test('should update user', () async {
@@ -81,7 +82,9 @@ void runBasicE2ETest(String connectionName) {
       final usersInGhana = await query.findMany();
       expect(usersInGhana.length, 10);
       expect(
-          usersInGhana.every((e) => e.homeAddress.contains('Ghana')), isTrue);
+        usersInGhana.every((e) => e.homeAddress.contains('Ghana')),
+        isTrue,
+      );
 
       expect(await query.take(4), hasLength(4));
     });
@@ -119,85 +122,44 @@ void runBasicE2ETest(String connectionName) {
     });
 
     group('aggregate function', () {
+      final query = db.query<User>().whereLike('home_address', '%%, Ghana');
+      List<User> usersInGhana = [];
+
+      setUpAll(() async {
+        usersInGhana = await query.findMany();
+        expect(usersInGhana, isNotEmpty);
+      });
+
       test('sum', () async {
-        final sum = await db.query<User>().sum('age');
-        expect(sum, isA<num>());
-        expect(sum, equals(1552));
+        final manualSum = usersInGhana.map((e) => e.age).sum;
+        expect(await query.sum('age'), equals(manualSum));
       });
 
       test('count', () async {
-        final count = await db.query<User>().count();
-        expect(count, isA<int>());
-        expect(count, equals(37));
-      });
-
-      test('average', () async {
-        final average = await db.query<User>().average('age');
-        expect(average, isA<num>());
-        expect(average.toStringAsFixed(2), equals('41.95'));
+        expect(await query.count(), equals(usersInGhana.length));
       });
 
       test('max', () async {
-        final max = await db.query<User>().max('age');
-        expect(max, isA<num>());
-        expect(max, equals(100));
+        final maxAge = usersInGhana.map((e) => e.age).max;
+        expect(await query.max('age'), equals(maxAge));
       });
 
       test('min', () async {
-        final min = await db.query<User>().min('age');
-        expect(min, isA<num>());
-        expect(min, equals(23));
+        final minAge = usersInGhana.map((e) => e.age).min;
+        expect(await query.min('age'), equals(minAge));
+      });
+
+      test('average', () async {
+        final average = usersInGhana.map((e) => e.age).average;
+        expect(await query.average('age'), equals(average));
       });
 
       test('concat', () async {
-        final concat = await db.query<User>().concat('age', separator: '_');
-        expect(concat, isA<String>());
-        expect(concat, equals('home_address'));
-      });
+        final concatAges = usersInGhana.map((e) => e.age).join('_');
+        final concatFirstnames = usersInGhana.map((e) => e.firstname).join(',');
 
-      test('should fetch Sum using a where clause', () async {
-        final sum = await db
-            .query<User>()
-            .whereEqual('home_address', 'Accra, Ghana')
-            .sum('age');
-        expect(sum, isA<num>());
-        expect(sum, equals(178));
-      });
-
-      test('should fetch Count', () async {
-        final count = await db
-            .query<User>()
-            .whereEqual('home_address', 'Accra, Ghana')
-            .count(field: 'id');
-        expect(count, isA<int>());
-        expect(count, equals(4));
-      });
-
-      test('should fetch Average using a where clause', () async {
-        final average = await db
-            .query<User>()
-            .whereEqual('home_address', 'Accra, Ghana')
-            .average('age');
-        expect(average, isA<num>());
-        expect(average, equals(double.parse('44.5')));
-      });
-
-      test('should fetch Max function using a where clause', () async {
-        final max = await db
-            .query<User>()
-            .whereEqual('home_address', 'Accra, Ghana')
-            .max('age');
-        expect(max, isA<num>());
-        expect(max, equals(100));
-      });
-
-      test('should fetch Min function using a where clause', () async {
-        final min = await db
-            .query<User>()
-            .whereEqual('home_address', 'Accra, Ghana')
-            .min('age');
-        expect(min, isA<num>());
-        expect(min, equals(25));
+        expect(await query.concat('age', separator: '_'), equals(concatAges));
+        expect(await query.concat('firstname'), equals(concatFirstnames));
       });
     });
 

@@ -2,7 +2,6 @@ import 'package:meta/meta.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/src/database/entity/entity.dart';
-import 'package:yaroorm/src/query/aggregates.dart';
 import 'package:yaroorm/src/query/query.dart';
 
 import '../../primitives/serializer.dart';
@@ -445,15 +444,6 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
 @protected
 class MySqlPrimitiveSerializer extends SqliteSerializer {
   const MySqlPrimitiveSerializer();
-
-  @override
-  String acceptAggregate(AggregateFunction aggregate) {
-    if (aggregate is GroupConcatAggregate) {
-      return acceptConcat(aggregate);
-    }
-
-    return acceptAggregateFunction(aggregate);
-  }
 
   @override
   String acceptInsertQuery(InsertQuery query) {

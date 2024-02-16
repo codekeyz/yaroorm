@@ -194,32 +194,26 @@ class SqliteSerializer implements PrimitiveSerializer {
 
   @override
   String acceptAggregate(AggregateFunction aggregate) {
-    return switch (aggregate.runtimeType) {
-      const (GroupConcatAggregate) => acceptConcat(
-          aggregate as GroupConcatAggregate,
-        ),
-      _ => acceptAggregateFunction(aggregate)
-    };
-  }
-
-  String acceptConcat(GroupConcatAggregate aggregate) {
-    final queryBuilder = StringBuffer();
-    final selections = aggregate.selections.map((e) => "'$e'").join('|| ');
-    queryBuilder
-        .write('SELECT $selections FROM ${escapeStr(aggregate.tableName)}');
-    return '${queryBuilder.toString()}$terminator';
-  }
-
-  String acceptAggregateFunction(AggregateFunction aggregate) {
     final queryBuilder = StringBuffer();
 
     /// SELECT
-    final selections = aggregate.selections.isEmpty
+    final fields = aggregate.selections.isEmpty
         ? '*'
         : aggregate.selections.map(escapeStr).join(', ');
 
-    queryBuilder.write(
-        'SELECT ${aggregate.name}($selections) FROM ${escapeStr(aggregate.tableName)}');
+    late final String selection;
+
+    if (aggregate is GroupConcatAggregate) {
+      final separator = aggregate.separator;
+      selection = separator != null
+          ? '${aggregate.name}($fields, "$separator")'
+          : '${aggregate.name}($fields)';
+    } else {
+      selection = '${aggregate.name}($fields)';
+    }
+
+    queryBuilder
+        .write('SELECT $selection FROM ${escapeStr(aggregate.tableName)}');
 
     /// WHERE
     final clauses = aggregate.whereClauses;

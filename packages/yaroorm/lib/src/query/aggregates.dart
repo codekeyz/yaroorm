@@ -3,7 +3,7 @@ import 'package:yaroorm/src/primitives/where.dart';
 
 import 'query.dart';
 
-abstract interface class AggregateFunction<T> {
+sealed class AggregateFunction<T> {
   final List<String> selections;
   final List<WhereClause> whereClauses;
   final String tableName;
@@ -19,7 +19,7 @@ abstract interface class AggregateFunction<T> {
   });
 
   AggregateFunction._init(Query query, this.selections)
-      : driver = query.queryDriver,
+      : driver = query.runner,
         tableName = query.tableName,
         whereClauses = query.whereClauses,
         assert(

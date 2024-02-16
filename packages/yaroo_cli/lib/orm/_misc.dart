@@ -31,6 +31,6 @@ Future<int> getLastBatchNumber(
   DatabaseDriver driver,
   String migrationsTable,
 ) async {
-  final batch = await Query.table(migrationsTable).driver(driver).max('batch');
-  return batch.toInt();
+  return (await Query.table(migrationsTable).driver(driver).max('batch'))
+      .toInt();
 }

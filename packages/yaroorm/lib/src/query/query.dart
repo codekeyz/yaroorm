@@ -11,7 +11,9 @@ part 'query_impl.dart';
 mixin ReadOperation<Result> {
   Future<Result?> get([Object id]);
 
-  Future<List<Result>> all();
+  Future<List<Result>> all({int? limit});
+
+  Future<List<Result>> take(int limit);
 }
 
 mixin FindOperation<Result> {
@@ -48,16 +50,14 @@ mixin OrderByOperation<ReturnType> {
   ReturnType orderByDesc(String field);
 }
 
-abstract interface class QueryBase<Owner> {
+sealed class QueryBase<Owner> {
   final String tableName;
 
   String? database;
 
-  DriverContract _queryDriver = throw StateError(
-    'Driver not set for query. Make sure you supply a driver using .driver()',
-  );
+  late DriverContract _queryDriver;
 
-  DriverContract get queryDriver => _queryDriver;
+  DriverContract get runner => _queryDriver;
 
   Owner driver(DriverContract driver) {
     _queryDriver = driver;
@@ -81,11 +81,12 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
         DeleteOperation<EntityType>,
         UpdateOperation<EntityType>,
         AggregateOperation {
-  late final Set<String> fieldSelections;
-  late final Set<OrderBy> orderByProps;
-  late final List<WhereClause<EntityType>> whereClauses;
+  final Set<String> fieldSelections;
+  final Set<OrderBy> orderByProps;
+  final List<WhereClause<EntityType>> whereClauses;
+  int? _limit;
 
-  late int? _limit;
+  int? get limit => _limit;
 
   Query(super.tableName)
       : fieldSelections = {},
@@ -101,8 +102,6 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
     return QueryImpl<Model>(tableName!);
   }
 
-  int? get limit => _limit;
-
   Query<EntityType> select(List<String> selections) {
     fieldSelections.addAll(selections);
     return this;
@@ -110,16 +109,24 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
 
   @override
   DeleteQuery delete(
-      WhereClause<EntityType> Function(Query<EntityType> query) where) {
-    return DeleteQuery(tableName, whereClause: where(this)).driver(queryDriver);
+    WhereClause<EntityType> Function(Query<EntityType> query) where,
+  ) {
+    return DeleteQuery(
+      tableName,
+      whereClause: where(this),
+    ).driver(runner);
   }
 
   @override
-  UpdateQuery update(
-      {required WhereClause<EntityType> Function(Query<EntityType> query) where,
-      required Map<String, dynamic> values}) {
-    return UpdateQuery(tableName, whereClause: where(this), data: values)
-        .driver(queryDriver);
+  UpdateQuery update({
+    required WhereClause<EntityType> Function(Query<EntityType> query) where,
+    required Map<String, dynamic> values,
+  }) {
+    return UpdateQuery(
+      tableName,
+      whereClause: where(this),
+      data: values,
+    ).driver(runner);
   }
 }
 
@@ -134,7 +141,7 @@ mixin AggregateOperation {
 
   Future<num> min(String field);
 
-  Future<String> concat(String field, {String? separator});
+  Future<String> concat(String field, {String separator = ','});
 }
 
 @protected
@@ -145,10 +152,10 @@ class UpdateQuery extends QueryBase<UpdateQuery> {
   UpdateQuery(super.tableName, {required this.whereClause, required this.data});
 
   @override
-  String get statement => queryDriver.serializer.acceptUpdateQuery(this);
+  String get statement => runner.serializer.acceptUpdateQuery(this);
 
   @override
-  Future<void> execute() => queryDriver.update(this);
+  Future<void> execute() => runner.update(this);
 }
 
 class InsertQuery extends QueryBase<InsertQuery> {
@@ -157,10 +164,10 @@ class InsertQuery extends QueryBase<InsertQuery> {
   InsertQuery(super.tableName, {required this.data});
 
   @override
-  Future<dynamic> execute() => queryDriver.insert(this);
+  Future<dynamic> execute() => runner.insert(this);
 
   @override
-  String get statement => queryDriver.serializer.acceptInsertQuery(this);
+  String get statement => runner.serializer.acceptInsertQuery(this);
 }
 
 class InsertManyQuery extends QueryBase<InsertManyQuery> {
@@ -169,10 +176,10 @@ class InsertManyQuery extends QueryBase<InsertManyQuery> {
   InsertManyQuery(super.tableName, {required this.values});
 
   @override
-  String get statement => queryDriver.serializer.acceptInsertManyQuery(this);
+  String get statement => runner.serializer.acceptInsertManyQuery(this);
 
   @override
-  Future<dynamic> execute() => queryDriver.insertMany(this);
+  Future<dynamic> execute() => runner.insertMany(this);
 }
 
 @protected
@@ -182,8 +189,8 @@ class DeleteQuery extends QueryBase<DeleteQuery> {
   DeleteQuery(super.tableName, {required this.whereClause});
 
   @override
-  String get statement => queryDriver.serializer.acceptDeleteQuery(this);
+  String get statement => runner.serializer.acceptDeleteQuery(this);
 
   @override
-  Future<void> execute() => queryDriver.delete(this);
+  Future<void> execute() => runner.delete(this);
 }
