@@ -156,6 +156,9 @@ class _PgSqlDriverTransactor extends DriverTransactor {
   _PgSqlDriverTransactor(this.txn);
 
   @override
+  DatabaseDriverType get type => DatabaseDriverType.pgsql;
+
+  @override
   Future<void> delete(DeleteQuery query) async {
     final sql = _pgsqlSerializer.acceptDeleteQuery(query);
     await rawQuery(sql);

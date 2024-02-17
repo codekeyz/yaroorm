@@ -214,13 +214,13 @@ class QueryImpl<Result> extends Query<Result> {
   }
 
   @override
-  Future<int> count({String field = "*", bool distinct = false}) {
+  Future<int> count({String? field, bool distinct = false}) {
     return CountAggregate(this, field).get();
   }
 
   @override
-  Future<String> concat(String field, {String? separator}) {
-    return GroupConcatAggregate(this, field, separator: separator).get();
+  Future<String> groupConcat(String field, String separator) {
+    return GroupConcatAggregate(this, field, separator).get();
   }
 
   @override

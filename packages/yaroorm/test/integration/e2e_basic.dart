@@ -155,20 +155,18 @@ void runBasicE2ETest(String connectionName) {
       });
 
       test('concat', () async {
-        Matcher matcher([String? separator]) {
-          if (db.driver.type == DatabaseDriverType.sqlite ||
-              separator == null) {
-            separator ??= ',';
+        Matcher matcher(String separator) {
+          if ([DatabaseDriverType.sqlite, DatabaseDriverType.pgsql]
+              .contains(db.driver.type)) {
             return equals(usersInGhana.map((e) => e.age).join(separator));
           }
 
           return equals(
-              usersInGhana.map((e) => '${e.age}$separator').join(','));
+            usersInGhana.map((e) => '${e.age}$separator').join(','),
+          );
         }
 
-        expect(await query.concat('age', separator: '--'), matcher('--'));
-
-        expect(await query.concat('age'), matcher());
+        expect(await query.groupConcat('age', ','), matcher(','));
       });
     });
 

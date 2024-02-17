@@ -185,12 +185,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   Future<num> average(String field) => AverageAggregate(query, field).get();
 
   @override
-  Future<String> concat(String field, {String? separator}) {
-    return GroupConcatAggregate(query, field, separator: separator).get();
-  }
-
-  @override
-  Future<int> count({String field = '*', bool distinct = false}) {
+  Future<int> count({String? field, bool distinct = false}) {
     return CountAggregate(query, field).get();
   }
 
@@ -202,6 +197,11 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
 
   @override
   Future<num> sum(String field) => SumAggregate(query, field).get();
+
+  @override
+  Future<String> groupConcat(String field, String separator) {
+    return GroupConcatAggregate(query, field, separator).get();
+  }
 
   @override
   String get statement => query.statement;

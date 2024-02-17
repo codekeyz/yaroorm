@@ -137,7 +137,7 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
 }
 
 mixin AggregateOperation {
-  Future<int> count({String field, bool distinct = false});
+  Future<int> count({String? field, bool distinct = false});
 
   Future<num> average(String field);
 
@@ -147,7 +147,7 @@ mixin AggregateOperation {
 
   Future<num> min(String field);
 
-  Future<String> concat(String field, {String? separator});
+  Future<String> groupConcat(String field, String separator);
 }
 
 @protected

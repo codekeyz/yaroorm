@@ -186,32 +186,19 @@ class _SqliteTransactor implements DriverTransactor {
 
   @override
   List<EntityTypeConverter> get typeconverters => _sqliteTypeConverters;
+
+  @override
+  DatabaseDriverType get type => DatabaseDriverType.sqlite;
 }
 
-@protected
-class SqliteSerializer implements PrimitiveSerializer {
+class SqliteSerializer extends PrimitiveSerializer {
   const SqliteSerializer();
 
   @override
   String acceptAggregate(AggregateFunction aggregate) {
     final queryBuilder = StringBuffer();
 
-    /// SELECT
-    final fields = aggregate.selections.isEmpty
-        ? '*'
-        : aggregate.selections.map(escapeStr).join(', ');
-
-    late final String selection;
-
-    if (aggregate is GroupConcatAggregate) {
-      final separator = aggregate.separator;
-      selection = separator != null
-          ? '${aggregate.name}($fields, "$separator")'
-          : '${aggregate.name}($fields)';
-    } else {
-      selection = '${aggregate.name}($fields)';
-    }
-
+    final selection = '${aggregate.name}(${aggregate.arguments.join(', ')})';
     queryBuilder
         .write('SELECT $selection FROM ${escapeStr(aggregate.tableName)}');
 

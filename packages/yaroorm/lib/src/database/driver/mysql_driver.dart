@@ -111,10 +111,8 @@ final class MySqlDriver implements DatabaseDriver {
   }
 
   @override
-  Future<void> transaction(
-      void Function(DriverTransactor transactor) func) async {
-    await _dbConnection.transactional((txn) => func(_MysqlTransactor(txn)));
-  }
+  Future<void> transaction(void Function(DriverTransactor transactor) func) =>
+      _dbConnection.transactional((txn) => func(_MysqlTransactor(txn, type)));
 
   @override
   DatabaseDriverType get type => _type;
@@ -132,7 +130,10 @@ final class MySqlDriver implements DatabaseDriver {
 class _MysqlTransactor extends DriverTransactor {
   final MySQLConnection _dbConn;
 
-  _MysqlTransactor(this._dbConn);
+  @override
+  final DatabaseDriverType type;
+
+  _MysqlTransactor(this._dbConn, this.type);
 
   @override
   Future<dynamic> execute(String script) => rawQuery(script);

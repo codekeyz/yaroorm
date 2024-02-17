@@ -99,6 +99,8 @@ mixin DriverContract {
   PrimitiveSerializer get serializer;
 
   List<EntityTypeConverter> get typeconverters => [];
+
+  DatabaseDriverType get type;
 }
 
 abstract class DriverTransactor with DriverContract {}
@@ -120,17 +122,8 @@ abstract interface class DatabaseDriver with DriverContract {
   /// Check if the database is open for operation
   bool get isOpen;
 
-  /// Schema name used to perform all write queries.
-  DatabaseDriverType get type;
-
-  /// Performs connection to the database.
-  ///
-  /// Depend on driver type it may create a connection pool.
   Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection});
 
-  /// Performs connection to the database.
-  ///
-  /// Depend on driver type it may create a connection pool.
   Future<void> disconnect();
 
   /// check if the table exists in the database
@@ -139,5 +132,6 @@ abstract interface class DatabaseDriver with DriverContract {
   TableBlueprint get blueprint;
 
   Future<void> transaction(
-      void Function(DriverTransactor transactor) transaction);
+    void Function(DriverTransactor transactor) transaction,
+  );
 }
