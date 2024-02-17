@@ -19,7 +19,7 @@ dependencies:
 
 dev_dependencies:
   test: ^1.24.0
-  lints:
+  lints: ^3.0.0
 
 executables:
   yaroo:

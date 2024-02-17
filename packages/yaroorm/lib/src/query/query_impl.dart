@@ -6,8 +6,11 @@ class QueryImpl<Result> extends Query<Result> {
   QueryImpl(super.tableName);
 
   @override
-  WhereClause<Result> where<Value>(String field, String condition,
-      [Value? value]) {
+  WhereClause<Result> where<Value>(
+    String field,
+    String condition, [
+    Value? value,
+  ]) {
     final newClause = WhereClause.create<Result>(this,
         value: WhereClauseValue.from(field, condition, value));
     whereClauses.add(newClause);
@@ -28,27 +31,25 @@ class QueryImpl<Result> extends Query<Result> {
 
   @override
   Future<PrimaryKey> insert<PrimaryKey>(Map<String, dynamic> data) async {
-    final recordId =
-        await queryDriver.insert(InsertQuery(tableName, data: data));
+    final recordId = await runner.insert(InsertQuery(tableName, data: data));
     return recordId as PrimaryKey;
   }
 
   @override
   Future<void> insertMany(List<Map<String, dynamic>> values) async {
-    return queryDriver.insertMany(InsertManyQuery(tableName, values: values));
+    return runner.insertMany(InsertManyQuery(tableName, values: values));
   }
 
   @override
-  Future<List<Result>> all() async {
-    final results = await queryDriver.query(this);
+  Future<List<Result>> all({int? limit}) async {
+    final results = await runner.query(this.._limit = limit);
     if (results.isEmpty) return <Result>[];
     return results.map(_wrapRawResult<Result>).toList();
   }
 
   @override
   Future<List<Result>> take(int limit) async {
-    _limit = limit;
-    final results = await queryDriver.query(this);
+    final results = await runner.query(this.._limit = limit);
     if (results.isEmpty) return <Result>[];
     return results.map(_wrapRawResult<Result>).toList();
   }
@@ -66,8 +67,8 @@ class QueryImpl<Result> extends Query<Result> {
     if (T == dynamic || result == null) return result as dynamic;
     return (serializedPropsToEntity<T>(
       result,
-      converters: _queryDriver!.typeconverters,
-    )).withDriver(_queryDriver!) as T;
+      converters: runner.typeconverters,
+    )).withDriver(runner) as T;
   }
 
   @override
@@ -202,8 +203,32 @@ class QueryImpl<Result> extends Query<Result> {
   }
 
   @override
-  Future<void> execute() => queryDriver.execute(statement);
+  Future<void> execute() => runner.execute(statement);
 
   @override
-  String get statement => queryDriver.serializer.acceptReadQuery(this);
+  String get statement => runner.serializer.acceptReadQuery(this);
+
+  @override
+  Future<num> average(String field) {
+    return AverageAggregate(this, field).get();
+  }
+
+  @override
+  Future<int> count({String? field, bool distinct = false}) {
+    return CountAggregate(this, field).get();
+  }
+
+  @override
+  Future<String> groupConcat(String field, String separator) {
+    return GroupConcatAggregate(this, field, separator).get();
+  }
+
+  @override
+  Future<num> max(String field) => MaxAggregate(this, field).get();
+
+  @override
+  Future<num> min(String field) => MinAggregate(this, field).get();
+
+  @override
+  Future<num> sum(String field) => SumAggregate(this, field).get();
 }

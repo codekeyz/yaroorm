@@ -1,5 +1,7 @@
 // ignore_for_file: constant_identifier_names
 
+import 'package:yaroorm/src/query/aggregates.dart';
+
 import '../query/query.dart';
 
 part '_where_impl.dart';
@@ -117,7 +119,8 @@ abstract class WhereClause<Result>
         WhereOperation<Result>,
         FindOperation<Result>,
         LimitOperation<Result>,
-        OrderByOperation<WhereClause<Result>> {
+        OrderByOperation<WhereClause<Result>>,
+        AggregateOperation {
   final List<CombineClause<WhereClause<Result>>> children = [];
 
   List<CombineClause<WhereClause<Result>>> get group => children.isEmpty
@@ -132,8 +135,10 @@ abstract class WhereClause<Result>
           ...children
         ];
 
-  Set<LogicalOperator> get operators =>
-      {operator, if (children.isNotEmpty) ...children.map((e) => e.$1)};
+  Set<LogicalOperator> get operators => {
+        operator,
+        if (children.isNotEmpty) ...children.map((e) => e.$1),
+      };
 
   final Query<Result> query;
 
@@ -147,8 +152,10 @@ abstract class WhereClause<Result>
     Query<Result> query, {
     LogicalOperator operator = LogicalOperator.AND,
     WhereClauseValue? value,
-  }) =>
-      _WhereClauseImpl<Result>(query, operator: operator)..clauseValue = value;
+  }) {
+    return _WhereClauseImpl<Result>(query, operator: operator)
+      ..clauseValue = value;
+  }
 
   Future<void> update(Map<String, dynamic> values);
 

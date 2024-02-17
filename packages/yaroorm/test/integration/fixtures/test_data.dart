@@ -38,7 +38,7 @@ class PostComment extends Entity<String, PostComment> {
   PostComment(this.comment, {this.postId});
 }
 
-final usersTestData = <User>[
+final usersList = <User>[
   /// Ghana Users - [6]
   User(
       firstname: 'Kofi',

@@ -3,6 +3,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common/sql.dart';
 import 'package:collection/collection.dart';
 import 'package:yaroorm/migration.dart';
+import 'package:yaroorm/src/query/aggregates.dart';
 
 import '../../primitives/serializer.dart';
 import '../../primitives/where.dart';
@@ -185,11 +186,30 @@ class _SqliteTransactor implements DriverTransactor {
 
   @override
   List<EntityTypeConverter> get typeconverters => _sqliteTypeConverters;
+
+  @override
+  DatabaseDriverType get type => DatabaseDriverType.sqlite;
 }
 
-@protected
-class SqliteSerializer implements PrimitiveSerializer {
+class SqliteSerializer extends PrimitiveSerializer {
   const SqliteSerializer();
+
+  @override
+  String acceptAggregate(AggregateFunction aggregate) {
+    final queryBuilder = StringBuffer();
+
+    final selection = '${aggregate.name}(${aggregate.arguments.join(', ')})';
+    queryBuilder
+        .write('SELECT $selection FROM ${escapeStr(aggregate.tableName)}');
+
+    /// WHERE
+    final clauses = aggregate.whereClauses;
+    if (clauses.isNotEmpty) {
+      queryBuilder.write(' WHERE ${_serializeWhereClauses(clauses)}');
+    }
+
+    return '${queryBuilder.toString()}$terminator';
+  }
 
   @override
   String acceptReadQuery(Query query) {
@@ -203,25 +223,7 @@ class SqliteSerializer implements PrimitiveSerializer {
     /// WHERE
     final clauses = query.whereClauses;
     if (clauses.isNotEmpty) {
-      final sb = StringBuffer();
-
-      final hasDifferentOperators = clauses
-              .map((e) => e.operators)
-              .reduce((val, e) => val..addAll(e))
-              .length >
-          1;
-
-      for (final clause in clauses) {
-        final result =
-            acceptWhereClause(clause, canGroup: hasDifferentOperators);
-        if (sb.isEmpty) {
-          sb.write(result);
-        } else {
-          sb.write(' ${clause.operator.name} $result');
-        }
-      }
-
-      queryBuilder.write(' WHERE $sb');
+      queryBuilder.write(' WHERE ${_serializeWhereClauses(clauses)}');
     }
 
     /// ORDER BY
@@ -237,6 +239,26 @@ class SqliteSerializer implements PrimitiveSerializer {
     }
 
     return '${queryBuilder.toString()}$terminator';
+  }
+
+  String _serializeWhereClauses(List<WhereClause> clauses) {
+    final sb = StringBuffer();
+
+    final hasDifferentOperators = clauses
+            .map((e) => e.operators)
+            .reduce((val, e) => val..addAll(e))
+            .length >
+        1;
+
+    for (final clause in clauses) {
+      final result = acceptWhereClause(clause, canGroup: hasDifferentOperators);
+      if (sb.isEmpty) {
+        sb.write(result);
+      } else {
+        sb.write(' ${clause.operator.name} $result');
+      }
+    }
+    return sb.toString();
   }
 
   @override
@@ -340,21 +362,21 @@ class SqliteSerializer implements PrimitiveSerializer {
   String get terminator => ';';
 
   @override
-  dynamic acceptPrimitiveValue(dartValue) => switch (dartValue.runtimeType) {
-        const (int) || const (double) => dartValue,
-        const (List<String>) => '(${dartValue.map((e) => "'$e'").join(', ')})',
+  dynamic acceptPrimitiveValue(value) => switch (value.runtimeType) {
+        const (int) || const (double) => value,
+        const (List<String>) => '(${value.map((e) => "'$e'").join(', ')})',
         const (List<int>) ||
         const (List<num>) ||
         const (List<double>) =>
-          '(${dartValue.join(', ')})',
-        _ => "'$dartValue'"
+          '(${value.join(', ')})',
+        _ => "'$value'"
       };
 
   @override
-  String acceptWhereClauseValue(WhereClauseValue clauseVal) {
-    final field = escapeStr(clauseVal.field);
-    final value = clauseVal.comparer.value;
-    final valueOperator = clauseVal.comparer.operator;
+  String acceptWhereClauseValue(WhereClauseValue clauseValue) {
+    final field = escapeStr(clauseValue.field);
+    final value = clauseValue.comparer.value;
+    final valueOperator = clauseValue.comparer.operator;
     final wrapped = acceptPrimitiveValue(value);
 
     return switch (valueOperator) {

@@ -2,9 +2,7 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 import 'package:yaroo_cli/orm/orm.dart';
-
 import '../fixtures/orm_config.dart' as conf;
-
 import 'migrator.reflectable.dart';
 
 void main(List<String> args) async {
@@ -22,6 +20,10 @@ Future<void> runMigrator(String connectionName, String command) async {
   print('> dart ${commands.join(' ')}\n');
 
   final result = await Process.run('dart', commands);
-  stderr.write(result.stderr);
+  stdout.write(result.stdout);
+  stderr.write("""--------------------------------------------
+      \n${result.stderr}\n
+      --------------------------------------------""");
+
   expect(result.exitCode, 0);
 }

@@ -1,9 +1,14 @@
 import 'package:yaroorm/migration.dart';
+import 'package:yaroorm/src/query/aggregates.dart';
 
 import '../query/query.dart';
 import 'where.dart';
 
 abstract class PrimitiveSerializer {
+  const PrimitiveSerializer();
+
+  String acceptAggregate(AggregateFunction aggregate);
+
   String acceptReadQuery(Query query);
 
   String acceptUpdateQuery(UpdateQuery query);

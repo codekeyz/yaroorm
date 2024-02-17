@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:test/test.dart';
 import 'package:yaroorm/yaroorm.dart';
 
@@ -24,7 +25,7 @@ void runBasicE2ETest(String connectionName) {
     });
 
     test('should insert single user', () async {
-      final result = await usersTestData.first.withDriver(db.driver).save();
+      final result = await usersList.first.withDriver(db.driver).save();
       expect(result, isA<User>().having((p0) => p0.id, 'has primary key', 1));
 
       expect(await db.query<User>().all(), hasLength(1));
@@ -32,11 +33,11 @@ void runBasicE2ETest(String connectionName) {
 
     test('should insert many users', () async {
       final remainingUsers =
-          usersTestData.sublist(1).map((e) => e.to_db_data).toList();
+          usersList.sublist(1).map((e) => e.to_db_data).toList();
       final userQuery = db.query<User>();
       await userQuery.insertMany(remainingUsers);
 
-      expect(await userQuery.all(), hasLength(usersTestData.length));
+      expect(await userQuery.all(), hasLength(usersList.length));
     });
 
     test('should update user', () async {
@@ -81,7 +82,9 @@ void runBasicE2ETest(String connectionName) {
       final usersInGhana = await query.findMany();
       expect(usersInGhana.length, 10);
       expect(
-          usersInGhana.every((e) => e.homeAddress.contains('Ghana')), isTrue);
+        usersInGhana.every((e) => e.homeAddress.contains('Ghana')),
+        isTrue,
+      );
 
       expect(await query.take(4), hasLength(4));
     });
@@ -116,6 +119,55 @@ void runBasicE2ETest(String connectionName) {
           .orWhere('age', '=', 52)
           .findMany();
       expect(users.every((e) => [30, 52].contains(e.age)), isTrue);
+    });
+
+    group('aggregate function', () {
+      final query = db.query<User>().whereLike('home_address', '%%, Ghana');
+      List<User> usersInGhana = [];
+
+      setUpAll(() async {
+        usersInGhana = await query.findMany();
+        expect(usersInGhana, isNotEmpty);
+      });
+
+      test('sum', () async {
+        final manualSum = usersInGhana.map((e) => e.age).sum;
+        expect(await query.sum('age'), equals(manualSum));
+      });
+
+      test('count', () async {
+        expect(await query.count(), equals(usersInGhana.length));
+      });
+
+      test('max', () async {
+        final maxAge = usersInGhana.map((e) => e.age).max;
+        expect(await query.max('age'), equals(maxAge));
+      });
+
+      test('min', () async {
+        final minAge = usersInGhana.map((e) => e.age).min;
+        expect(await query.min('age'), equals(minAge));
+      });
+
+      test('average', () async {
+        final average = usersInGhana.map((e) => e.age).average;
+        expect(await query.average('age'), equals(average));
+      });
+
+      test('concat', () async {
+        Matcher matcher(String separator) {
+          if ([DatabaseDriverType.sqlite, DatabaseDriverType.pgsql]
+              .contains(db.driver.type)) {
+            return equals(usersInGhana.map((e) => e.age).join(separator));
+          }
+
+          return equals(
+            usersInGhana.map((e) => '${e.age}$separator').join(','),
+          );
+        }
+
+        expect(await query.groupConcat('age', ','), matcher(','));
+      });
     });
 
     test('should delete user', () async {

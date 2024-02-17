@@ -115,7 +115,7 @@ void runRelationsE2ETest(String connectionName) {
     });
 
     test('should add post for another user', () async {
-      anotherUser = await usersTestData.last.withDriver(driver).save();
+      anotherUser = await usersList.last.withDriver(driver).save();
       final user = anotherUser as User;
 
       expect(user.id, isNotNull);
