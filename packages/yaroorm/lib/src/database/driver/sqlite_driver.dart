@@ -362,21 +362,21 @@ class SqliteSerializer extends PrimitiveSerializer {
   String get terminator => ';';
 
   @override
-  dynamic acceptPrimitiveValue(dartValue) => switch (dartValue.runtimeType) {
-        const (int) || const (double) => dartValue,
-        const (List<String>) => '(${dartValue.map((e) => "'$e'").join(', ')})',
+  dynamic acceptPrimitiveValue(value) => switch (value.runtimeType) {
+        const (int) || const (double) => value,
+        const (List<String>) => '(${value.map((e) => "'$e'").join(', ')})',
         const (List<int>) ||
         const (List<num>) ||
         const (List<double>) =>
-          '(${dartValue.join(', ')})',
-        _ => "'$dartValue'"
+          '(${value.join(', ')})',
+        _ => "'$value'"
       };
 
   @override
-  String acceptWhereClauseValue(WhereClauseValue clauseVal) {
-    final field = escapeStr(clauseVal.field);
-    final value = clauseVal.comparer.value;
-    final valueOperator = clauseVal.comparer.operator;
+  String acceptWhereClauseValue(WhereClauseValue clauseValue) {
+    final field = escapeStr(clauseValue.field);
+    final value = clauseValue.comparer.value;
+    final valueOperator = clauseValue.comparer.operator;
     final wrapped = acceptPrimitiveValue(value);
 
     return switch (valueOperator) {
