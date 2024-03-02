@@ -37,10 +37,7 @@ class _YarooAppImpl implements Application {
   @override
   int get port => config.port;
 
-  Pharaoh _createPharaohInstance({
-    FutureOr<Response> Function(Object error, Request req, Response res)?
-        onException,
-  }) {
+  Pharaoh _createPharaohInstance({OnErrorCallback? onException}) {
     final pharaoh = Pharaoh()
       ..useSpanner(_spanner)
       ..viewEngine = _viewEngine;

@@ -182,14 +182,18 @@ abstract class ApplicationFactory {
   }
 
   FutureOr<Response> onApplicationException(
-      Object error, Request request, Response response) async {
-    if (error is RequestValidationError) {
-      return response.json(error.errorBody, statusCode: HttpStatus.badRequest);
+    PharaohError error,
+    Request request,
+    Response response,
+  ) async {
+    final exception = error.exception;
+    if (exception is RequestValidationError) {
+      return response.json(exception, statusCode: HttpStatus.badRequest);
     } else if (error is SpannerRouteValidatorError) {
       return response.json({
-        'errors': [error.toString()]
+        'errors': [exception]
       }, statusCode: HttpStatus.badRequest);
     }
-    return response.internalServerError(error.toString());
+    return response.internalServerError(exception.toString());
   }
 }
