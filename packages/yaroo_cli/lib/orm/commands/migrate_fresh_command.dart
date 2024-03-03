@@ -13,7 +13,7 @@ class MigrateFreshCommand extends OrmCommand {
 
   @override
   Future<void> execute(DatabaseDriver driver) async {
-    final result = await MigrationResetCommand().run();
-    if (result == 0) await MigrateCommand().run();
+    await MigrationResetCommand().execute(driver);
+    await MigrateCommand().execute(driver);
   }
 }
