@@ -19,6 +19,7 @@ class ReflectableEntity extends r.Reflectable {
           r.typeCapability,
           r.reflectedTypeCapability,
           r.subtypeQuantifyCapability,
+          r.typeAnnotationQuantifyCapability,
         );
 }
 
@@ -31,38 +32,63 @@ r.ClassMirror reflectType(Type type) {
   }
 }
 
-String getEntityTableName(Type type) => getEntityMetaData(type).table;
+String getEntityTableName(Type type) => getEntityMetaData(type).name;
 
 String getEntityPrimaryKey(Type type) => getEntityMetaData(type).primaryKey;
 
-EntityMeta getEntityMetaData(Type type) {
-  return reflectType(type).metadata.whereType<EntityMeta>().firstOrNull ??
-      EntityMeta(table: type.toString().snakeCase.toPlural().first);
+Table getEntityMetaData(Type type) {
+  return reflectType(type).metadata.whereType<Table>().firstOrNull ??
+      Table(name: type.toString().snakeCase.toPlural().first);
 }
 
 class EntityPropertyData {
-  final String dartName;
-  final String dbColumnName;
-  final Type type;
+  final bool primaryKey;
 
-  const EntityPropertyData(this.dartName, this.dbColumnName, this.type);
+  // This is the name of property on the Dart Class
+  final String dartName;
+
+  // This is the name of the property in database table
+  final String dbColumnName;
+
+  final Type type;
+  final bool nullable;
+
+  const EntityPropertyData(
+    this.dartName,
+    this.dbColumnName,
+    this.type, {
+    this.nullable = false,
+    this.primaryKey = false,
+  });
 }
 
-Map<String, EntityPropertyData> getEntityProperties(Type type,
-    {ClassMirror? classMirror}) {
+Map<String, EntityPropertyData> getEntityProperties(
+  Type type, {
+  ClassMirror? classMirror,
+}) {
   classMirror ??= reflectType(type);
 
-  final metadata = classMirror.metadata.whereType<EntityMeta>().firstOrNull;
+  final metadata = classMirror.metadata.whereType<Table>().firstOrNull;
 
   final typeProps = classMirror.declarations.values
       .whereType<VariableMirror>()
       .fold<Map<String, EntityPropertyData>>({}, (prev, curr) {
-    final propertyMeta = curr.metadata.whereType<EntityProperty>().firstOrNull;
+    final propertyMeta = curr.metadata.whereType<TableColumn>().firstOrNull;
+
     return prev
-      ..[curr.simpleName] = EntityPropertyData(curr.simpleName,
-          propertyMeta?.name ?? curr.simpleName, curr.reflectedType);
+      ..[curr.simpleName] = EntityPropertyData(
+        curr.simpleName,
+        propertyMeta?.name ?? curr.simpleName,
+        curr.reflectedType,
+        nullable: curr.type.isNullable,
+      );
   });
-  if (metadata == null || !metadata.timestamps) return typeProps;
+
+  final primaryKeyProp = metadata?.primaryKey ?? 'id';
+  typeProps['id'] =
+      EntityPropertyData('id', primaryKeyProp, int, primaryKey: true);
+
+  if (metadata == null || !metadata.enableTimestamps) return typeProps;
 
   typeProps[metadata.createdAtColumn] ??=
       EntityPropertyData('createdAt', metadata.createdAtColumn, DateTime);

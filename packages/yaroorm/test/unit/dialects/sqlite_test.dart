@@ -7,7 +7,7 @@ import '../../integration/fixtures/orm_config.dart' as db;
 import '../../integration/fixtures/test_data.dart';
 import 'sqlite_test.reflectable.dart';
 
-@EntityMeta(table: 'user_articles', primaryKey: '_id_')
+@Table(name: 'user_articles', primaryKey: '_id_')
 class Article extends Entity<int, Entity> {
   final String name;
   final int ownerId;

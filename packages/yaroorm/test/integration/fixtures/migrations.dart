@@ -1,25 +1,18 @@
 import 'package:yaroorm/migration.dart';
+import 'package:yaroorm/src/database/driver/sqlite_driver.dart';
 
 import 'test_data.dart';
+import 'migrations.reflectable.dart';
 
 class AddUsersTable extends Migration {
   @override
   void up(List<Schema> schemas) {
-    final userSchema = Schema.create('users', (table) {
-      return table
-        ..id()
-        ..string('firstname')
-        ..string('lastname')
-        ..integer('age')
-        ..string('home_address');
-    });
-
-    schemas.add(userSchema);
+    schemas.add(Schema.fromEntity(User));
   }
 
   @override
   void down(List<Schema> schemas) {
-    schemas.add(Schema.dropIfExists('users'));
+    schemas.add(Schema.dropIfExists(User));
   }
 }
 
@@ -55,6 +48,15 @@ class AddPostsTable extends Migration {
   void down(List<Schema> schemas) {
     schemas.add(Schema.dropIfExists('post_comments'));
 
-    schemas.add(Schema.dropIfExists('posts'));
+    schemas.add(Schema.dropIfExists(Post));
   }
+}
+
+void main() {
+  initializeReflectable();
+
+  final schema = Schema.fromEntity(User);
+
+  final script = schema.toScript(SqliteTableBlueprint());
+  print(script);
 }

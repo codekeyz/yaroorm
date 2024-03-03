@@ -36,9 +36,10 @@ abstract class TableBlueprint {
 
   void blob(String name, {bool nullable = false, String? defaultValue});
 
-  void timestamps(
-      {String createdAt = entityCreatedAtColumnName,
-      String updatedAt = entityUpdatedAtColumnName});
+  void timestamps({
+    String createdAt = entityCreatedAtColumnName,
+    String updatedAt = entityUpdatedAtColumnName,
+  });
 
   /// NUMBER TYPES
   /// ----------------------------------------------------------------
@@ -181,23 +182,25 @@ class Schema {
       _bluePrintFunc!.call(table).createScript(tableName);
 
   static Schema fromEntity(Type entity) {
-    final meta = getEntityMetaData(entity);
-    final props = getEntityProperties(entity);
-    final tableName = getEntityTableName(entity);
-
-    TableBlueprint make(TableBlueprint table, EntityPropertyData data) {
+    make(TableBlueprint table, EntityPropertyData data) {
       return switch (data.type) {
-        const (int) => table..integer(data.dbColumnName),
-        const (double) || const (num) => table..double(data.dbColumnName),
-        const (DateTime) => table..datetime(data.dbColumnName),
-        _ => table..string(data.dbColumnName),
+        const (int) => table
+          ..integer(data.dbColumnName, nullable: data.nullable),
+        const (double) || const (num) => table
+          ..double(data.dbColumnName, nullable: data.nullable),
+        const (DateTime) => table
+          ..datetime(data.dbColumnName, nullable: data.nullable),
+        _ => table..string(data.dbColumnName, nullable: data.nullable),
       };
     }
 
-    return Schema.create(tableName, (table) {
-      table = table..id(name: meta.primaryKey);
-      for (final entry in props.entries) {
-        table = make(table, entry.value);
+    final props = getEntityProperties(entity);
+    final primaryKey = props.values.firstWhere((e) => e.primaryKey);
+
+    return Schema.create(getEntityTableName(entity), (table) {
+      table.id(name: primaryKey.dbColumnName);
+      for (final prop in props.values.where((e) => !e.primaryKey)) {
+        make(table, prop);
       }
       return table;
     });
@@ -206,7 +209,10 @@ class Schema {
   static Schema create(String name, TableBluePrintFunc func) =>
       Schema._(name, func);
 
-  static Schema dropIfExists(String name) => _DropSchema(name);
+  static Schema dropIfExists(dynamic value) {
+    if (value is! String) value = getEntityTableName(value);
+    return _DropSchema(value);
+  }
 
   static Schema rename(String from, String to) => _RenameSchema(from, to);
 }
@@ -267,22 +273,30 @@ class ForeignKey {
     this.constraint,
   });
 
-  ForeignKey actions(
-          {ForeignKeyAction? onUpdate, ForeignKeyAction? onDelete}) =>
-      ForeignKey(table, column,
-          foreignTable: foreignTable,
-          foreignTableColumn: foreignTableColumn,
-          nullable: nullable,
-          constraint: constraint,
-          onUpdate: onUpdate ?? this.onUpdate,
-          onDelete: onDelete ?? this.onDelete);
+  ForeignKey actions({
+    ForeignKeyAction? onUpdate,
+    ForeignKeyAction? onDelete,
+  }) =>
+      ForeignKey(
+        table,
+        column,
+        foreignTable: foreignTable,
+        foreignTableColumn: foreignTableColumn,
+        nullable: nullable,
+        constraint: constraint,
+        onUpdate: onUpdate ?? this.onUpdate,
+        onDelete: onDelete ?? this.onDelete,
+      );
 
-  ForeignKey constrained({String? name}) => ForeignKey(table, column,
-      foreignTable: foreignTable,
-      foreignTableColumn: foreignTableColumn,
-      nullable: nullable,
-      onUpdate: onUpdate,
-      onDelete: onDelete,
-      constraint: name ??
-          'fk_${table}_${column}_to_${foreignTable}_$foreignTableColumn');
+  ForeignKey constrained({String? name}) => ForeignKey(
+        table,
+        column,
+        foreignTable: foreignTable,
+        foreignTableColumn: foreignTableColumn,
+        nullable: nullable,
+        onUpdate: onUpdate,
+        onDelete: onDelete,
+        constraint: name ??
+            'fk_${table}_${column}_to_${foreignTable}_$foreignTableColumn',
+      );
 }

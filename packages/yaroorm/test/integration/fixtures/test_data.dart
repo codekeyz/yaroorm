@@ -5,7 +5,7 @@ class User extends Entity<int, User> {
   String lastname;
   int age;
 
-  @EntityProperty(name: 'home_address')
+  @TableColumn(name: 'home_address')
   String homeAddress;
 
   User({
@@ -18,7 +18,7 @@ class User extends Entity<int, User> {
   HasMany<Post> get posts => hasMany<Post>();
 }
 
-@EntityMeta(table: 'posts', timestamps: true)
+@Table(name: 'posts', enableTimestamps: true)
 class Post extends Entity<int, Post> {
   String title;
   String description;
@@ -30,7 +30,7 @@ class Post extends Entity<int, Post> {
   HasMany<PostComment> get comments => hasMany<PostComment>();
 }
 
-@EntityMeta(table: 'post_comments', timestamps: true)
+@Table(name: 'post_comments', enableTimestamps: true)
 class PostComment extends Entity<String, PostComment> {
   final String comment;
   final int? postId;

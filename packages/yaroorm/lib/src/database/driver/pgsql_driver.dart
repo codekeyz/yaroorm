@@ -285,18 +285,25 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   }
 
   @override
-  void float(String name,
-      {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+  void float(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+    int? precision,
+    int? scale,
+  }) {
     statements.add(makeColumn(name, 'DOUBLE PRECISION',
         nullable: nullable, defaultValue: defaultValue));
   }
 
   @override
-  void double(String name,
-      {bool nullable = false,
-      num? defaultValue,
-      int? precision = 10,
-      int? scale = 0}) {
+  void double(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+    int? precision = 10,
+    int? scale = 0,
+  }) {
     statements.add(makeColumn(name, 'NUMERIC($precision, $scale)',
         nullable: nullable, defaultValue: defaultValue));
   }

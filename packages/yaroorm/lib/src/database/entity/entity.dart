@@ -35,9 +35,9 @@ abstract class Entity<PkType, Model extends Object> {
 
   DateTime? updatedAt;
 
-  EntityMeta? _entityMetaCache;
+  Table? _entityMetaCache;
 
-  EntityMeta get entityMeta => _entityMetaCache ??= getEntityMetaData(Model);
+  Table get entityMeta => _entityMetaCache ??= getEntityMetaData(Model);
 
   DriverContract _driver = DB.defaultDriver;
 
@@ -60,7 +60,7 @@ abstract class Entity<PkType, Model extends Object> {
   Future<Model> save() async {
     if (_isLoadedFromDB) {
       assert(id != null, 'Id cannot be null when loaded from database');
-      if (entityMeta.timestamps) updatedAt = DateTime.now().toUtc();
+      if (entityMeta.enableTimestamps) updatedAt = DateTime.now().toUtc();
       await query.update(where: _whereId, values: to_db_data).execute();
       return this as Model;
     }
@@ -73,7 +73,7 @@ abstract class Entity<PkType, Model extends Object> {
 
   // ignore: non_constant_identifier_names
   Map<String, dynamic> get to_db_data {
-    if (entityMeta.timestamps) {
+    if (entityMeta.enableTimestamps) {
       updatedAt = DateTime.now().toUtc();
       createdAt ??= updatedAt;
     }
@@ -92,22 +92,22 @@ abstract class Entity<PkType, Model extends Object> {
 }
 
 @Target({TargetKind.classType})
-class EntityMeta {
-  final String table;
+class Table {
+  final String name;
 
   final String primaryKey;
 
-  final bool timestamps;
+  final bool enableTimestamps;
 
   final String createdAtColumn;
   final String updatedAtColumn;
 
   final List<EntityTypeConverter>? converters;
 
-  const EntityMeta({
-    required this.table,
+  const Table({
+    required this.name,
     this.primaryKey = 'id',
-    this.timestamps = false,
+    this.enableTimestamps = false,
     this.createdAtColumn = entityCreatedAtColumnName,
     this.updatedAtColumn = entityUpdatedAtColumnName,
     this.converters,
@@ -115,7 +115,7 @@ class EntityMeta {
 }
 
 @Target({TargetKind.field})
-class EntityProperty {
+class TableColumn {
   final String? name;
-  const EntityProperty({this.name});
+  const TableColumn({this.name});
 }
