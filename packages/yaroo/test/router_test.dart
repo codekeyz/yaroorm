@@ -141,9 +141,9 @@ void main() {
 
         expect(group.paths, [
           '[ALL]: /foo',
-          '[GET]: /foo/bar/',
+          '[GET]: /foo/bar',
           '[GET]: /foo/bar/<barId>',
-          '[POST]: /foo/bar/',
+          '[POST]: /foo/bar',
           '[PUT]: /foo/bar/<barId>',
           '[PATCH]: /foo/bar/<barId>',
           '[DELETE]: /foo/bar/<barId>'
@@ -156,9 +156,9 @@ void main() {
         ]);
 
         expect(group.paths, [
-          '[GET]: /foo/bar/',
+          '[GET]: /foo/bar',
           '[GET]: /foo/bar/<barId>',
-          '[POST]: /foo/bar/',
+          '[POST]: /foo/bar',
           '[PUT]: /foo/bar/<barId>',
           '[PATCH]: /foo/bar/<barId>',
           '[DELETE]: /foo/bar/<barId>'
@@ -188,6 +188,29 @@ void main() {
           '[PUT]: /merchants/users/update',
           '[ALL]: /merchants/users/hello',
           '[GET]: /merchants/users/hello/world'
+        ]);
+
+        var route = Route.middleware('api').routes([
+          Route.get('/get', (TestController, #index)),
+        ]);
+
+        expect(route.paths, ['[ALL]: /', '[GET]: /get']);
+
+        route = Route.group('users', [route]);
+        expect(route.paths, ['[ALL]: /users', '[GET]: /users/get']);
+
+        route = Route.group('admin', [
+          route,
+          Route.middleware('api').routes([
+            Route.get('/boys', (TestController, #index)),
+          ])
+        ]);
+
+        expect(route.paths, [
+          '[ALL]: /admin/users',
+          '[GET]: /admin/users/get',
+          '[ALL]: /admin',
+          '[GET]: /admin/boys'
         ]);
       });
     });
