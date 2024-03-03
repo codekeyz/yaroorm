@@ -180,6 +180,29 @@ class Schema {
   String toScript(TableBlueprint table) =>
       _bluePrintFunc!.call(table).createScript(tableName);
 
+  static Schema fromEntity(Type entity) {
+    final meta = getEntityMetaData(entity);
+    final props = getEntityProperties(entity);
+    final tableName = getEntityTableName(entity);
+
+    TableBlueprint make(TableBlueprint table, EntityPropertyData data) {
+      return switch (data.type) {
+        const (int) => table..integer(data.dbColumnName),
+        const (double) || const (num) => table..double(data.dbColumnName),
+        const (DateTime) => table..datetime(data.dbColumnName),
+        _ => table..string(data.dbColumnName),
+      };
+    }
+
+    return Schema.create(tableName, (table) {
+      table = table..id(name: meta.primaryKey);
+      for (final entry in props.entries) {
+        table = make(table, entry.value);
+      }
+      return table;
+    });
+  }
+
   static Schema create(String name, TableBluePrintFunc func) =>
       Schema._(name, func);
 
