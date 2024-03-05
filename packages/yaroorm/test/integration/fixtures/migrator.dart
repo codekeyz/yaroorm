@@ -20,9 +20,7 @@ Future<void> runMigrator(String connectionName, String command) async {
   print('> dart ${commands.join(' ')}\n');
 
   final result = await Process.run('dart', commands);
-  stderr.write("""--------------------------------------------
-      \n${result.stderr}\n
-      --------------------------------------------""");
+  stderr.write(result.stderr);
 
   expect(result.exitCode, 0);
 }
