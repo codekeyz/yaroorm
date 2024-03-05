@@ -90,6 +90,8 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
   final Set<String> fieldSelections;
   final Set<OrderBy> orderByProps;
   final List<WhereClause<EntityType>> whereClauses;
+
+  // ignore: prefer_final_fields
   int? _limit;
 
   int? get limit => _limit;
