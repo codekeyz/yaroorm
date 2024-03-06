@@ -55,8 +55,8 @@ class AddPostsTable extends Migration {
 void main() {
   initializeReflectable();
 
-  final schema = Schema.fromEntity(User);
+  // final schema = Schema.fromEntity(User);
 
-  final script = schema.toScript(SqliteTableBlueprint());
-  print(script);
+  // final script = schema.toScript(SqliteTableBlueprint());
+  // print(script);
 }
