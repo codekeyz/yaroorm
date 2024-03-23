@@ -1,10 +1,8 @@
 import 'package:meta/meta.dart';
 import 'package:yaroorm/src/query/aggregates.dart';
+import 'package:yaroorm/yaroorm.dart';
 
-import '../database/driver/driver.dart';
-import '../database/entity/entity.dart';
 import '../primitives/where.dart';
-import '../reflection/reflector.dart';
 
 part 'query_impl.dart';
 
@@ -33,9 +31,10 @@ mixin LimitOperation<ReturnType> {
 }
 
 mixin UpdateOperation<Result> {
-  UpdateQuery update(
-      {required WhereClause<Result> Function(Query query) where,
-      required Map<String, dynamic> values});
+  UpdateQuery update({
+    required WhereClause<Result> Function(Query query) where,
+    required Map<String, dynamic> values,
+  });
 }
 
 mixin DeleteOperation<Result> {
@@ -91,6 +90,8 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
   final Set<OrderBy> orderByProps;
   final List<WhereClause<EntityType>> whereClauses;
 
+  static final Map<Type, DBEntity> _typedata = {};
+
   // ignore: prefer_final_fields
   int? _limit;
 
@@ -102,9 +103,9 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
         whereClauses = [],
         _limit = null;
 
-  static Query<Model> table<Model>([String? tableName]) {
+  static Query<Model> table<Model extends Entity>([String? tableName]) {
     if (Model != Entity && Model != dynamic) {
-      tableName ??= getEntityTableName(Model);
+      tableName ??= getEntityTableName<Model>();
     }
     assert(tableName != null, 'Either provide Entity Type or tableName');
     return QueryImpl<Model>(tableName!);
@@ -135,6 +136,21 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
       whereClause: where(this),
       data: values,
     ).driver(runner);
+  }
+
+  static void addTypeDef<T extends Entity>(DBEntity entity) {
+    var type = T;
+    if (type == Entity) type = entity.dartType;
+    if (type == Entity) throw Exception();
+    _typedata[type] = entity;
+  }
+
+  @internal
+  static DBEntity getEntity<T extends Entity>({Type? type}) {
+    type ??= T;
+    return _typedata.containsKey(type)
+        ? _typedata[type]!
+        : throw Exception('Type Data not found for $type');
   }
 }
 

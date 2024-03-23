@@ -2,7 +2,7 @@ part of 'query.dart';
 
 enum OrderByDirection { asc, desc }
 
-class QueryImpl<Result> extends Query<Result> {
+class QueryImpl<Result extends Entity> extends Query<Result> {
   QueryImpl(super.tableName);
 
   @override
@@ -57,13 +57,13 @@ class QueryImpl<Result> extends Query<Result> {
   @override
   Future<Result?> get([dynamic id]) async {
     if (id != null) {
-      return whereEqual(getEntityPrimaryKey(Result), id).findOne();
+      return whereEqual(getEntityPrimaryKey<Result>(), id).findOne();
     }
     return (await take(1)).firstOrNull;
   }
 
   /// [T] is the expected type passed to [Query] via Query<T>
-  T _wrapRawResult<T>(Map<String, dynamic>? result) {
+  T _wrapRawResult<T extends Entity>(Map<String, dynamic>? result) {
     if (T == dynamic || result == null) return result as dynamic;
     return (serializedPropsToEntity<T>(
       result,

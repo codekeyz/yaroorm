@@ -1,6 +1,7 @@
 // ignore_for_file: constant_identifier_names
 
 import 'package:yaroorm/src/query/aggregates.dart';
+import 'package:yaroorm/yaroorm.dart';
 
 import '../query/query.dart';
 
@@ -156,8 +157,6 @@ abstract class WhereClause<Result>
     return _WhereClauseImpl<Result>(query, operator: operator)
       ..clauseValue = value;
   }
-
-  Future<void> update(Map<String, dynamic> values);
 
   Future<void> delete();
 

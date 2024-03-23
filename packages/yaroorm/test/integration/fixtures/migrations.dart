@@ -51,12 +51,3 @@ class AddPostsTable extends Migration {
     schemas.add(Schema.dropIfExists(Post));
   }
 }
-
-void main() {
-  initializeReflectable();
-
-  // final schema = Schema.fromEntity(User);
-
-  // final script = schema.toScript(SqliteTableBlueprint());
-  // print(script);
-}

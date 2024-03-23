@@ -1,100 +1,64 @@
-import 'package:collection/collection.dart';
-import 'package:grammer/grammer.dart';
-import 'package:recase/recase.dart';
-import 'package:reflectable/mirrors.dart';
-import 'package:reflectable/reflectable.dart' as r;
+import 'package:yaroorm/yaroorm.dart';
 
-import '../database/entity/entity.dart';
-import 'util.dart';
+String getEntityTableName<T extends Entity>() => Query.getEntity<T>().tableName;
 
-class ReflectableEntity extends r.Reflectable {
-  const ReflectableEntity()
-      : super(
-          r.declarationsCapability,
-          r.metadataCapability,
-          r.invokingCapability,
-          r.newInstanceCapability,
+String getEntityPrimaryKey<T extends Entity>() =>
+    Query.getEntity<T>().primaryKey.columnName;
 
-          ///
-          r.typeCapability,
-          r.reflectedTypeCapability,
-          r.subtypeQuantifyCapability,
-          r.typeAnnotationQuantifyCapability,
-        );
+typedef EntityInstanceReflector<T> = EntityMirror<T> Function(T instance);
+
+typedef EntityInstanceBuilder<T> = T Function(Map<Symbol, dynamic> args);
+
+abstract class EntityMirror<T> {
+  final T instance;
+  const EntityMirror(this.instance);
+
+  Object? get(Symbol field);
 }
 
-r.ClassMirror reflectType(Type type) {
-  try {
-    return entity.reflectType(type) as r.ClassMirror;
-  } catch (e) {
-    throw EntityValidationException(
-        'Unable to reflect on $type. Re-run your build command');
-  }
+class DBEntity<T extends Entity> {
+  Type get dartType => T;
+
+  final String tableName;
+  final List<DBEntityField> columns;
+
+  final EntityInstanceReflector<T> mirror;
+  final EntityInstanceBuilder<T> build;
+
+  final List<EntityTypeConverter> converters;
+
+  final bool timestampsEnabled;
+
+  DBEntityField get primaryKey => columns.firstWhere((e) => e.primaryKey);
+
+  const DBEntity(
+    this.tableName, {
+    this.columns = const [],
+    required this.mirror,
+    required this.build,
+    this.timestampsEnabled = false,
+    this.converters = const [],
+  });
 }
 
-String getEntityTableName(Type type) => getEntityMetaData(type).name;
+class DBEntityField {
+  /// dart name for property on Entity class
+  final Symbol dartName;
 
-String getEntityPrimaryKey(Type type) => getEntityMetaData(type).primaryKey;
+  /// Column name in the database
+  final String columnName;
 
-Table getEntityMetaData(Type type) {
-  return reflectType(type).metadata.whereType<Table>().firstOrNull ??
-      Table(name: type.toString().snakeCase.toPlural().first);
-}
+  /// Dart primitive type
+  final Type type;
 
-class EntityPropertyData {
+  final bool nullable;
   final bool primaryKey;
 
-  // This is the name of property on the Dart Class
-  final String dartName;
-
-  // This is the name of the property in database table
-  final String dbColumnName;
-
-  final Type type;
-  final bool nullable;
-
-  const EntityPropertyData(
-    this.dartName,
-    this.dbColumnName,
-    this.type, {
-    this.nullable = false,
+  const DBEntityField(
+    this.columnName,
+    this.type,
+    this.dartName, {
+    required this.nullable,
     this.primaryKey = false,
   });
-}
-
-Map<String, EntityPropertyData> getEntityProperties(
-  Type type, {
-  ClassMirror? classMirror,
-}) {
-  classMirror ??= reflectType(type);
-
-  final metadata = classMirror.metadata.whereType<Table>().firstOrNull;
-
-  final typeProps = classMirror.declarations.values
-      .whereType<VariableMirror>()
-      .fold<Map<String, EntityPropertyData>>({}, (prev, curr) {
-    final propertyMeta = curr.metadata.whereType<TableColumn>().firstOrNull;
-
-    return prev
-      ..[curr.simpleName] = EntityPropertyData(
-        curr.simpleName,
-        propertyMeta?.name ?? curr.simpleName,
-        curr.reflectedType,
-        nullable: curr.type.isNullable,
-      );
-  });
-
-  final primaryKeyProp = metadata?.primaryKey ?? 'id';
-  typeProps['id'] =
-      EntityPropertyData('id', primaryKeyProp, int, primaryKey: true);
-
-  if (metadata == null || !metadata.enableTimestamps) return typeProps;
-
-  typeProps[metadata.createdAtColumn] ??=
-      EntityPropertyData('createdAt', metadata.createdAtColumn, DateTime);
-
-  typeProps[metadata.updatedAtColumn] ??=
-      EntityPropertyData('updatedAt', metadata.updatedAtColumn, DateTime);
-
-  return typeProps;
 }

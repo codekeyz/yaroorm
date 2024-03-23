@@ -26,8 +26,10 @@ final class SqliteDriver implements DatabaseDriver {
   SqliteDriver(this.config);
 
   @override
-  Future<DatabaseDriver> connect(
-      {int? maxConnections, bool? singleConnection}) async {
+  Future<DatabaseDriver> connect({
+    int? maxConnections,
+    bool? singleConnection,
+  }) async {
     assert(maxConnections == null, 'Sqlite does not support max connections');
     assert(
         singleConnection == null, 'Sqlite does not support single connection');
@@ -529,9 +531,10 @@ class SqliteTableBlueprint extends TableBlueprint {
   }
 
   @override
-  void timestamps(
-      {String createdAt = entityCreatedAtColumnName,
-      String updatedAt = entityUpdatedAtColumnName}) {
+  void timestamps({
+    String createdAt = 'createdAt',
+    String updatedAt = 'updatedAt',
+  }) {
     timestamp(createdAt);
     timestamp(updatedAt);
   }
@@ -710,15 +713,7 @@ class SqliteTableBlueprint extends TableBlueprint {
   }
 
   @override
-  void foreign<Model extends Entity, ReferenceModel extends Entity>({
-    String? column,
-    ForeignKey Function(ForeignKey fkey)? onKey,
-  }) {
-    late ForeignKey result;
-    callback(ForeignKey fkey) => result = onKey?.call(fkey) ?? fkey;
-
-    super.foreign<Model, ReferenceModel>(column: column, onKey: callback);
-    final statement = szler.acceptForeignKey(this, result);
-    _foreignKeys.add(statement);
+  void foreign(ForeignKey key) {
+    _foreignKeys.add(szler.acceptForeignKey(this, key));
   }
 }

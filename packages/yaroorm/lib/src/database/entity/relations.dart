@@ -22,6 +22,11 @@ abstract class EntityRelation<RelatedModel extends Entity> {
   EntityRelation(this.owner)
       : _query = Query.table<RelatedModel>().driver(owner._driver);
 
+  Object get ownerId {
+    final typeData = Query.getEntity(type: owner.runtimeType);
+    return typeData.mirror.call(owner).get(typeData.primaryKey.dartName)!;
+  }
+
   DriverContract get _driver => owner._driver;
 
   get();
@@ -36,22 +41,21 @@ class HasOne<RelatedModel extends Entity> extends EntityRelation<RelatedModel>
   HasOne(this.foreignKey, super._owner);
 
   Future<RelatedModel> set(RelatedModel model) async {
-    model.withDriver(_driver);
-
-    final data = model.to_db_data..[foreignKey] = owner.id!;
-    data[model.entityMeta.primaryKey] = await _query.insert(data);
-    return serializedPropsToEntity<RelatedModel>(
-      data,
-      converters: _driver.typeconverters,
-    ).withDriver(_driver) as RelatedModel;
+    throw Exception();
+    // final data = model.to_db_data..[foreignKey] = ownerId;
+    // data[model.entityMeta.primaryKey] = await _query.insert(data);
+    // return serializedPropsToEntity<RelatedModel>(
+    //   data,
+    //   converters: _driver.typeconverters,
+    // ).withDriver(_driver) as RelatedModel;
   }
 
   @override
   Future<RelatedModel?> get() =>
-      _query.whereEqual(foreignKey, owner.id!).findOne();
+      _query.whereEqual(foreignKey, ownerId).findOne();
 
   @override
-  Future<void> delete() => _query.whereEqual(foreignKey, owner.id!).delete();
+  Future<void> delete() => _query.whereEqual(foreignKey, ownerId).delete();
 }
 
 class HasMany<RelatedModel extends Entity> extends EntityRelation<RelatedModel>
@@ -61,15 +65,16 @@ class HasMany<RelatedModel extends Entity> extends EntityRelation<RelatedModel>
   HasMany(this.foreignKey, super.owner);
 
   @override
-  Future<List<RelatedModel>> get() =>
-      _query.whereEqual(foreignKey, owner.id!).findMany();
+  Future<List<RelatedModel>> get() {
+    return _query.whereEqual(foreignKey, ownerId).findMany();
+  }
 
   Future<RelatedModel?> first() =>
-      _query.whereEqual(foreignKey, owner.id!).findOne();
+      _query.whereEqual(foreignKey, ownerId).findOne();
 
   Map<String, dynamic> _serializeModel(RelatedModel model) {
-    model.withDriver(_driver);
-    return model.to_db_data..[foreignKey] = owner.id!;
+    // model.withDriver(_driver);
+    return model.to_db_data..[foreignKey] = ownerId;
   }
 
   Future<void> add(RelatedModel model) => _query.insert(_serializeModel(model));
@@ -78,5 +83,5 @@ class HasMany<RelatedModel extends Entity> extends EntityRelation<RelatedModel>
       _query.insertMany(model.map(_serializeModel).toList());
 
   @override
-  Future<void> delete() => _query.whereEqual(foreignKey, owner.id!).delete();
+  Future<void> delete() => _query.whereEqual(foreignKey, ownerId).delete();
 }

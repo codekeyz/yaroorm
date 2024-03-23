@@ -52,74 +52,41 @@ Map<Type, EntityTypeConverter> _combineConverters(
   };
 }
 
-Map<String, dynamic> _serializeEntityProps<T extends Entity>(
-  T instance, {
+Map<String, dynamic> _serializeEntityProps<Model extends Entity>(
+  Model instance, {
   List<EntityTypeConverter> converters = const [],
 }) {
-  final entityMeta = getEntityMetaData(instance.runtimeType);
-  final entityProperties = getEntityProperties(instance.runtimeType);
-  if (instance.id != null) {
-    entityProperties['id'] = EntityPropertyData(
-        'id', entityMeta.primaryKey, instance.id.runtimeType);
-  }
+  final entity = Query.getEntity<Model>();
 
-  final instanceMirror = entity.reflect(instance);
-  final mappedConverters =
-      _combineConverters(entityMeta.converters ?? [], converters);
+  final instanceMirror = entity.mirror(instance);
+  final allConverters = _combineConverters(entity.converters, converters);
 
   /// database value conversion back to Dart Types
-  toDartValue(MapEntry<String, EntityPropertyData> entry) {
-    final value = instanceMirror.invokeGetter(entry.key);
-    final typeConverter = mappedConverters[entry.value.type];
+  toDartValue(DBEntityField field) {
+    final value = instanceMirror.get(field.dartName);
+    final typeConverter = allConverters[field.type];
     return typeConverter == null ? value : typeConverter.toDbType(value);
   }
 
   return {
-    for (final entry in entityProperties.entries)
-      entry.value.dbColumnName: toDartValue(entry),
+    for (final entry in entity.columns) entry.columnName: toDartValue(entry),
   };
 }
 
-Entity serializedPropsToEntity<Model>(
+Entity serializedPropsToEntity<Model extends Entity>(
   final Map<String, dynamic> json, {
   List<EntityTypeConverter> converters = const [],
 }) {
-  final mirror = reflectEntity<Model>();
-  final entityMeta = getEntityMetaData(Model);
-  final entityProperties = getEntityProperties(Model);
-  final constructorMethod = mirror.declarations.entries
-      .firstWhereOrNull((e) => e.key == '$Model')
-      ?.value as MethodMirror;
-  final constructorParams = constructorMethod.parameters;
+  final entity = Query.getEntity<Model>();
+  final allConverters = _combineConverters(entity.converters, converters);
 
-  final mappedConverters =
-      _combineConverters(entityMeta.converters ?? [], converters);
-
-  /// conversion to Database compatible types using [EntityTypeConverter]
-  final transformedRecordMap = <String, dynamic>{};
-  for (final entry in entityProperties.entries) {
-    final value = json[entry.value.dbColumnName];
-    final typeConverter = mappedConverters[entry.value.type];
-    transformedRecordMap[entry.value.dartName] =
+  final resultsMap = <Symbol, dynamic>{};
+  for (final entry in entity.columns) {
+    final value = json[entry.columnName];
+    final typeConverter = allConverters[entry.type];
+    resultsMap[entry.dartName] =
         typeConverter == null ? value : typeConverter.fromDbType(value);
   }
 
-  final namedDeps = constructorParams
-      .where((e) => e.isNamed)
-      .map((e) =>
-          (name: e.simpleName, value: transformedRecordMap[e.simpleName]))
-      .fold<Map<Symbol, dynamic>>(
-          {}, (prev, e) => prev..[Symbol(e.name)] = e.value);
-
-  final dependencies = constructorParams
-      .where((e) => !e.isNamed)
-      .map((e) => transformedRecordMap[e.simpleName])
-      .toList();
-
-  final newEntityInstance = mirror.newInstance('', dependencies, namedDeps);
-  return (newEntityInstance as Entity)
-    ..id = json[entityMeta.primaryKey]
-    ..createdAt = transformedRecordMap[entityMeta.createdAtColumn]
-    ..updatedAt = transformedRecordMap[entityMeta.updatedAtColumn]
-    .._isLoadedFromDB = true;
+  return entity.build(resultsMap);
 }
