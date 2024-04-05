@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:mason_logger/mason_logger.dart';
+import 'package:yaroo_cli/src/migration.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import '../../src/logger.dart';
 import '../_misc.dart';
-import '../orm.dart';
 import 'command.dart';
 
 class MigrateCommand extends OrmCommand {
@@ -39,9 +39,8 @@ class MigrateCommand extends OrmCommand {
           await txnDriver.execute(sql);
         }
 
-        await Query.table(migrationTableName)
-            .driver(txnDriver)
-            .insert(MigrationData(fileName, batchNos).to_db_data);
+        await MigrationQuery.driver(driver)
+            .create(migration: fileName, batch: batchNos);
 
         print('✔ done:   $fileName');
       });

@@ -1,18 +1,11 @@
-import 'package:yaroorm/migration.dart';
+import 'package:yaroo_cli/src/migration.dart';
 import 'package:yaroorm/yaroorm.dart';
-
-final _migrationsSchema = Schema.create('migrations', ($table) {
-  return $table
-    ..id()
-    ..string('migration')
-    ..integer('batch');
-});
 
 Future<void> ensureMigrationsTableReady(DatabaseDriver driver) async {
   final hasTable = await driver.hasTable(DB.config.migrationsTable);
   if (hasTable) return;
 
-  final script = _migrationsSchema.toScript(driver.blueprint);
+  final script = MigrationDataSchema.toScript(driver.blueprint);
   await driver.execute(script);
 }
 
@@ -22,7 +15,7 @@ Future<bool> hasAlreadyMigratedScript(
 ) async {
   final result = await Query.table(DB.config.migrationsTable)
       .driver(driver)
-      .whereEqual('migration', scriptName)
+      .equal('migration', scriptName)
       .findOne();
   return result != null;
 }

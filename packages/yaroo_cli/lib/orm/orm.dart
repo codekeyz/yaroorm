@@ -9,13 +9,6 @@ import 'commands/migrate_command.dart';
 import 'commands/migrate_reset_command.dart';
 import 'commands/migrate_rollback_command.dart';
 
-class MigrationData extends Entity<int, MigrationData> {
-  final String migration;
-  final int batch;
-
-  MigrationData(this.migration, this.batch);
-}
-
 const executableName = 'yaroo orm';
 const packageName = 'yaroo_cli';
 const description = 'yaroorm command-line tool';

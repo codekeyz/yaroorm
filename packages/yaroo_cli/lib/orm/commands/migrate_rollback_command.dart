@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart';
+import 'package:yaroo_cli/src/migration.dart';
 import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import '../_misc.dart';
-import '../orm.dart';
 import 'command.dart';
 
 class MigrationRollbackCommand extends OrmCommand {
@@ -22,10 +22,8 @@ class MigrationRollbackCommand extends OrmCommand {
     final lastBatchNumber =
         await getLastBatchNumber(driver, migrationTableName);
 
-    final entries = await DB
-        .connection(dbConnection)
-        .query<MigrationData>(migrationTableName)
-        .whereEqual('batch', lastBatchNumber)
+    final entries = await MigrationQuery.driver(driver)
+        .equal('batch', lastBatchNumber)
         .findMany();
 
     /// rollbacks start from the last class listed in the migrations list
@@ -66,7 +64,7 @@ Future<void> processRollbacks(
 
       await Query.table(
         DB.config.migrationsTable,
-      ).driver(transactor).whereEqual('id', rollback.entry.id!).delete();
+      ).driver(transactor).equal('id', rollback.entry.id).delete();
     });
 
     print('✔ rolled back: ${rollback.entry.migration}');
