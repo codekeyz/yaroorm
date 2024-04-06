@@ -29,7 +29,10 @@ class DBEntity<T extends Entity> {
 
   final bool timestampsEnabled;
 
-  DBEntityField get primaryKey => columns.firstWhere((e) => e.primaryKey);
+  PrimaryKeyField get primaryKey => columns.whereType<PrimaryKeyField>().first;
+
+  List<DBEntityField> get editableColumns =>
+      columns.where((e) => e != primaryKey).toList();
 
   const DBEntity(
     this.tableName, {
@@ -41,7 +44,7 @@ class DBEntity<T extends Entity> {
   });
 }
 
-class DBEntityField {
+final class DBEntityField {
   /// dart name for property on Entity class
   final Symbol dartName;
 
@@ -52,13 +55,23 @@ class DBEntityField {
   final Type type;
 
   final bool nullable;
-  final bool primaryKey;
 
-  const DBEntityField(
-    this.columnName,
-    this.type,
-    this.dartName, {
-    required this.nullable,
-    this.primaryKey = false,
-  });
+  bool get primaryKey => false;
+
+  const DBEntityField(this.columnName, this.type, this.dartName,
+      {this.nullable = false});
+}
+
+final class PrimaryKeyField extends DBEntityField {
+  final bool autoIncrement;
+
+  const PrimaryKeyField(
+    super.columnName,
+    super.type,
+    super.dartName, {
+    this.autoIncrement = true,
+  }) : super(nullable: false);
+
+  @override
+  bool get primaryKey => true;
 }

@@ -46,8 +46,8 @@ extension MigrationDataQueryExtension on Query<MigrationData> {
   Future<MigrationData> create({
     required String migration,
     required int batch,
-  }) async {
-    return MigrationQuery.insert({#migration: migration, #batch: batch});
+  }) {
+    return insert({#migration: migration, #batch: batch});
   }
 
   Future<void> update({
@@ -65,7 +65,7 @@ extension MigrationDataQueryExtension on Query<MigrationData> {
       data: conformToDbTypes(props, converters),
     );
 
-    await MigrationQuery.accept<UpdateQuery>(update);
+    await accept<UpdateQuery>(update);
   }
 }
 

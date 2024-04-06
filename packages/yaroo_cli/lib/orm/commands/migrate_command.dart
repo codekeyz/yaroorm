@@ -39,7 +39,7 @@ class MigrateCommand extends OrmCommand {
           await txnDriver.execute(sql);
         }
 
-        await MigrationQuery.driver(driver)
+        await MigrationQuery.driver(txnDriver)
             .create(migration: fileName, batch: batchNos);
 
         print('✔ done:   $fileName');

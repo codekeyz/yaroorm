@@ -1,10 +1,10 @@
 part of 'where.dart';
 
-class _WhereClauseImpl<Result> extends WhereClause<Result> {
+class _WhereClauseImpl<Result extends Entity> extends WhereClause<Result> {
   _WhereClauseImpl(super.query, {super.operator});
 
   @override
-  WhereClause<Result> whereEqual<Value>(String field, Value value) {
+  WhereClause<Result> equal<Value>(String field, Value value) {
     final newChild = _WhereClauseImpl(query)
       ..clauseValue = WhereClauseValue(
         field,
@@ -15,7 +15,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   }
 
   @override
-  WhereClause<Result> whereNotEqual<Value>(String field, Value value) {
+  WhereClause<Result> notEqual<Value>(String field, Value value) {
     final newChild = _WhereClauseImpl(query)
       ..clauseValue = WhereClauseValue(
         field,
@@ -26,7 +26,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   }
 
   @override
-  WhereClause<Result> whereIn<Value>(String field, List<Value> values) {
+  WhereClause<Result> isIn<Value>(String field, List<Value> values) {
     final newChild = _WhereClauseImpl(query)
       ..clauseValue = WhereClauseValue(
         field,
@@ -37,7 +37,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   }
 
   @override
-  WhereClause<Result> whereNotIn<Value>(String field, List<Value> values) {
+  WhereClause<Result> isNotIn<Value>(String field, List<Value> values) {
     final newChild = _WhereClauseImpl(query)
       ..clauseValue = WhereClauseValue(
         field,
@@ -48,7 +48,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   }
 
   @override
-  WhereClause<Result> whereBetween<Value>(String field, List<Value> values) {
+  WhereClause<Result> isBetween<Value>(String field, List<Value> values) {
     final newChild = _WhereClauseImpl(query)
       ..clauseValue = WhereClauseValue(
         field,
@@ -59,7 +59,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   }
 
   @override
-  WhereClause<Result> whereNotBetween<Value>(String field, List<Value> values) {
+  WhereClause<Result> isNotBetween<Value>(String field, List<Value> values) {
     final newChild = _WhereClauseImpl(query)
       ..clauseValue = WhereClauseValue(
         field,
@@ -70,7 +70,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   }
 
   @override
-  WhereClause<Result> whereLike<Value>(String field, String pattern) {
+  WhereClause<Result> isLike<Value>(String field, String pattern) {
     final newChild = _WhereClauseImpl(query)
       ..clauseValue = WhereClauseValue(
         field,
@@ -81,7 +81,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   }
 
   @override
-  WhereClause<Result> whereNotLike<Value>(String field, String pattern) {
+  WhereClause<Result> isNotLike<Value>(String field, String pattern) {
     final newChild = _WhereClauseImpl(query)
       ..clauseValue = WhereClauseValue(
           field, (operator: Operator.NOT_LIKE, value: pattern));
@@ -90,7 +90,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   }
 
   @override
-  WhereClause<Result> whereNull(String field) {
+  WhereClause<Result> isNull(String field) {
     final newChild = _WhereClauseImpl(query)
       ..clauseValue = WhereClauseValue(
         field,
@@ -101,7 +101,7 @@ class _WhereClauseImpl<Result> extends WhereClause<Result> {
   }
 
   @override
-  WhereClause<Result> whereNotNull(String field) {
+  WhereClause<Result> isNotNull(String field) {
     final newChild = _WhereClauseImpl(query)
       ..clauseValue = WhereClauseValue(
         field,

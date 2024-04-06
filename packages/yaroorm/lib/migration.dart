@@ -170,22 +170,35 @@ abstract class Schema {
   static CreateSchema fromEntity<T extends Entity>() {
     final entity = Query.getEntity<T>();
 
-    make(TableBlueprint table, DBEntityField field) {
+    void make(TableBlueprint table, DBEntityField field) {
       return switch (field.type) {
-        const (int) => table
-          ..integer(field.columnName, nullable: field.nullable),
-        const (double) || const (num) => table
-          ..double(field.columnName, nullable: field.nullable),
-        const (DateTime) => table
-          ..datetime(field.columnName, nullable: field.nullable),
-        _ => table..string(field.columnName, nullable: field.nullable),
+        const (int) => table.integer(
+            field.columnName,
+            nullable: field.nullable,
+          ),
+        const (double) || const (num) => table.double(
+            field.columnName,
+            nullable: field.nullable,
+          ),
+        const (DateTime) => table.datetime(
+            field.columnName,
+            nullable: field.nullable,
+          ),
+        _ => table.string(
+            field.columnName,
+            nullable: field.nullable,
+          ),
       };
     }
 
     return CreateSchema._(
       entity.tableName,
       (table) {
-        table.id(name: entity.primaryKey.columnName);
+        table.id(
+          name: entity.primaryKey.columnName,
+          autoIncrement: entity.primaryKey.autoIncrement,
+        );
+
         for (final prop in entity.columns.where((e) => !e.primaryKey)) {
           make(table, prop);
         }
@@ -197,9 +210,8 @@ abstract class Schema {
   static Schema create(String name, TableBluePrintFunc func) =>
       CreateSchema._(name, func);
 
-  static Schema dropIfExists(dynamic value) {
-    // if (value is! String) value = getEntityTableName(value);
-    return _DropSchema(value);
+  static Schema dropIfExists(CreateSchema value) {
+    return _DropSchema(value.tableName);
   }
 
   static Schema rename(String from, String to) => _RenameSchema(from, to);

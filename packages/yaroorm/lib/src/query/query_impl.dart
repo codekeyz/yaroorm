@@ -2,93 +2,91 @@ part of 'query.dart';
 
 enum OrderByDirection { asc, desc }
 
-class QueryImpl<Result extends Entity> extends Query<Result> {
+class QueryImpl<Model extends Entity> extends Query<Model> {
   QueryImpl(super.tableName);
 
   @override
-  WhereClause<Result> where<Value>(
+  WhereClause<Model> where<Value>(
     String field,
     String condition, [
     Value? value,
   ]) {
-    final newClause = WhereClause.create<Result>(this,
-        value: WhereClauseValue.from(field, condition, value));
+    final newClause = WhereClause.create<Model>(this, value: WhereClauseValue.from(field, condition, value));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  Query<Result> orderByAsc(String field) {
+  Query<Model> orderByAsc(String field) {
     orderByProps.add((field: field, direction: OrderByDirection.asc));
     return this;
   }
 
   @override
-  Query<Result> orderByDesc(String field) {
+  Query<Model> orderByDesc(String field) {
     orderByProps.add((field: field, direction: OrderByDirection.desc));
     return this;
   }
 
   @override
-  Future<PrimaryKey> insert<PrimaryKey>(Map<String, dynamic> data) async {
-    final recordId = await runner.insert(InsertQuery(tableName, data: data));
-    return recordId as PrimaryKey;
+  Future<Model> insert(Map<Symbol, dynamic> data) async {
+    final dataToDbD = conformToDbTypes<Model>(data, converters);
+    final recordId = await runner.insert(InsertQuery(tableName, data: dataToDbD));
+    return (await get(recordId))!;
   }
 
   @override
   Future<void> insertMany(List<Map<String, dynamic>> values) async {
-    return runner.insertMany(InsertManyQuery(tableName, values: values));
+    throw Exception();
   }
 
   @override
-  Future<List<Result>> all({int? limit}) async {
+  Future<List<Model>> all({int? limit}) async {
     final results = await runner.query(this.._limit = limit);
-    if (results.isEmpty) return <Result>[];
-    return results.map(_wrapRawResult<Result>).toList();
+    if (results.isEmpty) return <Model>[];
+    return results.map(_wrapRawResult).toList();
   }
 
   @override
-  Future<List<Result>> take(int limit) async {
+  Future<List<Model>> take(int limit) async {
     final results = await runner.query(this.._limit = limit);
-    if (results.isEmpty) return <Result>[];
-    return results.map(_wrapRawResult<Result>).toList();
+    if (results.isEmpty) return <Model>[];
+    return results.map(_wrapRawResult).toList();
   }
 
   @override
-  Future<Result?> get([dynamic id]) async {
+  Future<Model?> get([dynamic id]) async {
     if (id != null) {
-      return whereEqual(getEntityPrimaryKey<Result>(), id).findOne();
+      return equal(getEntityPrimaryKey<Model>(), id).findOne();
     }
     return (await take(1)).firstOrNull;
   }
 
   /// [T] is the expected type passed to [Query] via Query<T>
-  T _wrapRawResult<T extends Entity>(Map<String, dynamic>? result) {
-    if (T == dynamic || result == null) return result as dynamic;
-    return (serializedPropsToEntity<T>(
+  Model _wrapRawResult(Map<String, dynamic>? result) {
+    if (result == null) return result as dynamic;
+    return serializedPropsToEntity<Model>(
       result,
-      converters: runner.typeconverters,
-    )).withDriver(runner) as T;
+      entity,
+      converters,
+    );
   }
 
   @override
-  WhereClause<Result> orWhere<Value>(String field, String condition,
-      [Value? value]) {
-    throw StateError(
-        'Cannot use `orWhere` directly on a Query you need a WHERE clause first');
+  WhereClause<Model> orWhere<Value>(String field, String condition, [Value? value]) {
+    throw StateError('Cannot use `orWhere` directly on a Query you need a WHERE clause first');
   }
 
   @override
-  Query<Result> orWhereFunc(Function(Query<Result> query) builder) {
+  Query<Model> orWhereFunc(Function(Query<Model> query) builder) {
     if (whereClauses.isEmpty) {
       throw StateError('Cannot use `orWhereFunc` without a where clause');
     }
 
-    final newQuery = QueryImpl<Result>(tableName);
+    final newQuery = QueryImpl<Model>(tableName);
     builder(newQuery);
 
-    final newGroup =
-        WhereClause.create<Result>(this, operator: LogicalOperator.OR);
+    final newGroup = WhereClause.create<Model>(this, operator: LogicalOperator.OR);
     for (final clause in newQuery.whereClauses) {
       newGroup.children.add((clause.operator, clause));
     }
@@ -99,12 +97,11 @@ class QueryImpl<Result extends Entity> extends Query<Result> {
   }
 
   @override
-  Query<Result> whereFunc(Function(Query<Result> query) builder) {
-    final newQuery = QueryImpl<Result>(tableName);
+  Query<Model> whereFunc(Function(Query<Model> query) builder) {
+    final newQuery = QueryImpl<Model>(tableName);
     builder(newQuery);
 
-    final newGroup =
-        WhereClause.create<Result>(this, operator: LogicalOperator.AND);
+    final newGroup = WhereClause.create<Model>(this, operator: LogicalOperator.AND);
     for (final clause in newQuery.whereClauses) {
       newGroup.children.add((clause.operator, clause));
     }
@@ -115,89 +112,81 @@ class QueryImpl<Result extends Entity> extends Query<Result> {
   }
 
   @override
-  WhereClause<Result> whereEqual<Value>(String field, Value value) {
-    final newClause = WhereClause.create<Result>(this,
-        value:
-            WhereClauseValue(field, (operator: Operator.EQUAL, value: value)));
+  WhereClause<Model> equal<Value>(String field, Value value) {
+    final newClause =
+        WhereClause.create<Model>(this, value: WhereClauseValue(field, (operator: Operator.EQUAL, value: value)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause<Result> whereNotEqual<Value>(String field, Value value) {
-    final newClause = WhereClause.create<Result>(this,
-        value: WhereClauseValue(
-            field, (operator: Operator.NOT_EQUAL, value: value)));
+  WhereClause<Model> notEqual<Value>(String field, Value value) {
+    final newClause =
+        WhereClause.create<Model>(this, value: WhereClauseValue(field, (operator: Operator.NOT_EQUAL, value: value)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause<Result> whereIn<Value>(String field, List<Value> values) {
-    final newClause = WhereClause.create<Result>(this,
-        value: WhereClauseValue(field, (operator: Operator.IN, value: values)));
+  WhereClause<Model> isIn<Value>(String field, List<Value> values) {
+    final newClause =
+        WhereClause.create<Model>(this, value: WhereClauseValue(field, (operator: Operator.IN, value: values)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause<Result> whereNotIn<Value>(String field, List<Value> values) {
-    final newClause = WhereClause.create<Result>(this,
-        value: WhereClauseValue(
-            field, (operator: Operator.NOT_IN, value: values)));
+  WhereClause<Model> isNotIn<Value>(String field, List<Value> values) {
+    final newClause =
+        WhereClause.create<Model>(this, value: WhereClauseValue(field, (operator: Operator.NOT_IN, value: values)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause<Result> whereLike<Value>(String field, String pattern) {
-    final newClause = WhereClause.create<Result>(this,
-        value:
-            WhereClauseValue(field, (operator: Operator.LIKE, value: pattern)));
+  WhereClause<Model> isLike<Value>(String field, String pattern) {
+    final newClause =
+        WhereClause.create<Model>(this, value: WhereClauseValue(field, (operator: Operator.LIKE, value: pattern)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause<Result> whereNotLike<Value>(String field, String pattern) {
-    final newClause = WhereClause.create<Result>(this,
-        value: WhereClauseValue(
-            field, (operator: Operator.NOT_LIKE, value: pattern)));
+  WhereClause<Model> isNotLike<Value>(String field, String pattern) {
+    final newClause =
+        WhereClause.create<Model>(this, value: WhereClauseValue(field, (operator: Operator.NOT_LIKE, value: pattern)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause<Result> whereNull(String field) {
-    final newClause = WhereClause.create<Result>(this,
-        value: WhereClauseValue(field, (operator: Operator.NULL, value: null)));
+  WhereClause<Model> isNull(String field) {
+    final newClause =
+        WhereClause.create<Model>(this, value: WhereClauseValue(field, (operator: Operator.NULL, value: null)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause<Result> whereNotNull(String field) {
-    final newClause = WhereClause.create<Result>(this,
-        value: WhereClauseValue(
-            field, (operator: Operator.NOT_NULL, value: null)));
+  WhereClause<Model> isNotNull(String field) {
+    final newClause =
+        WhereClause.create<Model>(this, value: WhereClauseValue(field, (operator: Operator.NOT_NULL, value: null)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause<Result> whereBetween<Value>(String field, List<Value> values) {
-    final newClause = WhereClause.create<Result>(this,
-        value: WhereClauseValue(
-            field, (operator: Operator.BETWEEN, value: values)));
+  WhereClause<Model> isBetween<Value>(String field, List<Value> values) {
+    final newClause =
+        WhereClause.create<Model>(this, value: WhereClauseValue(field, (operator: Operator.BETWEEN, value: values)));
     whereClauses.add(newClause);
     return newClause;
   }
 
   @override
-  WhereClause<Result> whereNotBetween<Value>(String field, List<Value> values) {
-    final newClause = WhereClause.create<Result>(this,
-        value: WhereClauseValue(
-            field, (operator: Operator.NOT_BETWEEN, value: values)));
+  WhereClause<Model> isNotBetween<Value>(String field, List<Value> values) {
+    final newClause = WhereClause.create<Model>(this,
+        value: WhereClauseValue(field, (operator: Operator.NOT_BETWEEN, value: values)));
     whereClauses.add(newClause);
     return newClause;
   }

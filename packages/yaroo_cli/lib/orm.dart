@@ -3,11 +3,11 @@ import 'package:yaroo_cli/orm/commands/migrate_fresh_command.dart';
 import 'package:yaroo_cli/src/utils.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import '../src/logger.dart';
-import 'commands/command.dart';
-import 'commands/migrate_command.dart';
-import 'commands/migrate_reset_command.dart';
-import 'commands/migrate_rollback_command.dart';
+import 'src/logger.dart';
+import 'orm/commands/command.dart';
+import 'orm/commands/migrate_command.dart';
+import 'orm/commands/migrate_reset_command.dart';
+import 'orm/commands/migrate_rollback_command.dart';
 
 const executableName = 'yaroo orm';
 const packageName = 'yaroo_cli';

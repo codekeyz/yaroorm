@@ -41,7 +41,7 @@ void runBasicE2ETest(String connectionName) {
     });
 
     group('Aggregate Functions', () {
-      final query = db.query<User>().whereLike('home_address', '%%, Ghana');
+      final query = db.query<User>().isLike('home_address', '%%, Ghana');
       List<User> usersInGhana = [];
 
       setUpAll(() async {
@@ -107,13 +107,13 @@ void runBasicE2ETest(String connectionName) {
     test('should update many users', () async {
       final userQuery = db.query<User>();
 
-      final age50Users = userQuery.whereEqual('age', 50);
+      final age50Users = userQuery.equal('age', 50);
       final usersWithAge50 = await age50Users.findMany();
       expect(usersWithAge50.length, 4);
       expect(usersWithAge50.every((e) => e.age == 50), isTrue);
 
       await userQuery.update(
-          where: (query) => query.whereEqual('age', 50),
+          where: (query) => query.equal('age', 50),
           values: {'home_address': 'Keta, Ghana'}).execute();
 
       final updatedResult = await age50Users.findMany();
@@ -126,7 +126,7 @@ void runBasicE2ETest(String connectionName) {
     test('should fetch only users in Ghana', () async {
       final query = db
           .query<User>()
-          .whereLike('home_address', '%, Ghana')
+          .isLike('home_address', '%, Ghana')
           .orderByDesc('age');
       final usersInGhana = await query.findMany();
       expect(usersInGhana.length, 10);
@@ -141,7 +141,7 @@ void runBasicE2ETest(String connectionName) {
     test('should get all users between age 35 and 50', () async {
       final age50Users = await db
           .query<User>()
-          .whereBetween('age', [35, 50])
+          .isBetween('age', [35, 50])
           .orderByDesc('age')
           .findMany();
       expect(age50Users.length, 19);
@@ -152,7 +152,7 @@ void runBasicE2ETest(String connectionName) {
     test('should get all users in somewhere in Nigeria', () async {
       final users = await db
           .query<User>()
-          .whereLike('home_address', '%, Nigeria')
+          .isLike('home_address', '%, Nigeria')
           .orderByAsc('home_address')
           .findMany();
 
@@ -164,7 +164,7 @@ void runBasicE2ETest(String connectionName) {
     test('should get all users where age is 30 or 52', () async {
       final users = await db
           .query<User>()
-          .whereEqual('age', 30)
+          .equal('age', 30)
           .orWhere('age', '=', 52)
           .findMany();
       expect(users.every((e) => [30, 52].contains(e.age)), isTrue);
@@ -181,7 +181,7 @@ void runBasicE2ETest(String connectionName) {
     });
 
     test('should delete many users', () async {
-      final query = db.query<User>().whereLike('home_address', '%, Nigeria');
+      final query = db.query<User>().isLike('home_address', '%, Nigeria');
       expect(await query.findMany(), isNotEmpty);
 
       await query.delete();

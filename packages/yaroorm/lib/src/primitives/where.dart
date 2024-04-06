@@ -3,11 +3,13 @@
 import 'package:yaroorm/src/query/aggregates.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import '../query/query.dart';
-
 part '_where_impl.dart';
 
-mixin WhereOperation<Result> {
+typedef WhereBuilder<T extends Entity> = WhereClause<T> Function(
+  Query<T> query,
+);
+
+mixin WhereOperation<Result extends Entity> {
   WhereClause<Result> where<Value>(
     String field,
     String condition, [
@@ -20,25 +22,25 @@ mixin WhereOperation<Result> {
     Value? value,
   ]);
 
-  WhereClause<Result> whereEqual<Value>(String field, Value value);
+  WhereClause<Result> equal<Value>(String field, Value value);
 
-  WhereClause<Result> whereNotEqual<Value>(String field, Value value);
+  WhereClause<Result> notEqual<Value>(String field, Value value);
 
-  WhereClause<Result> whereNull(String field);
+  WhereClause<Result> isNull(String field);
 
-  WhereClause<Result> whereNotNull(String field);
+  WhereClause<Result> isNotNull(String field);
 
-  WhereClause<Result> whereIn<Value>(String field, List<Value> values);
+  WhereClause<Result> isIn<Value>(String field, List<Value> values);
 
-  WhereClause<Result> whereNotIn<Value>(String field, List<Value> values);
+  WhereClause<Result> isNotIn<Value>(String field, List<Value> values);
 
-  WhereClause<Result> whereLike<Value>(String field, String pattern);
+  WhereClause<Result> isLike<Value>(String field, String pattern);
 
-  WhereClause<Result> whereNotLike<Value>(String field, String pattern);
+  WhereClause<Result> isNotLike<Value>(String field, String pattern);
 
-  WhereClause<Result> whereBetween<Value>(String field, List<Value> values);
+  WhereClause<Result> isBetween<Value>(String field, List<Value> values);
 
-  WhereClause<Result> whereNotBetween<Value>(String field, List<Value> values);
+  WhereClause<Result> isNotBetween<Value>(String field, List<Value> values);
 
   Query<Result> orWhereFunc(Function(Query<Result> query) builder);
 
@@ -87,8 +89,7 @@ Operator _strToOperator(String condition) => switch (condition) {
       //
       'between' => Operator.BETWEEN,
       'not between' => Operator.NOT_BETWEEN,
-      _ => throw ArgumentError.value(
-          condition, null, 'Condition $condition is not known')
+      _ => throw ArgumentError.value(condition, null, 'Condition $condition is not known')
     };
 
 class WhereClauseValue<ValueType> {
@@ -115,24 +116,15 @@ class WhereClauseValue<ValueType> {
   }
 }
 
-abstract class WhereClause<Result>
-    with
-        WhereOperation<Result>,
-        FindOperation<Result>,
-        LimitOperation<Result>,
-        OrderByOperation<WhereClause<Result>>,
-        AggregateOperation {
-  final List<CombineClause<WhereClause<Result>>> children = [];
+abstract class WhereClause<T extends Entity>
+    with WhereOperation<T>, FindOperation<T>, LimitOperation<T>, OrderByOperation<WhereClause<T>>, AggregateOperation {
+  final List<CombineClause<WhereClause<T>>> children = [];
 
-  List<CombineClause<WhereClause<Result>>> get group => children.isEmpty
+  List<CombineClause<WhereClause<T>>> get group => children.isEmpty
       ? const []
       : [
           if (clauseValue != null)
-            (
-              operator,
-              WhereClause.create<Result>(query, operator: operator)
-                ..clauseValue = clauseValue
-            ),
+            (operator, WhereClause.create<T>(query, operator: operator)..clauseValue = clauseValue),
           ...children
         ];
 
@@ -141,7 +133,7 @@ abstract class WhereClause<Result>
         if (children.isNotEmpty) ...children.map((e) => e.$1),
       };
 
-  final Query<Result> query;
+  final Query<T> query;
 
   final LogicalOperator operator;
 
@@ -149,13 +141,12 @@ abstract class WhereClause<Result>
 
   WhereClause(this.query, {this.operator = LogicalOperator.AND});
 
-  static WhereClause<Result> create<Result>(
+  static WhereClause<Result> create<Result extends Entity>(
     Query<Result> query, {
     LogicalOperator operator = LogicalOperator.AND,
     WhereClauseValue? value,
   }) {
-    return _WhereClauseImpl<Result>(query, operator: operator)
-      ..clauseValue = value;
+    return _WhereClauseImpl<Result>(query, operator: operator)..clauseValue = value;
   }
 
   Future<void> delete();

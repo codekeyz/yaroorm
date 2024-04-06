@@ -13,10 +13,7 @@ Future<bool> hasAlreadyMigratedScript(
   String scriptName,
   DatabaseDriver driver,
 ) async {
-  final result = await Query.table(DB.config.migrationsTable)
-      .driver(driver)
-      .equal('migration', scriptName)
-      .findOne();
+  final result = await MigrationQuery.driver(driver).equal('migration', scriptName).findOne();
   return result != null;
 }
 
@@ -24,6 +21,5 @@ Future<int> getLastBatchNumber(
   DatabaseDriver driver,
   String migrationsTable,
 ) async {
-  return (await Query.table(migrationsTable).driver(driver).max('batch'))
-      .toInt();
+  return (await MigrationQuery.driver(driver).max('batch')).toInt();
 }

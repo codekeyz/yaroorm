@@ -171,7 +171,7 @@ void main() {
           final query = Query.table('users')
               .driver(driver)
               .where('firstname', '=', 'Chima')
-              .whereNull('age');
+              .isNull('age');
 
           expect(
             query.statement,
@@ -183,7 +183,7 @@ void main() {
           final query = Query.table('users')
               .driver(driver)
               .where('firstname', '=', 'Chima')
-              .whereNotNull('age');
+              .isNotNull('age');
 
           expect(
             query.statement,
@@ -195,7 +195,7 @@ void main() {
           final query = Query.table('users')
               .driver(driver)
               .where('firstname', '=', 'Chima')
-              .whereIn('age', [22, 24, 25]);
+              .isIn('age', [22, 24, 25]);
 
           expect(
             query.statement,
@@ -207,7 +207,7 @@ void main() {
           final query = Query.table('users')
               .driver(driver)
               .where('firstname', '=', 'Chima')
-              .whereNotIn('age', [22, 24, 25]);
+              .isNotIn('age', [22, 24, 25]);
 
           expect(
             query.statement,
@@ -219,7 +219,7 @@ void main() {
           final query = Query.table('users')
               .driver(driver)
               .where('firstname', '=', 'Chima')
-              .whereLike('lastname', 'hello%');
+              .isLike('lastname', 'hello%');
 
           expect(
             query.statement,
@@ -231,7 +231,7 @@ void main() {
           final query = Query.table('users')
               .driver(driver)
               .where('firstname', '=', 'Chima')
-              .whereNotLike('lastname', 'hello%');
+              .isNotLike('lastname', 'hello%');
 
           expect(
             query.statement,
@@ -243,7 +243,7 @@ void main() {
           final query = Query.table('users')
               .driver(driver)
               .where('firstname', '=', 'Chima')
-              .whereBetween<int>('lastname', [22, 50]);
+              .isBetween<int>('lastname', [22, 50]);
 
           expect(
             query.statement,
@@ -255,7 +255,7 @@ void main() {
           final query = Query.table('users')
               .driver(driver)
               .where('firstname', '=', 'Chima')
-              .whereNotBetween<double>('lastname', [22.34, 50]);
+              .isNotBetween<double>('lastname', [22.34, 50]);
 
           expect(
             query.statement,
@@ -424,7 +424,7 @@ void main() {
       test('of level 1', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereIn('firstname', ['Accra', 'Tamale']);
+            .isIn('firstname', ['Accra', 'Tamale']);
 
         expect(
           query.statement,
@@ -433,7 +433,7 @@ void main() {
       });
 
       test('of level 2', () {
-        final query = Query.table('users').driver(driver).whereIn(
+        final query = Query.table('users').driver(driver).isIn(
             'places', ['Accra', 'Tamale']).where('lastname', '=', 'Precious');
 
         expect(
@@ -445,7 +445,7 @@ void main() {
       test('of level 3', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereIn('places', ['Accra', 'Tamale'])
+            .isIn('places', ['Accra', 'Tamale'])
             .where('lastname', '=', 'Precious')
             .where('names', 'like', 'Hello%');
 
@@ -458,7 +458,7 @@ void main() {
       test('of level 4', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereIn('places', ['Accra', 'Tamale'])
+            .isIn('places', ['Accra', 'Tamale'])
             .where('lastname', '=', 'Precious')
             .where('names', 'like', 'Hello%')
             .orWhere('age', 'in', [23, 34, 55]);
@@ -474,7 +474,7 @@ void main() {
       test('of level 1', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereNotIn('firstname', ['Accra', 'Tamale']);
+            .isNotIn('firstname', ['Accra', 'Tamale']);
 
         expect(
           query.statement,
@@ -483,7 +483,7 @@ void main() {
       });
 
       test('of level 2', () {
-        final query = Query.table('users').driver(driver).whereNotIn(
+        final query = Query.table('users').driver(driver).isNotIn(
             'places', ['Accra', 'Tamale']).where('lastname', '=', 'Precious');
 
         expect(
@@ -495,9 +495,9 @@ void main() {
       test('of level 3', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereNotIn('places', ['Accra', 'Tamale'])
+            .isNotIn('places', ['Accra', 'Tamale'])
             .where('lastname', '=', 'Precious')
-            .whereNotNull('names');
+            .isNotNull('names');
 
         expect(
           query.statement,
@@ -508,10 +508,10 @@ void main() {
       test('of level 4', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereNotIn('places', ['Accra', 'Tamale'])
+            .isNotIn('places', ['Accra', 'Tamale'])
             .where('lastname', '=', 'Precious')
             .where('names', 'like', 'Hello%')
-            .whereBetween('age', [23, 34]);
+            .isBetween('age', [23, 34]);
 
         expect(
           query.statement,
@@ -525,14 +525,14 @@ void main() {
         expect(
             () => Query.table('users')
                 .driver(driver)
-                .whereBetween('age', [22]).statement,
+                .isBetween('age', [22]).statement,
             throwsA(isA<ArgumentError>().having((p0) => p0.message, '',
                 'BETWEEN requires a List with length 2 (val1, val2)')));
       });
 
       test('of level 1', () {
         final query =
-            Query.table('users').driver(driver).whereBetween('age', [22, 70]);
+            Query.table('users').driver(driver).isBetween('age', [22, 70]);
 
         expect(
           query.statement,
@@ -543,7 +543,7 @@ void main() {
       test('of level 2', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereBetween('places', ['Accra', 'Tamale']).where(
+            .isBetween('places', ['Accra', 'Tamale']).where(
                 'lastname', 'between', [2, 100]);
 
         expect(
@@ -555,7 +555,7 @@ void main() {
       test('of level 3', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereIn('places', ['Accra', 'Tamale']).whereBetween(
+            .isIn('places', ['Accra', 'Tamale']).isBetween(
                 'lastname', [22, 48]).where('names', 'like', 'Hello%');
 
         expect(
@@ -567,10 +567,10 @@ void main() {
       test('of level 4', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereIn('places', ['Accra', 'Tamale'])
+            .isIn('places', ['Accra', 'Tamale'])
             .where('lastname', '=', 'Precious')
             .orWhere('age', 'in', [23, 34, 55])
-            .whereBetween('dates', ['2015-01-01', '2016-12-01']);
+            .isBetween('dates', ['2015-01-01', '2016-12-01']);
 
         expect(
           query.statement,
@@ -584,15 +584,14 @@ void main() {
         expect(
             () => Query.table('users')
                 .driver(driver)
-                .whereNotBetween('age', [22]).statement,
+                .isNotBetween('age', [22]).statement,
             throwsA(isA<ArgumentError>().having((p0) => p0.message, '',
                 'NOT_BETWEEN requires a List with length 2 (val1, val2)')));
       });
 
       test('of level 1', () {
-        final query = Query.table('users')
-            .driver(driver)
-            .whereNotBetween('age', [22, 70]);
+        final query =
+            Query.table('users').driver(driver).isNotBetween('age', [22, 70]);
 
         expect(
           query.statement,
@@ -603,7 +602,7 @@ void main() {
       test('of level 2', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereNotBetween('places', ['Accra', 'Tamale']).where(
+            .isNotBetween('places', ['Accra', 'Tamale']).where(
                 'lastname', 'between', [2, 100]);
 
         expect(
@@ -615,7 +614,7 @@ void main() {
       test('of level 3', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereIn('places', ['Accra', 'Tamale']).whereNotBetween(
+            .isIn('places', ['Accra', 'Tamale']).isNotBetween(
                 'lastname', [22, 48]).where('names', 'like', 'Hello%');
 
         expect(
@@ -627,10 +626,10 @@ void main() {
       test('of level 4', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereIn('places', ['Accra', 'Tamale'])
+            .isIn('places', ['Accra', 'Tamale'])
             .where('lastname', '=', 'Precious')
             .orWhere('age', 'in', [23, 34, 55])
-            .whereNotBetween('dates', ['2015-01-01', '2016-12-01']);
+            .isNotBetween('dates', ['2015-01-01', '2016-12-01']);
 
         expect(
           query.statement,
@@ -641,9 +640,8 @@ void main() {
 
     group('when .whereLike', () {
       test('of level 1', () {
-        final query = Query.table('users')
-            .driver(driver)
-            .whereLike('firstname', 'Names%%');
+        final query =
+            Query.table('users').driver(driver).isLike('firstname', 'Names%%');
 
         expect(
           query.statement,
@@ -654,7 +652,7 @@ void main() {
       test('of level 2', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereLike('places', 'Chima**')
+            .isLike('places', 'Chima**')
             .where('lastname', '=', 'Precious');
 
         expect(
@@ -666,7 +664,7 @@ void main() {
       test('of level 3', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereLike('places', 'Hello123')
+            .isLike('places', 'Hello123')
             .where('lastname', '=', 'Precious')
             .where('names', 'like', 'Hello%');
 
@@ -679,7 +677,7 @@ void main() {
       test('of level 4', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereLike('places', 'Nems#')
+            .isLike('places', 'Nems#')
             .where('lastname', '=', 'Precious')
             .where('names', 'like', 'Hello%')
             .orWhere('age', 'between', [23, 34]);
@@ -695,7 +693,7 @@ void main() {
       test('of level 1', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereNotLike('firstname', 'Names%%');
+            .isNotLike('firstname', 'Names%%');
 
         expect(
           query.statement,
@@ -706,8 +704,8 @@ void main() {
       test('of level 2', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereNotLike('places', 'Chima**')
-            .whereBetween('lastname', [12, 90]);
+            .isNotLike('places', 'Chima**')
+            .isBetween('lastname', [12, 90]);
 
         expect(
           query.statement,
@@ -718,7 +716,7 @@ void main() {
       test('of level 3', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereNotLike('places', 'Hello123')
+            .isNotLike('places', 'Hello123')
             .where('lastname', '=', 'Precious')
             .where('names', 'like', 'Hello%');
 
@@ -731,7 +729,7 @@ void main() {
       test('of level 4', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereNotLike('places', 'Nems#')
+            .isNotLike('places', 'Nems#')
             .where('lastname', '=', 'Precious')
             .orWhere('names', 'not like', 'Hello%')
             .orWhere('age', 'between', [23, 34]);
@@ -745,8 +743,7 @@ void main() {
 
     group('when .whereNull', () {
       test('of level 1', () {
-        final query =
-            Query.table('users').driver(driver).whereNull('firstname');
+        final query = Query.table('users').driver(driver).isNull('firstname');
 
         expect(query.statement, 'SELECT * FROM users WHERE firstname IS NULL;');
       });
@@ -754,7 +751,7 @@ void main() {
       test('of level 2', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereNull('places')
+            .isNull('places')
             .where('lastname', '=', 'Precious');
 
         expect(
@@ -766,7 +763,7 @@ void main() {
       test('of level 3', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereNull('places')
+            .isNull('places')
             .where('lastname', '=', 'Precious')
             .where('names', 'like', 'Hello%');
 
@@ -779,7 +776,7 @@ void main() {
       test('of level 4', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereNull('places')
+            .isNull('places')
             .where('lastname', '=', 'Precious')
             .orWhere('names', 'null')
             .orWhere('age', 'between', [23, 34]);
@@ -794,7 +791,7 @@ void main() {
     group('when .whereNotNull', () {
       test('of level 1', () {
         final query =
-            Query.table('users').driver(driver).whereNotNull('firstname');
+            Query.table('users').driver(driver).isNotNull('firstname');
 
         expect(
           query.statement,
@@ -805,7 +802,7 @@ void main() {
       test('of level 2', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereNotNull('places')
+            .isNotNull('places')
             .where('lastname', '=', 'Precious');
 
         expect(
@@ -817,7 +814,7 @@ void main() {
       test('of level 3', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereNotNull('places')
+            .isNotNull('places')
             .where('lastname', '=', 'Precious')
             .where('names', 'like', 'Hello%');
 
@@ -830,7 +827,7 @@ void main() {
       test('of level 4', () {
         final query = Query.table('users')
             .driver(driver)
-            .whereNotNull('places')
+            .isNotNull('places')
             .where('lastname', '=', 'Precious')
             .orWhere('names', 'not null')
             .orWhere('age', 'between', [23, 34]);
@@ -965,10 +962,10 @@ void main() {
                     .where('image', 'like', 'Image&&'),
               )
               .whereFunc((query) => query
-                  .whereIn('fruits', ['oranges', 'apples'])
-                  .whereBetween('price', [20, 100])
-                  .whereEqual('status', 'available')
-                  .whereLike('stores', 'Accra, %%'));
+                  .isIn('fruits', ['oranges', 'apples'])
+                  .isBetween('price', [20, 100])
+                  .equal('status', 'available')
+                  .isLike('stores', 'Accra, %%'));
 
           final sB = StringBuffer();
           sB.write("SELECT * FROM users WHERE name = 'Chima' ");
@@ -991,16 +988,16 @@ void main() {
                     .where('image', 'like', 'Image&&'),
               )
               .whereFunc((query) => query
-                  .whereIn('fruits', ['oranges', 'apples'])
-                  .whereBetween('price', [20, 100])
-                  .whereEqual('status', 'available')
-                  .whereLike('stores', 'Accra, %%'))
+                  .isIn('fruits', ['oranges', 'apples'])
+                  .isBetween('price', [20, 100])
+                  .equal('status', 'available')
+                  .isLike('stores', 'Accra, %%'))
               .orWhereFunc((query) => query
                   .where('languages', 'in', ['python', 'cobra']).orWhereFunc(
                       (query) => query
                           .where('job_status', '=', 'available')
                           .where('location', '=', 'Accra')
-                          .whereNotBetween('salary', [8000, 16000])));
+                          .isNotBetween('salary', [8000, 16000])));
 
           final sB = StringBuffer();
           sB.write("SELECT * FROM users WHERE name = 'Chima' ");

@@ -22,7 +22,6 @@ class DateTimeConverter extends EntityTypeConverter<DateTime, String> {
 
   @override
   String? toDbType(DateTime? value) {
-    value = value?.toUtc();
     return value == null
         ? null
         : '${value.year}-${padValue(value.month)}-${padValue(value.day)} ${padValue(value.hour)}:${padValue(value.minute)}:${padValue(value.second)}';
@@ -42,7 +41,7 @@ class BooleanConverter extends EntityTypeConverter<bool, int> {
 const dateTimeConverter = DateTimeConverter();
 const booleanConverter = BooleanConverter();
 
-Map<Type, EntityTypeConverter> _combineConverters(
+Map<Type, EntityTypeConverter> combineConverters(
   List<EntityTypeConverter> custom,
   List<EntityTypeConverter> driverProvided,
 ) {
@@ -52,38 +51,33 @@ Map<Type, EntityTypeConverter> _combineConverters(
   };
 }
 
-Map<String, dynamic> _serializeEntityProps<Model extends Entity>(
-  Model instance, {
-  List<EntityTypeConverter> converters = const [],
-}) {
+Map<String, dynamic> conformToDbTypes<Model extends Entity>(
+  Map<Symbol, dynamic> data,
+  Map<Type, EntityTypeConverter> converters,
+) {
   final entity = Query.getEntity<Model>();
 
-  final instanceMirror = entity.mirror(instance);
-  final allConverters = _combineConverters(entity.converters, converters);
-
-  /// database value conversion back to Dart Types
-  toDartValue(DBEntityField field) {
-    final value = instanceMirror.get(field.dartName);
-    final typeConverter = allConverters[field.type];
+  Object toDbType(DBEntityField field) {
+    final value = data[field.dartName];
+    final typeConverter = converters[field.type];
     return typeConverter == null ? value : typeConverter.toDbType(value);
   }
 
   return {
-    for (final entry in entity.columns) entry.columnName: toDartValue(entry),
+    for (final entry in entity.editableColumns)
+      entry.columnName: toDbType(entry),
   };
 }
 
-Entity serializedPropsToEntity<Model extends Entity>(
-  final Map<String, dynamic> json, {
-  List<EntityTypeConverter> converters = const [],
-}) {
-  final entity = Query.getEntity<Model>();
-  final allConverters = _combineConverters(entity.converters, converters);
-
+Model serializedPropsToEntity<Model extends Entity>(
+  Map<String, dynamic> dataFromDb,
+  DBEntity<Model> entity,
+  Map<Type, EntityTypeConverter> converters,
+) {
   final resultsMap = <Symbol, dynamic>{};
   for (final entry in entity.columns) {
-    final value = json[entry.columnName];
-    final typeConverter = allConverters[entry.type];
+    final value = dataFromDb[entry.columnName];
+    final typeConverter = converters[entry.type];
     resultsMap[entry.dartName] =
         typeConverter == null ? value : typeConverter.fromDbType(value);
   }

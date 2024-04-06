@@ -4,33 +4,20 @@ import 'package:yaroorm/yaroorm.dart';
 import 'package:meta/meta_meta.dart';
 
 part 'converter.dart';
-part 'relations.dart';
+// part 'relations.dart';
 
-abstract class Entity<Model extends Object> {
-  String get _foreignKeyForModel => '${Model.toString().camelCase}Id';
+abstract class Entity {
+  String get _foreignKeyForModel => '${_type.toString().camelCase}Id';
 
-  HasOne<T> hasOne<T extends Entity>({
-    String? foreignKey,
-  }) {
-    return HasOne<T>(foreignKey ?? _foreignKeyForModel, this);
-  }
+  Type get _type => runtimeType;
 
-  HasMany<T> hasMany<T extends Entity>({
-    String? foreignKey,
-  }) {
-    return HasMany<T>(foreignKey ?? _foreignKeyForModel, this);
-  }
+  // HasOne<T> hasOne<T extends Entity>({String? foreignKey}) {
+  //   return HasOne<T>(foreignKey ?? _foreignKeyForModel, this);
+  // }
 
-  final DriverContract _driver = DB.defaultDriver;
-
-  Entity<Model> withDriver(DriverContract driver) {
-    return this;
-  }
-
-  // ignore: non_constant_identifier_names
-  Map<String, dynamic> get to_db_data {
-    return _serializeEntityProps(this, converters: _driver.typeconverters);
-  }
+  // HasMany<T> hasMany<T extends Entity>({String? foreignKey}) {
+  //   return HasMany<T>(foreignKey ?? _foreignKeyForModel, this);
+  // }
 }
 
 @Target({TargetKind.classType})
@@ -54,7 +41,8 @@ class TableColumn {
 
 @Target({TargetKind.field})
 class PrimaryKey extends TableColumn {
-  const PrimaryKey();
+  final bool autoIncrement;
+  const PrimaryKey({this.autoIncrement = true});
 }
 
 @Target({TargetKind.field})

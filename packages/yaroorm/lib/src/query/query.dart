@@ -20,25 +20,14 @@ mixin FindOperation<Result> {
   Future<List<Result>> findMany();
 }
 
-mixin InsertOperation {
-  Future<PrimaryKeyKey> insert<PrimaryKeyKey>(Map<String, dynamic> data);
+mixin InsertOperation<T extends Entity> {
+  Future<T> insert(Map<Symbol, dynamic> data);
 
   Future<void> insertMany(List<Map<String, dynamic>> values);
 }
 
 mixin LimitOperation<ReturnType> {
   Future<List<ReturnType>> take(int limit);
-}
-
-mixin UpdateOperation<Result> {
-  UpdateQuery update({
-    required WhereClause<Result> Function(Query query) where,
-    required Map<String, dynamic> values,
-  });
-}
-
-mixin DeleteOperation<Result> {
-  DeleteQuery delete(WhereClause<Result> Function(Query query) where);
 }
 
 typedef OrderBy = ({String field, OrderByDirection direction});
@@ -76,21 +65,25 @@ sealed class QueryBase<Owner> {
   String get statement;
 }
 
-abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
+abstract interface class Query<T extends Entity> extends QueryBase<Query<T>>
     with
-        ReadOperation<EntityType>,
-        WhereOperation<EntityType>,
-        LimitOperation<EntityType>,
-        OrderByOperation<Query<EntityType>>,
-        InsertOperation,
-        DeleteOperation<EntityType>,
-        UpdateOperation<EntityType>,
+        ReadOperation<T>,
+        WhereOperation<T>,
+        LimitOperation<T>,
+        OrderByOperation<Query<T>>,
+        InsertOperation<T>,
         AggregateOperation {
   final Set<String> fieldSelections;
   final Set<OrderBy> orderByProps;
-  final List<WhereClause<EntityType>> whereClauses;
+  final List<WhereClause<T>> whereClauses;
+  final DBEntity<T> entity;
 
-  static final Map<Type, DBEntity> _typedata = {};
+  Map<Type, EntityTypeConverter> get converters => combineConverters(
+        entity.converters,
+        runner.typeconverters,
+      );
+
+  static final Map<Type, DBEntity> _typedatas = {};
 
   // ignore: prefer_final_fields
   int? _limit;
@@ -98,7 +91,8 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
   int? get limit => _limit;
 
   Query(super.tableName)
-      : fieldSelections = {},
+      : entity = Query.getEntity<T>(),
+        fieldSelections = {},
         orderByProps = {},
         whereClauses = [],
         _limit = null;
@@ -111,46 +105,29 @@ abstract interface class Query<EntityType> extends QueryBase<Query<EntityType>>
     return QueryImpl<Model>(tableName!);
   }
 
-  Query<EntityType> select(List<String> selections) {
+  Query<T> select(List<String> selections) {
     fieldSelections.addAll(selections);
     return this;
   }
 
-  @override
-  DeleteQuery delete(
-    WhereClause<EntityType> Function(Query<EntityType> query) where,
-  ) {
-    return DeleteQuery(
-      tableName,
-      whereClause: where(this),
-    ).driver(runner);
+  Future<dynamic> accept<A extends QueryBase<A>>(A query) async {
+    return (query..driver(runner)).execute();
   }
 
-  @override
-  UpdateQuery update({
-    required WhereClause<EntityType> Function(Query<EntityType> query) where,
-    required Map<String, dynamic> values,
-  }) {
-    return UpdateQuery(
-      tableName,
-      whereClause: where(this),
-      data: values,
-    ).driver(runner);
-  }
-
-  static void addTypeDef<T extends Entity>(DBEntity entity) {
+  static void addTypeDef<T extends Entity>(DBEntity<T> entity) {
     var type = T;
     if (type == Entity) type = entity.dartType;
     if (type == Entity) throw Exception();
-    _typedata[type] = entity;
+    _typedatas[type] = entity;
   }
 
   @internal
-  static DBEntity getEntity<T extends Entity>({Type? type}) {
+  static DBEntity<T> getEntity<T extends Entity>({Type? type}) {
     type ??= T;
-    return _typedata.containsKey(type)
-        ? _typedata[type]!
-        : throw Exception('Type Data not found for $type');
+    if (!_typedatas.containsKey(type)) {
+      throw Exception('Type Data not found for $type');
+    }
+    return _typedatas[type]! as DBEntity<T>;
   }
 }
 
