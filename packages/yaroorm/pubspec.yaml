@@ -31,3 +31,6 @@ dev_dependencies:
   yaroo_cli:
     path: ../yaroo_cli
   path: ^1.9.0
+  build_runner:
+  copy_with_extension: ^5.0.4
+  copy_with_extension_gen: ^5.0.4

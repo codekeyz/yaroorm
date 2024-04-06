@@ -1,7 +1,9 @@
 import 'package:recase/recase.dart';
 
-import 'package:yaroorm/yaroorm.dart';
 import 'package:meta/meta_meta.dart';
+
+import '../../query/query.dart';
+import '../../reflection.dart';
 
 part 'converter.dart';
 // part 'relations.dart';

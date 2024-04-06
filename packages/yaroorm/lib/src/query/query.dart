@@ -3,6 +3,7 @@ import 'package:yaroorm/src/query/aggregates.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import '../primitives/where.dart';
+import '../reflection.dart';
 
 part 'query_impl.dart';
 

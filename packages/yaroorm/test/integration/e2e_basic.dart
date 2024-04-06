@@ -91,14 +91,12 @@ void runBasicE2ETest(String connectionName) {
 
     test('should update user', () async {
       final user = await db.query<User>().get();
-      expect(user!.id!, 1);
+      expect(user!.id, 1);
 
-      user
-        ..firstname = 'Red Oil'
-        ..age = 100;
-      await user.save();
+      final updatedUser =
+          await user.copyWith(firstname: 'Red Oil', age: 100).save();
 
-      final userFromDB = await db.query<User>().get(user.id!);
+      final userFromDB = await db.query<User>().get(user.id);
       expect(user, isNotNull);
       expect(userFromDB?.firstname, 'Red Oil');
       expect(userFromDB?.age, 100);

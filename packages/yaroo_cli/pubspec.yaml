@@ -17,6 +17,13 @@ dependencies:
   yaroorm:
   mason_logger: ^0.2.11
 
+  analyzer:
+  code_builder: ^4.10.0
+  dart_style:
+  source_gen: ^1.5.0
+  grammer: ^1.0.3
+  recase: ^4.1.0
+
 dev_dependencies:
   test: ^1.24.0
   lints: ^3.0.0

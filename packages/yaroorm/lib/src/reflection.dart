@@ -16,7 +16,7 @@ abstract class EntityMirror<T> {
   Object? get(Symbol field);
 }
 
-class DBEntity<T extends Entity> {
+final class DBEntity<T extends Entity> {
   Type get dartType => T;
 
   final String tableName;

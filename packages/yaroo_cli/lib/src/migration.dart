@@ -3,6 +3,9 @@
 import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/yaroorm.dart';
 
+// ignore: implementation_imports
+import 'package:yaroorm/src/reflection.dart';
+
 class MigrationData extends Entity {
   @primaryKey
   final int id;
