@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:args/command_runner.dart';
-import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 class MigrationDefn {

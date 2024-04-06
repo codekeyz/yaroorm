@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:collection/collection.dart';
 import 'package:yaroo_cli/src/migration.dart';
-import 'package:yaroorm/migration.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import '../_misc.dart';
@@ -22,7 +21,7 @@ class MigrationRollbackCommand extends OrmCommand {
     final lastBatchNumber =
         await getLastBatchNumber(driver, migrationTableName);
 
-    final entries = await MigrationQuery.driver(driver)
+    final entries = await MigrationEntityQuery.driver(driver)
         .equal('batch', lastBatchNumber)
         .findMany();
 
@@ -50,7 +49,7 @@ class MigrationRollbackCommand extends OrmCommand {
   }
 }
 
-typedef Rollback = ({MigrationData entry, List<Schema> schemas});
+typedef Rollback = ({MigrationEntity entry, List<Schema> schemas});
 
 Future<void> processRollbacks(
   DatabaseDriver driver,
@@ -62,9 +61,9 @@ Future<void> processRollbacks(
         await transactor.execute(e.toScript(driver.blueprint));
       }
 
-      await Query.table(
-        DB.config.migrationsTable,
-      ).driver(transactor).equal('id', rollback.entry.id).delete();
+      await MigrationQuery.driver(transactor)
+          .equal('id', rollback.entry.id)
+          .delete();
     });
 
     print('✔ rolled back: ${rollback.entry.migration}');

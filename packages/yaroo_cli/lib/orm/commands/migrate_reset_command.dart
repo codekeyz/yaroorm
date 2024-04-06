@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart';
-import 'package:yaroo_cli/src/migration.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import '../_misc.dart';

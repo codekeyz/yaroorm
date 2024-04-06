@@ -1,6 +1,5 @@
 import 'package:cli_completion/cli_completion.dart';
 import 'package:mason_logger/mason_logger.dart';
-import 'package:yaroo_cli/src/commands/generate.dart';
 import 'package:yaroo_cli/src/logger.dart';
 
 const executableName = 'yaroo';
@@ -17,8 +16,6 @@ class YarooCliCommandRunner extends CompletionCommandRunner<int> {
           callback: (verbose) {
         if (verbose) logger.level = Level.verbose;
       });
-
-    addCommand(GenerateEntityCommand());
   }
 
   @override
