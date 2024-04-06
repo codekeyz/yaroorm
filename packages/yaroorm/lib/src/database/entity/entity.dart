@@ -1,3 +1,4 @@
+import 'package:copy_with_extension/copy_with_extension.dart';
 import 'package:recase/recase.dart';
 
 import 'package:meta/meta_meta.dart';
@@ -23,13 +24,13 @@ abstract class Entity {
 }
 
 @Target({TargetKind.classType})
-class Table {
+class Table extends CopyWith {
   final String name;
-  final List<EntityTypeConverter>? converters;
+  final List<EntityTypeConverter> converters;
 
   const Table(
     this.name, {
-    this.converters,
+    this.converters = const [],
   });
 }
 
@@ -44,7 +45,7 @@ class TableColumn {
 @Target({TargetKind.field})
 class PrimaryKey extends TableColumn {
   final bool autoIncrement;
-  const PrimaryKey({this.autoIncrement = true});
+  const PrimaryKey({this.autoIncrement = true, super.name});
 }
 
 @Target({TargetKind.field})

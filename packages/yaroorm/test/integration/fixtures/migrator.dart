@@ -1,12 +1,10 @@
 import 'dart:io';
 
 import 'package:test/test.dart';
-import 'package:yaroo_cli/orm/orm.dart';
+import 'package:yaroo_cli/orm.dart';
 import '../fixtures/orm_config.dart' as conf;
-import 'migrator.reflectable.dart';
 
 void main(List<String> args) async {
-  initializeReflectable();
   await OrmCLIRunner.start(args, conf.config);
 }
 

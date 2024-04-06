@@ -21,16 +21,17 @@ dependencies:
   postgres: ^3.1.1
 
   meta: ^1.11.0
-  collection: ^1.18.0
   grammer: ^1.0.3
   recase: ^4.1.0
+  copy_with_extension: ^5.0.4
 
 dev_dependencies:
+  yaroorm_builder:
   lints: ^3.0.0
   test: ^1.24.0
   yaroo_cli:
     path: ../yaroo_cli
   path: ^1.9.0
-  build_runner:
-  copy_with_extension: ^5.0.4
   copy_with_extension_gen: ^5.0.4
+  build_runner:
+  collection: ^1.18.0

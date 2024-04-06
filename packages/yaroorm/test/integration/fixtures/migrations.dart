@@ -1,53 +1,35 @@
-import 'package:yaroorm/migration.dart';
-import 'package:yaroorm/src/database/driver/sqlite_driver.dart';
+import 'package:yaroorm/src/migration.dart';
 
-import 'test_data.dart';
-import 'migrations.reflectable.dart';
+import '../../models/models.dart';
 
 class AddUsersTable extends Migration {
   @override
   void up(List<Schema> schemas) {
-    schemas.add(Schema.fromEntity(User));
+    schemas.add(UserSchema);
   }
 
   @override
   void down(List<Schema> schemas) {
-    schemas.add(Schema.dropIfExists(User));
+    schemas.add(Schema.dropIfExists(UserSchema));
   }
 }
 
 class AddPostsTable extends Migration {
   @override
   void up(List<Schema> schemas) {
-    final postSchema = Schema.create('posts', (table) {
-      return table
-        ..id()
-        ..integer('userId')
-        ..string('title')
-        ..string('description')
-        ..foreign<User>(
-            onKey: (key) => key.actions(
-                onUpdate: ForeignKeyAction.cascade,
-                onDelete: ForeignKeyAction.cascade))
-        ..timestamps();
-    });
+    final postSchema = PostSchema
+      ..foreign<User>(
+          onKey: (key) => key.actions(
+              onUpdate: ForeignKeyAction.cascade,
+              onDelete: ForeignKeyAction.cascade));
 
-    final postCommentSchema = Schema.create('post_comments', (table) {
-      return table
-        ..id(type: 'VARCHAR(255)', autoIncrement: false)
-        ..integer('postId')
-        ..string('comment')
-        ..foreign<PostComment, Post>()
-        ..timestamps();
-    });
-
-    schemas.addAll([postSchema, postCommentSchema]);
+    schemas.addAll([postSchema, PostCommentSchema]);
   }
 
   @override
   void down(List<Schema> schemas) {
-    schemas.add(Schema.dropIfExists('post_comments'));
+    schemas.add(Schema.dropIfExists(PostCommentSchema));
 
-    schemas.add(Schema.dropIfExists(Post));
+    schemas.add(Schema.dropIfExists(PostSchema));
   }
 }

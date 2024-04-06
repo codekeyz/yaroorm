@@ -1,4 +1,4 @@
-import 'package:yaroorm/migration.dart';
+import 'package:yaroorm/src/migration.dart';
 import 'package:yaroorm/src/query/aggregates.dart';
 
 import '../query/query.dart';

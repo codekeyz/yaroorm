@@ -3,7 +3,7 @@ import 'package:yaroorm/src/database/driver/pgsql_driver.dart';
 
 import '../../primitives/serializer.dart';
 import '../../query/query.dart';
-import '../../../migration.dart';
+import '../../migration.dart';
 
 import '../entity/entity.dart';
 import 'sqlite_driver.dart';

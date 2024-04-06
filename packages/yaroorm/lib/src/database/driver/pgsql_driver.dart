@@ -1,7 +1,7 @@
 import 'package:meta/meta.dart';
 import 'package:postgres/postgres.dart' as pg;
 
-import '../../../migration.dart';
+import '../../migration.dart';
 import '../../primitives/serializer.dart';
 import '../../query/query.dart';
 import '../entity/entity.dart';

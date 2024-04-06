@@ -4,7 +4,7 @@ import 'package:meta/meta.dart';
 import 'package:recase/recase.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import 'src/reflection.dart';
+import 'reflection.dart';
 
 abstract class TableBlueprint {
   void id({String name = 'id', String? type, bool autoIncrement = true});

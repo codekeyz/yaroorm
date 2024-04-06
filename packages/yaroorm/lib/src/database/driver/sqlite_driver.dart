@@ -2,7 +2,7 @@ import 'package:meta/meta.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common/sql.dart';
 import 'package:collection/collection.dart';
-import 'package:yaroorm/migration.dart';
+import 'package:yaroorm/src/migration.dart';
 import 'package:yaroorm/src/query/aggregates.dart';
 
 import '../../primitives/serializer.dart';
