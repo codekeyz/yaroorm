@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:args/command_runner.dart';
+import 'package:yaroo_cli/src/migration.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 class MigrationDefn {
@@ -48,6 +49,8 @@ abstract class OrmCommand extends Command<int> {
 
   @override
   FutureOr<int> run() async {
+    Query.addTypeDef<MigrationEntity>(migration_entityTypeData);
+
     final driver = DB.driver(dbConnection);
     await driver.connect();
 

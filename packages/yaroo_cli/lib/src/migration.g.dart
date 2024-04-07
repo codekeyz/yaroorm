@@ -15,7 +15,7 @@ DBEntity<MigrationEntity> get migration_entityTypeData =>
       "migrations",
       timestampsEnabled: false,
       columns: [
-        PrimaryKeyField("id", int, #id),
+        DBEntityField.primaryKey("id", int, #id),
         DBEntityField("migration", String, #migration),
         DBEntityField("batch", int, #batch)
       ],
