@@ -1,9 +1,10 @@
 import 'package:meta/meta.dart';
-import 'package:yaroorm/src/query/aggregates.dart';
-import 'package:yaroorm/yaroorm.dart';
 
+import '../database/driver/driver.dart';
+import '../database/entity/entity.dart';
 import '../primitives/where.dart';
 import '../reflection.dart';
+import 'aggregates.dart';
 
 part 'query_impl.dart';
 
@@ -79,10 +80,8 @@ abstract interface class Query<T extends Entity> extends QueryBase<Query<T>>
   final List<WhereClause<T>> whereClauses;
   final DBEntity<T> entity;
 
-  Map<Type, EntityTypeConverter> get converters => combineConverters(
-        entity.converters,
-        runner.typeconverters,
-      );
+  Map<Type, EntityTypeConverter> get converters =>
+      combineConverters(entity.converters, runner.typeconverters);
 
   static final Map<Type, DBEntity> _typedatas = {};
 

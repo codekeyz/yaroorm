@@ -3,6 +3,7 @@ import 'package:recase/recase.dart';
 
 import 'package:meta/meta_meta.dart';
 
+import '../../migration.dart';
 import '../../query/query.dart';
 import '../../reflection.dart';
 
@@ -56,6 +57,17 @@ class CreatedAtColumn extends TableColumn {
 @Target({TargetKind.field})
 class UpdatedAtColumn extends TableColumn {
   const UpdatedAtColumn() : super(name: 'updatedAt', nullable: false);
+}
+
+/// Use this to reference other entities
+///
+/// ignore: camel_case_types
+class reference extends TableColumn {
+  final Type type;
+
+  final ForeignKeyAction? onUpdate, onDelete;
+
+  const reference(this.type, {super.name, this.onUpdate, this.onDelete});
 }
 
 const primaryKey = PrimaryKey();

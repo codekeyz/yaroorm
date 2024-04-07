@@ -31,6 +31,22 @@ class QueryImpl<Model extends Entity> extends Query<Model> {
 
   @override
   Future<Model> insert(Map<Symbol, dynamic> data) async {
+    final typeData = Query.getEntity<Model>();
+
+    if (typeData.timestampsEnabled) {
+      final now = DateTime.now();
+      final createdAtField = typeData.createdAtField;
+      final updatedAtField = typeData.updatedAtField;
+
+      if (createdAtField != null) {
+        data[createdAtField.dartName] = now;
+      }
+
+      if (updatedAtField != null) {
+        data[updatedAtField.dartName] = now;
+      }
+    }
+
     final dataToDbD = conformToDbTypes<Model>(data, converters);
     final recordId =
         await runner.insert(InsertQuery(tableName, data: dataToDbD));

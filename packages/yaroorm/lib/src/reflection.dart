@@ -1,7 +1,7 @@
-
 import 'package:yaroorm/src/utils.dart';
 
 import 'database/entity/entity.dart';
+import 'migration.dart';
 import 'query/query.dart';
 
 String getEntityTableName<T extends Entity>() => Query.getEntity<T>().tableName;
@@ -33,7 +33,8 @@ final class DBEntity<T extends Entity> {
 
   final bool timestampsEnabled;
 
-  PrimaryKeyField get primaryKey => columns.firstWhereOrNull((e) => e is PrimaryKeyField) as PrimaryKeyField;
+  PrimaryKeyField get primaryKey =>
+      columns.firstWhereOrNull((e) => e is PrimaryKeyField) as PrimaryKeyField;
 
   CreatedAtField? get createdAtField => !timestampsEnabled
       ? null
@@ -43,8 +44,11 @@ final class DBEntity<T extends Entity> {
       ? null
       : columns.firstWhereOrNull((e) => e is UpdatedAtField) as UpdatedAtField?;
 
-  List<DBEntityField> get editableColumns =>
-      columns.where((e) => e != primaryKey).toList();
+  Iterable<ReferencedField> get referencedFields =>
+      columns.whereType<ReferencedField>();
+
+  Iterable<DBEntityField> get editableColumns =>
+      columns.where((e) => e != primaryKey);
 
   const DBEntity(
     this.tableName, {
@@ -55,9 +59,6 @@ final class DBEntity<T extends Entity> {
     this.converters = const [],
   });
 }
-
-
-
 
 final class DBEntityField {
   /// dart name for property on Entity class
@@ -71,16 +72,53 @@ final class DBEntityField {
 
   final bool nullable;
 
-  bool get primaryKey => false;
+  bool get isPrimaryKey => false;
 
-  const DBEntityField(this.columnName, this.type, this.dartName,
-      {this.nullable = false});
+  const DBEntityField(
+    this.columnName,
+    this.type,
+    this.dartName, {
+    this.nullable = false,
+  });
+
+  static PrimaryKeyField primaryKey(
+    String columnName,
+    Type type,
+    Symbol dartName, {
+    bool? autoIncrement,
+  }) {
+    return PrimaryKeyField._(
+      columnName,
+      type,
+      dartName,
+      autoIncrement: autoIncrement ?? false,
+    );
+  }
+
+  static CreatedAtField createdAt(String columnName, Symbol dartName) {
+    return CreatedAtField._(columnName, dartName);
+  }
+
+  static UpdatedAtField updatedAt(String columnName, Symbol dartName) {
+    return UpdatedAtField._(columnName, dartName);
+  }
+
+  static ReferencedField<T> referenced<T extends Entity>(
+    String columnName,
+    Symbol dartName, {
+    bool nullable = false,
+    ForeignKeyAction? onUpdate,
+    ForeignKeyAction? onDelete,
+  }) {
+    return ReferencedField<T>._(columnName, dartName,
+        nullable: nullable, onUpdate: onUpdate, onDelete: onDelete);
+  }
 }
 
 final class PrimaryKeyField extends DBEntityField {
   final bool autoIncrement;
 
-  const PrimaryKeyField(
+  const PrimaryKeyField._(
     super.columnName,
     super.type,
     super.dartName, {
@@ -88,15 +126,48 @@ final class PrimaryKeyField extends DBEntityField {
   }) : super(nullable: false);
 
   @override
-  bool get primaryKey => true;
+  bool get isPrimaryKey => true;
 }
 
 final class CreatedAtField extends DBEntityField {
-  const CreatedAtField(String columnName, Symbol dartName)
+  const CreatedAtField._(String columnName, Symbol dartName)
       : super(columnName, DateTime, dartName);
 }
 
 final class UpdatedAtField extends DBEntityField {
-  const UpdatedAtField(String columnName, Symbol dartName)
+  const UpdatedAtField._(String columnName, Symbol dartName)
       : super(columnName, DateTime, dartName);
+}
+
+final class ReferencedField<T extends Entity> implements DBEntityField {
+  final DBEntity<T> reference;
+  final String _columnName;
+  final Symbol _dartName;
+  final bool _nullable;
+
+  final ForeignKeyAction? onUpdate, onDelete;
+
+  ReferencedField._(
+    this._columnName,
+    this._dartName, {
+    bool nullable = false,
+    this.onDelete,
+    this.onUpdate,
+  })  : _nullable = nullable,
+        reference = Query.getEntity<T>();
+
+  @override
+  String get columnName => _columnName;
+
+  @override
+  Symbol get dartName => _dartName;
+
+  @override
+  bool get isPrimaryKey => false;
+
+  @override
+  bool get nullable => _nullable;
+
+  @override
+  Type get type => reference.primaryKey.type;
 }

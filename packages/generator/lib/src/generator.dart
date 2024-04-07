@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
@@ -45,7 +47,9 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
   TypeChecker _typeChecker(Type type) => TypeChecker.fromRuntime(type);
 
   ({FieldElement field, ConstantReader reader})? _getFieldAnnotationByType(
-      List<FieldElement> fields, Type type) {
+    List<FieldElement> fields,
+    Type type,
+  ) {
     for (final field in fields) {
       final result =
           _typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
@@ -101,17 +105,63 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
           'These props are not allowed in $className Entity default constructor: ${notAllowedProps.join(', ')}');
     }
 
-    String fieldToString(FieldElement e) {
+    String generateCodeForField(FieldElement e) {
       final symbol = '#${e.name}';
+      var columnName = e.name;
+
+      final meta = _typeChecker(entity.TableColumn)
+          .firstAnnotationOf(e, throwOnUnresolved: false);
+      ConstantReader? metaReader;
+
+      if (meta != null) {
+        metaReader = ConstantReader(meta);
+        final customName = metaReader.peek('name')?.stringValue;
+        if (customName != null) columnName = customName;
+      }
 
       final requiredOpts = '''
-              "${e.name}",
+              "$columnName",
                ${e.type.getDisplayString(withNullability: false)},
                $symbol
             ''';
 
+      if (meta != null) {
+        final isReferenceField =
+            _typeChecker(entity.reference).isExactly(meta.type!.element!);
+
+        if (isReferenceField) {
+          final referencedType = metaReader!.peek('type')!.typeValue;
+          final element = referencedType.element as ClassElement;
+          final superType = element.supertype?.element;
+
+          if (superType == null || !_typeChecker(entity.Entity).isExactly(superType)) {
+            throw InvalidGenerationSourceError(
+              'Generator cannot target field `${e.name}` on `$className` class.',
+              todo: 'Type passed to [reference] annotation must be a subtype of `Entity`.',
+            );
+          }
+
+          final onUpdate = metaReader.peek('onUpdate')?.objectValue.variable!.name;
+          final onDelete = metaReader.peek('onDelete')?.objectValue.variable!.name;
+
+          return '''DBEntityField.referenced<${element.name}>(
+                  "$columnName", $symbol
+                  ${onUpdate == null ? '' : ', onUpdate: ForeignKeyAction.$onUpdate'}
+                  ${onDelete == null ? '' : ', onDelete: ForeignKeyAction.$onDelete'}
+                  ,)''';
+        }
+      }
+
+      if (e == createdAtField) {
+        return '''DBEntityField.createdAt("$columnName", $symbol)''';
+      }
+
+      if (e == updatedAtField) {
+        return '''DBEntityField.updatedAt("$columnName", $symbol)''';
+      }
+
       if (e == primaryKey.field) {
-        return '''PrimaryKeyField(
+        return '''DBEntityField.primaryKey(
           $requiredOpts)
           ${!autoIncrementPrimaryKey ? ', autoIncrement: false' : ''}''';
       }
@@ -149,7 +199,7 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
             '''DBEntity<$className>(
                 "$tableName",
                 timestampsEnabled: $timestampsEnabled,
-                columns: ${fields.map(fieldToString).toList()},
+                columns: ${fields.map(generateCodeForField).toList()},
                 mirror: _\$${className}EntityMirror.new,
                 build: (args) => ${_generateConstructorCode(className, primaryConstructor)},
                 ${converters.isEmpty ? '' : 'converters: ${converters.map(processAnnotation).toList()},'})''',
@@ -267,24 +317,6 @@ return switch(field) {
 
     return (sb..write(')')).toString();
   }
-
-  /// Returns the field and it's meta value
-  // ({FieldElement field, DartObject meta})? getEntityField(
-  //     List<FieldElement> fields, String type) {
-  //   ElementAnnotation? metaData;
-
-  //   final field = fields.firstWhereOrNull((f) {
-  //     metaData = f.metadata.firstWhereOrNull((e) =>
-  //         e.element?.library?.identifier == yaroormIdentifier &&
-  //         (e.element is PropertyAccessorElement) &&
-  //         (e.element as PropertyAccessorElement).returnType.toString() == type);
-
-  //     return metaData != null;
-  //   });
-  //   if (field == null) return null;
-
-  //   return (field: field, meta: metaData!.computeConstantValue()!);
-  // }
 
   /// Process entity annotation
   String processAnnotation(DartObject constantValue) {
