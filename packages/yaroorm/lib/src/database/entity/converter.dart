@@ -57,7 +57,7 @@ Map<String, dynamic> conformToDbTypes<Model extends Entity>(
 ) {
   final entity = Query.getEntity<Model>();
 
-  Object toDbType(DBEntityField field) {
+  Object? toDbType(DBEntityField field) {
     final value = data[field.dartName];
     final typeConverter = converters[field.type];
     return typeConverter == null ? value : typeConverter.toDbType(value);

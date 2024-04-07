@@ -1,4 +1,8 @@
-import 'package:yaroorm/yaroorm.dart';
+
+import 'package:yaroorm/src/utils.dart';
+
+import 'database/entity/entity.dart';
+import 'query/query.dart';
 
 String getEntityTableName<T extends Entity>() => Query.getEntity<T>().tableName;
 
@@ -29,7 +33,15 @@ final class DBEntity<T extends Entity> {
 
   final bool timestampsEnabled;
 
-  PrimaryKeyField get primaryKey => columns.whereType<PrimaryKeyField>().first;
+  PrimaryKeyField get primaryKey => columns.firstWhereOrNull((e) => e is PrimaryKeyField) as PrimaryKeyField;
+
+  CreatedAtField? get createdAtField => !timestampsEnabled
+      ? null
+      : columns.firstWhereOrNull((e) => e is CreatedAtField) as CreatedAtField?;
+
+  UpdatedAtField? get updatedAtField => !timestampsEnabled
+      ? null
+      : columns.firstWhereOrNull((e) => e is UpdatedAtField) as UpdatedAtField?;
 
   List<DBEntityField> get editableColumns =>
       columns.where((e) => e != primaryKey).toList();
@@ -43,6 +55,9 @@ final class DBEntity<T extends Entity> {
     this.converters = const [],
   });
 }
+
+
+
 
 final class DBEntityField {
   /// dart name for property on Entity class
@@ -74,4 +89,14 @@ final class PrimaryKeyField extends DBEntityField {
 
   @override
   bool get primaryKey => true;
+}
+
+final class CreatedAtField extends DBEntityField {
+  const CreatedAtField(String columnName, Symbol dartName)
+      : super(columnName, DateTime, dartName);
+}
+
+final class UpdatedAtField extends DBEntityField {
+  const UpdatedAtField(String columnName, Symbol dartName)
+      : super(columnName, DateTime, dartName);
 }
