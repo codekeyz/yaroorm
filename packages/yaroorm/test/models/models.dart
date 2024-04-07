@@ -1,3 +1,5 @@
+import 'package:yaroorm/src/database/driver/pgsql_driver.dart';
+import 'package:yaroorm/src/database/driver/sqlite_driver.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 part 'models.g.dart';
@@ -33,6 +35,12 @@ class Post extends Entity {
   final String title;
   final String description;
 
+  @reference(
+    User,
+    name: 'user_id',
+    onUpdate: ForeignKeyAction.cascade,
+    onDelete: ForeignKeyAction.cascade,
+  )
   final int userId;
 
   @createdAtCol

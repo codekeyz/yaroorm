@@ -17,11 +17,7 @@ class AddUsersTable extends Migration {
 class AddPostsTable extends Migration {
   @override
   void up(List<Schema> schemas) {
-    final postSchema = PostSchema
-      ..foreign<User>(
-          onKey: (key) => key.actions(
-              onUpdate: ForeignKeyAction.cascade,
-              onDelete: ForeignKeyAction.cascade));
+    final postSchema = PostSchema;
 
     schemas.addAll([postSchema, PostCommentSchema]);
   }
