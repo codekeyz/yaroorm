@@ -83,8 +83,7 @@ class _WhereClauseImpl<Result extends Entity> extends WhereClause<Result> {
   @override
   WhereClause<Result> isNotLike<Value>(String field, String pattern) {
     final newChild = _WhereClauseImpl(query)
-      ..clauseValue = WhereClauseValue(
-          field, (operator: Operator.NOT_LIKE, value: pattern));
+      ..clauseValue = WhereClauseValue(field, (operator: Operator.NOT_LIKE, value: pattern));
     children.add((LogicalOperator.AND, newChild));
     return this;
   }
@@ -113,9 +112,7 @@ class _WhereClauseImpl<Result extends Entity> extends WhereClause<Result> {
 
   @override
   Future<void> delete() {
-    return DeleteQuery(query.tableName, whereClause: this)
-        .driver(query.runner)
-        .execute();
+    return DeleteQuery(query.tableName, whereClause: this).driver(query.runner).execute();
   }
 
   @override
@@ -145,8 +142,7 @@ class _WhereClauseImpl<Result extends Entity> extends WhereClause<Result> {
     String condition, [
     Value? value,
   ]) {
-    final newChild = _WhereClauseImpl<Result>(query)
-      ..clauseValue = WhereClauseValue.from(field, condition, value);
+    final newChild = _WhereClauseImpl<Result>(query)..clauseValue = WhereClauseValue.from(field, condition, value);
     children.add((LogicalOperator.AND, newChild));
     return this;
   }
@@ -157,9 +153,8 @@ class _WhereClauseImpl<Result extends Entity> extends WhereClause<Result> {
     String condition, [
     Value? value,
   ]) {
-    final newChild =
-        _WhereClauseImpl<Result>(query, operator: LogicalOperator.OR)
-          ..clauseValue = WhereClauseValue.from(field, condition, value);
+    final newChild = _WhereClauseImpl<Result>(query, operator: LogicalOperator.OR)
+      ..clauseValue = WhereClauseValue.from(field, condition, value);
     query.whereClauses.add(newChild);
     return newChild;
   }

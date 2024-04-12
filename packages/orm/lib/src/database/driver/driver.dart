@@ -66,8 +66,7 @@ class DatabaseConnection {
       'pgsql' => DatabaseDriverType.pgsql,
       'mysql' => DatabaseDriverType.mysql,
       'mariadb' => DatabaseDriverType.mariadb,
-      _ => throw ArgumentError.value(
-          driver, null, 'Invalid Database Driver provided in configuration')
+      _ => throw ArgumentError.value(driver, null, 'Invalid Database Driver provided in configuration')
     };
   }
 }

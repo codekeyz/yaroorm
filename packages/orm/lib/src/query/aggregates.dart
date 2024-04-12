@@ -38,10 +38,7 @@ sealed class AggregateFunction<T> {
     final value = result[0].values.first;
     if (value is T) return value;
     return switch (T) {
-      const (int) ||
-      const (double) ||
-      const (num) =>
-        value == null ? 0 : num.parse(value.toString()),
+      const (int) || const (double) || const (num) => value == null ? 0 : num.parse(value.toString()),
       const (String) => value.toString(),
       _ => throw Exception('Null value returned for aggregate: $statement'),
     } as T;
@@ -88,8 +85,7 @@ class MinAggregate extends AggregateFunction<num> {
 class GroupConcatAggregate extends AggregateFunction<String> {
   final String separator;
 
-  GroupConcatAggregate(super.query, String super.field, this.separator)
-      : super._init();
+  GroupConcatAggregate(super.query, String super.field, this.separator) : super._init();
 
   @override
   List<String> get arguments {
