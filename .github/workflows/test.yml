@@ -37,61 +37,61 @@ jobs:
           melos builder
           melos analyze
 
-  # test:
-  #   name: Test Packages
-  #   runs-on: ubuntu-latest
-  #   services:
-  #     mariadb:
-  #       image: mariadb
-  #       env:
-  #         MYSQL_ROOT_PASSWORD: password
-  #         MARIADB_DATABASE: test_db
-  #       ports:
-  #         - 3000:3306
-  #     mysql:
-  #       image: mysql
-  #       env:
-  #         MYSQL_ROOT_PASSWORD: password
-  #         MYSQL_DATABASE: test_db
-  #       ports:
-  #         - 3001:3306
-  #     postgres:
-  #       image: postgres:latest
-  #       env:
-  #         POSTGRES_DB: test_db
-  #         POSTGRES_PASSWORD: password
-  #         POSTGRES_USER: root
-  #       ports:
-  #         - 3002:5432
+  test:
+    name: Test Packages
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MARIADB_DATABASE: test_db
+        ports:
+          - 3000:3306
+      mysql:
+        image: mysql
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: test_db
+        ports:
+          - 3001:3306
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_PASSWORD: password
+          POSTGRES_USER: root
+        ports:
+          - 3002:5432
 
-  #   steps:
-  #     - name: Checkout Repository
-  #       uses: actions/checkout@v3
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-  #     - uses: dart-lang/setup-dart@v1.3
-  #       with:
-  #         sdk: "3.0.0"
-  #     - uses: bluefireteam/melos-action@v3
+      - uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: "3.0.0"
+      - uses: bluefireteam/melos-action@v3
 
-  #     - name: Prepare Workspace
-  #       run: |
-  #         dart pub global activate melos
-  #         dart pub global activate coverage
-  #         melos bootstrap
-  #         melos builder
+      - name: Prepare Workspace
+        run: |
+          dart pub global activate melos
+          dart pub global activate coverage
+          melos bootstrap
+          melos builder
 
-  #     - name: Run Unit Tests
-  #       run: melos tests:ci
+      - name: Run Unit Tests
+        run: melos tests:ci
 
-  #     - name: Run E2E Tests
-  #       run: cd packages/yaroorm && "./e2e_test.sh"
+      # - name: Run E2E Tests
+      #   run: cd packages/yaroorm && "./e2e_test.sh"
 
-  #     - name: Combine Coverage
-  #       run: melos coverage
+      # - name: Combine Coverage
+      #   run: melos coverage
 
-  #     - name: Upload Coverage
-  #       uses: codecov/codecov-action@v3
-  #       env:
-  #         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-  #       with:
-  #         files: coverage/*_lcov.info
+      # - name: Upload Coverage
+      #   uses: codecov/codecov-action@v3
+      #   env:
+      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      #   with:
+      #     files: coverage/*_lcov.info
