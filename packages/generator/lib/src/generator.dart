@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
@@ -21,6 +19,8 @@ Builder generatorFactoryBuilder(BuilderOptions options) => SharedPartBuilder(
       [YaroormGenerator(YaroormOptions.fromOptions(options))],
       'yaroorm',
     );
+
+typedef FieldData = ({FieldElement field, ConstantReader reader});
 
 class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
   final YaroormOptions globalOptions;
@@ -46,13 +46,12 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
 
   TypeChecker _typeChecker(Type type) => TypeChecker.fromRuntime(type);
 
-  ({FieldElement field, ConstantReader reader})? _getFieldAnnotationByType(
+  FieldData? _getFieldAnnotationByType(
     List<FieldElement> fields,
     Type type,
   ) {
     for (final field in fields) {
-      final result =
-          _typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
+      final result = _typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
       if (result != null) {
         return (field: field, reader: ConstantReader(result));
       }
@@ -67,10 +66,8 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
     final tableName = annotation.peek('name')!.stringValue;
 
     final primaryKey = _getFieldAnnotationByType(fields, entity.PrimaryKey);
-    final createdAtField =
-        _getFieldAnnotationByType(fields, entity.CreatedAtColumn)?.field;
-    final updatedAtField =
-        _getFieldAnnotationByType(fields, entity.UpdatedAtColumn)?.field;
+    final createdAtField = _getFieldAnnotationByType(fields, entity.CreatedAtColumn)?.field;
+    final updatedAtField = _getFieldAnnotationByType(fields, entity.UpdatedAtColumn)?.field;
 
     final converters = annotation.peek('converters')!.listValue;
 
@@ -78,28 +75,21 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
       throw Exception("$className Entity doesn't have primary key");
     }
 
-    final autoIncrementPrimaryKey =
-        primaryKey.reader.peek('autoIncrement')!.boolValue;
+    final autoIncrementPrimaryKey = primaryKey.reader.peek('autoIncrement')!.boolValue;
     final timestampsEnabled = (createdAtField ?? updatedAtField) != null;
 
     /// other properties aside primarykey, updatedAt and createdAt
-    final normalFields = fields.where(
-        (e) => ![createdAtField, updatedAtField, primaryKey.field].contains(e));
+    final normalFields = fields.where((e) => ![createdAtField, updatedAtField, primaryKey.field].contains(e));
 
-    final creatableFields = [
-      if (!autoIncrementPrimaryKey) primaryKey.field,
-      ...normalFields
-    ];
+    final creatableFields = [if (!autoIncrementPrimaryKey) primaryKey.field, ...normalFields];
 
-    final primaryConstructor =
-        classElement.constructors.firstWhereOrNull((e) => e.name == "");
+    final primaryConstructor = classElement.constructors.firstWhereOrNull((e) => e.name == "");
     if (primaryConstructor == null) {
       throw '$className Entity does not have a default constructor';
     }
 
     final fieldNames = fields.map((e) => e.name);
-    final notAllowedProps =
-        primaryConstructor.children.where((e) => !fieldNames.contains(e.name));
+    final notAllowedProps = primaryConstructor.children.where((e) => !fieldNames.contains(e.name));
     if (notAllowedProps.isNotEmpty) {
       throw Exception(
           'These props are not allowed in $className Entity default constructor: ${notAllowedProps.join(', ')}');
@@ -109,8 +99,7 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
       final symbol = '#${e.name}';
       var columnName = e.name;
 
-      final meta = _typeChecker(entity.TableColumn)
-          .firstAnnotationOf(e, throwOnUnresolved: false);
+      final meta = _typeChecker(entity.TableColumn).firstAnnotationOf(e, throwOnUnresolved: false);
       ConstantReader? metaReader;
 
       if (meta != null) {
@@ -126,8 +115,7 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
             ''';
 
       if (meta != null) {
-        final isReferenceField =
-            _typeChecker(entity.reference).isExactly(meta.type!.element!);
+        final isReferenceField = _typeChecker(entity.reference).isExactly(meta.type!.element!);
 
         if (isReferenceField) {
           final referencedType = metaReader!.peek('type')!.typeValue;
@@ -233,57 +221,56 @@ return switch(field) {
 ''')),
             ]),
         ),
-        Extension((b) => b
-          ..name = '${className}QueryExtension'
-          ..on = refer('Query<$className>')
-          ..methods.addAll([
-            Method(
-              (m) => m
-                ..name = 'create'
-                ..returns = refer('Future<$className>')
-                ..lambda = true
-                ..optionalParameters.addAll(creatableFields.map(
-                  (field) => Parameter((p) => p
-                    ..name = field.name
-                    ..named = true
-                    ..type = refer('${field.type}')
-                    ..required = !field.type.isNullable),
-                ))
-                ..body = Code('''insert({
+        Extension(
+          (b) => b
+            ..name = '${className}QueryExtension'
+            ..on = refer('Query<$className>')
+            ..methods.addAll([
+              _generateFieldWhereClause(primaryKey.field, className),
+              ...normalFields.map((e) => _generateFieldWhereClause(e, className)),
+              _generateGetByPropertyMethod(primaryKey.field, className),
+              ...normalFields.map((e) => _generateGetByPropertyMethod(e, className)),
+              Method(
+                (m) => m
+                  ..name = 'create'
+                  ..returns = refer('Future<$className>')
+                  ..optionalParameters.addAll(creatableFields.map(
+                    (field) => Parameter((p) => p
+                      ..name = field.name
+                      ..named = true
+                      ..type = refer('${field.type}')
+                      ..required = !field.type.isNullable),
+                  ))
+                  ..body = Code('''return \$insert({
                 ${creatableFields.map((e) => '#${e.name}: ${e.name}').join(',')}
-                ,})'''),
-            ),
+                });'''),
+              ),
+            ]),
+        ),
+        Extension((b) => b
+          ..name = '${className}UpdateQueryExtension'
+          ..on = refer('WhereClause<$className>')
+          ..methods.addAll([
             Method(
               (m) => m
                 ..name = 'update'
                 ..returns = refer('Future<void>')
                 ..modifier = MethodModifier.async
-                ..optionalParameters.addAll([
-                  Parameter((p) => p
-                    ..name = 'where'
-                    ..named = true
-                    ..type = refer('WhereBuilder<$className>')
-                    ..required = true),
-                  Parameter((p) => p
-                    ..name = 'value'
-                    ..named = true
-                    ..type = refer(className)
-                    ..required = true)
-                ])
-                ..body = Code('''
-                final mirror = $typeDataName.mirror(value);
-                final props = {
-      for (final column in $typeDataName.columns) column.dartName: mirror.get(column.dartName),
-    };
-
-     final update = UpdateQuery(
-      entity.tableName,
-      whereClause: where(this),
-      data: conformToDbTypes(props, converters),
-    );
-
-     await accept<UpdateQuery>(update);
-'''),
+                ..optionalParameters.addAll(normalFields.map(
+                  (field) => Parameter(
+                    (p) => p
+                      ..name = field.name
+                      ..named = true
+                      ..type = refer('value<${field.type.getDisplayString(withNullability: true)}>')
+                      ..defaultTo = Code('const NoValue()')
+                      ..required = false,
+                  ),
+                ))
+                ..body = Code('''await query.\$update(
+                  where: (_) => this,
+                  values: {
+                    ${normalFields.map((e) => 'if (${e.name} is! NoValue) #${e.name}: ${e.name}.val').join(',')},
+                  }).execute();'''),
             ),
           ]))
       ]));
@@ -296,8 +283,7 @@ return switch(field) {
     return field.getter?.isSynthetic ?? false;
   }
 
-  String _generateConstructorCode(
-      String className, ConstructorElement constructor) {
+  String _generateConstructorCode(String className, ConstructorElement constructor) {
     final sb = StringBuffer()..write('$className(');
 
     final normalParams = constructor.type.normalParameterNames;
@@ -318,11 +304,52 @@ return switch(field) {
     return (sb..write(')')).toString();
   }
 
+  /// This generates WHERE-EQUAL Clauses for a field
+  Method _generateFieldWhereClause(FieldElement field, String className) {
+    final meta = _typeChecker(entity.TableColumn).firstAnnotationOf(field, throwOnUnresolved: false);
+    final ConstantReader? reader = meta == null ? null : ConstantReader(meta);
+
+    final fieldName = field.name.pascalCase;
+    final dbColumnName = (reader?.peek('name')?.stringValue ?? field.name);
+    final fieldType = field.type.getDisplayString(withNullability: true);
+
+    return Method(
+      (m) {
+        m
+          ..name = fieldName
+          ..returns = refer('WhereClause<$className>')
+          ..lambda = true
+          ..requiredParameters.add(Parameter((p) => p
+            ..name = 'value'
+            ..type = refer(fieldType)))
+          ..body = Code('equal<$fieldType>("$dbColumnName", value)');
+      },
+    );
+  }
+
+  /// This generates GetByProperty for a field
+  Method _generateGetByPropertyMethod(FieldElement field, String className) {
+    final fieldName = field.name.pascalCase;
+    final fieldType = field.type.getDisplayString(withNullability: true);
+
+    return Method(
+      (m) {
+        m
+          ..name = 'findBy$fieldName'
+          ..returns = refer('Future<$className?>')
+          ..lambda = true
+          ..requiredParameters.add(Parameter((p) => p
+            ..name = 'value'
+            ..type = refer(fieldType)))
+          ..body = Code('$fieldName(value).findOne()');
+      },
+    );
+  }
+
   /// Process entity annotation
   String processAnnotation(DartObject constantValue) {
     final classElement = constantValue.type!.element as ClassElement;
-    assert(classElement.supertype!.typeArguments.length == 2,
-        'Should have two type arguments');
+    assert(classElement.supertype!.typeArguments.length == 2, 'Should have two type arguments');
 
     final variable = constantValue.variable;
     if (variable != null) return variable.name;
