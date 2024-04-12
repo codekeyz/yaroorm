@@ -10,9 +10,7 @@ class YarooCliCommandRunner extends CompletionCommandRunner<int> {
   YarooCliCommandRunner() : super(executableName, description) {
     argParser
       ..addFlag('version', negatable: false, help: 'Print the current version.')
-      ..addFlag('verbose',
-          abbr: 'v',
-          help: 'Noisy logging, including all shell commands executed.',
+      ..addFlag('verbose', abbr: 'v', help: 'Noisy logging, including all shell commands executed.',
           callback: (verbose) {
         if (verbose) logger.level = Level.verbose;
       });

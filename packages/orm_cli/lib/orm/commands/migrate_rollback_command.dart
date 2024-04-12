@@ -18,18 +18,14 @@ class MigrationRollbackCommand extends OrmCommand {
   Future<void> execute(DatabaseDriver driver) async {
     await ensureMigrationsTableReady(driver);
 
-    final lastBatchNumber =
-        await getLastBatchNumber(driver, migrationTableName);
+    final lastBatchNumber = await getLastBatchNumber(driver, migrationTableName);
 
-    final entries = await MigrationEntityQuery.driver(driver)
-        .equal('batch', lastBatchNumber)
-        .findMany();
+    final entries = await MigrationEntityQuery.driver(driver).equal('batch', lastBatchNumber).findMany();
 
     /// rollbacks start from the last class listed in the migrations list
     final migrationTask = migrationDefinitions
         .map((defn) {
-          final entry =
-              entries.firstWhereOrNull((e) => e.migration == defn.name);
+          final entry = entries.firstWhereOrNull((e) => e.migration == defn.name);
           return entry == null ? null : (entry: entry, schemas: defn.down);
         })
         .whereNotNull()
@@ -40,8 +36,7 @@ class MigrationRollbackCommand extends OrmCommand {
       return;
     }
 
-    print(
-        '------- Rolling back ${migrationTask.entry.migration}  📦 -------\n');
+    print('------- Rolling back ${migrationTask.entry.migration}  📦 -------\n');
 
     await processRollbacks(driver, [migrationTask]);
 
@@ -61,9 +56,7 @@ Future<void> processRollbacks(
         await transactor.execute(e.toScript(driver.blueprint));
       }
 
-      await MigrationQuery.driver(transactor)
-          .equal('id', rollback.entry.id)
-          .delete();
+      await MigrationQuery.driver(transactor).whereId(rollback.entry.id).delete();
     });
 
     print('✔ rolled back: ${rollback.entry.migration}');

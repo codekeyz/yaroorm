@@ -18,8 +18,7 @@ class MigrationResetCommand extends OrmCommand {
   Future<void> execute(DatabaseDriver driver) async {
     await ensureMigrationsTableReady(driver);
 
-    final migrationsList =
-        await MigrationQuery.driver(driver).orderByDesc('batch').all();
+    final migrationsList = await MigrationQuery.driver(driver).orderByDesc('batch').all();
     if (migrationsList.isEmpty) {
       print('𐄂 skipped: reason:     no migrations to reset');
       return;
@@ -28,8 +27,7 @@ class MigrationResetCommand extends OrmCommand {
     print('------- Resetting migrations  📦 -------\n');
 
     final rollbacks = migrationDefinitions.reversed.map((e) {
-      final entry =
-          migrationsList.firstWhereOrNull((entry) => e.name == entry.migration);
+      final entry = migrationsList.firstWhereOrNull((entry) => e.name == entry.migration);
       return entry == null ? null : (entry: entry, schemas: e.down);
     }).whereNotNull();
 

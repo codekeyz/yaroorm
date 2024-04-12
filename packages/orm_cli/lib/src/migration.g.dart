@@ -10,8 +10,7 @@ part of 'migration.dart';
 
 Query<MigrationEntity> get MigrationEntityQuery => DB.query<MigrationEntity>();
 CreateSchema get MigrationEntitySchema => Schema.fromEntity<MigrationEntity>();
-DBEntity<MigrationEntity> get migration_entityTypeData =>
-    DBEntity<MigrationEntity>(
+DBEntity<MigrationEntity> get migration_entityTypeData => DBEntity<MigrationEntity>(
       "migrations",
       timestampsEnabled: false,
       columns: [
@@ -43,15 +42,11 @@ class _$MigrationEntityEntityMirror extends EntityMirror<MigrationEntity> {
 
 extension MigrationEntityQueryExtension on Query<MigrationEntity> {
   WhereClause<MigrationEntity> whereId(int value) => equal<int>("id", value);
-  WhereClause<MigrationEntity> whereMigration(String value) =>
-      equal<String>("migration", value);
-  WhereClause<MigrationEntity> whereBatch(int value) =>
-      equal<int>("batch", value);
+  WhereClause<MigrationEntity> whereMigration(String value) => equal<String>("migration", value);
+  WhereClause<MigrationEntity> whereBatch(int value) => equal<int>("batch", value);
   Future<MigrationEntity?> findById(int value) => whereId(value).findOne();
-  Future<MigrationEntity?> findByMigration(String value) =>
-      whereMigration(value).findOne();
-  Future<MigrationEntity?> findByBatch(int value) =>
-      whereBatch(value).findOne();
+  Future<MigrationEntity?> findByMigration(String value) => whereMigration(value).findOne();
+  Future<MigrationEntity?> findByBatch(int value) => whereBatch(value).findOne();
   Future<MigrationEntity> create({
     required String migration,
     required int batch,
