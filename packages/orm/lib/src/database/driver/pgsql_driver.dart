@@ -4,7 +4,7 @@ import 'package:postgres/postgres.dart' as pg;
 import '../../migration.dart';
 import '../../primitives/serializer.dart';
 import '../../query/query.dart';
-import '../entity/entity.dart';
+import '../entity/entity.dart' hide value;
 import 'driver.dart';
 import 'mysql_driver.dart';
 

@@ -2,7 +2,6 @@ library migration;
 
 import 'package:meta/meta.dart';
 import 'package:recase/recase.dart';
-import 'package:yaroorm/yaroorm.dart';
 
 import 'database/entity/entity.dart';
 import 'query/query.dart';

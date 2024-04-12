@@ -1,14 +1,14 @@
 import 'package:meta/meta.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common/sql.dart';
-import 'package:collection/collection.dart';
-import 'package:yaroorm/src/migration.dart';
-import 'package:yaroorm/src/query/aggregates.dart';
+import 'package:yaroorm/src/utils.dart';
 
+import '../../migration.dart';
 import '../../primitives/serializer.dart';
 import '../../primitives/where.dart';
+import '../../query/aggregates.dart';
 import '../../query/query.dart';
-import '../entity/entity.dart';
+import '../entity/entity.dart' hide value;
 import 'driver.dart';
 
 final _serializer = const SqliteSerializer();

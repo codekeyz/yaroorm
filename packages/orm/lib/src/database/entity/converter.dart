@@ -13,7 +13,7 @@ abstract class EntityTypeConverter<DartType, DBType> {
 class DateTimeConverter extends EntityTypeConverter<DateTime, String> {
   const DateTimeConverter();
 
-  String padValue(value) => value.toString().padLeft(2, '0');
+  String padValue(v) => v.toString().padLeft(2, '0');
 
   @override
   DateTime? fromDbType(String? value) {

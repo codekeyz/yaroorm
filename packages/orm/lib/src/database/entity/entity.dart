@@ -3,7 +3,6 @@
 import 'dart:collection';
 
 import 'package:meta/meta.dart';
-import 'package:recase/recase.dart';
 
 import 'package:meta/meta_meta.dart';
 
@@ -17,9 +16,9 @@ part 'converter.dart';
 // part 'relations.dart';
 
 abstract class Entity {
-  String get _foreignKeyForModel => '${_type.toString().camelCase}Id';
+  // String get _foreignKeyForModel => '${_type.toString().camelCase}Id';
 
-  Type get _type => runtimeType;
+  // Type get _type => runtimeType;
 
   DriverContract _driver = DB.defaultDriver;
 

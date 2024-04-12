@@ -1,7 +1,8 @@
 // ignore_for_file: constant_identifier_names
 
-import 'package:yaroorm/src/query/aggregates.dart';
-import 'package:yaroorm/yaroorm.dart';
+import '../database/entity/entity.dart' hide value;
+import '../query/aggregates.dart';
+import '../query/query.dart';
 
 part '_where_impl.dart';
 
