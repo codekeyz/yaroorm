@@ -2,6 +2,7 @@ library migration;
 
 import 'package:meta/meta.dart';
 import 'package:recase/recase.dart';
+import 'package:yaroorm/yaroorm.dart';
 
 import 'database/entity/entity.dart';
 import 'query/query.dart';
@@ -169,12 +170,12 @@ abstract class Schema {
   static CreateSchema fromEntity<T extends Entity>() {
     final entity = Query.getEntity<T>();
 
-    void make(TableBlueprint table, DBEntityField field) {
+    TableBlueprint make(TableBlueprint table, DBEntityField field) {
       return switch (field.type) {
-        const (int) => table.integer(field.columnName, nullable: field.nullable),
-        const (double) || const (num) => table.double(field.columnName, nullable: field.nullable),
-        const (DateTime) => table.datetime(field.columnName, nullable: field.nullable),
-        _ => table.string(field.columnName, nullable: field.nullable),
+        const (int) => table..integer(field.columnName, nullable: field.nullable),
+        const (double) || const (num) => table..double(field.columnName, nullable: field.nullable),
+        const (DateTime) => table..datetime(field.columnName, nullable: field.nullable),
+        _ => table..string(field.columnName, nullable: field.nullable),
       };
     }
 
@@ -187,7 +188,7 @@ abstract class Schema {
         );
 
         for (final prop in entity.columns.where((e) => !e.isPrimaryKey)) {
-          make(table, prop);
+          table = make(table, prop);
         }
 
         for (final prop in entity.referencedFields) {
