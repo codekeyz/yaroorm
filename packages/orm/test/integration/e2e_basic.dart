@@ -109,88 +109,70 @@ void runBasicE2ETest(String connectionName) {
       expect(userFromDB?.age, 100);
     });
 
-    // test('should update many users', () async {
-    //   final age50Users = userQuery.equal('age', 50);
-    //   final usersWithAge50 = await age50Users.findMany();
-    //   expect(usersWithAge50.length, 4);
-    //   expect(usersWithAge50.every((e) => e.age == 50), isTrue);
+    test('should update many users', () async {
+      final age50Users = userQuery.whereAge(50);
+      final usersWithAge50 = await age50Users.findMany();
+      expect(usersWithAge50.length, 4);
+      expect(usersWithAge50.every((e) => e.age == 50), isTrue);
 
-    //   await userQuery.update(
-    //       where: (query) => query.equal('age', 50),
-    //       value: {'home_address': 'Keta, Ghana'}).execute();
+      await userQuery.whereAge(50).update(homeAddress: value('Keta, Ghana'));
 
-    //   final updatedResult = await age50Users.findMany();
-    //   expect(updatedResult.length, 4);
-    //   expect(updatedResult.every((e) => e.age == 50), isTrue);
-    //   expect(
-    //       updatedResult.every((e) => e.homeAddress == 'Keta, Ghana'), isTrue);
-    // });
+      final updatedResult = await age50Users.findMany();
+      expect(updatedResult.length, 4);
+      expect(updatedResult.every((e) => e.age == 50), isTrue);
+      expect(updatedResult.every((e) => e.homeAddress == 'Keta, Ghana'), isTrue);
+    });
 
-    // test('should fetch only users in Ghana', () async {
-    //   final query = db
-    //       .query<User>()
-    //       .isLike('home_address', '%, Ghana')
-    //       .orderByDesc('age');
-    //   final usersInGhana = await query.findMany();
-    //   expect(usersInGhana.length, 10);
-    //   expect(
-    //     usersInGhana.every((e) => e.homeAddress.contains('Ghana')),
-    //     isTrue,
-    //   );
+    test('should fetch only users in Ghana', () async {
+      final query = UserQuery.isLike('home_address', '%, Ghana').orderByDesc('age');
+      final usersInGhana = await query.findMany();
+      expect(usersInGhana.length, 10);
+      expect(
+        usersInGhana.every((e) => e.homeAddress.contains('Ghana')),
+        isTrue,
+      );
 
-    //   expect(await query.take(4), hasLength(4));
-    // });
+      expect(await query.take(4), hasLength(4));
+    });
 
-    // test('should get all users between age 35 and 50', () async {
-    //   final age50Users = await db
-    //       .query<User>()
-    //       .isBetween('age', [35, 50])
-    //       .orderByDesc('age')
-    //       .findMany();
-    //   expect(age50Users.length, 19);
-    //   expect(age50Users.first.age, 50);
-    //   expect(age50Users.last.age, 35);
-    // });
+    test('should get all users between age 35 and 50', () async {
+      final age50Users = await UserQuery.isBetween('age', [35, 50]).orderByDesc('age').findMany();
+      expect(age50Users.length, 19);
+      expect(age50Users.first.age, 50);
+      expect(age50Users.last.age, 35);
+    });
 
-    // test('should get all users in somewhere in Nigeria', () async {
-    //   final users = await db
-    //       .query<User>()
-    //       .isLike('home_address', '%, Nigeria')
-    //       .orderByAsc('home_address')
-    //       .findMany();
+    test('should get all users in somewhere in Nigeria', () async {
+      final users = await UserQuery.isLike('home_address', '%, Nigeria').orderByAsc('home_address').findMany();
 
-    //   expect(users.length, 18);
-    //   expect(users.first.homeAddress, 'Abuja, Nigeria');
-    //   expect(users.last.homeAddress, 'Owerri, Nigeria');
-    // });
+      expect(users.length, 18);
+      expect(users.first.homeAddress, 'Abuja, Nigeria');
+      expect(users.last.homeAddress, 'Owerri, Nigeria');
+    });
 
-    // test('should get all users where age is 30 or 52', () async {
-    //   final users = await db
-    //       .query<User>()
-    //       .equal('age', 30)
-    //       .orWhere('age', '=', 52)
-    //       .findMany();
-    //   expect(users.every((e) => [30, 52].contains(e.age)), isTrue);
-    // });
+    test('should get all users where age is 30 or 52', () async {
+      final users = await UserQuery.whereAge(30).orWhere('age', '=', 52).findMany();
+      expect(users.every((e) => [30, 52].contains(e.age)), isTrue);
+    });
 
-    // test('should delete user', () async {
-    //   final userOne = await db.query<User>().get();
-    //   expect(userOne, isNotNull);
+    test('should delete user', () async {
+      final userOne = await UserQuery.get();
+      expect(userOne, isNotNull);
 
-    //   await userOne!.delete();
+      await UserQuery.whereId(userOne!.id).delete();
 
-    //   final usersAfterDelete = await db.query<User>().all();
-    //   expect(usersAfterDelete.any((e) => e.id == userOne.id), isFalse);
-    // });
+      final usersAfterDelete = await UserQuery.all();
+      expect(usersAfterDelete.any((e) => e.id == userOne.id), isFalse);
+    });
 
-    // test('should delete many users', () async {
-    //   final query = db.query<User>().isLike('home_address', '%, Nigeria');
-    //   expect(await query.findMany(), isNotEmpty);
+    test('should delete many users', () async {
+      final query = UserQuery.isLike('home_address', '%, Nigeria');
+      expect(await query.findMany(), isNotEmpty);
 
-    //   await query.delete();
+      await query.delete();
 
-    //   expect(await query.findMany(), isEmpty);
-    // });
+      expect(await query.findMany(), isEmpty);
+    });
 
     test('should drop tables', () async {
       await runMigrator(connectionName, 'migrate:reset');
