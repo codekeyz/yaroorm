@@ -19,6 +19,9 @@ scripts:
   tests:ci:
     run: |
       melos exec -c 1  -- "dart test --coverage=coverage" --fail-fast
+  
+  builder:
+    run: melos exec --ignore="yaroorm_builder" -- "dart run build_runner build"
 
   coverage:
     run: |

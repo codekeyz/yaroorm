@@ -34,7 +34,7 @@ jobs:
 
       - name: Check linting
         run: |
-          melos exec -- "dart run build_runner build"
+          melos builder
           melos analyze
 
   test:
