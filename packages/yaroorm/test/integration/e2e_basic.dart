@@ -97,20 +97,17 @@ void runBasicE2ETest(String connectionName) {
       });
     });
 
-    // test('should update user', () async {
-    //   final user = await userQuery.get();
-    //   expect(user!.id, 1);
+    test('should update user', () async {
+      final user = await userQuery.get();
+      expect(user!.id, 1);
 
-    //   await userQuery.update(
-    //     where: (query) => query.equal('id', user.id),
-    //     value: user.copyWith(firstname: 'Red Oil', age: 100),
-    //   );
+      await userQuery.whereId(user.id).update(firstname: value('Red Oil'), age: value(100));
 
-    //   final userFromDB = await userQuery.get(user.id);
-    //   expect(user, isNotNull);
-    //   expect(userFromDB?.firstname, 'Red Oil');
-    //   expect(userFromDB?.age, 100);
-    // });
+      final userFromDB = await userQuery.whereId(user.id).findOne();
+      expect(user, isNotNull);
+      expect(userFromDB?.firstname, 'Red Oil');
+      expect(userFromDB?.age, 100);
+    });
 
     // test('should update many users', () async {
     //   final age50Users = userQuery.equal('age', 50);
