@@ -11,6 +11,8 @@ Matcher throwsArgumentErrorWithMessage(String message) =>
     throwsA(isA<ArgumentError>().having((p0) => p0.message, '', message));
 
 void main() {
+  Query.addTypeDef(userTypeData);
+
   setUpAll(() => DB.init(db.config));
 
   group('DatabaseDriver.init', () {
@@ -90,7 +92,7 @@ void main() {
   test('should err when Query without driver', () async {
     late Object error;
     try {
-      await UserQuery.all();
+      await Query.table<User>().all();
     } catch (e) {
       error = e;
     }
