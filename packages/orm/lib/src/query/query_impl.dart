@@ -43,10 +43,15 @@ class QueryImpl<Model extends Entity> extends Query<Model> {
         data[updatedAtField.dartName] = now;
       }
     }
+    final recordId = await runner.insert(
+      InsertQuery(
+        tableName,
+        data: entityMapToDbData<Model>(data, converters),
+      ),
+    );
 
-    final dataToDbD = entityMapToDbData<Model>(data, converters);
-    final recordId = await runner.insert(InsertQuery(tableName, data: dataToDbD));
-    return (await get(recordId))!;
+    /// TODO: rework this to be a READ QUERY;
+    return (await _virtual.get(recordId))!;
   }
 
   @override

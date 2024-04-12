@@ -87,6 +87,8 @@ abstract interface class Query<T extends Entity> extends QueryBase<Query<T>>
   final List<WhereClause<T>> whereClauses;
   final DBEntity<T> entity;
 
+  Query<T> get _virtual => Query.table<T>(tableName).driver(runner);
+
   Map<Type, EntityTypeConverter> get converters => combineConverters(entity.converters, runner.typeconverters);
 
   static final Map<Type, DBEntity> _typedatas = {};

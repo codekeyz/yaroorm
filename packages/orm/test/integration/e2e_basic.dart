@@ -7,50 +7,57 @@ import 'fixtures/migrator.dart';
 import 'fixtures/test_data.dart';
 
 void runBasicE2ETest(String connectionName) {
-  final _ = DB.connection(connectionName);
-  final userQuery = UserQuery.driver(_.driver);
+  Query.addTypeDef<User>(userTypeData);
 
-  return group('with ${_.driver.type.name} driver', () {
+  final driver = DB.driver(connectionName);
+
+  return group('with ${driver.type.name} driver', () {
     test('driver should connect', () async {
-      await _.driver.connect();
+      await driver.connect();
 
-      expect(_.driver.isOpen, isTrue);
+      expect(driver.isOpen, isTrue);
     });
 
-    test('should have no tables', () async => expect(await _.driver.hasTable('users'), isFalse));
+    test('should have no tables', () async => expect(await driver.hasTable('users'), isFalse));
 
     test('should execute migration', () async {
       await runMigrator(connectionName, 'migrate');
 
-      expect(await _.driver.hasTable('users'), isTrue);
+      expect(await driver.hasTable('users'), isTrue);
     });
 
     test('should insert single user', () async {
       final firstData = usersList.first;
-      final result = await userQuery.create(
+      final query = UserQuery.driver(driver);
+      final result = await query.create(
         firstname: firstData.firstname,
         lastname: firstData.lastname,
         age: firstData.age,
         homeAddress: firstData.homeAddress,
       );
 
-      expect(result, isA<User>().having((p0) => p0.id, 'has primary key', 1));
+      expect(result.id, 1);
 
-      expect(await userQuery.all(), hasLength(1));
+      expect(await query.all(), hasLength(1));
     });
 
     test('should insert many users', () async {
-      await Future.wait(usersList
-          .sublist(1)
-          .map((e) =>
-              userQuery.create(firstname: e.firstname, lastname: e.lastname, age: e.age, homeAddress: e.homeAddress))
-          .toList());
+      final query = UserQuery.driver(driver);
 
-      expect(await UserQuery.count(), hasLength(usersList.length));
+      for (final user in usersList.skip(1)) {
+        await query.create(
+          firstname: user.firstname,
+          lastname: user.lastname,
+          age: user.age,
+          homeAddress: user.homeAddress,
+        );
+      }
+
+      expect(await query.count(), usersList.length);
     });
 
     group('Aggregate Functions', () {
-      final query = userQuery.isLike('home_address', '%%, Ghana');
+      final query = UserQuery.driver(driver).isLike('home_address', '%%, Ghana');
       List<User> usersInGhana = [];
 
       setUpAll(() async {
@@ -84,7 +91,7 @@ void runBasicE2ETest(String connectionName) {
 
       test('concat', () async {
         Matcher matcher(String separator) {
-          if ([DatabaseDriverType.sqlite, DatabaseDriverType.pgsql].contains(_.driver.type)) {
+          if ([DatabaseDriverType.sqlite, DatabaseDriverType.pgsql].contains(driver.type)) {
             return equals(usersInGhana.map((e) => e.age).join(separator));
           }
 
@@ -98,19 +105,22 @@ void runBasicE2ETest(String connectionName) {
     });
 
     test('should update user', () async {
-      final user = await userQuery.get();
+      final query = UserQuery.driver(driver);
+      final user = await query.get();
       expect(user!.id, 1);
 
-      await userQuery.whereId(user.id).update(firstname: value('Red Oil'), age: value(100));
+      await query.whereId(user.id).update(firstname: value('Red Oil'), age: value(100));
 
-      final userFromDB = await userQuery.whereId(user.id).findOne();
+      final userFromDB = await query.whereId(user.id).findOne();
       expect(user, isNotNull);
       expect(userFromDB?.firstname, 'Red Oil');
       expect(userFromDB?.age, 100);
     });
 
     test('should update many users', () async {
+      final userQuery = UserQuery.driver(driver);
       final age50Users = userQuery.whereAge(50);
+
       final usersWithAge50 = await age50Users.findMany();
       expect(usersWithAge50.length, 4);
       expect(usersWithAge50.every((e) => e.age == 50), isTrue);
@@ -124,26 +134,28 @@ void runBasicE2ETest(String connectionName) {
     });
 
     test('should fetch only users in Ghana', () async {
-      final query = UserQuery.isLike('home_address', '%, Ghana').orderByDesc('age');
-      final usersInGhana = await query.findMany();
+      final userQuery = UserQuery.driver(driver).isLike('home_address', '%, Ghana').orderByDesc('age');
+
+      final usersInGhana = await userQuery.findMany();
       expect(usersInGhana.length, 10);
       expect(
         usersInGhana.every((e) => e.homeAddress.contains('Ghana')),
         isTrue,
       );
 
-      expect(await query.take(4), hasLength(4));
+      expect(await userQuery.take(4), hasLength(4));
     });
 
     test('should get all users between age 35 and 50', () async {
-      final age50Users = await UserQuery.isBetween('age', [35, 50]).orderByDesc('age').findMany();
+      final age50Users = await UserQuery.driver(driver).isBetween('age', [35, 50]).orderByDesc('age').findMany();
       expect(age50Users.length, 19);
       expect(age50Users.first.age, 50);
       expect(age50Users.last.age, 35);
     });
 
     test('should get all users in somewhere in Nigeria', () async {
-      final users = await UserQuery.isLike('home_address', '%, Nigeria').orderByAsc('home_address').findMany();
+      final users =
+          await UserQuery.driver(driver).isLike('home_address', '%, Nigeria').orderByAsc('home_address').findMany();
 
       expect(users.length, 18);
       expect(users.first.homeAddress, 'Abuja, Nigeria');
@@ -151,22 +163,23 @@ void runBasicE2ETest(String connectionName) {
     });
 
     test('should get all users where age is 30 or 52', () async {
-      final users = await UserQuery.whereAge(30).orWhere('age', '=', 52).findMany();
+      final users = await UserQuery.driver(driver).whereAge(30).orWhere('age', '=', 52).findMany();
       expect(users.every((e) => [30, 52].contains(e.age)), isTrue);
     });
 
     test('should delete user', () async {
-      final userOne = await UserQuery.get();
+      final userQuery = UserQuery.driver(driver);
+      final userOne = await userQuery.get();
       expect(userOne, isNotNull);
 
-      await UserQuery.whereId(userOne!.id).delete();
+      await userQuery.whereId(userOne!.id).delete();
 
-      final usersAfterDelete = await UserQuery.all();
+      final usersAfterDelete = await userQuery.all();
       expect(usersAfterDelete.any((e) => e.id == userOne.id), isFalse);
     });
 
     test('should delete many users', () async {
-      final query = UserQuery.isLike('home_address', '%, Nigeria');
+      final query = UserQuery.driver(driver).isLike('home_address', '%, Nigeria');
       expect(await query.findMany(), isNotEmpty);
 
       await query.delete();
@@ -177,15 +190,15 @@ void runBasicE2ETest(String connectionName) {
     test('should drop tables', () async {
       await runMigrator(connectionName, 'migrate:reset');
 
-      expect(await _.driver.hasTable('users'), isFalse);
+      expect(await driver.hasTable('users'), isFalse);
     });
 
     test('should disconnect', () async {
-      expect(_.driver.isOpen, isTrue);
+      expect(driver.isOpen, isTrue);
 
-      await _.driver.disconnect();
+      await driver.disconnect();
 
-      expect(_.driver.isOpen, isFalse);
+      expect(driver.isOpen, isFalse);
     });
   });
 }

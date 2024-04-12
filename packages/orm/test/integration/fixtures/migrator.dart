@@ -2,9 +2,15 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 import 'package:yaroo_cli/orm.dart';
+import 'package:yaroorm/yaroorm.dart';
 import '../fixtures/orm_config.dart' as conf;
+import 'models.dart';
 
 void main(List<String> args) async {
+  Query.addTypeDef<User>(userTypeData);
+  Query.addTypeDef<Post>(postTypeData);
+  Query.addTypeDef<PostComment>(post_commentTypeData);
+
   await OrmCLIRunner.start(args, conf.config);
 }
 
