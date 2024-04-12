@@ -10,8 +10,7 @@ part of 'migration.dart';
 
 Query<MigrationEntity> get MigrationEntityQuery => DB.query<MigrationEntity>();
 CreateSchema get MigrationEntitySchema => Schema.fromEntity<MigrationEntity>();
-DBEntity<MigrationEntity> get migration_entityTypeData =>
-    DBEntity<MigrationEntity>(
+DBEntity<MigrationEntity> get migration_entityTypeData => DBEntity<MigrationEntity>(
       "migrations",
       timestampsEnabled: false,
       columns: [
@@ -42,30 +41,28 @@ class _$MigrationEntityEntityMirror extends EntityMirror<MigrationEntity> {
 }
 
 extension MigrationEntityQueryExtension on Query<MigrationEntity> {
+  WhereClause<MigrationEntity> Id(int value) => equal<int>("id", value);
+  WhereClause<MigrationEntity> Migration(String value) => equal<String>("migration", value);
+  WhereClause<MigrationEntity> Batch(int value) => equal<int>("batch", value);
+  Future<MigrationEntity?> findById(int value) => Id(value).findOne();
+  Future<MigrationEntity?> findByMigration(String value) => Migration(value).findOne();
+  Future<MigrationEntity?> findByBatch(int value) => Batch(value).findOne();
   Future<MigrationEntity> create({
     required String migration,
     required int batch,
-  }) =>
-      insert({
-        #migration: migration,
-        #batch: batch,
-      });
+  }) {
+    return $insert({#migration: migration, #batch: batch});
+  }
+}
+
+extension MigrationEntityUpdateQueryExtension on WhereClause<MigrationEntity> {
   Future<void> update({
-    required WhereBuilder<MigrationEntity> where,
-    required MigrationEntity value,
+    value<String> migration = const NoValue(),
+    value<int> batch = const NoValue(),
   }) async {
-    final mirror = migration_entityTypeData.mirror(value);
-    final props = {
-      for (final column in migration_entityTypeData.columns)
-        column.dartName: mirror.get(column.dartName),
-    };
-
-    final update = UpdateQuery(
-      entity.tableName,
-      whereClause: where(this),
-      data: conformToDbTypes(props, converters),
-    );
-
-    await accept<UpdateQuery>(update);
+    await query.$update(where: (_) => this, values: {
+      if (migration is! NoValue) #migration: migration.val,
+      if (batch is! NoValue) #batch: batch.val,
+    }).execute();
   }
 }

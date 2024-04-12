@@ -1,4 +1,8 @@
-import 'package:copy_with_extension/copy_with_extension.dart';
+// ignore_for_file: camel_case_types
+
+import 'dart:collection';
+
+import 'package:meta/meta.dart';
 import 'package:recase/recase.dart';
 
 import 'package:meta/meta_meta.dart';
@@ -6,6 +10,8 @@ import 'package:meta/meta_meta.dart';
 import '../../migration.dart';
 import '../../query/query.dart';
 import '../../reflection.dart';
+import '../database.dart';
+import '../driver/driver.dart';
 
 part 'converter.dart';
 // part 'relations.dart';
@@ -14,6 +20,21 @@ abstract class Entity {
   String get _foreignKeyForModel => '${_type.toString().camelCase}Id';
 
   Type get _type => runtimeType;
+
+  DriverContract _driver = DB.defaultDriver;
+
+  String? get connection => null;
+
+  // ignore: non_constant_identifier_names
+  UnmodifiableMapView get to_db_data => entityToDbData(this);
+
+  Entity() {
+    if (connection != null) _driver = DB.driver(connection!);
+  }
+
+  withDriver(DriverContract driver) {
+    return this.._driver = driver;
+  }
 
   // HasOne<T> hasOne<T extends Entity>({String? foreignKey}) {
   //   return HasOne<T>(foreignKey ?? _foreignKeyForModel, this);
@@ -25,7 +46,7 @@ abstract class Entity {
 }
 
 @Target({TargetKind.classType})
-class Table extends CopyWith {
+class Table {
   final String name;
   final List<EntityTypeConverter> converters;
 
@@ -60,8 +81,6 @@ class UpdatedAtColumn extends TableColumn {
 }
 
 /// Use this to reference other entities
-///
-/// ignore: camel_case_types
 class reference extends TableColumn {
   final Type type;
 
@@ -73,3 +92,12 @@ class reference extends TableColumn {
 const primaryKey = PrimaryKey();
 const createdAtCol = CreatedAtColumn();
 const updatedAtCol = UpdatedAtColumn();
+
+class value<T> {
+  final T? val;
+  const value(this.val);
+}
+
+class NoValue<T> extends value<T> {
+  const NoValue() : super(null);
+}

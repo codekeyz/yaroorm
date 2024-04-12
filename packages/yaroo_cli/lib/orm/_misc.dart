@@ -2,8 +2,7 @@ import 'package:yaroo_cli/src/migration.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 // ignore: non_constant_identifier_names
-Query<MigrationEntity> get MigrationQuery =>
-    DB.query<MigrationEntity>(DB.config.migrationsTable);
+Query<MigrationEntity> get MigrationQuery => DB.query<MigrationEntity>(DB.config.migrationsTable);
 
 Future<void> ensureMigrationsTableReady(DatabaseDriver driver) async {
   final hasTable = await driver.hasTable(DB.config.migrationsTable);
@@ -17,9 +16,7 @@ Future<bool> hasAlreadyMigratedScript(
   String scriptName,
   DatabaseDriver driver,
 ) async {
-  final result = await MigrationQuery.driver(driver)
-      .equal('migration', scriptName)
-      .findOne();
+  final result = await MigrationQuery.driver(driver).Migration(scriptName).findOne();
   return result != null;
 }
 

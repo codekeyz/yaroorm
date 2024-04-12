@@ -36,11 +36,9 @@ abstract class TableBlueprint {
 
   void integer(String name, {bool nullable = false, num? defaultValue});
 
-  void double(String name,
-      {bool nullable = false, num? defaultValue, int? precision, int? scale});
+  void double(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale});
 
-  void float(String name,
-      {bool nullable = false, num? defaultValue, int? precision, int? scale});
+  void float(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale});
 
   void tinyInt(String name, {bool nullable = false, num? defaultValue});
 
@@ -50,11 +48,9 @@ abstract class TableBlueprint {
 
   void bigInteger(String name, {bool nullable = false, num? defaultValue});
 
-  void decimal(String name,
-      {bool nullable = false, num? defaultValue, int? precision, int? scale});
+  void decimal(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale});
 
-  void numeric(String name,
-      {bool nullable = false, num? defaultValue, int? precision, int? scale});
+  void numeric(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale});
 
   void bit(String name, {bool nullable = false, int? defaultValue});
 
@@ -175,13 +171,9 @@ abstract class Schema {
 
     void make(TableBlueprint table, DBEntityField field) {
       return switch (field.type) {
-        const (int) =>
-          table.integer(field.columnName, nullable: field.nullable),
-        const (double) ||
-        const (num) =>
-          table.double(field.columnName, nullable: field.nullable),
-        const (DateTime) =>
-          table.datetime(field.columnName, nullable: field.nullable),
+        const (int) => table.integer(field.columnName, nullable: field.nullable),
+        const (double) || const (num) => table.double(field.columnName, nullable: field.nullable),
+        const (DateTime) => table.datetime(field.columnName, nullable: field.nullable),
         _ => table.string(field.columnName, nullable: field.nullable),
       };
     }
@@ -215,8 +207,7 @@ abstract class Schema {
     );
   }
 
-  static Schema create(String name, TableBluePrintFunc func) =>
-      CreateSchema._(name, func);
+  static Schema create(String name, TableBluePrintFunc func) => CreateSchema._(name, func);
 
   static Schema dropIfExists(CreateSchema value) {
     return _DropSchema(value.tableName);
@@ -260,8 +251,7 @@ class _RenameSchema extends Schema {
   _RenameSchema(String from, this.newName) : super._(from, null);
 
   @override
-  String toScript(TableBlueprint table) =>
-      table.renameScript(tableName, newName);
+  String toScript(TableBlueprint table) => table.renameScript(tableName, newName);
 }
 
 enum ForeignKeyAction { cascade, restrict, setNull, setDefault, noAction }
@@ -314,7 +304,6 @@ class ForeignKey {
         nullable: nullable,
         onUpdate: onUpdate,
         onDelete: onDelete,
-        constraint: name ??
-            'fk_${table}_${column}_to_${foreignTable}_$foreignTableColumn',
+        constraint: name ?? 'fk_${table}_${column}_to_${foreignTable}_$foreignTableColumn',
       );
 }

@@ -23,9 +23,16 @@ mixin FindOperation<Result> {
 }
 
 mixin InsertOperation<T extends Entity> {
-  Future<T> insert(Map<Symbol, dynamic> data);
+  Future<T> $insert(Map<Symbol, dynamic> data);
 
-  Future<void> insertMany(List<Map<String, dynamic>> values);
+  Future<void> $insertMany(List<Map<String, dynamic>> values);
+}
+
+mixin UpdateOperation<Result extends Entity> {
+  UpdateQuery $update({
+    required WhereClause<Result> Function(Query<Entity> query) where,
+    required Map<Symbol, dynamic> values,
+  });
 }
 
 mixin LimitOperation<ReturnType> {
@@ -49,8 +56,7 @@ sealed class QueryBase<Owner> {
 
   DriverContract get runner {
     if (_queryDriver == null) {
-      throw StateError(
-          'Driver not set for query. Make sure you supply a driver using .driver()');
+      throw StateError('Driver not set for query. Make sure you supply a driver using .driver()');
     }
     return _queryDriver!;
   }
@@ -74,14 +80,14 @@ abstract interface class Query<T extends Entity> extends QueryBase<Query<T>>
         LimitOperation<T>,
         OrderByOperation<Query<T>>,
         InsertOperation<T>,
+        UpdateOperation<T>,
         AggregateOperation {
   final Set<String> fieldSelections;
   final Set<OrderBy> orderByProps;
   final List<WhereClause<T>> whereClauses;
   final DBEntity<T> entity;
 
-  Map<Type, EntityTypeConverter> get converters =>
-      combineConverters(entity.converters, runner.typeconverters);
+  Map<Type, EntityTypeConverter> get converters => combineConverters(entity.converters, runner.typeconverters);
 
   static final Map<Type, DBEntity> _typedatas = {};
 
