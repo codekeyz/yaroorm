@@ -78,7 +78,7 @@ jobs:
           dart pub global activate melos
           dart pub global activate coverage
           melos bootstrap
-          melos exec -- "dart run build_runner build"
+          melos builder
 
       - name: Run Unit Tests
         run: melos tests:ci
