@@ -316,7 +316,7 @@ return switch(field) {
     return Method(
       (m) {
         m
-          ..name = fieldName
+          ..name = 'where$fieldName'
           ..returns = refer('WhereClause<$className>')
           ..lambda = true
           ..requiredParameters.add(Parameter((p) => p
@@ -341,7 +341,7 @@ return switch(field) {
           ..requiredParameters.add(Parameter((p) => p
             ..name = 'value'
             ..type = refer(fieldType)))
-          ..body = Code('$fieldName(value).findOne()');
+          ..body = Code('where$fieldName(value).findOne()');
       },
     );
   }

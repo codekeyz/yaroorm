@@ -1,6 +1,6 @@
 import 'package:yaroorm/src/migration.dart';
 
-import '../../models/models.dart';
+import 'models.dart';
 
 class AddUsersTable extends Migration {
   @override

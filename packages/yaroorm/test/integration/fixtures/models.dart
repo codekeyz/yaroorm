@@ -1,5 +1,3 @@
-import 'package:yaroorm/src/database/driver/pgsql_driver.dart';
-import 'package:yaroorm/src/database/driver/sqlite_driver.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 part 'models.g.dart';

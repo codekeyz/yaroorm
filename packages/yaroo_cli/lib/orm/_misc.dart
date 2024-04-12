@@ -16,7 +16,7 @@ Future<bool> hasAlreadyMigratedScript(
   String scriptName,
   DatabaseDriver driver,
 ) async {
-  final result = await MigrationQuery.driver(driver).Migration(scriptName).findOne();
+  final result = await MigrationQuery.driver(driver).whereMigration(scriptName).findOne();
   return result != null;
 }
 

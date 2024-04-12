@@ -2,7 +2,7 @@ import 'package:test/test.dart';
 import 'package:yaroorm/yaroorm.dart';
 import 'package:collection/collection.dart';
 
-import '../models/models.dart';
+import 'fixtures/models.dart';
 import 'fixtures/migrator.dart';
 import 'fixtures/test_data.dart';
 
@@ -17,8 +17,7 @@ void runBasicE2ETest(String connectionName) {
       expect(_.driver.isOpen, isTrue);
     });
 
-    test('should have no tables',
-        () async => expect(await _.driver.hasTable('users'), isFalse));
+    test('should have no tables', () async => expect(await _.driver.hasTable('users'), isFalse));
 
     test('should execute migration', () async {
       await runMigrator(connectionName, 'migrate');
@@ -43,11 +42,8 @@ void runBasicE2ETest(String connectionName) {
     test('should insert many users', () async {
       await Future.wait(usersList
           .sublist(1)
-          .map((e) => userQuery.create(
-              firstname: e.firstname,
-              lastname: e.lastname,
-              age: e.age,
-              homeAddress: e.homeAddress))
+          .map((e) =>
+              userQuery.create(firstname: e.firstname, lastname: e.lastname, age: e.age, homeAddress: e.homeAddress))
           .toList());
 
       expect(await UserQuery.count(), hasLength(usersList.length));
@@ -88,8 +84,7 @@ void runBasicE2ETest(String connectionName) {
 
       test('concat', () async {
         Matcher matcher(String separator) {
-          if ([DatabaseDriverType.sqlite, DatabaseDriverType.pgsql]
-              .contains(_.driver.type)) {
+          if ([DatabaseDriverType.sqlite, DatabaseDriverType.pgsql].contains(_.driver.type)) {
             return equals(usersInGhana.map((e) => e.age).join(separator));
           }
 
