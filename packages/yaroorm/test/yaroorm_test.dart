@@ -5,7 +5,7 @@ import 'package:yaroorm/src/database/driver/sqlite_driver.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import 'integration/fixtures/orm_config.dart' as db;
-import 'models/models.dart';
+import 'integration/fixtures/models.dart';
 
 Matcher throwsArgumentErrorWithMessage(String message) =>
     throwsA(isA<ArgumentError>().having((p0) => p0.message, '', message));
