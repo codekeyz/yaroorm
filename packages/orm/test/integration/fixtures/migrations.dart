@@ -17,9 +17,7 @@ class AddUsersTable extends Migration {
 class AddPostsTable extends Migration {
   @override
   void up(List<Schema> schemas) {
-    final postSchema = PostSchema;
-
-    schemas.addAll([postSchema, PostCommentSchema]);
+    schemas.addAll([PostSchema, PostCommentSchema]);
   }
 
   @override
