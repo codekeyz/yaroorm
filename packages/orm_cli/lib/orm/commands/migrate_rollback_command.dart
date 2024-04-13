@@ -20,7 +20,11 @@ class MigrationRollbackCommand extends OrmCommand {
 
     final lastBatchNumber = await getLastBatchNumber(driver, migrationTableName);
 
-    final entries = await MigrationEntityQuery.driver(driver).equal('batch', lastBatchNumber).findMany();
+    final entries = await MigrationEntityQuery.driver(driver)
+        .where(
+          (migration) => migration.batch(lastBatchNumber),
+        )
+        .findMany();
 
     /// rollbacks start from the last class listed in the migrations list
     final migrationTask = migrationDefinitions
@@ -56,7 +60,11 @@ Future<void> processRollbacks(
         await transactor.execute(e.toScript(driver.blueprint));
       }
 
-      await MigrationQuery.driver(transactor).whereId(rollback.entry.id).delete();
+      await MigrationQuery.driver(transactor)
+          .where(
+            (migration) => migration.id(rollback.entry.id),
+          )
+          .delete();
     });
 
     print('✔ rolled back: ${rollback.entry.migration}');

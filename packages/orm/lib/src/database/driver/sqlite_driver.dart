@@ -5,7 +5,6 @@ import 'package:yaroorm/src/utils.dart';
 
 import '../../migration.dart';
 import '../../primitives/serializer.dart';
-import '../../primitives/where.dart';
 import '../../query/aggregates.dart';
 import '../../query/query.dart';
 import '../entity/entity.dart' hide value;
@@ -69,7 +68,7 @@ final class SqliteDriver implements DatabaseDriver {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> query(Query query) async {
+  Future<List<Map<String, dynamic>>> query(ReadQuery query) async {
     final sql = _serializer.acceptReadQuery(query);
     return rawQuery(sql);
   }
@@ -88,15 +87,15 @@ final class SqliteDriver implements DatabaseDriver {
 
   @override
   Future<void> insertMany(InsertManyQuery query) async {
-    final db = await _getDatabase();
-    final batch = db.batch();
+    // final db = await _getDatabase();
+    // final batch = db.batch();
 
-    for (final entry in query.values) {
-      final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, data: entry));
-      batch.rawInsert(sql, entry.values.toList());
-    }
+    // for (final entry in query.values) {
+    //   final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, data: entry));
+    //   batch.rawInsert(sql, entry.values.toList());
+    // }
 
-    await batch.commit(noResult: true);
+    // await batch.commit(noResult: true);
   }
 
   @override
@@ -139,7 +138,7 @@ class _SqliteTransactor implements DriverTransactor {
   Future<List<Map<String, dynamic>>> rawQuery(String script) => _txn.rawQuery(script);
 
   @override
-  Future<List<Map<String, dynamic>>> query(Query query) async {
+  Future<List<Map<String, dynamic>>> query(ReadQuery query) async {
     final sql = _serializer.acceptReadQuery(query);
     return rawQuery(sql);
   }
@@ -164,14 +163,14 @@ class _SqliteTransactor implements DriverTransactor {
 
   @override
   Future<void> insertMany(InsertManyQuery query) async {
-    final batch = _txn.batch();
+    // final batch = _txn.batch();
 
-    for (final entry in query.values) {
-      final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, data: entry));
-      batch.rawInsert(sql, entry.values.toList());
-    }
+    // for (final entry in query.values) {
+    //   final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, data: entry));
+    //   batch.rawInsert(sql, entry.values.toList());
+    // }
 
-    await batch.commit(noResult: true);
+    // await batch.commit(noResult: true);
   }
 
   @override
@@ -195,16 +194,16 @@ class SqliteSerializer extends PrimitiveSerializer {
     queryBuilder.write('SELECT $selection FROM ${escapeStr(aggregate.tableName)}');
 
     /// WHERE
-    final clauses = aggregate.whereClauses;
-    if (clauses.isNotEmpty) {
-      queryBuilder.write(' WHERE ${_serializeWhereClauses(clauses)}');
+    final clause = aggregate.whereClause;
+    if (clause != null) {
+      queryBuilder.write(' WHERE ${acceptWhereClause(clause)}');
     }
 
     return '${queryBuilder.toString()}$terminator';
   }
 
   @override
-  String acceptReadQuery(Query query) {
+  String acceptReadQuery(ReadQuery query) {
     final queryBuilder = StringBuffer();
 
     /// SELECT
@@ -213,13 +212,13 @@ class SqliteSerializer extends PrimitiveSerializer {
     queryBuilder.write('FROM ${escapeStr(query.tableName)}');
 
     /// WHERE
-    final clauses = query.whereClauses;
-    if (clauses.isNotEmpty) {
-      queryBuilder.write(' WHERE ${_serializeWhereClauses(clauses)}');
+    final whereClause = query.whereClause;
+    if (whereClause != null) {
+      queryBuilder.write(' WHERE ${acceptWhereClause(whereClause)}');
     }
 
     /// ORDER BY
-    final orderBys = query.orderByProps;
+    final orderBys = query.orderByProps ?? {};
     if (orderBys.isNotEmpty) {
       queryBuilder.write(' ORDER BY ${acceptOrderBy(orderBys.toList())}');
     }
@@ -230,23 +229,45 @@ class SqliteSerializer extends PrimitiveSerializer {
       queryBuilder.write(' LIMIT ${acceptLimit(limit)}');
     }
 
+    /// OFFSET
+    final offset = query.offset;
+    if (offset != null) {
+      queryBuilder.write(' OFFSET ${acceptOffset(offset)}');
+    }
+
     return '${queryBuilder.toString()}$terminator';
   }
 
-  String _serializeWhereClauses(List<WhereClause> clauses) {
-    final sb = StringBuffer();
+  String acceptWhereClause(WhereClause clause) {
+    if (clause is WhereClauseValue) {
+      return acceptWhereClauseValue(clause);
+    }
 
-    final hasDifferentOperators = clauses.map((e) => e.operators).reduce((val, e) => val..addAll(e)).length > 1;
+    final whereStr = StringBuffer();
 
-    for (final clause in clauses) {
-      final result = acceptWhereClause(clause, canGroup: hasDifferentOperators);
-      if (sb.isEmpty) {
-        sb.write(result);
+    if (clause.values.isNotEmpty) {
+      final combiner = clause is $AndGroup ? 'AND' : 'OR';
+
+      final children = clause.values;
+      final group = StringBuffer();
+
+      for (final val in children) {
+        final res = acceptWhereClause(val);
+        if (res.isNotEmpty) {
+          group.write(group.isEmpty ? res : ' $combiner $res');
+        }
+      }
+
+      final result = children.length > 1 ? '(${group.toString()})' : group.toString();
+
+      if (whereStr.isNotEmpty) {
+        whereStr.write('$combiner $result');
       } else {
-        sb.write(' ${clause.operator.name} $result');
+        whereStr.write(result);
       }
     }
-    return sb.toString();
+
+    return whereStr.toString();
   }
 
   @override
@@ -295,48 +316,16 @@ class SqliteSerializer extends PrimitiveSerializer {
   }
 
   @override
-  String acceptWhereClause(WhereClause clause, {bool canGroup = false}) {
-    if (clause.children.isEmpty) {
-      return acceptWhereClauseValue(clause.clauseValue!);
-    }
-
-    final whereBb = StringBuffer();
-
-    final List<(LogicalOperator operator, WhereClause clause)> groupMembers = clause.group;
-
-    final shouldAddParenthesis = canGroup && groupMembers.length > 1;
-
-    for (int i = 0; i < groupMembers.length; i++) {
-      final isLast = i == groupMembers.length - 1;
-      final member = groupMembers[i];
-      final childOperator = member.$1;
-      final WhereClause childValue = member.$2;
-
-      if (whereBb.isNotEmpty) {
-        whereBb.write('${childOperator.name} ');
-      }
-
-      final shouldWrapChild = childValue.group.length > 1;
-      final childSerialized = acceptWhereClause(childValue);
-
-      /// wrap sub clauses in parenthesis
-      shouldWrapChild ? whereBb.write('($childSerialized)') : whereBb.write(childSerialized);
-
-      if (!isLast) whereBb.write(' ');
-    }
-
-    /// wrap the whole clause in parenthesis
-    return shouldAddParenthesis ? '($whereBb)' : '$whereBb';
-  }
-
-  @override
   String acceptOrderBy(List<OrderBy> orderBys) {
-    direction(OrderByDirection dir) => dir == OrderByDirection.asc ? 'ASC' : 'DESC';
+    direction(OrderDirection dir) => dir == OrderDirection.asc ? 'ASC' : 'DESC';
     return orderBys.map((e) => '${e.field} ${direction(e.direction)}').join(', ');
   }
 
   @override
   String acceptLimit(int limit) => '$limit';
+
+  @override
+  String acceptOffset(int offset) => '$offset';
 
   @override
   String get terminator => ';';
@@ -352,8 +341,8 @@ class SqliteSerializer extends PrimitiveSerializer {
   @override
   String acceptWhereClauseValue(WhereClauseValue clauseValue) {
     final field = escapeStr(clauseValue.field);
-    final value = clauseValue.comparer.value;
-    final valueOperator = clauseValue.comparer.operator;
+    final value = clauseValue.value;
+    final valueOperator = clauseValue.operator;
     final wrapped = acceptPrimitiveValue(value);
 
     return switch (valueOperator) {

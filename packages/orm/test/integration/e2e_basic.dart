@@ -38,7 +38,7 @@ void runBasicE2ETest(String connectionName) {
 
       expect(result.id, 1);
 
-      expect(await query.all(), hasLength(1));
+      expect(await query.findMany(), hasLength(1));
     });
 
     test('should insert many users', () async {
@@ -57,7 +57,7 @@ void runBasicE2ETest(String connectionName) {
     });
 
     group('Aggregate Functions', () {
-      final query = UserQuery.driver(driver).isLike('home_address', '%%, Ghana');
+      final query = UserQuery.driver(driver).where((user) => user.$isLike('home_address', '%%, Ghana'));
       List<User> usersInGhana = [];
 
       setUpAll(() async {
@@ -105,13 +105,14 @@ void runBasicE2ETest(String connectionName) {
     });
 
     test('should update user', () async {
-      final query = UserQuery.driver(driver);
-      final user = await query.get();
+      final query = UserQuery.driver(driver).where((user) => user.id(1));
+
+      final user = await query.findOne();
       expect(user!.id, 1);
 
-      await query.whereId(user.id).update(firstname: value('Red Oil'), age: value(100));
+      await query.update(firstname: value('Red Oil'), age: value(100));
 
-      final userFromDB = await query.whereId(user.id).findOne();
+      final userFromDB = await query.findOne();
       expect(user, isNotNull);
       expect(userFromDB?.firstname, 'Red Oil');
       expect(userFromDB?.age, 100);
@@ -119,13 +120,13 @@ void runBasicE2ETest(String connectionName) {
 
     test('should update many users', () async {
       final userQuery = UserQuery.driver(driver);
-      final age50Users = userQuery.whereAge(50);
+      final age50Users = userQuery.where((user) => user.age(50));
 
       final usersWithAge50 = await age50Users.findMany();
       expect(usersWithAge50.length, 4);
       expect(usersWithAge50.every((e) => e.age == 50), isTrue);
 
-      await userQuery.whereAge(50).update(homeAddress: value('Keta, Ghana'));
+      await age50Users.update(homeAddress: value('Keta, Ghana'));
 
       final updatedResult = await age50Users.findMany();
       expect(updatedResult.length, 4);
@@ -134,7 +135,7 @@ void runBasicE2ETest(String connectionName) {
     });
 
     test('should fetch only users in Ghana', () async {
-      final userQuery = UserQuery.driver(driver).isLike('home_address', '%, Ghana').orderByDesc('age');
+      final userQuery = UserQuery.driver(driver).where((user) => user.$isLike('home_address', '%, Ghana'));
 
       final usersInGhana = await userQuery.findMany();
       expect(usersInGhana.length, 10);
@@ -143,19 +144,23 @@ void runBasicE2ETest(String connectionName) {
         isTrue,
       );
 
-      expect(await userQuery.take(4), hasLength(4));
+      expect(await userQuery.findMany(limit: 4), hasLength(4));
     });
 
     test('should get all users between age 35 and 50', () async {
-      final age50Users = await UserQuery.driver(driver).isBetween('age', [35, 50]).orderByDesc('age').findMany();
+      final age50Users = await UserQuery.driver(driver)
+          .where((user) => user.$isBetween('age', [35, 50]))
+          .findMany(orderBy: [OrderUserBy.age(OrderDirection.desc)]);
+
       expect(age50Users.length, 19);
       expect(age50Users.first.age, 50);
       expect(age50Users.last.age, 35);
     });
 
     test('should get all users in somewhere in Nigeria', () async {
-      final users =
-          await UserQuery.driver(driver).isLike('home_address', '%, Nigeria').orderByAsc('home_address').findMany();
+      final users = await UserQuery.driver(driver)
+          .where((user) => user.$isLike('home_address', '%, Nigeria'))
+          .findMany(orderBy: [OrderUserBy.homeAddress(OrderDirection.asc)]);
 
       expect(users.length, 18);
       expect(users.first.homeAddress, 'Abuja, Nigeria');
@@ -163,23 +168,30 @@ void runBasicE2ETest(String connectionName) {
     });
 
     test('should get all users where age is 30 or 52', () async {
-      final users = await UserQuery.driver(driver).whereAge(30).orWhere('age', '=', 52).findMany();
+      final users = await UserQuery.driver(driver)
+          .where((user) => user.or([
+                user.age(30),
+                user.age(52),
+              ]))
+          .findMany();
+
       expect(users.every((e) => [30, 52].contains(e.age)), isTrue);
     });
 
     test('should delete user', () async {
       final userQuery = UserQuery.driver(driver);
-      final userOne = await userQuery.get();
+      final userOne = await userQuery.findOne();
       expect(userOne, isNotNull);
 
-      await userQuery.whereId(userOne!.id).delete();
+      final userOneQuery = userQuery.where((user) => user.id(userOne!.id));
 
-      final usersAfterDelete = await userQuery.all();
-      expect(usersAfterDelete.any((e) => e.id == userOne.id), isFalse);
+      await userOneQuery.delete();
+
+      expect(await userOneQuery.findOne(), isNull);
     });
 
     test('should delete many users', () async {
-      final query = UserQuery.driver(driver).isLike('home_address', '%, Nigeria');
+      final query = UserQuery.driver(driver).where((user) => user.$isLike('home_address', '%, Nigeria'));
       expect(await query.findMany(), isNotEmpty);
 
       await query.delete();

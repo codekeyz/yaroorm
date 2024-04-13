@@ -92,7 +92,7 @@ void main() {
   test('should err when Query without driver', () async {
     late Object error;
     try {
-      await Query.table<User>().all();
+      await Query.table<User>().findMany();
     } catch (e) {
       error = e;
     }

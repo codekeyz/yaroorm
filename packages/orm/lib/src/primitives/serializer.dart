@@ -2,14 +2,13 @@ import 'package:yaroorm/src/migration.dart';
 import 'package:yaroorm/src/query/aggregates.dart';
 
 import '../query/query.dart';
-import 'where.dart';
 
 abstract class PrimitiveSerializer {
   const PrimitiveSerializer();
 
   String acceptAggregate(AggregateFunction aggregate);
 
-  String acceptReadQuery(Query query);
+  String acceptReadQuery(ReadQuery query);
 
   String acceptUpdateQuery(UpdateQuery query);
 
@@ -19,8 +18,6 @@ abstract class PrimitiveSerializer {
 
   String acceptInsertManyQuery(InsertManyQuery query);
 
-  String acceptWhereClause(WhereClause clause);
-
   String acceptWhereClauseValue(WhereClauseValue clauseValue);
 
   String acceptSelect(List<String> fields);
@@ -28,6 +25,8 @@ abstract class PrimitiveSerializer {
   String acceptOrderBy(List<OrderBy> orderBys);
 
   String acceptLimit(int limit);
+
+  String acceptOffset(int offset);
 
   dynamic acceptPrimitiveValue(dynamic value);
 

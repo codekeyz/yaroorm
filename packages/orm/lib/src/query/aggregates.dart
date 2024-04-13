@@ -1,10 +1,9 @@
 import '../database/driver/driver.dart';
-import '../primitives/where.dart';
 import 'query.dart';
 
 sealed class AggregateFunction<T> {
   final List<String> selections;
-  final List<WhereClause> whereClauses;
+  final WhereClause? whereClause;
   final String tableName;
   final DriverContract driver;
 
@@ -19,17 +18,17 @@ sealed class AggregateFunction<T> {
     this.driver,
     this.tableName, {
     this.selections = const [],
-    this.whereClauses = const [],
+    this.whereClause,
   });
 
-  AggregateFunction._init(Query query, String? field)
+  AggregateFunction._init(ReadQuery query, String? field)
       : driver = query.runner,
         tableName = query.tableName,
-        whereClauses = query.whereClauses,
+        whereClause = query.whereClause,
         selections = field == null ? const [] : [field],
         assert(
           query.fieldSelections.isEmpty,
-          'You can not use selections with aggregate functions',
+          'You can not use selections with aggregate functisons',
         );
 
   Future<T> get() async {
@@ -48,7 +47,9 @@ sealed class AggregateFunction<T> {
 }
 
 class CountAggregate extends AggregateFunction<int> {
-  CountAggregate(super.query, super.field) : super._init();
+  final bool distinct;
+
+  CountAggregate(super.query, super.field, this.distinct) : super._init();
 
   @override
   String get name => 'COUNT';

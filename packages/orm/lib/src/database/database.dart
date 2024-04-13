@@ -12,7 +12,7 @@ class UseDatabaseConnection {
   UseDatabaseConnection(this.info) : driver = DB.driver(info.name);
 
   Query<Model> query<Model extends Entity>([String? table]) {
-    return Query.table<Model>(table).driver(driver)..database = info.database;
+    return Query.table<Model>(table, info.database).driver(driver);
   }
 }
 

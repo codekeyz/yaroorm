@@ -1,51 +1,33 @@
 // ignore_for_file: constant_identifier_names
 
-import '../database/entity/entity.dart' hide value;
-import '../query/aggregates.dart';
-import '../query/query.dart';
+part of '../query/query.dart';
 
-part '_where_impl.dart';
+typedef WhereBuilder<T extends Entity> = WhereClause Function(WhereClauseBuilder<T> builder);
 
-typedef WhereBuilder<T extends Entity> = WhereClause<T> Function(
-  Query<T> query,
-);
+mixin WhereOperation {
+  $AndGroup and(List<WhereClause> values) => $AndGroup._(values);
 
-mixin WhereOperation<Result extends Entity> {
-  WhereClause<Result> where<Value>(
-    String field,
-    String condition, [
-    Value? value,
-  ]);
+  $OrGroup or(List<WhereClause> values) => $OrGroup._(values);
 
-  WhereClause<Result> orWhere<Value>(
-    String field,
-    String condition, [
-    Value? value,
-  ]);
+  WhereClauseValue $equal<T>(String field, T value);
 
-  WhereClause<Result> equal<Value>(String field, Value value);
+  WhereClauseValue $notEqual<T>(String field, T value);
 
-  WhereClause<Result> notEqual<Value>(String field, Value value);
+  WhereClauseValue $isNull(String field);
 
-  WhereClause<Result> isNull(String field);
+  WhereClauseValue $isNotNull(String field);
 
-  WhereClause<Result> isNotNull(String field);
+  WhereClauseValue<List<T>> $isIn<T>(String field, List<T> values);
 
-  WhereClause<Result> isIn<Value>(String field, List<Value> values);
+  WhereClauseValue<List<T>> $isNotIn<T>(String field, List<T> values);
 
-  WhereClause<Result> isNotIn<Value>(String field, List<Value> values);
+  WhereClauseValue $isLike(String field, String pattern);
 
-  WhereClause<Result> isLike<Value>(String field, String pattern);
+  WhereClauseValue $isNotLike(String field, String pattern);
 
-  WhereClause<Result> isNotLike<Value>(String field, String pattern);
+  WhereClauseValue<List<T>> $isBetween<T>(String field, List<T> values);
 
-  WhereClause<Result> isBetween<Value>(String field, List<Value> values);
-
-  WhereClause<Result> isNotBetween<Value>(String field, List<Value> values);
-
-  Query<Result> orWhereFunc(Function(Query<Result> query) builder);
-
-  Query<Result> whereFunc(Function(Query<Result> query) builder);
+  WhereClauseValue<List<T>> $isNotBetween<T>(String field, List<T> values);
 }
 
 enum LogicalOperator { AND, OR }
@@ -71,37 +53,27 @@ enum Operator {
 
 typedef CompareWithValue<Value> = ({Operator operator, Value? value});
 
-Operator _strToOperator(String condition) => switch (condition) {
-      '=' => Operator.EQUAL,
-      '!=' => Operator.NOT_EQUAL,
-      '<' => Operator.LESS_THAN,
-      '>' => Operator.GREAT_THAN,
-      '>=' => Operator.GREATER_THAN_OR_EQUAL_TO,
-      '<=' => Operator.LESS_THEN_OR_EQUAL_TO,
-      //
-      'in' => Operator.IN,
-      'not in' => Operator.NOT_IN,
-      //
-      'like' => Operator.LIKE,
-      'not like' => Operator.NOT_LIKE,
-      //
-      'null' => Operator.NULL,
-      'not null' => Operator.NOT_NULL,
-      //
-      'between' => Operator.BETWEEN,
-      'not between' => Operator.NOT_BETWEEN,
-      _ => throw ArgumentError.value(condition, null, 'Condition $condition is not known')
-    };
+abstract interface class WhereClause {
+  final List<WhereClause> values;
+  WhereClause(this.values);
+}
 
-class WhereClauseValue<ValueType> {
+class $AndGroup extends WhereClause {
+  $AndGroup._(super.values);
+}
+
+class $OrGroup extends WhereClause {
+  $OrGroup._(super.values);
+}
+
+class WhereClauseValue<ValueType> extends WhereClause {
   final String field;
-  final CompareWithValue<ValueType> comparer;
+  final Operator operator;
+  final ValueType value;
 
-  WhereClauseValue(this.field, this.comparer) {
-    final operator = comparer.operator;
-    final value = comparer.value;
+  WhereClauseValue._(this.field, this.operator, this.value) : super(const []) {
     if ([Operator.BETWEEN, Operator.NOT_BETWEEN].contains(operator)) {
-      if (value is! List || value.length != 2) {
+      if (value is! Iterable || (value as Iterable).length != 2) {
         throw ArgumentError(
           '${operator.name} requires a List with length 2 (val1, val2)',
           '$field ${operator.name} $value',
@@ -109,48 +81,58 @@ class WhereClauseValue<ValueType> {
       }
     }
   }
-
-  factory WhereClauseValue.from(String field, String condition, value) {
-    final operator = _strToOperator(condition);
-
-    return WhereClauseValue(field, (operator: operator, value: value));
-  }
 }
 
-abstract class WhereClause<T extends Entity>
-    with WhereOperation<T>, FindOperation<T>, LimitOperation<T>, OrderByOperation<WhereClause<T>>, AggregateOperation {
-  final List<CombineClause<WhereClause<T>>> children = [];
+final class WhereClauseBuilder<T extends Entity> with WhereOperation {
+  WhereClauseBuilder._();
 
-  List<CombineClause<WhereClause<T>>> get group => children.isEmpty
-      ? const []
-      : [
-          if (clauseValue != null)
-            (operator, WhereClause.create<T>(query, operator: operator)..clauseValue = clauseValue),
-          ...children
-        ];
-
-  Set<LogicalOperator> get operators => {
-        operator,
-        if (children.isNotEmpty) ...children.map((e) => e.$1),
-      };
-
-  final Query<T> query;
-
-  final LogicalOperator operator;
-
-  WhereClauseValue? clauseValue;
-
-  WhereClause(this.query, {this.operator = LogicalOperator.AND});
-
-  static WhereClause<Result> create<Result extends Entity>(
-    Query<Result> query, {
-    LogicalOperator operator = LogicalOperator.AND,
-    WhereClauseValue? value,
-  }) {
-    return _WhereClauseImpl<Result>(query, operator: operator)..clauseValue = value;
+  @override
+  WhereClauseValue<V> $equal<V>(String field, V value) {
+    return WhereClauseValue<V>._(field, Operator.EQUAL, value);
   }
 
-  Future<void> delete();
+  @override
+  WhereClauseValue $notEqual<V>(String field, V value) {
+    return WhereClauseValue._(field, Operator.NOT_EQUAL, value);
+  }
 
-  String get statement;
+  @override
+  WhereClauseValue<List<V>> $isIn<V>(String field, List<V> values) {
+    return WhereClauseValue._(field, Operator.IN, values);
+  }
+
+  @override
+  WhereClauseValue<List<V>> $isNotIn<V>(String field, List<V> values) {
+    return WhereClauseValue._(field, Operator.NOT_IN, values);
+  }
+
+  @override
+  WhereClauseValue $isLike(String field, String pattern) {
+    return WhereClauseValue._(field, Operator.LIKE, pattern);
+  }
+
+  @override
+  WhereClauseValue $isNotLike(String field, String pattern) {
+    return WhereClauseValue._(field, Operator.NOT_LIKE, pattern);
+  }
+
+  @override
+  WhereClauseValue $isNull(String field) {
+    return WhereClauseValue._(field, Operator.NULL, null);
+  }
+
+  @override
+  WhereClauseValue $isNotNull(String field) {
+    return WhereClauseValue._(field, Operator.NOT_NULL, null);
+  }
+
+  @override
+  WhereClauseValue<List<V>> $isBetween<V>(String field, List<V> values) {
+    return WhereClauseValue._(field, Operator.BETWEEN, values);
+  }
+
+  @override
+  WhereClauseValue<List<V>> $isNotBetween<V>(String field, List<V> values) {
+    return WhereClauseValue._(field, Operator.NOT_BETWEEN, values);
+  }
 }

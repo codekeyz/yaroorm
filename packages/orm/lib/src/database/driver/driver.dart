@@ -73,7 +73,7 @@ class DatabaseConnection {
 
 mixin DriverContract {
   /// Perform query on the database
-  Future<List<Map<String, dynamic>>> query(Query query);
+  Future<List<Map<String, dynamic>>> query(ReadQuery query);
 
   /// Perform raw query on the database.
   Future<List<Map<String, dynamic>>> rawQuery(String script);

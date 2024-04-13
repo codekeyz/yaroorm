@@ -67,7 +67,7 @@ final class MySqlDriver implements DatabaseDriver {
   Future<dynamic> execute(String script) => rawQuery(script);
 
   @override
-  Future<List<Map<String, dynamic>>> query(Query query) {
+  Future<List<Map<String, dynamic>>> query(ReadQuery query) {
     final sql = _serializer.acceptReadQuery(query);
     return rawQuery(sql);
   }
@@ -92,9 +92,9 @@ final class MySqlDriver implements DatabaseDriver {
 
   @override
   Future<void> insertMany(InsertManyQuery query) async {
-    for (final value in query.values) {
-      await insert(InsertQuery(query.tableName, data: value));
-    }
+    // for (final value in query.values) {
+    //   await insert(InsertQuery(query.tableName, data: value));
+    // }
   }
 
   @override
@@ -140,7 +140,7 @@ class _MysqlTransactor extends DriverTransactor {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> query(Query query) {
+  Future<List<Map<String, dynamic>>> query(ReadQuery query) {
     final sql = _serializer.acceptReadQuery(query);
     return rawQuery(sql);
   }
@@ -164,9 +164,9 @@ class _MysqlTransactor extends DriverTransactor {
 
   @override
   Future<void> insertMany(InsertManyQuery query) async {
-    for (final value in query.values) {
-      await insert(InsertQuery(query.tableName, data: value));
-    }
+    // for (final value in query.values) {
+    //   await insert(InsertQuery(query.tableName, data: value));
+    // }
   }
 
   @override

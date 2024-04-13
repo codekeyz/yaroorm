@@ -10,7 +10,8 @@ part of 'migration.dart';
 
 Query<MigrationEntity> get MigrationEntityQuery => DB.query<MigrationEntity>();
 CreateSchema get MigrationEntitySchema => Schema.fromEntity<MigrationEntity>();
-DBEntity<MigrationEntity> get migration_entityTypeData => DBEntity<MigrationEntity>(
+DBEntity<MigrationEntity> get migration_entityTypeData =>
+    DBEntity<MigrationEntity>(
       "migrations",
       timestampsEnabled: false,
       columns: [
@@ -40,13 +41,21 @@ class _$MigrationEntityEntityMirror extends EntityMirror<MigrationEntity> {
   }
 }
 
+class OrderMigrationEntityBy extends OrderBy<MigrationEntity> {
+  const OrderMigrationEntityBy.migration(OrderDirection direction)
+      : super("migration", direction);
+
+  const OrderMigrationEntityBy.batch(OrderDirection direction)
+      : super("batch", direction);
+}
+
 extension MigrationEntityQueryExtension on Query<MigrationEntity> {
-  WhereClause<MigrationEntity> whereId(int value) => equal<int>("id", value);
-  WhereClause<MigrationEntity> whereMigration(String value) => equal<String>("migration", value);
-  WhereClause<MigrationEntity> whereBatch(int value) => equal<int>("batch", value);
-  Future<MigrationEntity?> findById(int value) => whereId(value).findOne();
-  Future<MigrationEntity?> findByMigration(String value) => whereMigration(value).findOne();
-  Future<MigrationEntity?> findByBatch(int value) => whereBatch(value).findOne();
+  Future<MigrationEntity?> findById(int val) =>
+      findOne(where: (q) => q.id(val));
+  Future<MigrationEntity?> findByMigration(String val) =>
+      findOne(where: (q) => q.migration(val));
+  Future<MigrationEntity?> findByBatch(int val) =>
+      findOne(where: (q) => q.batch(val));
   Future<MigrationEntity> create({
     required String migration,
     required int batch,
@@ -55,12 +64,20 @@ extension MigrationEntityQueryExtension on Query<MigrationEntity> {
   }
 }
 
-extension MigrationEntityUpdateQueryExtension on WhereClause<MigrationEntity> {
+extension MigrationEntityWhereBuilderExtension
+    on WhereClauseBuilder<MigrationEntity> {
+  WhereClauseValue id(int value) => $equal<int>("id", value);
+  WhereClauseValue migration(String value) =>
+      $equal<String>("migration", value);
+  WhereClauseValue batch(int value) => $equal<int>("batch", value);
+}
+
+extension MigrationEntityUpdateExtension on ReadQuery<MigrationEntity> {
   Future<void> update({
     value<String> migration = const NoValue(),
     value<int> batch = const NoValue(),
   }) async {
-    await query.$update(where: (_) => this, values: {
+    await $query.$update(where: (_) => whereClause!, values: {
       if (migration is! NoValue) #migration: migration.val,
       if (batch is! NoValue) #batch: batch.val,
     }).execute();

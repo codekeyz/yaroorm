@@ -1,36 +1,34 @@
 import 'package:meta/meta.dart';
 
 import '../database/driver/driver.dart';
-import '../database/entity/entity.dart';
-import '../primitives/where.dart';
+import '../database/entity/entity.dart' hide value;
 import '../reflection.dart';
 import 'aggregates.dart';
 
-part 'query_impl.dart';
+part '../primitives/where.dart';
 
-mixin ReadOperation<Result> {
-  Future<Result?> get([Object id]);
+enum OrderDirection { asc, desc }
 
-  Future<List<Result>> all({int? limit});
+mixin ReadOperation<Result extends Entity> {
+  Future<Result?> findOne({
+    WhereBuilder<Result>? where,
+  });
 
-  Future<List<Result>> take(int limit);
-}
-
-mixin FindOperation<Result> {
-  Future<Result?> findOne();
-
-  Future<List<Result>> findMany();
+  Future<List<Result>> findMany({
+    WhereBuilder<Result>? where,
+    List<OrderBy<Result>> orderBy,
+    int? limit,
+    int? offset,
+  });
 }
 
 mixin InsertOperation<T extends Entity> {
   Future<T> $insert(Map<Symbol, dynamic> data);
-
-  Future<void> $insertMany(List<Map<String, dynamic>> values);
 }
 
 mixin UpdateOperation<Result extends Entity> {
   UpdateQuery $update({
-    required WhereClause<Result> Function(Query<Entity> query) where,
+    required WhereBuilder<Result> where,
     required Map<Symbol, dynamic> values,
   });
 }
@@ -39,20 +37,45 @@ mixin LimitOperation<ReturnType> {
   Future<List<ReturnType>> take(int limit);
 }
 
-typedef OrderBy = ({String field, OrderByDirection direction});
+abstract class OrderBy<T extends Entity> {
+  final String field;
+  final OrderDirection direction;
 
-mixin OrderByOperation<ReturnType> {
-  ReturnType orderByAsc(String field);
-
-  ReturnType orderByDesc(String field);
+  const OrderBy(this.field, this.direction);
 }
 
 sealed class QueryBase<Owner> {
   final String tableName;
+  final String? database;
 
-  String? database;
+  final Query _query;
+
+  DriverContract get runner => _query.runner;
+
+  Future<void> execute();
+
+  QueryBase(this._query)
+      : tableName = _query.tableName,
+        database = _query.database;
+
+  String get statement;
+}
+
+final class Query<T extends Entity> with ReadOperation<T>, InsertOperation<T>, UpdateOperation<T>, AggregateOperation {
+  final DBEntity<T> entity;
+  final String? database;
+
+  late final String tableName;
 
   DriverContract? _queryDriver;
+
+  Map<Type, EntityTypeConverter> get converters => combineConverters(entity.converters, runner.typeconverters);
+
+  static final Map<Type, DBEntity> _typedatas = {};
+
+  Query._({String? tableName, this.database}) : entity = Query.getEntity<T>() {
+    this.tableName = tableName ?? entity.tableName;
+  }
 
   DriverContract get runner {
     if (_queryDriver == null) {
@@ -61,65 +84,16 @@ sealed class QueryBase<Owner> {
     return _queryDriver!;
   }
 
-  Owner driver(DriverContract driver) {
+  Query<T> driver(DriverContract driver) {
     _queryDriver = driver;
-    return this as Owner;
-  }
-
-  Future<void> execute();
-
-  QueryBase(this.tableName);
-
-  String get statement;
-}
-
-abstract interface class Query<T extends Entity> extends QueryBase<Query<T>>
-    with
-        ReadOperation<T>,
-        WhereOperation<T>,
-        LimitOperation<T>,
-        OrderByOperation<Query<T>>,
-        InsertOperation<T>,
-        UpdateOperation<T>,
-        AggregateOperation {
-  final Set<String> fieldSelections;
-  final Set<OrderBy> orderByProps;
-  final List<WhereClause<T>> whereClauses;
-  final DBEntity<T> entity;
-
-  Query<T> get _virtual => Query.table<T>(tableName).driver(runner);
-
-  Map<Type, EntityTypeConverter> get converters => combineConverters(entity.converters, runner.typeconverters);
-
-  static final Map<Type, DBEntity> _typedatas = {};
-
-  // ignore: prefer_final_fields
-  int? _limit;
-
-  int? get limit => _limit;
-
-  Query(super.tableName)
-      : entity = Query.getEntity<T>(),
-        fieldSelections = {},
-        orderByProps = {},
-        whereClauses = [],
-        _limit = null;
-
-  static Query<Model> table<Model extends Entity>([String? tableName]) {
-    if (Model != Entity && Model != dynamic) {
-      tableName ??= getEntityTableName<Model>();
-    }
-    assert(tableName != null, 'Either provide Entity Type or tableName');
-    return QueryImpl<Model>(tableName!);
-  }
-
-  Query<T> select(List<String> selections) {
-    fieldSelections.addAll(selections);
     return this;
   }
 
-  Future<dynamic> accept<A extends QueryBase<A>>(A query) async {
-    return (query..driver(runner)).execute();
+  static Query<Model> table<Model extends Entity>([String? tableName, String? database]) {
+    if (Model == Entity || Model == dynamic) {
+      throw UnsupportedError('Query cannot receive Entity or dynamic as Type');
+    }
+    return Query<Model>._(tableName: tableName, database: database);
   }
 
   static void addTypeDef<T extends Entity>(DBEntity<T> entity) {
@@ -137,6 +111,123 @@ abstract interface class Query<T extends Entity> extends QueryBase<Query<T>>
     }
     return _typedatas[type]! as DBEntity<T>;
   }
+
+  ReadQuery<T> where(WhereBuilder<T> builder) {
+    final whereClause = builder.call(WhereClauseBuilder<T>._());
+    return ReadQuery<T>._(this, whereClause: whereClause);
+  }
+
+  @override
+  Future<T> $insert(Map<Symbol, dynamic> data) async {
+    if (entity.timestampsEnabled) {
+      final now = DateTime.now();
+      final createdAtField = entity.createdAtField;
+      final updatedAtField = entity.updatedAtField;
+
+      if (createdAtField != null) {
+        data[createdAtField.dartName] = now;
+      }
+
+      if (updatedAtField != null) {
+        data[updatedAtField.dartName] = now;
+      }
+    }
+    final recordId = await runner.insert(
+      InsertQuery(this, data: entityMapToDbData<T>(data, converters)),
+    );
+
+    return (await findOne(where: (q) => q.$equal(entity.primaryKey.columnName, recordId)))!;
+  }
+
+  @override
+  Future<List<T>> findMany({
+    WhereBuilder<T>? where,
+    List<OrderBy<T>>? orderBy,
+    int? limit,
+    int? offset,
+  }) async {
+    final whereClause = where?.call(WhereClauseBuilder<T>._());
+    final readQ = ReadQuery._(
+      this,
+      limit: limit,
+      offset: offset,
+      whereClause: whereClause,
+      orderByProps: orderBy?.toSet(),
+    );
+
+    final results = await runner.query(readQ);
+    if (results.isEmpty) return <T>[];
+    return results.map(_wrapRawResult).toList();
+  }
+
+  @override
+  Future<T?> findOne({WhereBuilder<T>? where}) async {
+    final whereClause = where?.call(WhereClauseBuilder<T>._());
+    final readQ = ReadQuery._(this, limit: 1, whereClause: whereClause);
+    final results = await runner.query(readQ);
+    if (results.isEmpty) return null;
+    return results.map(_wrapRawResult).first;
+  }
+
+  @override
+  UpdateQuery $update({
+    required WhereBuilder<T> where,
+    required Map<Symbol, dynamic> values,
+  }) {
+    final whereClause = where.call(WhereClauseBuilder<T>._());
+
+    if (entity.timestampsEnabled) {
+      final now = DateTime.now();
+      final updatedAtField = entity.updatedAtField;
+      if (updatedAtField != null) {
+        values[updatedAtField.dartName] = now;
+      }
+    }
+
+    final dataToDbD = entityMapToDbData<T>(
+      values,
+      converters,
+      onlyPropertiesPassed: true,
+    );
+
+    return UpdateQuery(this, whereClause: whereClause, data: dataToDbD);
+  }
+
+  /// [T] is the expected type passed to [Query] via Query<T>
+  T _wrapRawResult(Map<String, dynamic>? result) {
+    if (result == null) return result as dynamic;
+    return serializedPropsToEntity<T>(
+      result,
+      entity,
+      converters,
+    );
+  }
+
+  ReadQuery<T> get _readQuery => ReadQuery<T>._(this);
+
+  @override
+  Future<num> average(String field) {
+    return AverageAggregate(_readQuery, field).get();
+  }
+
+  @override
+  Future<int> count({String? field, bool distinct = false}) {
+    return CountAggregate(_readQuery, field, distinct).get();
+  }
+
+  @override
+  Future<String> groupConcat(String field, String separator) {
+    return GroupConcatAggregate(_readQuery, field, separator).get();
+  }
+
+  @override
+  Future<num> max(String field) => MaxAggregate(_readQuery, field).get();
+
+  @override
+  Future<num> min(String field) => MinAggregate(_readQuery, field).get();
+
+  @override
+  Future<num> sum(String field) => SumAggregate(_readQuery, field).get();
 }
 
 mixin AggregateOperation {
@@ -154,20 +245,89 @@ mixin AggregateOperation {
 }
 
 @protected
-class UpdateQuery extends QueryBase<UpdateQuery> {
+final class UpdateQuery extends QueryBase<UpdateQuery> {
   final WhereClause whereClause;
   final Map<String, dynamic> data;
 
   UpdateQuery(super.tableName, {required this.whereClause, required this.data});
 
   @override
-  String get statement => runner.serializer.acceptUpdateQuery(this);
+  String get statement => _query.runner.serializer.acceptUpdateQuery(this);
 
   @override
   Future<void> execute() => runner.update(this);
 }
 
-class InsertQuery extends QueryBase<InsertQuery> {
+final class ReadQuery<T extends Entity> extends QueryBase<ReadQuery> with AggregateOperation {
+  final Set<String> fieldSelections;
+  final Set<OrderBy<T>>? orderByProps;
+  final WhereClause? whereClause;
+  final int? limit, offset;
+
+  final Query<T> $query;
+
+  ReadQuery._(
+    this.$query, {
+    this.whereClause,
+    this.orderByProps,
+    this.fieldSelections = const {},
+    this.limit,
+    this.offset,
+  }) : super($query);
+
+  @override
+  Future<List<Map<String, dynamic>>> execute() => runner.query(this);
+
+  @override
+  String get statement => runner.serializer.acceptReadQuery(this);
+
+  @override
+  Future<num> average(String field) {
+    return AverageAggregate(this, field).get();
+  }
+
+  @override
+  Future<int> count({String? field, bool distinct = false}) {
+    return CountAggregate(this, field, distinct).get();
+  }
+
+  @override
+  Future<String> groupConcat(String field, String separator) {
+    return GroupConcatAggregate(this, field, separator).get();
+  }
+
+  @override
+  Future<num> max(String field) => MaxAggregate(this, field).get();
+
+  @override
+  Future<num> min(String field) => MinAggregate(this, field).get();
+
+  @override
+  Future<num> sum(String field) {
+    return SumAggregate(this, field).get();
+  }
+
+  Future<List<T>> findMany({
+    int? limit,
+    int? offset,
+    List<OrderBy<T>>? orderBy,
+  }) {
+    return $query.findMany(
+      limit: limit,
+      offset: offset,
+      where: (_) => whereClause!,
+      orderBy: orderBy,
+    );
+  }
+
+  Future<T?> findOne() => $query.findOne(where: (_) => whereClause!);
+
+  Future<void> delete() async {
+    return DeleteQuery(_query, whereClause: whereClause!).execute();
+  }
+}
+
+final class InsertQuery extends QueryBase<InsertQuery> {
   final Map<String, dynamic> data;
 
   InsertQuery(super.tableName, {required this.data});
@@ -179,7 +339,7 @@ class InsertQuery extends QueryBase<InsertQuery> {
   String get statement => runner.serializer.acceptInsertQuery(this);
 }
 
-class InsertManyQuery extends QueryBase<InsertManyQuery> {
+final class InsertManyQuery extends QueryBase<InsertManyQuery> {
   final List<Map<String, dynamic>> values;
 
   InsertManyQuery(super.tableName, {required this.values});
@@ -192,10 +352,10 @@ class InsertManyQuery extends QueryBase<InsertManyQuery> {
 }
 
 @protected
-class DeleteQuery extends QueryBase<DeleteQuery> {
+final class DeleteQuery extends QueryBase<DeleteQuery> {
   final WhereClause whereClause;
 
-  DeleteQuery(super.tableName, {required this.whereClause});
+  DeleteQuery(super._query, {required this.whereClause});
 
   @override
   String get statement => runner.serializer.acceptDeleteQuery(this);

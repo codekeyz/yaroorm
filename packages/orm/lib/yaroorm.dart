@@ -1,7 +1,6 @@
 library;
 
 export 'src/query/query.dart';
-export 'src/primitives/where.dart' show WhereClause;
 export 'src/database/driver/driver.dart';
 export 'src/database/entity/entity.dart' hide entityMapToDbData, entityToDbData, serializedPropsToEntity;
 export 'src/database/database.dart';

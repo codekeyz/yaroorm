@@ -78,7 +78,7 @@ final class PostgreSqlDriver implements DatabaseDriver {
   bool get isOpen => db?.isOpen ?? false;
 
   @override
-  Future<List<Map<String, dynamic>>> query(Query query) async {
+  Future<List<Map<String, dynamic>>> query(ReadQuery query) async {
     final sqlScript = serializer.acceptReadQuery(query);
     return _execRawQuery(sqlScript);
   }
@@ -174,7 +174,7 @@ class _PgSqlDriverTransactor extends DriverTransactor {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> query(Query query) {
+  Future<List<Map<String, dynamic>>> query(ReadQuery query) {
     final sql = _pgsqlSerializer.acceptReadQuery(query);
     return rawQuery(sql);
   }

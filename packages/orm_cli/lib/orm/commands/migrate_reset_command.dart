@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart';
+import 'package:yaroo_cli/src/migration.dart';
 import 'package:yaroorm/yaroorm.dart';
 
 import '../_misc.dart';
@@ -18,7 +19,9 @@ class MigrationResetCommand extends OrmCommand {
   Future<void> execute(DatabaseDriver driver) async {
     await ensureMigrationsTableReady(driver);
 
-    final migrationsList = await MigrationQuery.driver(driver).orderByDesc('batch').all();
+    final migrationsList = await MigrationQuery.driver(driver).findMany(
+      orderBy: [OrderMigrationEntityBy.batch(OrderDirection.desc)],
+    );
     if (migrationsList.isEmpty) {
       print('𐄂 skipped: reason:     no migrations to reset');
       return;
