@@ -44,8 +44,6 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
     return _implementClass(element, annotation);
   }
 
-  TypeChecker _typeChecker(Type type) => TypeChecker.fromRuntime(type);
-
   FieldData? _getFieldAnnotationByType(
     List<FieldElement> fields,
     Type type,
@@ -97,16 +95,9 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
 
     String generateCodeForField(FieldElement e) {
       final symbol = '#${e.name}';
-      var columnName = e.name;
+      final columnName = _getFieldDbName(e);
 
       final meta = _typeChecker(entity.TableColumn).firstAnnotationOf(e, throwOnUnresolved: false);
-      ConstantReader? metaReader;
-
-      if (meta != null) {
-        metaReader = ConstantReader(meta);
-        final customName = metaReader.peek('name')?.stringValue;
-        if (customName != null) columnName = customName;
-      }
 
       final requiredOpts = '''
               "$columnName",
@@ -115,6 +106,7 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
             ''';
 
       if (meta != null) {
+        final metaReader = ConstantReader(meta);
         final isReferenceField = _typeChecker(entity.reference).isExactly(meta.type!.element!);
 
         if (isReferenceField) {
@@ -192,6 +184,8 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
                 build: (args) => ${_generateConstructorCode(className, primaryConstructor)},
                 ${converters.isEmpty ? '' : 'converters: ${converters.map(processAnnotation).toList()},'})''',
           )),
+
+        /// Generate Entity Mirror for Reflection
         Class(
           (b) => b
             ..name = '_\$${className}EntityMirror'
@@ -204,30 +198,49 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
                   ..name = 'instance')),
             ))
             ..methods.addAll([
-              Method((m) => m
-                ..name = 'get'
-                ..annotations.add(CodeExpression(Code('override')))
-                ..requiredParameters.add(Parameter((p) => p
-                  ..name = 'field'
-                  ..type = refer('Symbol')))
-                ..returns = refer('Object?')
-                ..body = Code('''
+              Method(
+                (m) => m
+                  ..name = 'get'
+                  ..annotations.add(CodeExpression(Code('override')))
+                  ..requiredParameters.add(Parameter((p) => p
+                    ..name = 'field'
+                    ..type = refer('Symbol')))
+                  ..returns = refer('Object?')
+                  ..body = Code('''
 return switch(field) {
   ${fields.map((e) => '''
   #${e.name} => instance.${e.name}
 ''').join(',')},
   _ => throw Exception('Unknown property \$field'),
 };
-''')),
+'''),
+              ),
             ]),
         ),
+
+        /// Generate Typed OrderBy's
+        Class((b) => b
+          ..name = 'Order${className}By'
+          ..extend = refer('OrderBy<$className>')
+          ..constructors.addAll([
+            ...normalFields,
+            if (createdAtField != null) createdAtField,
+            if (updatedAtField != null) updatedAtField,
+          ].map((field) => Constructor((c) => c
+            ..name = field.name
+            ..constant = true
+            ..lambda = true
+            ..initializers.add(Code('super("${_getFieldDbName(field)}", direction)'))
+            ..requiredParameters.add(Parameter((p) => p
+              ..type = refer('OrderDirection')
+              ..name = 'direction')))))),
+
+        /// Generate Entity Create Extension
         Extension(
           (b) => b
             ..name = '${className}QueryExtension'
             ..on = refer('Query<$className>')
             ..methods.addAll([
-              _generateFieldWhereClause(primaryKey.field, className),
-              ...normalFields.map((e) => _generateFieldWhereClause(e, className)),
               _generateGetByPropertyMethod(primaryKey.field, className),
               ...normalFields.map((e) => _generateGetByPropertyMethod(e, className)),
               Method(
@@ -247,9 +260,20 @@ return switch(field) {
               ),
             ]),
         ),
+
+        /// Generate Typed Entity WhereBuilder Extension
         Extension((b) => b
-          ..name = '${className}UpdateQueryExtension'
-          ..on = refer('WhereClause<$className>')
+          ..name = '${className}WhereBuilderExtension'
+          ..on = refer('WhereClauseBuilder<$className>')
+          ..methods.addAll([
+            _generateFieldWhereClause(primaryKey.field, className),
+            ...normalFields.map((e) => _generateFieldWhereClause(e, className)),
+          ])),
+
+        /// Generate Typed Entity Update Extension
+        Extension((b) => b
+          ..name = '${className}UpdateExtension'
+          ..on = refer('ReadQuery<$className>')
           ..methods.addAll([
             Method(
               (m) => m
@@ -266,8 +290,8 @@ return switch(field) {
                       ..required = false,
                   ),
                 ))
-                ..body = Code('''await query.\$update(
-                  where: (_) => this,
+                ..body = Code('''await \$query.\$update(
+                  where: (_) => whereClause!,
                   values: {
                     ${normalFields.map((e) => 'if (${e.name} is! NoValue) #${e.name}: ${e.name}.val').join(',')},
                   }).execute();'''),
@@ -275,7 +299,7 @@ return switch(field) {
           ]))
       ]));
 
-    final emitter = DartEmitter(useNullSafetySyntax: true);
+    final emitter = DartEmitter(useNullSafetySyntax: true, orderDirectives: true);
     return DartFormatter().format('${library.accept(emitter)}');
   }
 
@@ -306,42 +330,38 @@ return switch(field) {
 
   /// This generates WHERE-EQUAL Clauses for a field
   Method _generateFieldWhereClause(FieldElement field, String className) {
-    final meta = _typeChecker(entity.TableColumn).firstAnnotationOf(field, throwOnUnresolved: false);
-    final ConstantReader? reader = meta == null ? null : ConstantReader(meta);
-
-    final fieldName = field.name.pascalCase;
-    final dbColumnName = (reader?.peek('name')?.stringValue ?? field.name);
+    final dbColumnName = _getFieldDbName(field);
     final fieldType = field.type.getDisplayString(withNullability: true);
 
     return Method(
       (m) {
         m
-          ..name = 'where$fieldName'
-          ..returns = refer('WhereClause<$className>')
+          ..name = field.name
+          ..returns = refer('WhereClauseValue')
           ..lambda = true
           ..requiredParameters.add(Parameter((p) => p
             ..name = 'value'
             ..type = refer(fieldType)))
-          ..body = Code('equal<$fieldType>("$dbColumnName", value)');
+          ..body = Code('\$equal<$fieldType>("$dbColumnName", value)');
       },
     );
   }
 
   /// This generates GetByProperty for a field
   Method _generateGetByPropertyMethod(FieldElement field, String className) {
-    final fieldName = field.name.pascalCase;
+    final fieldName = field.name;
     final fieldType = field.type.getDisplayString(withNullability: true);
 
     return Method(
       (m) {
         m
-          ..name = 'findBy$fieldName'
+          ..name = 'findBy${fieldName.pascalCase}'
           ..returns = refer('Future<$className?>')
           ..lambda = true
           ..requiredParameters.add(Parameter((p) => p
-            ..name = 'value'
+            ..name = 'val'
             ..type = refer(fieldType)))
-          ..body = Code('where$fieldName(value).findOne()');
+          ..body = Code('findOne(where: (q) => q.$fieldName(val))');
       },
     );
   }
@@ -368,13 +388,22 @@ extension DartTypeExt on DartType {
   bool get isNullable => nullabilitySuffix == NullabilitySuffix.question;
 }
 
+String _getFieldDbName(FieldElement element) {
+  final elementName = element.name;
+  final meta = _typeChecker(entity.TableColumn).firstAnnotationOf(element, throwOnUnresolved: false);
+  if (meta != null) {
+    return ConstantReader(meta).peek('name')?.stringValue ?? elementName;
+  }
+  return elementName;
+}
+
 extension IterableExtension<T> on Iterable<T> {
   T? firstWhereOrNull(bool Function(T element) test) {
     for (final element in this) {
-      if (test(element)) {
-        return element;
-      }
+      if (test(element)) return element;
     }
     return null;
   }
 }
+
+TypeChecker _typeChecker(Type type) => TypeChecker.fromRuntime(type);
