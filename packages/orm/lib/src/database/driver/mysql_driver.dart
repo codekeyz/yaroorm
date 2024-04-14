@@ -135,8 +135,9 @@ class _MysqlTransactor extends DriverTransactor {
 
   @override
   Future<List<Map<String, dynamic>>> rawQuery(String script) async {
-    final result = await _dbConn.execute(script);
-    return result.rows.map((e) => e.assoc()).toList();
+    final rows = (await _dbConn.execute(script)).rows;
+    if (rows.isEmpty) return [];
+    return rows.map((e) => e.typedAssoc()).toList();
   }
 
   @override
@@ -184,7 +185,6 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
   @override
   void id({String name = 'id', String? type, bool autoIncrement = true}) {
     type ??= 'INT';
-
     final sb = StringBuffer()..write('${_serializer.escapeStr(name)} $type NOT NULL PRIMARY KEY');
     if (autoIncrement) sb.write(' AUTO_INCREMENT');
     statements.add(sb.toString());

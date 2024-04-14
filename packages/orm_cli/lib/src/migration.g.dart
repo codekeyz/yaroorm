@@ -14,16 +14,12 @@ DBEntity<MigrationEntity> get migration_entityTypeData => DBEntity<MigrationEnti
       "migrations",
       timestampsEnabled: false,
       columns: [
-        DBEntityField.primaryKey("id", int, #id),
+        DBEntityField.primaryKey("id", int, #id, autoIncrement: true),
         DBEntityField("migration", String, #migration),
         DBEntityField("batch", int, #batch)
       ],
       mirror: _$MigrationEntityEntityMirror.new,
-      build: (args) => MigrationEntity(
-        args[#id],
-        args[#migration],
-        args[#batch],
-      ),
+      build: (args) => MigrationEntity(args[#id], args[#migration], args[#batch]),
     );
 
 class _$MigrationEntityEntityMirror extends EntityMirror<MigrationEntity> {

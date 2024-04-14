@@ -142,14 +142,14 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
 
       if (e == primaryKey.field) {
         return '''DBEntityField.primaryKey(
-          $requiredOpts)
-          ${!autoIncrementPrimaryKey ? ', autoIncrement: false' : ''}''';
+          $requiredOpts
+          ${autoIncrementPrimaryKey ? ', autoIncrement: true' : ''}
+          )''';
       }
 
       return '''DBEntityField(
         $requiredOpts
-        ${e.type.isNullable ? ', nullable: true' : ''})'''
-          .trim();
+        ${e.type.isNullable ? ', nullable: true' : ''})''';
     }
 
     final typeDataName = '${className.snakeCase}TypeData';
