@@ -110,7 +110,7 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
         final isReferenceField = _typeChecker(entity.reference).isExactly(meta.type!.element!);
 
         if (isReferenceField) {
-          final referencedType = metaReader!.peek('type')!.typeValue;
+          final referencedType = metaReader.peek('type')!.typeValue;
           final element = referencedType.element as ClassElement;
           final superType = element.supertype?.element;
 
