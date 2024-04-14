@@ -320,6 +320,17 @@ final class ReadQuery<T extends Entity> extends QueryBase<ReadQuery> with Aggreg
     );
   }
 
+  Future<bool> exists() async {
+    final existsQuery = ReadQuery._(
+      $query,
+      fieldSelections: {$query.entity.primaryKey.columnName},
+      whereClause: whereClause,
+      limit: 1,
+    );
+    final result = await $query.runner.query(existsQuery);
+    return result.isNotEmpty;
+  }
+
   Future<T?> findOne() => $query.findOne(where: (_) => whereClause!);
 
   Future<void> delete() async {

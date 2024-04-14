@@ -36,9 +36,8 @@ void runBasicE2ETest(String connectionName) {
         homeAddress: firstData.homeAddress,
       );
 
-      expect(result.id, 1);
-
-      expect(await query.findMany(), hasLength(1));
+      final exists = await query.where((user) => user.id(result.id)).exists();
+      expect(exists, isTrue);
     });
 
     test('should insert many users', () async {

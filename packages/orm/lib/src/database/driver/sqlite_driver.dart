@@ -312,7 +312,7 @@ class SqliteSerializer extends PrimitiveSerializer {
 
   @override
   String acceptSelect(List<String> fields) {
-    return fields.isEmpty ? 'SELECT * ' : 'SELECT ${fields.map(escapeStr).join(', ')}';
+    return fields.isEmpty ? 'SELECT * ' : 'SELECT ${fields.map(escapeStr).join(', ')} ';
   }
 
   @override
