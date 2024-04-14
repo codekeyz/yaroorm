@@ -2,7 +2,7 @@ name: orm-docker
 version: "3.8"
 
 services:
-  maria_db:
+  mariadb:
     container_name: mariadb
     image: mariadb:latest
     environment:
@@ -14,6 +14,19 @@ services:
       - "3000:3306"
     volumes:
       - mariadb_data:/var/lib/mariadb/data
+  mysqldb:
+    image: mysql:latest
+    environment:
+      MYSQL_USER: 'tester'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_DATABASE: test_db
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "3001:3306"
+    volumes:
+      - mysqldb_data:/var/lib/mysql_random/data
+
 
 volumes:
   mariadb_data:
+  mysqldb_data:

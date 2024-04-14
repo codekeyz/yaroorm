@@ -26,7 +26,7 @@ final config = YaroormConfig(
       DatabaseDriverType.mysql,
       database: 'test_db',
       host: 'localhost',
-      username: 'root',
+      username: 'tester',
       password: 'password',
       port: 3001,
       secure: true,

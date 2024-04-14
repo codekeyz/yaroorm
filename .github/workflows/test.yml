@@ -49,15 +49,16 @@ jobs:
           MARIADB_USER: root
         ports:
           - 3000:3306
-      mysql:
+      mysqldb:
         image: mysql
         env:
-          MYSQL_ROOT_PASSWORD: password
+          MYSQL_USER: 'tester'
           MYSQL_DATABASE: test_db
-          MYSQL_USER: root
+          MYSQL_PASSWORD: 'password'
+          MYSQL_ROOT_PASSWORD: 'password'
         ports:
           - 3001:3306
-      postgres:
+      postgresdb:
         image: postgres:latest
         env:
           POSTGRES_DB: test_db
