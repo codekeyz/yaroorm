@@ -25,8 +25,19 @@ services:
       - "3001:3306"
     volumes:
       - mysqldb_data:/var/lib/mysql_random/data
+  postgresdb:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: 'tester'
+      POSTGRES_PASSWORD: 'password'
+      POSTGRES_DB: test_db
+    ports:
+      - "3002:3306"
+    volumes:
+      - postgresdb_data:/var/lib/psql/data
 
 
 volumes:
   mariadb_data:
   mysqldb_data:
+  postgresdb_data:
