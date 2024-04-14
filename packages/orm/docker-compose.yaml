@@ -2,7 +2,7 @@ name: orm-docker
 version: "3.8"
 
 services:
-  db:
+  maria_db:
     container_name: mariadb
     image: mariadb:latest
     environment:
