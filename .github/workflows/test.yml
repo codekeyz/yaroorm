@@ -90,12 +90,12 @@ jobs:
       - name: Run E2E Tests
         run: cd packages/orm && "./e2e_test.sh"
 
-      # - name: Combine Coverage
-      #   run: melos coverage
+      - name: Combine Coverage
+        run: melos coverage
 
-      # - name: Upload Coverage
-      #   uses: codecov/codecov-action@v3
-      #   env:
-      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      #   with:
-      #     files: coverage/*_lcov.info
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          files: coverage/*_lcov.info
