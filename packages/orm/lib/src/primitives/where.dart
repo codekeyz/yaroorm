@@ -2,7 +2,7 @@
 
 part of '../query/query.dart';
 
-typedef WhereBuilder<T extends Entity> = WhereClause Function(WhereClauseBuilder<T> builder);
+typedef WhereBuilder<T extends Entity<T>> = WhereClause Function(WhereClauseBuilder<T> builder);
 
 mixin WhereOperation {
   $AndGroup and(List<WhereClause> values) => $AndGroup._(values);
@@ -83,7 +83,7 @@ class WhereClauseValue<ValueType> extends WhereClause {
   }
 }
 
-final class WhereClauseBuilder<T extends Entity> with WhereOperation {
+final class WhereClauseBuilder<T extends Entity<T>> with WhereOperation {
   WhereClauseBuilder._();
 
   @override

@@ -50,7 +50,7 @@ Map<Type, EntityTypeConverter> combineConverters(
   };
 }
 
-UnmodifiableMapView<String, dynamic> entityToDbData<Model extends Entity>(Model value) {
+UnmodifiableMapView<String, dynamic> entityToDbData<Model extends Entity<Model>>(Model value) {
   final entity = Query.getEntity<Model>(type: value.runtimeType);
   final typeConverters = combineConverters(entity.converters, value._driver.typeconverters);
   final mirror = entity.mirror(value);
@@ -69,7 +69,7 @@ UnmodifiableMapView<String, dynamic> entityToDbData<Model extends Entity>(Model 
 }
 
 @internal
-UnmodifiableMapView<String, dynamic> entityMapToDbData<T extends Entity>(
+UnmodifiableMapView<String, dynamic> entityMapToDbData<T extends Entity<T>>(
   Map<Symbol, dynamic> values,
   Map<Type, EntityTypeConverter> typeConverters, {
   bool onlyPropertiesPassed = false,
@@ -99,7 +99,7 @@ UnmodifiableMapView<String, dynamic> entityMapToDbData<T extends Entity>(
 }
 
 @internal
-Model serializedPropsToEntity<Model extends Entity>(
+Model serializedPropsToEntity<Model extends Entity<Model>>(
   Map<String, dynamic> dataFromDb,
   DBEntity<Model> entity,
   Map<Type, EntityTypeConverter> converters,

@@ -3,7 +3,7 @@ import 'package:yaroorm/yaroorm.dart';
 part 'models.g.dart';
 
 @Table('users')
-class User extends Entity {
+class User extends Entity<User> {
   @primaryKey
   final int id;
 
@@ -26,7 +26,7 @@ class User extends Entity {
 }
 
 @Table('posts')
-class Post extends Entity {
+class Post extends Entity<Post> {
   @primaryKey
   final int id;
 
@@ -60,7 +60,7 @@ class Post extends Entity {
 }
 
 @Table('post_comments')
-class PostComment extends Entity {
+class PostComment extends Entity<PostComment> {
   @primaryKey
   final String id;
   final String comment;

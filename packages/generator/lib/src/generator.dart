@@ -156,7 +156,6 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
     final queryName = '${className}Query';
 
     final library = Library((b) => b
-      ..comments.add('ignore_for_file: non_constant_identifier_names')
       ..body.addAll([
         Method((m) => m
           ..name = queryName
@@ -300,7 +299,10 @@ return switch(field) {
       ]));
 
     final emitter = DartEmitter(useNullSafetySyntax: true, orderDirectives: true);
-    return DartFormatter().format('${library.accept(emitter)}');
+    return DartFormatter().format([
+      '// ignore_for_file: non_constant_identifier_names',
+      library.accept(emitter),
+    ].join('\n\n'));
   }
 
   bool allowedTypes(FieldElement field) {

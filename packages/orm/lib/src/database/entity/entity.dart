@@ -13,19 +13,18 @@ import '../database.dart';
 import '../driver/driver.dart';
 
 part 'converter.dart';
-// part 'relations.dart';
+part 'relations.dart';
 
-abstract class Entity {
-  // String get _foreignKeyForModel => '${_type.toString().camelCase}Id';
-
-  // Type get _type => runtimeType;
-
+abstract class Entity<Parent extends Entity<Parent>> {
   DriverContract _driver = DB.defaultDriver;
 
-  String? get connection => null;
+  DBEntity<Parent>? _typeDataCache;
+  DBEntity<Parent> get typeData {
+    if (_typeDataCache != null) return _typeDataCache!;
+    return _typeDataCache = Query.getEntity<Parent>();
+  }
 
-  // ignore: non_constant_identifier_names
-  UnmodifiableMapView get to_db_data => entityToDbData(this);
+  String? get connection => null;
 
   Entity() {
     if (connection != null) _driver = DB.driver(connection!);
@@ -35,13 +34,28 @@ abstract class Entity {
     return this.._driver = driver;
   }
 
-  // HasOne<T> hasOne<T extends Entity>({String? foreignKey}) {
-  //   return HasOne<T>(foreignKey ?? _foreignKeyForModel, this);
-  // }
+  @protected
+  HasMany<Parent, RelatedModel> hasMany<RelatedModel extends Entity<RelatedModel>>([String? foreignKey]) {
+    final relatedModelTypeData = Query.getEntity<RelatedModel>();
+    final referenceField = relatedModelTypeData.referencedFields.firstWhere((e) => e.reference.dartType == Parent);
+    return HasMany<Parent, RelatedModel>._(
+      foreignKey ?? referenceField.columnName,
+      this as Parent,
+    );
+  }
 
-  // HasMany<T> hasMany<T extends Entity>({String? foreignKey}) {
-  //   return HasMany<T>(foreignKey ?? _foreignKeyForModel, this);
-  // }
+  @protected
+  BelongsTo<Parent, RelatedModel> belongsTo<RelatedModel extends Entity<RelatedModel>>([String? foreignKey]) {
+    final parentFieldName = foreignKey ?? Query.getEntity<RelatedModel>().primaryKey.columnName;
+    final referenceField = typeData.referencedFields.firstWhere((e) => e.reference.dartType == RelatedModel);
+    final referenceFieldValue = typeData.mirror(this as Parent).get(referenceField.dartName);
+
+    return BelongsTo<Parent, RelatedModel>._(
+      parentFieldName,
+      this as Parent,
+      referenceFieldValue,
+    );
+  }
 }
 
 @Target({TargetKind.classType})

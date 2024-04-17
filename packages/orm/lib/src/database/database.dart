@@ -11,7 +11,7 @@ class UseDatabaseConnection {
 
   UseDatabaseConnection(this.info) : driver = DB.driver(info.name);
 
-  Query<Model> query<Model extends Entity>([String? table]) {
+  Query<Model> query<Model extends Entity<Model>>([String? table]) {
     return Query.table<Model>(table, info.database).driver(driver);
   }
 }
@@ -30,7 +30,7 @@ class DB {
 
   static DatabaseDriver get defaultDriver => defaultConnection.driver;
 
-  static Query<Model> query<Model extends Entity>([String? table]) => defaultConnection.query<Model>(table);
+  static Query<Model> query<Model extends Entity<Model>>([String? table]) => defaultConnection.query<Model>(table);
 
   static UseDatabaseConnection connection(String connName) =>
       UseDatabaseConnection(config.connections.firstWhere((e) => e.name == connName));

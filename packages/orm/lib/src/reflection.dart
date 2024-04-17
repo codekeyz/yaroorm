@@ -4,9 +4,9 @@ import 'database/entity/entity.dart';
 import 'migration.dart';
 import 'query/query.dart';
 
-String getEntityTableName<T extends Entity>() => Query.getEntity<T>().tableName;
+String getEntityTableName<T extends Entity<T>>() => Query.getEntity<T>().tableName;
 
-String getEntityPrimaryKey<T extends Entity>() => Query.getEntity<T>().primaryKey.columnName;
+String getEntityPrimaryKey<T extends Entity<T>>() => Query.getEntity<T>().primaryKey.columnName;
 
 typedef EntityInstanceReflector<T> = EntityMirror<T> Function(T instance);
 
@@ -19,7 +19,7 @@ abstract class EntityMirror<T> {
   Object? get(Symbol field);
 }
 
-final class DBEntity<T extends Entity> {
+final class DBEntity<T extends Entity<T>> {
   Type get dartType => T;
 
   final String tableName;
@@ -97,7 +97,7 @@ final class DBEntityField {
     return UpdatedAtField._(columnName, dartName);
   }
 
-  static ReferencedField<T> referenced<T extends Entity>(
+  static ReferencedField<T> referenced<T extends Entity<T>>(
     String columnName,
     Symbol dartName, {
     bool nullable = false,
@@ -130,7 +130,7 @@ final class UpdatedAtField extends DBEntityField {
   const UpdatedAtField._(String columnName, Symbol dartName) : super(columnName, DateTime, dartName);
 }
 
-final class ReferencedField<T extends Entity> implements DBEntityField {
+final class ReferencedField<T extends Entity<T>> implements DBEntityField {
   final DBEntity<T> reference;
   final String _columnName;
   final Symbol _dartName;

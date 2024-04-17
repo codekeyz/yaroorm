@@ -1,82 +1,78 @@
-// part of 'entity.dart';
+part of 'entity.dart';
 
-// mixin OrderByMixin<K, V extends Entity> on EntityRelation<V> implements OrderByOperation<K> {
-//   @override
-//   K orderByAsc(String field) {
-//     _query.orderByAsc(field);
-//     return this as K;
-//   }
+abstract class EntityRelation<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>> {
+  final Parent parent;
 
-//   @override
-//   K orderByDesc(String field) {
-//     _query.orderByDesc(field);
-//     return this as K;
-//   }
-// }
+  late final Query<RelatedModel> _query;
 
-// abstract class EntityRelation<RelatedModel extends Entity> {
-//   final Entity owner;
-//   late final Query<RelatedModel> _query;
+  EntityRelation(this.parent) : _query = Query.table<RelatedModel>().driver(parent._driver);
 
-//   EntityRelation(this.owner) : _query = Query.table<RelatedModel>().driver(owner._driver);
+  Object get ownerId {
+    final typeInfo = parent.typeData;
+    return typeInfo.mirror.call(parent).get(typeInfo.primaryKey.dartName)!;
+  }
 
-//   Object get ownerId {
-//     final typeData = Query.getEntity(type: owner.runtimeType);
-//     return typeData.mirror.call(owner).get(typeData.primaryKey.dartName)!;
-//   }
+  DriverContract get _driver => parent._driver;
 
-//   DriverContract get _driver => owner._driver;
+  get();
 
-//   get();
+  delete();
+}
 
-//   delete();
-// }
+final class HasOne<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>>
+    extends EntityRelation<Parent, RelatedModel> {
+  final String foreignKey;
 
-// class HasOne<RelatedModel extends Entity> extends EntityRelation<RelatedModel>
-//     with OrderByMixin<HasOne<RelatedModel>, RelatedModel> {
-//   final String foreignKey;
+  HasOne._(this.foreignKey, super._owner);
 
-//   HasOne(this.foreignKey, super._owner);
+  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, ownerId));
 
-//   Future<RelatedModel> set(RelatedModel model) async {
-//     throw Exception();
-//     // final data = model.to_db_data..[foreignKey] = ownerId;
-//     // data[model.entityMeta.primaryKey] = await _query.insert(data);
-//     // return serializedPropsToEntity<RelatedModel>(
-//     //   data,
-//     //   converters: _driver.typeconverters,
-//     // ).withDriver(_driver) as RelatedModel;
-//   }
+  @override
+  Future<RelatedModel?> get() => $readQuery.findOne();
 
-//   @override
-//   Future<RelatedModel?> get() => _query.equal(foreignKey, ownerId).findOne();
+  @override
+  Future<void> delete() => $readQuery.delete();
 
-//   @override
-//   Future<void> delete() => _query.equal(foreignKey, ownerId).delete();
-// }
+  Future<void> exists() => $readQuery.exists();
+}
 
-// class HasMany<RelatedModel extends Entity> extends EntityRelation<RelatedModel>
-//     with OrderByMixin<HasMany<RelatedModel>, RelatedModel> {
-//   final String foreignKey;
+final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>>
+    extends EntityRelation<Parent, RelatedModel> {
+  final String foreignKey;
 
-//   HasMany(this.foreignKey, super.owner);
+  HasMany._(this.foreignKey, super.parent);
 
-//   @override
-//   Future<List<RelatedModel>> get() {
-//     return _query.equal(foreignKey, ownerId).findMany();
-//   }
+  ReadQuery<RelatedModel> get _readQuery => _query.where((q) => q.$equal(foreignKey, ownerId));
 
-//   Future<RelatedModel?> first() => _query.equal(foreignKey, ownerId).findOne();
+  @override
+  Future<List<RelatedModel>> get({int? limit, int? offset, List<OrderBy<RelatedModel>>? orderBy}) {
+    return _readQuery.findMany(
+      limit: limit,
+      offset: offset,
+      orderBy: orderBy,
+    );
+  }
 
-//   Map<String, dynamic> _serializeModel(RelatedModel model) {
-//     // model.withDriver(_driver);
-//     return model.to_db_data..[foreignKey] = ownerId;
-//   }
+  Future<RelatedModel?> get first => _readQuery.findOne();
 
-//   Future<void> add(RelatedModel model) => _query.insert(_serializeModel(model));
+  @override
+  Future<void> delete() => _readQuery.delete();
+}
 
-//   Future<void> addAll(Iterable<RelatedModel> model) => _query.insertMany(model.map(_serializeModel).toList());
+final class BelongsTo<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>>
+    extends EntityRelation<Parent, RelatedModel> {
+  final String foreignKey;
+  final dynamic value;
 
-//   @override
-//   Future<void> delete() => _query.equal(foreignKey, ownerId).delete();
-// }
+  BelongsTo._(this.foreignKey, super.parent, this.value);
+
+  ReadQuery<RelatedModel> get _readQuery {
+    return Query.table<RelatedModel>().driver(_driver).where((q) => q.$equal(foreignKey, value));
+  }
+
+  @override
+  Future<RelatedModel?> get() => _readQuery.findOne();
+
+  @override
+  Future<void> delete() => _readQuery.delete();
+}

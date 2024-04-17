@@ -9,7 +9,7 @@ part '../primitives/where.dart';
 
 enum OrderDirection { asc, desc }
 
-mixin ReadOperation<Result extends Entity> {
+mixin ReadOperation<Result extends Entity<Result>> {
   Future<Result?> findOne({
     WhereBuilder<Result>? where,
   });
@@ -22,11 +22,11 @@ mixin ReadOperation<Result extends Entity> {
   });
 }
 
-mixin InsertOperation<T extends Entity> {
+mixin InsertOperation<T extends Entity<T>> {
   Future<T> $insert(Map<Symbol, dynamic> data);
 }
 
-mixin UpdateOperation<Result extends Entity> {
+mixin UpdateOperation<Result extends Entity<Result>> {
   UpdateQuery $update({
     required WhereBuilder<Result> where,
     required Map<Symbol, dynamic> values,
@@ -37,7 +37,7 @@ mixin LimitOperation<ReturnType> {
   Future<List<ReturnType>> take(int limit);
 }
 
-abstract class OrderBy<T extends Entity> {
+abstract class OrderBy<T extends Entity<T>> {
   final String field;
   final OrderDirection direction;
 
@@ -61,7 +61,8 @@ sealed class QueryBase<Owner> {
   String get statement;
 }
 
-final class Query<T extends Entity> with ReadOperation<T>, InsertOperation<T>, UpdateOperation<T>, AggregateOperation {
+final class Query<T extends Entity<T>>
+    with ReadOperation<T>, InsertOperation<T>, UpdateOperation<T>, AggregateOperation {
   final DBEntity<T> entity;
   final String? database;
 
@@ -89,14 +90,14 @@ final class Query<T extends Entity> with ReadOperation<T>, InsertOperation<T>, U
     return this;
   }
 
-  static Query<Model> table<Model extends Entity>([String? tableName, String? database]) {
+  static Query<Model> table<Model extends Entity<Model>>([String? tableName, String? database]) {
     if (Model == Entity || Model == dynamic) {
       throw UnsupportedError('Query cannot receive Entity or dynamic as Type');
     }
     return Query<Model>._(tableName: tableName, database: database);
   }
 
-  static void addTypeDef<T extends Entity>(DBEntity<T> entity) {
+  static void addTypeDef<T extends Entity<T>>(DBEntity<T> entity) {
     var type = T;
     if (type == Entity) type = entity.dartType;
     if (type == Entity) throw Exception();
@@ -104,12 +105,12 @@ final class Query<T extends Entity> with ReadOperation<T>, InsertOperation<T>, U
   }
 
   @internal
-  static DBEntity<T> getEntity<T extends Entity>({Type? type}) {
+  static DBEntity<T> getEntity<T extends Entity<T>>({Type? type}) {
     type ??= T;
     if (!_typedatas.containsKey(type)) {
       throw Exception('Type Data not found for $type');
     }
-    return _typedatas[type]! as DBEntity<T>;
+    return _typedatas[type]! as dynamic;
   }
 
   ReadQuery<T> where(WhereBuilder<T> builder) {
@@ -258,7 +259,7 @@ final class UpdateQuery extends QueryBase<UpdateQuery> {
   Future<void> execute() => runner.update(this);
 }
 
-final class ReadQuery<T extends Entity> extends QueryBase<ReadQuery> with AggregateOperation {
+final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with AggregateOperation {
   final Set<String> fieldSelections;
   final Set<OrderBy<T>>? orderByProps;
   final WhereClause? whereClause;
