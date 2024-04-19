@@ -92,7 +92,7 @@ jobs:
       - name: Combine Coverage
         run: |
           cd _tests_
-          "dart pub global run coverage:format_coverage --check-ignore --report-on=lib --lcov -o "$MELOS_ROOT_PATH/coverage/$(echo "\$MELOS_PACKAGE_NAME")_lcov.info" -i ./coverage"
+          dart pub global run coverage:format_coverage --check-ignore --report-on=lib --lcov -o "coverage/yaroorm_lcov.info" -i ./coverage
           rm -rf coverage
 
       - name: Upload Coverage
@@ -100,4 +100,4 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
-          files: coverage/*_lcov.info
+          files: _tests_/coverage/*_lcov.info
