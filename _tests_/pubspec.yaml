@@ -1,0 +1,13 @@
+name: yaroorm_tests
+description: Tests for yaroorm
+version: 0.0.1
+
+publish_to: none
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  build_runner: ^2.4.9
+  yaroorm: 
+    path: ../
