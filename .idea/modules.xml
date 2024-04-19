@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/packages/orm_cli/melos_yaroo_cli.iml" filepath="$PROJECT_DIR$/packages/orm_cli/melos_yaroo_cli.iml" />
+      <module fileurl="file://$PROJECT_DIR$/packages/orm/melos_yaroorm.iml" filepath="$PROJECT_DIR$/packages/orm/melos_yaroorm.iml" />
+      <module fileurl="file://$PROJECT_DIR$/melos_yaroodev.iml" filepath="$PROJECT_DIR$/melos_yaroodev.iml" />
+    </modules>
+  </component>
+</project>

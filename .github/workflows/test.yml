@@ -22,20 +22,19 @@ jobs:
       - uses: dart-lang/setup-dart@v1.3
         with:
           sdk: "3.0.0"
-      - uses: bluefireteam/melos-action@v3
 
       - name: Bootstrap
         run: |
-          dart pub global activate melos
-          melos bootstrap
+          dart pub get 
+          cd _tests_ && dart pub get
 
       - name: Check formatting
-        run: melos format -- --set-exit-if-changed
+        run: dart format . --line-length=120 --set-exit-if-changed
 
       - name: Check linting
         run: |
-          melos builder
-          melos analyze
+          dart run build_runner build --delete-conflicting-outputs       
+          dart analyze . --fatal-infos --no-fatal-warnings
 
   test:
     name: Test Packages
@@ -75,20 +74,16 @@ jobs:
       - uses: dart-lang/setup-dart@v1.3
         with:
           sdk: "3.0.0"
-      - uses: bluefireteam/melos-action@v3
 
       - name: Prepare Workspace
         run: |
-          dart pub global activate melos
           dart pub global activate coverage
-          melos bootstrap
-          melos builder
 
       - name: Run Unit Tests
         run: melos tests:ci
 
       - name: Run E2E Tests
-        run: cd packages/orm && "./e2e_test.sh"
+        run: ./e2e_test.sh
 
       - name: Combine Coverage
         run: melos coverage
