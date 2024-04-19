@@ -77,10 +77,11 @@ jobs:
 
       - name: Prepare Workspace
         run: |
+          dart pub get
           dart pub global activate coverage
 
       - name: Run Unit Tests
-        run: melos tests:ci
+        run: dart test --coverage=coverage --fail-fast
 
       - name: Run E2E Tests
         run: ./e2e_test.sh
