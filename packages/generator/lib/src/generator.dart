@@ -58,6 +58,14 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
   }
 
   String _implementClass(ClassElement classElement, ConstantReader annotation) {
+    final getterFields = classElement.fields.where((e) => e.getter?.isSynthetic == false);
+    final hasManyGetters = getterFields.where((getter) => _typeChecker(entity.HasMany).isExactlyType(getter.type));
+
+    if (hasManyGetters.isNotEmpty) {
+      final hasManyClass = hasManyGetters.first.type.element;
+      print(hasManyClass?.name);
+    }
+
     final fields = classElement.fields.where(allowedTypes).toList();
     final className = classElement.name;
 
@@ -295,7 +303,9 @@ return switch(field) {
                     ${normalFields.map((e) => 'if (${e.name} is! NoValue) #${e.name}: ${e.name}.val').join(',')},
                   }).execute();'''),
             ),
-          ]))
+          ])),
+
+        /// Generate Extension for HasMany creations
       ]));
 
     final emitter = DartEmitter(useNullSafetySyntax: true, orderDirectives: true);

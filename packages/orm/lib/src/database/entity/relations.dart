@@ -42,21 +42,21 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
 
   HasMany._(this.foreignKey, super.parent);
 
-  ReadQuery<RelatedModel> get _readQuery => _query.where((q) => q.$equal(foreignKey, ownerId));
+  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, ownerId));
 
   @override
   Future<List<RelatedModel>> get({int? limit, int? offset, List<OrderBy<RelatedModel>>? orderBy}) {
-    return _readQuery.findMany(
+    return $readQuery.findMany(
       limit: limit,
       offset: offset,
       orderBy: orderBy,
     );
   }
 
-  Future<RelatedModel?> get first => _readQuery.findOne();
+  Future<RelatedModel?> get first => $readQuery.findOne();
 
   @override
-  Future<void> delete() => _readQuery.delete();
+  Future<void> delete() => $readQuery.delete();
 }
 
 final class BelongsTo<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>>
