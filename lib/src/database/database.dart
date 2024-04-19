@@ -1,4 +1,4 @@
-import '../utils.dart';
+import 'package:collection/collection.dart';
 
 import '../config.dart';
 import '../query/query.dart';

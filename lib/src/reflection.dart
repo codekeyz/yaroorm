@@ -1,4 +1,4 @@
-import 'utils.dart';
+import 'package:collection/collection.dart';
 
 import 'database/entity/entity.dart';
 import 'migration.dart';

@@ -1,7 +1,7 @@
+import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common/sql.dart';
-import '../../utils.dart';
 
 import '../../migration.dart';
 import '../../primitives/serializer.dart';
