@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
@@ -7,26 +9,50 @@ import 'package:code_builder/code_builder.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
+import 'package:yaroorm/yaroorm.dart';
 
 // ignore: implementation_imports
 import 'database/entity/entity.dart' as entity;
+import 'database/database.dart' as db;
 
-class YaroormOptions {
-  YaroormOptions.fromOptions([BuilderOptions? options]);
-}
+final _emitter = DartEmitter(useNullSafetySyntax: true, orderDirectives: true);
 
-Builder generatorFactoryBuilder(BuilderOptions options) => SharedPartBuilder(
-      [YaroormGenerator(YaroormOptions.fromOptions(options))],
-      'yaroorm',
-    );
+Builder generatorFactoryBuilder(BuilderOptions options) => SharedPartBuilder([
+      EntityGenerator(),
+      DBInitGenerator(),
+    ], 'yaroorm');
 
 typedef FieldData = ({FieldElement field, ConstantReader reader});
 
-class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
-  final YaroormOptions globalOptions;
+extension DartTypeExt on DartType {
+  bool get isNullable => nullabilitySuffix == NullabilitySuffix.question;
+}
 
-  YaroormGenerator(this.globalOptions);
+String _getFieldDbName(FieldElement element) {
+  final elementName = element.name;
+  final meta = _typeChecker(entity.TableColumn).firstAnnotationOf(element, throwOnUnresolved: false);
+  if (meta != null) {
+    return ConstantReader(meta).peek('name')?.stringValue ?? elementName;
+  }
+  return elementName;
+}
 
+String _getTypeDefName(String className) {
+  return '${className.snakeCase}TypeData';
+}
+
+extension IterableExtension<T> on Iterable<T> {
+  T? firstWhereOrNull(bool Function(T element) test) {
+    for (final element in this) {
+      if (test(element)) return element;
+    }
+    return null;
+  }
+}
+
+TypeChecker _typeChecker(Type type) => TypeChecker.fromRuntime(type);
+
+class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
   @override
   generateForAnnotatedElement(
     Element element,
@@ -160,8 +186,8 @@ class YaroormGenerator extends GeneratorForAnnotation<entity.Table> {
         ${e.type.isNullable ? ', nullable: true' : ''})''';
     }
 
-    final typeDataName = '${className.snakeCase}TypeData';
     final queryName = '${className}Query';
+    final typeDataName = _getTypeDefName(className);
 
     final library = Library((b) => b
       ..body.addAll([
@@ -308,10 +334,9 @@ return switch(field) {
         /// Generate Extension for HasMany creations
       ]));
 
-    final emitter = DartEmitter(useNullSafetySyntax: true, orderDirectives: true);
     return DartFormatter().format([
       '// ignore_for_file: non_constant_identifier_names',
-      library.accept(emitter),
+      library.accept(_emitter),
     ].join('\n\n'));
   }
 
@@ -396,26 +421,45 @@ return switch(field) {
   }
 }
 
-extension DartTypeExt on DartType {
-  bool get isNullable => nullabilitySuffix == NullabilitySuffix.question;
-}
+class DBInitGenerator extends GeneratorForAnnotation<db.UseORMConfig> {
+  final List<ClassElement> _entities = [];
 
-String _getFieldDbName(FieldElement element) {
-  final elementName = element.name;
-  final meta = _typeChecker(entity.TableColumn).firstAnnotationOf(element, throwOnUnresolved: false);
-  if (meta != null) {
-    return ConstantReader(meta).peek('name')?.stringValue ?? elementName;
-  }
-  return elementName;
-}
+  @override
+  FutureOr<String> generate(LibraryReader library, BuildStep buildStep) async {
+    final entityChecker = TypeChecker.fromRuntime(Table);
 
-extension IterableExtension<T> on Iterable<T> {
-  T? firstWhereOrNull(bool Function(T element) test) {
-    for (final element in this) {
-      if (test(element)) return element;
+    for (final annotatedElement in library.annotatedWithExact(entityChecker, throwOnUnresolved: false)) {
+      final element = annotatedElement.element;
+      if (element is! ClassElement) continue;
+      if (element.isAbstract || element.isPrivate) continue;
+
+      _entities.add(element);
     }
-    return null;
+
+    return super.generate(library, buildStep);
+  }
+
+  @override
+  generateForAnnotatedElement(Element element, ConstantReader annotation, BuildStep buildStep) {
+    if (_entities.isEmpty) return null;
+
+    if (element is! TopLevelVariableElement) {
+      throw InvalidGenerationSourceError('Generator cannot target `${element.name}`.',
+          todo: 'Must be a top-level variable.');
+    }
+
+    final field = Method.returnsVoid((m) => m
+      ..name = 'initializeORM'
+      ..body = Code('''
+// Add Type Definitions to Query Runner
+${_entities.map((entity) => 'Query.addTypeDef<${entity.name}>(${_getTypeDefName(entity.name)});').join('\n')}
+
+DB.init(${element.name});
+
+'''));
+
+    return DartFormatter().format([
+      field.accept(_emitter),
+    ].join('\n\n'));
   }
 }
-
-TypeChecker _typeChecker(Type type) => TypeChecker.fromRuntime(type);

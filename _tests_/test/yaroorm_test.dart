@@ -4,16 +4,14 @@ import 'package:yaroorm/src/database/driver/pgsql_driver.dart';
 import 'package:yaroorm/src/database/driver/sqlite_driver.dart';
 import 'package:yaroorm/yaroorm.dart';
 
-import 'integration/fixtures/orm_config.dart' as db;
+import 'integration/fixtures/database.dart' as db;
 import 'integration/fixtures/models.dart';
 
 Matcher throwsArgumentErrorWithMessage(String message) =>
     throwsA(isA<ArgumentError>().having((p0) => p0.message, '', message));
 
 void main() {
-  Query.addTypeDef(userTypeData);
-
-  setUpAll(() => DB.init(db.config));
+  setUpAll(db.initializeORM);
 
   group('DatabaseDriver.init', () {
     group('when sqlite connection', () {

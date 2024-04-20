@@ -3,6 +3,9 @@ import 'package:yaroorm/yaroorm.dart';
 
 import 'migrations.dart';
 
+part 'database.g.dart';
+
+@DB.useConfig
 final config = YaroormConfig(
   'foo_sqlite',
   connections: [

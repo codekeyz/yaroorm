@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:meta/meta_meta.dart';
 
 import '../config.dart';
 import '../query/query.dart';
@@ -19,7 +20,14 @@ class UseDatabaseConnection {
 const String pleaseInitializeMessage = 'DB has not been initialized.\n'
     'Please make sure that you have called `DB.init(DatabaseConfig)`.';
 
+@Target({TargetKind.topLevelVariable})
+class UseORMConfig {
+  const UseORMConfig._();
+}
+
 class DB {
+  static const useConfig = UseORMConfig._();
+
   static YaroormConfig config = throw StateError(pleaseInitializeMessage);
 
   static final Map<String, DatabaseDriver> _driverInstances = {};
