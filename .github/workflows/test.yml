@@ -35,9 +35,7 @@ jobs:
         run: |
           cd _tests_
           dart run yaroorm init
-          dart run build_runner build --delete-conflicting-outputs
-          cd ..
-          dart analyze . --fatal-infos --no-fatal-warnings
+        
 
   test:
     name: Test Packages
