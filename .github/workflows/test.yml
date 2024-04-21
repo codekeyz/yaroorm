@@ -25,7 +25,8 @@ jobs:
 
       - name: Bootstrap
         run: |
-          dart pub get 
+          dart pub get
+          ls -lf
           cd _tests_ && dart pub get && dart pub run yaroorm init
 
       - name: Check formatting
