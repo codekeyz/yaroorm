@@ -34,6 +34,7 @@ jobs:
       - name: Check linting
         run: |
           cd _tests_ && dart run build_runner build --delete-conflicting-outputs && cd ..
+          dart run yaroorm init        
           dart analyze . --fatal-infos --no-fatal-warnings
 
   test:
@@ -84,6 +85,7 @@ jobs:
         run: |
           cd _tests_
           dart run build_runner build --delete-conflicting-outputs
+          dart run yaroorm init        
           dart test --coverage=coverage --fail-fast
 
       - name: Run E2E Tests
