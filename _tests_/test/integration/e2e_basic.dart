@@ -3,13 +3,10 @@ import 'package:collection/collection.dart';
 import 'package:yaroorm/yaroorm.dart';
 import 'package:yaroorm_tests/src/models.dart';
 
-import '../../database/database.dart';
 import '../../lib/test_data.dart';
-import 'fixtures/migrator.dart';
+import '../util.dart';
 
 void runBasicE2ETest(String connectionName) {
-  initializeORM();
-
   final driver = DB.driver(connectionName);
 
   return group('with ${driver.type.name} driver', () {
@@ -19,7 +16,8 @@ void runBasicE2ETest(String connectionName) {
       expect(driver.isOpen, isTrue);
     });
 
-    test('should have no tables', () async => expect(await driver.hasTable('users'), isFalse));
+    test('should have no tables',
+        () async => expect(await driver.hasTable('users'), isFalse));
 
     test('should execute migration', () async {
       await runMigrator(connectionName, 'migrate');
@@ -57,7 +55,8 @@ void runBasicE2ETest(String connectionName) {
     });
 
     group('Aggregate Functions', () {
-      final query = UserQuery.driver(driver).where((user) => user.$isLike('home_address', '%%, Ghana'));
+      final query = UserQuery.driver(driver)
+          .where((user) => user.$isLike('home_address', '%%, Ghana'));
       List<User> usersInGhana = [];
 
       setUpAll(() async {
@@ -91,7 +90,8 @@ void runBasicE2ETest(String connectionName) {
 
       test('concat', () async {
         Matcher matcher(String separator) {
-          if ([DatabaseDriverType.sqlite, DatabaseDriverType.pgsql].contains(driver.type)) {
+          if ([DatabaseDriverType.sqlite, DatabaseDriverType.pgsql]
+              .contains(driver.type)) {
             return equals(usersInGhana.map((e) => e.age).join(separator));
           }
 
@@ -131,11 +131,13 @@ void runBasicE2ETest(String connectionName) {
       final updatedResult = await age50Users.findMany();
       expect(updatedResult.length, 4);
       expect(updatedResult.every((e) => e.age == 50), isTrue);
-      expect(updatedResult.every((e) => e.homeAddress == 'Keta, Ghana'), isTrue);
+      expect(
+          updatedResult.every((e) => e.homeAddress == 'Keta, Ghana'), isTrue);
     });
 
     test('should fetch only users in Ghana', () async {
-      final userQuery = UserQuery.driver(driver).where((user) => user.$isLike('home_address', '%, Ghana'));
+      final userQuery = UserQuery.driver(driver)
+          .where((user) => user.$isLike('home_address', '%, Ghana'));
 
       final usersInGhana = await userQuery.findMany();
       expect(usersInGhana.length, 10);
@@ -191,7 +193,8 @@ void runBasicE2ETest(String connectionName) {
     });
 
     test('should delete many users', () async {
-      final query = UserQuery.driver(driver).where((user) => user.$isLike('home_address', '%, Nigeria'));
+      final query = UserQuery.driver(driver)
+          .where((user) => user.$isLike('home_address', '%, Nigeria'));
       expect(await query.findMany(), isNotEmpty);
 
       await query.delete();

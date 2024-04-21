@@ -80,7 +80,7 @@ jobs:
         run: |
           cd _tests_
           dart run build_runner build --delete-conflicting-outputs
-          dart run yaroorm init        
+          dart run yaroorm init
           dart test --coverage=coverage --fail-fast
 
       - name: Run E2E Tests
