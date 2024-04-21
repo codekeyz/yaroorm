@@ -26,9 +26,7 @@ jobs:
       - name: Bootstrap
         run: |
           dart pub get
-          cd _tests_ && dart pub get 
-          ls -lf
-          dart pub run yaroorm
+          cd _tests_ && dart pub get && dart run yaroorm init
 
       - name: Check formatting
         run: dart format . --line-length=120 --set-exit-if-changed
@@ -36,7 +34,6 @@ jobs:
       - name: Check linting
         run: |
           cd _tests_
-          dart pub get 
           dart run yaroorm init
         
 
