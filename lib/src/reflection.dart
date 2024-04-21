@@ -131,7 +131,6 @@ final class UpdatedAtField extends DBEntityField {
 }
 
 final class ReferencedField<T extends Entity<T>> implements DBEntityField {
-  final DBEntity<T> reference;
   final String _columnName;
   final Symbol _dartName;
   final bool _nullable;
@@ -144,8 +143,9 @@ final class ReferencedField<T extends Entity<T>> implements DBEntityField {
     bool nullable = false,
     this.onDelete,
     this.onUpdate,
-  })  : _nullable = nullable,
-        reference = Query.getEntity<T>();
+  }) : _nullable = nullable;
+
+  DBEntity<T> get reference => Query.getEntity<T>();
 
   @override
   String get columnName => _columnName;

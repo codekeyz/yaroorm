@@ -178,7 +178,7 @@ abstract class Schema {
       };
     }
 
-    return CreateSchema._(
+    return CreateSchema<T>._(
       entity.tableName,
       (table) {
         table.id(
@@ -207,11 +207,7 @@ abstract class Schema {
     );
   }
 
-  static Schema create(String name, TableBluePrintFunc func) => CreateSchema._(name, func);
-
-  static Schema dropIfExists(CreateSchema value) {
-    return _DropSchema(value.tableName);
-  }
+  static Schema dropIfExists(CreateSchema value) => _DropSchema(value.tableName);
 
   static Schema rename(String from, String to) => _RenameSchema(from, to);
 }
@@ -228,7 +224,7 @@ abstract class Migration {
   void down(List<Schema> schemas);
 }
 
-final class CreateSchema extends Schema {
+final class CreateSchema<T extends Entity<T>> extends Schema {
   CreateSchema._(super.name, super.func) : super._();
 
   @override

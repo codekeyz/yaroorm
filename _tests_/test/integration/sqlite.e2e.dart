@@ -1,10 +1,10 @@
 import 'package:test/test.dart';
 
-import 'fixtures/database.dart' as db;
+import '../../database/database.dart';
 import 'e2e_basic.dart';
 
 void main() async {
-  db.initializeORM();
+  initializeORM();
 
   group('SQLite', () {
     group('Basic E2E Test', () => runBasicE2ETest('foo_sqlite'));

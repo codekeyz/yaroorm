@@ -1,6 +1,7 @@
 import 'package:cli_completion/cli_completion.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:args/command_runner.dart';
+import 'package:yaroorm/src/cli/commands/init_orm_command.dart';
 
 import 'commands/migrate_rollback_command.dart';
 import 'commands/migrate_fresh_command.dart';
@@ -11,8 +12,7 @@ import 'commands/command.dart';
 import '_misc.dart';
 import 'logger.dart';
 
-const executableName = 'yaroo orm';
-const packageName = 'yaroo_cli';
+const executableName = 'yaroorm';
 const description = 'yaroorm command-line tool';
 
 class OrmCLIRunner extends CompletionCommandRunner<int> {
@@ -36,6 +36,7 @@ class OrmCLIRunner extends CompletionCommandRunner<int> {
       help: 'specify database connection',
     );
 
+    addCommand(InitializeOrmCommand());
     addCommand(MigrateCommand());
     addCommand(MigrateFreshCommand());
     addCommand(MigrationRollbackCommand());

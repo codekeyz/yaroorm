@@ -1,13 +1,14 @@
 import 'package:test/test.dart';
 import 'package:collection/collection.dart';
 import 'package:yaroorm/yaroorm.dart';
+import 'package:yaroorm_tests/src/models.dart';
 
-import 'fixtures/models.dart';
+import '../../database/database.dart';
+import '../../lib/test_data.dart';
 import 'fixtures/migrator.dart';
-import 'fixtures/test_data.dart';
 
 void runBasicE2ETest(String connectionName) {
-  Query.addTypeDef<User>(userTypeData);
+  initializeORM();
 
   final driver = DB.driver(connectionName);
 

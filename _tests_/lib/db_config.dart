@@ -1,10 +1,6 @@
 import 'package:path/path.dart' as path;
 import 'package:yaroorm/yaroorm.dart';
 
-import 'migrations.dart';
-
-part 'database.g.dart';
-
 @DB.useConfig
 final config = YaroormConfig(
   'foo_sqlite',
@@ -12,7 +8,7 @@ final config = YaroormConfig(
     DatabaseConnection(
       'foo_sqlite',
       DatabaseDriverType.sqlite,
-      database: path.absolute('test/integration', 'db.sqlite'),
+      database: path.absolute('database', 'db.sqlite'),
       dbForeignKeys: true,
     ),
     DatabaseConnection(
@@ -44,5 +40,4 @@ final config = YaroormConfig(
       port: 3002,
     ),
   ],
-  migrations: [AddUsersTable(), AddPostsTable()],
 );

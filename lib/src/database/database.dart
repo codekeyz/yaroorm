@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:meta/meta_meta.dart';
 
 import '../config.dart';
+import '../migration.dart';
 import '../query/query.dart';
 import 'entity/entity.dart';
 import 'driver/driver.dart';
@@ -27,6 +28,8 @@ class UseORMConfig {
 
 class DB {
   static const useConfig = UseORMConfig._();
+
+  static List<Migration> migrations = [];
 
   static YaroormConfig config = throw StateError(pleaseInitializeMessage);
 

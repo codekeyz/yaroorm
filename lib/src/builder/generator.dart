@@ -1,56 +1,19 @@
-import 'dart:async';
-
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
-import 'package:analyzer/dart/element/nullability_suffix.dart';
-import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart';
+import 'package:collection/collection.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
-import 'package:yaroorm/yaroorm.dart';
 
 // ignore: implementation_imports
-import 'database/entity/entity.dart' as entity;
-import 'database/database.dart' as db;
+import '../database/entity/entity.dart' as entity;
+import 'utils.dart';
 
 final _emitter = DartEmitter(useNullSafetySyntax: true, orderDirectives: true);
 
-Builder generatorFactoryBuilder(BuilderOptions options) => SharedPartBuilder([
-      EntityGenerator(),
-      DBInitGenerator(),
-    ], 'yaroorm');
-
-typedef FieldData = ({FieldElement field, ConstantReader reader});
-
-extension DartTypeExt on DartType {
-  bool get isNullable => nullabilitySuffix == NullabilitySuffix.question;
-}
-
-String _getFieldDbName(FieldElement element) {
-  final elementName = element.name;
-  final meta = _typeChecker(entity.TableColumn).firstAnnotationOf(element, throwOnUnresolved: false);
-  if (meta != null) {
-    return ConstantReader(meta).peek('name')?.stringValue ?? elementName;
-  }
-  return elementName;
-}
-
-String _getTypeDefName(String className) {
-  return '${className.snakeCase}TypeData';
-}
-
-extension IterableExtension<T> on Iterable<T> {
-  T? firstWhereOrNull(bool Function(T element) test) {
-    for (final element in this) {
-      if (test(element)) return element;
-    }
-    return null;
-  }
-}
-
-TypeChecker _typeChecker(Type type) => TypeChecker.fromRuntime(type);
+Builder generatorFactoryBuilder(BuilderOptions options) => SharedPartBuilder([EntityGenerator()], 'yaroorm');
 
 class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
   @override
@@ -75,7 +38,7 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
     Type type,
   ) {
     for (final field in fields) {
-      final result = _typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
+      final result = typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
       if (result != null) {
         return (field: field, reader: ConstantReader(result));
       }
@@ -85,11 +48,10 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
 
   String _implementClass(ClassElement classElement, ConstantReader annotation) {
     final getterFields = classElement.fields.where((e) => e.getter?.isSynthetic == false);
-    final hasManyGetters = getterFields.where((getter) => _typeChecker(entity.HasMany).isExactlyType(getter.type));
+    final hasManyGetters = getterFields.where((getter) => typeChecker(entity.HasMany).isExactlyType(getter.type));
 
     if (hasManyGetters.isNotEmpty) {
-      final hasManyClass = hasManyGetters.first.type.element;
-      print(hasManyClass?.name);
+      // final hasManyClass = hasManyGetters.first.type.element;
     }
 
     final fields = classElement.fields.where(allowedTypes).toList();
@@ -129,9 +91,9 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
 
     String generateCodeForField(FieldElement e) {
       final symbol = '#${e.name}';
-      final columnName = _getFieldDbName(e);
+      final columnName = getFieldDbName(e);
 
-      final meta = _typeChecker(entity.TableColumn).firstAnnotationOf(e, throwOnUnresolved: false);
+      final meta = typeChecker(entity.TableColumn).firstAnnotationOf(e, throwOnUnresolved: false);
 
       final requiredOpts = '''
               "$columnName",
@@ -141,14 +103,14 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
 
       if (meta != null) {
         final metaReader = ConstantReader(meta);
-        final isReferenceField = _typeChecker(entity.reference).isExactly(meta.type!.element!);
+        final isReferenceField = typeChecker(entity.reference).isExactly(meta.type!.element!);
 
         if (isReferenceField) {
           final referencedType = metaReader.peek('type')!.typeValue;
           final element = referencedType.element as ClassElement;
           final superType = element.supertype?.element;
 
-          if (superType == null || !_typeChecker(entity.Entity).isExactly(superType)) {
+          if (superType == null || !typeChecker(entity.Entity).isExactly(superType)) {
             throw InvalidGenerationSourceError(
               'Generator cannot target field `${e.name}` on `$className` class.',
               todo: 'Type passed to [reference] annotation must be a subtype of `Entity`.',
@@ -187,7 +149,7 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
     }
 
     final queryName = '${className}Query';
-    final typeDataName = _getTypeDefName(className);
+    final typeDataName = getTypeDefName(className);
 
     final library = Library((b) => b
       ..body.addAll([
@@ -263,7 +225,7 @@ return switch(field) {
             ..name = field.name
             ..constant = true
             ..lambda = true
-            ..initializers.add(Code('super("${_getFieldDbName(field)}", direction)'))
+            ..initializers.add(Code('super("${getFieldDbName(field)}", direction)'))
             ..requiredParameters.add(Parameter((p) => p
               ..type = refer('OrderDirection')
               ..name = 'direction')))))),
@@ -367,7 +329,7 @@ return switch(field) {
 
   /// This generates WHERE-EQUAL Clauses for a field
   Method _generateFieldWhereClause(FieldElement field, String className) {
-    final dbColumnName = _getFieldDbName(field);
+    final dbColumnName = getFieldDbName(field);
     final fieldType = field.type.getDisplayString(withNullability: true);
 
     return Method(
@@ -418,48 +380,5 @@ return switch(field) {
 
     /// TODO(codekeyz): resolve constructor for TypeConverters
     throw UnsupportedError('Parameters for TypeConverters not yet supported');
-  }
-}
-
-class DBInitGenerator extends GeneratorForAnnotation<db.UseORMConfig> {
-  final List<ClassElement> _entities = [];
-
-  @override
-  FutureOr<String> generate(LibraryReader library, BuildStep buildStep) async {
-    final entityChecker = TypeChecker.fromRuntime(Table);
-
-    for (final annotatedElement in library.annotatedWithExact(entityChecker, throwOnUnresolved: false)) {
-      final element = annotatedElement.element;
-      if (element is! ClassElement) continue;
-      if (element.isAbstract || element.isPrivate) continue;
-
-      _entities.add(element);
-    }
-
-    return super.generate(library, buildStep);
-  }
-
-  @override
-  generateForAnnotatedElement(Element element, ConstantReader annotation, BuildStep buildStep) {
-    if (_entities.isEmpty) return null;
-
-    if (element is! TopLevelVariableElement) {
-      throw InvalidGenerationSourceError('Generator cannot target `${element.name}`.',
-          todo: 'Must be a top-level variable.');
-    }
-
-    final field = Method.returnsVoid((m) => m
-      ..name = 'initializeORM'
-      ..body = Code('''
-// Add Type Definitions to Query Runner
-${_entities.map((entity) => 'Query.addTypeDef<${entity.name}>(${_getTypeDefName(entity.name)});').join('\n')}
-
-DB.init(${element.name});
-
-'''));
-
-    return DartFormatter().format([
-      field.accept(_emitter),
-    ].join('\n\n'));
   }
 }

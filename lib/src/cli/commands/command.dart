@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:args/command_runner.dart';
+import 'package:mason_logger/mason_logger.dart';
 import '../../../yaroorm.dart';
 
 import '../model/migration.dart';
@@ -40,7 +41,7 @@ abstract class OrmCommand extends Command<int> {
   }
 
   List<MigrationDefn> get migrationDefinitions {
-    return (ormConfig.migrations)
+    return (DB.migrations)
         .where((e) => e.connection == null || e.connection == dbConnection)
         .map(MigrationDefn.new)
         .toList();
@@ -56,7 +57,7 @@ abstract class OrmCommand extends Command<int> {
     await execute(driver);
 
     await driver.disconnect();
-    return 0;
+    return ExitCode.success.code;
   }
 
   Future<void> execute(DatabaseDriver driver);
