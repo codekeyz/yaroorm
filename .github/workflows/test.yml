@@ -80,7 +80,9 @@ jobs:
           dart run yaroorm init
 
       - name: Run Unit Tests
-        run: dart test --coverage=coverage --fail-fast
+        run: |
+          cd _tests_
+          dart test --coverage=coverage --fail-fast
 
       - name: Run E2E Tests
         run: ./e2e_test.sh
