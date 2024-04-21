@@ -50,7 +50,7 @@ Future<void> _initOrmInProject(
   TopLevelVariableElement dbConfig,
 ) async {
   final entityNames = entities.map((e) => e.elements.map((e) => e.name)).fold(<String>{}, (preV, e) => preV..addAll(e));
-  final databaseFile = File(path.join(workingDir.path, 'database/database.dart'));
+  final databaseFile = File(path.join(workingDir.path, 'database', 'database.dart'));
 
   // Resolve ORM Config file import path
   const filePrefix = 'file://';

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:yaroorm/src/cli/commands/init_orm_command.dart';
+import 'package:yaroorm/src/cli/orm.dart';
 
 const _migratorFileContent = '''
 import 'package:yaroorm/src/cli/orm.dart';
@@ -26,13 +27,14 @@ void main(List<String> args) async {
   final migratorFile = File(dartFile);
   final kernelFile = File(kernelFilePath);
 
-  final isInitCommand = args.isNotEmpty && args[0] == InitializeOrmCommand.commandName;
-  if (isInitCommand && kernelFile.existsSync()) {
-    kernelFile.delete();
+  if (!migratorFile.existsSync()) {
+    migratorFile.writeAsStringSync(_migratorFileContent);
   }
 
-  if (!migratorFile.existsSync()) {
-    await migratorFile.writeAsString(_migratorFileContent);
+  final isInitCommand = args.isNotEmpty && args[0] == InitializeOrmCommand.commandName;
+  if (isInitCommand) {
+    if (kernelFile.existsSync()) kernelFile.delete();
+    return OrmCLIRunner.start(args);
   }
 
   late Process process;
