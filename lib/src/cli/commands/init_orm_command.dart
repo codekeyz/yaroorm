@@ -25,14 +25,14 @@ class InitializeOrmCommand extends Command<int> {
   @override
   FutureOr<int>? run() async {
     final workingDir = Directory.current;
-    final progress = logger.progress('Initializing ORM in project');
+    final progress = logger.progress('Initializing Yaroorm 📦');
 
     try {
       final result = await resolveMigrationAndEntitiesInDir(workingDir);
 
       await _initOrmInProject(workingDir, result.migrations, result.entities, result.dbConfig);
 
-      progress.complete('ORM initialized 🚀');
+      progress.complete('Yaroorm 📦 initialized 🚀');
 
       return ExitCode.success.code;
     } on YaroormCliException catch (e) {
