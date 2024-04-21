@@ -33,8 +33,10 @@ jobs:
 
       - name: Check linting
         run: |
-          cd _tests_ && dart run build_runner build --delete-conflicting-outputs && cd ..
-          dart run yaroorm init        
+          cd _tests_
+          dart run build_runner build --delete-conflicting-outputs
+          dart run yaroorm init
+          cd ..
           dart analyze . --fatal-infos --no-fatal-warnings
 
   test:
