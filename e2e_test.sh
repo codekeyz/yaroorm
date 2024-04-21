@@ -3,7 +3,9 @@
 
 set -e
 
-TEST_DIRECTORY="_tests_/test/integration"
+cd _tests_
+
+TEST_DIRECTORY="test/integration"
 
 pattern="*.e2e.dart"
 
