@@ -27,17 +27,14 @@ jobs:
         run: |
           dart pub get
           cd _tests_ 
+          dart run build_runner build
           dart pub get && dart run yaroorm init
 
       - name: Check formatting
         run: dart format . --line-length=120 --set-exit-if-changed
 
       - name: Check linting
-        run:
-          cd _tests_
-          dart run build_runner build --delete-conflicting-outputs
-          cd ..
-          dart analyze . --fatal-infos --no-fatal-warnings
+        run: dart analyze . --fatal-infos --no-fatal-warnings
 
   test:
     name: Test Packages
