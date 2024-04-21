@@ -1,3 +1,5 @@
+import 'package:yaroorm/src/cli/logger.dart';
+
 import '../../../yaroorm.dart';
 
 import 'command.dart';
@@ -13,7 +15,8 @@ class MigrateFreshCommand extends OrmCommand {
 
   @override
   Future<void> execute(DatabaseDriver driver) async {
-    await MigrationResetCommand().execute(driver);
-    await MigrateCommand().execute(driver);
+    await MigrationResetCommand().execute(driver, writeLogs: false);
+    await MigrateCommand().execute(driver, writeLogs: false);
+    logger.write(migrationLogTable.toString());
   }
 }
