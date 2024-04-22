@@ -21,7 +21,7 @@ jobs:
 
       - uses: dart-lang/setup-dart@v1.3
         with:
-          sdk: "3.0.0"
+          sdk: "3.0.6"
 
       - name: Bootstrap
         run: dart pub get
@@ -69,7 +69,7 @@ jobs:
 
       - uses: dart-lang/setup-dart@v1.3
         with:
-          sdk: "3.0.0"
+          sdk: "3.0.6"
 
       - name: Prepare Workspace
         run: |
