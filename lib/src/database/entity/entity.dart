@@ -35,18 +35,18 @@ abstract class Entity<Parent extends Entity<Parent>> {
   }
 
   @protected
-  HasMany<Parent, RelatedModel> hasMany<RelatedModel extends Entity<RelatedModel>>([String? foreignKey]) {
+  HasMany<Parent, RelatedModel> hasMany<RelatedModel extends Entity<RelatedModel>>() {
     final relatedModelTypeData = Query.getEntity<RelatedModel>();
     final referenceField = relatedModelTypeData.referencedFields.firstWhere((e) => e.reference.dartType == Parent);
     return HasMany<Parent, RelatedModel>._(
-      foreignKey ?? referenceField.columnName,
+      referenceField.columnName,
       this as Parent,
     );
   }
 
   @protected
-  BelongsTo<Parent, RelatedModel> belongsTo<RelatedModel extends Entity<RelatedModel>>([String? foreignKey]) {
-    final parentFieldName = foreignKey ?? Query.getEntity<RelatedModel>().primaryKey.columnName;
+  BelongsTo<Parent, RelatedModel> belongsTo<RelatedModel extends Entity<RelatedModel>>() {
+    final parentFieldName = Query.getEntity<RelatedModel>().primaryKey.columnName;
     final referenceField = typeData.referencedFields.firstWhere((e) => e.reference.dartType == RelatedModel);
     final referenceFieldValue = typeData.mirror(this as Parent).get(referenceField.dartName);
 
