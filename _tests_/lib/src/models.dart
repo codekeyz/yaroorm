@@ -22,7 +22,7 @@ class User extends Entity<User> {
     required this.homeAddress,
   });
 
-  // HasMany<Post> get posts => hasMany<Post>();
+  HasMany<User, Post> get posts => hasMany<Post>();
 }
 
 @Table('posts')
@@ -33,12 +33,7 @@ class Post extends Entity<Post> {
   final String title;
   final String description;
 
-  @reference(
-    User,
-    name: 'user_id',
-    onUpdate: ForeignKeyAction.cascade,
-    onDelete: ForeignKeyAction.cascade,
-  )
+  @reference(User, name: 'user_id', onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.cascade)
   final int userId;
 
   @createdAtCol
@@ -56,7 +51,7 @@ class Post extends Entity<Post> {
     required this.updatedAt,
   });
 
-  // HasMany<PostComment> get comments => hasMany<PostComment>();
+  HasMany<Post, PostComment> get comments => hasMany<PostComment>();
 }
 
 @Table('post_comments')
@@ -64,7 +59,9 @@ class PostComment extends Entity<PostComment> {
   @primaryKey
   final String id;
   final String comment;
-  final int? postId;
 
-  PostComment(this.id, this.comment, {this.postId});
+  @reference(Post, name: 'post_id', onDelete: ForeignKeyAction.cascade)
+  final int postId;
+
+  PostComment(this.id, this.comment, {required this.postId});
 }

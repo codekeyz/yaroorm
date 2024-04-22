@@ -28,6 +28,7 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
       throw InvalidGenerationSourceError(
         'Generator cannot target `$name`.',
         todo: 'Remove the [Table] annotation from `$name`.',
+        element: element,
       );
     }
 
@@ -93,6 +94,7 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
           if (superType == null || !typeChecker(entity.Entity).isExactly(superType)) {
             throw InvalidGenerationSourceError(
               'Generator cannot target field `${e.name}` on `$className` class.',
+              element: element,
               todo: 'Type passed to [reference] annotation must be a subtype of `Entity`.',
             );
           }
@@ -283,8 +285,15 @@ return switch(field) {
 
               final parsedRelatedEntity = ParsedEntityClass.parse(relatedClass);
               final referenceField = parsedRelatedEntity.referencedFields
-                  .firstWhere((e) => e.reader.peek('type')!.typeValue.element!.name == className)
-                  .field;
+                  .firstWhereOrNull((e) => e.reader.peek('type')!.typeValue.element!.name == className)
+                  ?.field;
+              if (referenceField == null) {
+                throw InvalidGenerationSourceError(
+                  'No reference field found for $className in $relatedClassName',
+                  element: relatedClass,
+                  todo: 'Did you forget to annotate with `@reference`',
+                );
+              }
 
               final relatedEntityCreateFields =
                   parsedRelatedEntity.fieldsRequiredForCreate.where((field) => field != referenceField);
@@ -295,7 +304,7 @@ return switch(field) {
                 ..methods.addAll([
                   Method(
                     (m) => m
-                      ..name = 'create'
+                      ..name = 'add'
                       ..returns = refer('Future<$relatedClassName>')
                       ..optionalParameters.addAll(relatedEntityCreateFields.map(
                         (field) => Parameter((p) => p
