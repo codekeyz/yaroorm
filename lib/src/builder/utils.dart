@@ -20,12 +20,8 @@ class YaroormCliException implements Exception {
   YaroormCliException(this.message) : super();
 
   @override
-  String toString() {
-    return 'ORM CLI Error: $message';
-  }
+  String toString() => 'ORM CLI Error: $message';
 }
-
-typedef FieldData = ({FieldElement field, ConstantReader reader});
 
 TypeChecker typeChecker(Type type) => TypeChecker.fromRuntime(type);
 
@@ -150,5 +146,81 @@ Stream<(ResolvedLibraryResult, String, String)> _libraries(AnalysisContextCollec
         yield (library, filePath, context.contextRoot.root.path);
       }
     }
+  }
+}
+
+typedef FieldElementAndReader = ({FieldElement field, ConstantReader reader});
+
+class ParsedEntityClass {
+  final List<FieldElement> allFields;
+
+  final List<FieldElement> getters;
+
+  final FieldElementAndReader? primaryKey, createdAtField, updatedAtField;
+
+  List<FieldElementAndReader> get referencedFields => _getFieldsAndReaders(normalFields, entity.reference);
+
+  List<FieldElement> get hasManyGetters =>
+      getters.where((getter) => typeChecker(entity.HasMany).isExactlyType(getter.type)).toList();
+
+  /// All other properties aside primarykey, updatedAt and createdAt.
+  List<FieldElement> get normalFields =>
+      allFields.where((e) => ![createdAtField?.field, updatedAtField?.field, primaryKey!.field].contains(e)).toList();
+
+  bool get hasAutoIncrementingPrimaryKey {
+    return primaryKey!.reader.peek('autoIncrement')!.boolValue;
+  }
+
+  List<FieldElement> get fieldsRequiredForCreate => [
+        if (!hasAutoIncrementingPrimaryKey) primaryKey!.field,
+        ...normalFields,
+      ];
+
+  const ParsedEntityClass({
+    this.primaryKey,
+    this.createdAtField,
+    this.updatedAtField,
+    required this.allFields,
+    this.getters = const [],
+  });
+
+  factory ParsedEntityClass.parse(ClassElement element) {
+    final fields = element.fields.where(_allowedTypes).toList();
+    final primaryKey = _getFieldAnnotationByType(fields, entity.PrimaryKey);
+    final createdAt = _getFieldAnnotationByType(fields, entity.CreatedAtColumn);
+    final updatedAt = _getFieldAnnotationByType(fields, entity.UpdatedAtColumn);
+
+    return ParsedEntityClass(
+      allFields: fields,
+      getters: element.fields.where((e) => e.getter?.isSynthetic == false).toList(),
+      primaryKey: primaryKey,
+      createdAtField: createdAt,
+      updatedAtField: updatedAt,
+    );
+  }
+
+  static bool _allowedTypes(FieldElement field) {
+    return field.getter?.isSynthetic ?? false;
+  }
+
+  static FieldElementAndReader? _getFieldAnnotationByType(List<FieldElement> fields, Type type) {
+    for (final field in fields) {
+      final result = typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
+      if (result != null) {
+        return (field: field, reader: ConstantReader(result));
+      }
+    }
+    return null;
+  }
+
+  static List<FieldElementAndReader> _getFieldsAndReaders(List<FieldElement> fields, Type type) {
+    return fields
+        .map((field) {
+          final result = typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
+          if (result == null) return null;
+          return (field: field, reader: ConstantReader(result));
+        })
+        .whereNotNull()
+        .toList();
   }
 }

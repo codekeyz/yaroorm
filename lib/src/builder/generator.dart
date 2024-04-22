@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:collection/collection.dart';
@@ -33,50 +34,20 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
     return _implementClass(element, annotation);
   }
 
-  FieldData? _getFieldAnnotationByType(
-    List<FieldElement> fields,
-    Type type,
-  ) {
-    for (final field in fields) {
-      final result = typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
-      if (result != null) {
-        return (field: field, reader: ConstantReader(result));
-      }
-    }
-    return null;
-  }
-
   String _implementClass(ClassElement classElement, ConstantReader annotation) {
-    final getterFields = classElement.fields.where((e) => e.getter?.isSynthetic == false);
-    final hasManyGetters = getterFields.where((getter) => typeChecker(entity.HasMany).isExactlyType(getter.type));
-
-    if (hasManyGetters.isNotEmpty) {
-      // final hasManyClass = hasManyGetters.first.type.element;
-    }
-
-    final fields = classElement.fields.where(allowedTypes).toList();
+    final parsedEntity = ParsedEntityClass.parse(classElement);
     final className = classElement.name;
 
-    final tableName = annotation.peek('name')!.stringValue;
-
-    final primaryKey = _getFieldAnnotationByType(fields, entity.PrimaryKey);
-    final createdAtField = _getFieldAnnotationByType(fields, entity.CreatedAtColumn)?.field;
-    final updatedAtField = _getFieldAnnotationByType(fields, entity.UpdatedAtColumn)?.field;
-
-    final converters = annotation.peek('converters')!.listValue;
+    final primaryKey = parsedEntity.primaryKey;
+    final fields = parsedEntity.allFields;
+    final createdAtField = parsedEntity.createdAtField?.field;
+    final updatedAtField = parsedEntity.updatedAtField?.field;
 
     if (primaryKey == null) {
       throw Exception("$className Entity doesn't have primary key");
     }
 
-    final autoIncrementPrimaryKey = primaryKey.reader.peek('autoIncrement')!.boolValue;
-    final timestampsEnabled = (createdAtField ?? updatedAtField) != null;
-
-    /// other properties aside primarykey, updatedAt and createdAt
-    final normalFields = fields.where((e) => ![createdAtField, updatedAtField, primaryKey.field].contains(e));
-
-    final creatableFields = [if (!autoIncrementPrimaryKey) primaryKey.field, ...normalFields];
-
+    /// Validate class constructor
     final primaryConstructor = classElement.constructors.firstWhereOrNull((e) => e.name == "");
     if (primaryConstructor == null) {
       throw '$className Entity does not have a default constructor';
@@ -88,6 +59,15 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
       throw Exception(
           'These props are not allowed in $className Entity default constructor: ${notAllowedProps.join(', ')}');
     }
+
+    final normalFields = parsedEntity.normalFields;
+
+    final tableName = annotation.peek('name')!.stringValue;
+    final converters = annotation.peek('converters')!.listValue;
+
+    final autoIncrementPrimaryKey = primaryKey.reader.peek('autoIncrement')!.boolValue;
+    final timestampsEnabled = (createdAtField ?? updatedAtField) != null;
+    final creatableFields = parsedEntity.fieldsRequiredForCreate;
 
     String generateCodeForField(FieldElement e) {
       final symbol = '#${e.name}';
@@ -294,16 +274,53 @@ return switch(field) {
           ])),
 
         /// Generate Extension for HasMany creations
+        if (parsedEntity.hasManyGetters.isNotEmpty) ...[
+          ...parsedEntity.hasManyGetters.map(
+            (hasManyField) {
+              final hasManyClass = hasManyField.getter!.returnType as InterfaceType;
+              final relatedClass = hasManyClass.typeArguments.last.element as ClassElement;
+              final relatedClassName = relatedClass.name;
+
+              final parsedRelatedEntity = ParsedEntityClass.parse(relatedClass);
+              final referenceField = parsedRelatedEntity.referencedFields
+                  .firstWhere((e) => e.reader.peek('type')!.typeValue.element!.name == className)
+                  .field;
+
+              final relatedEntityCreateFields =
+                  parsedRelatedEntity.fieldsRequiredForCreate.where((field) => field != referenceField);
+
+              return Extension((b) => b
+                ..name = '${className}HasMany${relatedClassName}Extension'
+                ..on = refer('HasMany<$className, $relatedClassName>')
+                ..methods.addAll([
+                  Method(
+                    (m) => m
+                      ..name = 'create'
+                      ..returns = refer('Future<$relatedClassName>')
+                      ..optionalParameters.addAll(relatedEntityCreateFields.map(
+                        (field) => Parameter((p) => p
+                          ..name = field.name
+                          ..named = true
+                          ..type = refer('${field.type}')
+                          ..required = !field.type.isNullable),
+                      ))
+                      ..body = Code('''return  \$readQuery.\$query.\$insert({
+                      ${[
+                        ...relatedEntityCreateFields.map((e) => '#${e.name}: ${e.name}'),
+                        '#${referenceField.name}: parentId'
+                      ].join(',')}
+                });'''),
+                  ),
+                ]));
+            },
+          )
+        ]
       ]));
 
     return DartFormatter().format([
       '// ignore_for_file: non_constant_identifier_names',
       library.accept(_emitter),
     ].join('\n\n'));
-  }
-
-  bool allowedTypes(FieldElement field) {
-    return field.getter?.isSynthetic ?? false;
   }
 
   String _generateConstructorCode(String className, ConstructorElement constructor) {

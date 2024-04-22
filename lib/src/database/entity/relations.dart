@@ -7,7 +7,7 @@ abstract class EntityRelation<Parent extends Entity<Parent>, RelatedModel extend
 
   EntityRelation(this.parent) : _query = Query.table<RelatedModel>().driver(parent._driver);
 
-  Object get ownerId {
+  Object get parentId {
     final typeInfo = parent.typeData;
     return typeInfo.mirror.call(parent).get(typeInfo.primaryKey.dartName)!;
   }
@@ -25,7 +25,7 @@ final class HasOne<Parent extends Entity<Parent>, RelatedModel extends Entity<Re
 
   HasOne._(this.foreignKey, super._owner);
 
-  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, ownerId));
+  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, parentId));
 
   @override
   Future<RelatedModel?> get() => $readQuery.findOne();
@@ -42,7 +42,7 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
 
   HasMany._(this.foreignKey, super.parent);
 
-  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, ownerId));
+  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, parentId));
 
   @override
   Future<List<RelatedModel>> get({int? limit, int? offset, List<OrderBy<RelatedModel>>? orderBy}) {
