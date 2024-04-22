@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:cli_table/cli_table.dart';
 import 'package:collection/collection.dart';
-import '../../../yaroorm.dart';
+import 'package:yaroorm/src/cli/logger.dart';
+import '../../../yaroorm.dart' hide Table;
 
 import '../_misc.dart';
 import '../model/migration.dart';
@@ -40,11 +42,9 @@ class MigrationRollbackCommand extends OrmCommand {
       return;
     }
 
-    print('------- Rolling back ${migrationTask.entry.migration}  📦 -------\n');
+    await processRollbacks(driver, [migrationTask], table: migrationLogTable);
 
-    await processRollbacks(driver, [migrationTask]);
-
-    print('\n------- Rollback done 🚀 -------\n');
+    logger.write(migrationLogTable.toString());
   }
 }
 
@@ -52,8 +52,9 @@ typedef Rollback = ({MigrationEntity entry, List<Schema> schemas});
 
 Future<void> processRollbacks(
   DatabaseDriver driver,
-  Iterable<Rollback> rollbacks,
-) async {
+  Iterable<Rollback> rollbacks, {
+  Table? table,
+}) async {
   for (final rollback in rollbacks) {
     await driver.transaction((transactor) async {
       for (var e in rollback.schemas) {
@@ -67,6 +68,6 @@ Future<void> processRollbacks(
           .delete();
     });
 
-    print('✔ rolled back: ${rollback.entry.migration}');
+    table?.add([rollback.entry.migration, '✅ rolled back']);
   }
 }

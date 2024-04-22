@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart';
+import 'package:yaroorm/src/cli/logger.dart';
 import '../../../yaroorm.dart';
 
 import '../_misc.dart';
@@ -16,26 +17,28 @@ class MigrationResetCommand extends OrmCommand {
   String get name => 'migrate:reset';
 
   @override
-  Future<void> execute(DatabaseDriver driver) async {
+  Future<void> execute(DatabaseDriver driver, {bool writeLogs = true}) async {
     await ensureMigrationsTableReady(driver);
 
     final migrationsList = await MigrationEntityQuery.driver(driver).findMany(
-      orderBy: [OrderMigrationEntityBy.batch(OrderDirection.desc)],
+      orderBy: [
+        OrderMigrationEntityBy.batch(OrderDirection.desc),
+      ],
     );
     if (migrationsList.isEmpty) {
       print('𐄂 skipped: reason:     no migrations to reset');
       return;
     }
 
-    print('------- Resetting migrations  📦 -------\n');
-
     final rollbacks = migrationDefinitions.reversed.map((e) {
       final entry = migrationsList.firstWhereOrNull((entry) => e.name == entry.migration);
       return entry == null ? null : (entry: entry, schemas: e.down);
     }).whereNotNull();
 
-    await processRollbacks(driver, rollbacks);
+    await processRollbacks(driver, rollbacks, table: migrationLogTable);
 
-    print('\n------- Reset migrations done 🚀 -------\n');
+    if (writeLogs) {
+      logger.write(migrationLogTable.toString());
+    }
   }
 }

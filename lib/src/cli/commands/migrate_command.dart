@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:mason_logger/mason_logger.dart';
 import '../../../yaroorm.dart';
 
 import '../_misc.dart';
@@ -15,19 +14,17 @@ class MigrateCommand extends OrmCommand {
   String get name => 'migrate';
 
   @override
-  Future<void> execute(DatabaseDriver driver) async {
+  Future<void> execute(DatabaseDriver driver, {bool writeLogs = true}) async {
     await ensureMigrationsTableReady(driver);
 
     final lastBatchNumber = await getLastBatchNumber(driver, migrationTableName);
     final batchNos = lastBatchNumber + 1;
 
-    logger.info(backgroundBlack.wrap('               Starting DB migration  📦                \n'));
-
     for (final migration in migrationDefinitions) {
       final fileName = migration.name;
 
       if (await hasAlreadyMigratedScript(fileName, driver)) {
-        print('𐄂 skipped: $fileName     reason: already migrated');
+        migrationLogTable.add([fileName, '〽️ already migrated']);
         continue;
       }
 
@@ -39,10 +36,12 @@ class MigrateCommand extends OrmCommand {
 
         await MigrationEntityQuery.driver(txnDriver).create(migration: fileName, batch: batchNos);
 
-        print('✔ done:   $fileName');
+        migrationLogTable.add([fileName, '✅ migrated']);
       });
     }
 
-    logger.info(backgroundBlack.wrap('\n               Completed DB migration 🚀                \n'));
+    if (writeLogs) {
+      logger.write(migrationLogTable.toString());
+    }
   }
 }

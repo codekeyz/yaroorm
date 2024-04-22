@@ -1,8 +1,9 @@
 import 'dart:async';
 
 import 'package:args/command_runner.dart';
+import 'package:cli_table/cli_table.dart';
 import 'package:mason_logger/mason_logger.dart';
-import '../../../yaroorm.dart';
+import '../../../yaroorm.dart' hide Table;
 
 import '../model/migration.dart';
 
@@ -16,15 +17,18 @@ class MigrationDefn {
     down = _accumulate(migration.name, migration.down);
   }
 
-  List<Schema> _accumulate(
-    String scriptName,
-    Function(List<Schema> schemas) func,
-  ) {
+  List<Schema> _accumulate(String scriptName, Function(List<Schema> schemas) func) {
     final result = <Schema>[];
     func(result);
     return result;
   }
 }
+
+final migrationLogTable = Table(
+  header: ['Migration', 'Status'],
+  columnWidths: [30, 30],
+  style: TableStyle(header: ['green']),
+);
 
 abstract class OrmCommand extends Command<int> {
   static const String connectionArg = 'connection';
