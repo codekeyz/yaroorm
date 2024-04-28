@@ -207,9 +207,11 @@ class SqliteSerializer extends PrimitiveSerializer {
     final queryBuilder = StringBuffer();
 
     /// SELECT
-    final selectStatement = acceptSelect(query.fieldSelections.toList());
-    queryBuilder.write(selectStatement);
-    queryBuilder.write('FROM ${escapeStr(query.tableName)}');
+    final tableName = escapeStr(query.tableName);
+    final selectStatement = acceptSelect(tableName, query.fieldSelections.toList());
+    queryBuilder
+      ..write(selectStatement)
+      ..write('FROM $tableName');
 
     /// WHERE
     final whereClause = query.whereClause;
@@ -311,8 +313,10 @@ class SqliteSerializer extends PrimitiveSerializer {
   }
 
   @override
-  String acceptSelect(List<String> fields) {
-    return fields.isEmpty ? 'SELECT * ' : 'SELECT ${fields.map(escapeStr).join(', ')} ';
+  String acceptSelect(String tableName, List<String> fields) {
+    return fields.isEmpty
+        ? 'SELECT $tableName.* '
+        : 'SELECT ${fields.map((e) => '$tableName.${escapeStr(e)}').join(', ')} ';
   }
 
   @override

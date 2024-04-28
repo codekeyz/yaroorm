@@ -20,7 +20,7 @@ abstract class PrimitiveSerializer {
 
   String acceptWhereClauseValue(WhereClauseValue clauseValue);
 
-  String acceptSelect(List<String> fields);
+  String acceptSelect(String tableName, List<String> fields);
 
   String acceptOrderBy(List<OrderBy> orderBys);
 
