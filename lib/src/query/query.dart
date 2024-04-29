@@ -235,6 +235,12 @@ final class Query<T extends Entity<T>>
 
   @override
   Future<num> sum(String field) => SumAggregate(_readQuery, field).get();
+
+  @override
+  Query<T> withRelations(List<Join<T, Entity>> Function(JoinBuilder<T> builder) builder) {
+    super.withRelations(builder);
+    return this;
+  }
 }
 
 mixin AggregateOperation {
@@ -342,6 +348,12 @@ final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with Agg
 
   Future<void> delete() async {
     return DeleteQuery(_query, whereClause: whereClause!).execute();
+  }
+
+  @override
+  ReadQuery<T> withRelations(List<Join<T, Entity>> Function(JoinBuilder<T> builder) builder) {
+    super.withRelations(builder);
+    return this;
   }
 }
 
