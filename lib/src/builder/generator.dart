@@ -99,14 +99,36 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
             );
           }
 
+          final parsedClass = ParsedEntityClass.parse(element);
+
           final onUpdate = metaReader.peek('onUpdate')?.objectValue.variable!.name;
           final onDelete = metaReader.peek('onDelete')?.objectValue.variable!.name;
 
+          final customPassedReferenceSymbol = metaReader.peek('field')?.symbolValue;
+
+          late FieldElement referenceField;
+          if (customPassedReferenceSymbol != null) {
+            final foundField =
+                parsedClass.allFields.firstWhereOrNull((e) => Symbol(e.name) == customPassedReferenceSymbol);
+            if (foundField == null) {
+              throw InvalidGenerationSourceError(
+                'Referenced Symbol `$customPassedReferenceSymbol` does not exist on `${element.name}` class.',
+                element: e,
+              );
+            }
+            referenceField = foundField;
+          } else {
+            referenceField = parsedClass.primaryKey!.field;
+          }
+
           return '''DBEntityField.referenced<${element.name}>(
-                  "$columnName", $symbol
-                  ${onUpdate == null ? '' : ', onUpdate: ForeignKeyAction.$onUpdate'}
-                  ${onDelete == null ? '' : ', onDelete: ForeignKeyAction.$onDelete'}
-                  ,)''';
+            ${[
+            '($symbol, "$columnName")',
+            '(#${referenceField.name}, "${getFieldDbName(referenceField)}")',
+            if (e.type.isNullable) 'nullable: true',
+            if (onUpdate != null) 'onUpdate: ForeignKeyAction.$onUpdate',
+            if (onDelete != null) 'onDelete: ForeignKeyAction.$onDelete',
+          ].join(', ')})''';
         }
       }
 
@@ -132,6 +154,8 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
 
     final queryName = '${className}Query';
     final typeDataName = getTypeDefName(className);
+
+    final allRelations = [...parsedEntity.hasManyGetters, ...parsedEntity.belongsToGetters];
 
     final library = Library((b) => b
       ..body.addAll([
@@ -323,7 +347,63 @@ return switch(field) {
                 ]));
             },
           )
-        ]
+        ],
+
+        /// Generate Extension for loading relations
+        Extension((b) => b
+          ..name = '${className}RelationsBuilder'
+          ..on = refer('JoinBuilder<$className>')
+          ..methods.addAll([
+            // generate for :belongsTo
+            if (parsedEntity.belongsToGetters.isNotEmpty)
+              ...parsedEntity.belongsToGetters.map((e) {
+                final belongsToClass = e.getter!.returnType as InterfaceType;
+                final relatedClass = belongsToClass.typeArguments.last.element as ClassElement;
+                final referenceField = parsedEntity.referencedFields
+                    .firstWhere((e) => e.reader.peek('type')!.typeValue.element!.name == relatedClass.name);
+
+                final parsedRelatedClass = ParsedEntityClass.parse(relatedClass);
+                final customField = referenceField.reader.peek('field')?.symbolValue;
+
+                final referenceColumn = parsedRelatedClass.allFields.firstWhereOrNull(
+                      (e) => Symbol(e.name) == customField,
+                    ) ??
+                    parsedRelatedClass.primaryKey!.field;
+
+                final joinClass = 'Join<$className, ${relatedClass.name}>';
+                return Method(
+                  (m) => m
+                    ..name = e.name
+                    ..type = MethodType.getter
+                    ..lambda = true
+                    ..returns = refer(joinClass)
+                    ..body = Code('''$joinClass(#${referenceField.field.name}, on: #${referenceColumn.name})'''),
+                );
+              }),
+
+            // generate for :hasMany
+            if (parsedEntity.hasManyGetters.isNotEmpty)
+              ...parsedEntity.hasManyGetters.map((e) {
+                final hasMany = e.getter!.returnType as InterfaceType;
+                final hasManyOfClass = hasMany.typeArguments.last.element as ClassElement;
+                final parsedRelatedClass = ParsedEntityClass.parse(hasManyOfClass);
+
+                final referenceField = parsedRelatedClass.referencedFields
+                    .firstWhere((e) => e.reader.peek('type')!.typeValue.element == classElement);
+
+                final joinClass = 'Join<$className, ${hasManyOfClass.name}>';
+                return Method(
+                  (m) => m
+                    ..name = e.name
+                    ..type = MethodType.getter
+                    ..lambda = true
+                    ..returns = refer(joinClass)
+                    ..body = Code(
+                      '''$joinClass(#${getFieldDbName(primaryKey.field)}, on: #${referenceField.field.name})''',
+                    ),
+                );
+              }),
+          ])),
       ]));
 
     return DartFormatter().format([

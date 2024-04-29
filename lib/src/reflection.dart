@@ -98,13 +98,19 @@ final class DBEntityField {
   }
 
   static ReferencedField<T> referenced<T extends Entity<T>>(
-    String columnName,
-    Symbol dartName, {
+    Refer from,
+    Refer to, {
     bool nullable = false,
     ForeignKeyAction? onUpdate,
     ForeignKeyAction? onDelete,
   }) {
-    return ReferencedField<T>._(columnName, dartName, nullable: nullable, onUpdate: onUpdate, onDelete: onDelete);
+    return ReferencedField<T>._(
+      from,
+      to,
+      nullable: nullable,
+      onUpdate: onUpdate,
+      onDelete: onDelete,
+    );
   }
 }
 
@@ -130,20 +136,30 @@ final class UpdatedAtField extends DBEntityField {
   const UpdatedAtField._(String columnName, Symbol dartName) : super(columnName, DateTime, dartName);
 }
 
+typedef Refer = (Symbol symbol, String dbname);
+
 final class ReferencedField<T extends Entity<T>> implements DBEntityField {
   final String _columnName;
   final Symbol _dartName;
+
   final bool _nullable;
+
+  final String _referencedColumnName;
+  final Symbol _referencedDartName;
 
   final ForeignKeyAction? onUpdate, onDelete;
 
   ReferencedField._(
-    this._columnName,
-    this._dartName, {
+    Refer from,
+    Refer to, {
     bool nullable = false,
     this.onDelete,
     this.onUpdate,
-  }) : _nullable = nullable;
+  })  : _nullable = nullable,
+        _dartName = from.$1,
+        _columnName = from.$2,
+        _referencedDartName = to.$1,
+        _referencedColumnName = to.$2;
 
   DBEntity<T> get reference => Query.getEntity<T>();
 

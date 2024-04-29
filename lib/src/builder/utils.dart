@@ -151,7 +151,7 @@ Stream<(ResolvedLibraryResult, String, String)> _libraries(AnalysisContextCollec
 
 typedef FieldElementAndReader = ({FieldElement field, ConstantReader reader});
 
-class ParsedEntityClass {
+final class ParsedEntityClass {
   final List<FieldElement> allFields;
 
   final List<FieldElement> getters;
@@ -162,6 +162,9 @@ class ParsedEntityClass {
 
   List<FieldElement> get hasManyGetters =>
       getters.where((getter) => typeChecker(entity.HasMany).isExactlyType(getter.type)).toList();
+
+  List<FieldElement> get belongsToGetters =>
+      getters.where((getter) => typeChecker(entity.BelongsTo).isExactlyType(getter.type)).toList();
 
   /// All other properties aside primarykey, updatedAt and createdAt.
   List<FieldElement> get normalFields =>

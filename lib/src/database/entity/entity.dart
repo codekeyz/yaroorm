@@ -14,6 +14,7 @@ import '../driver/driver.dart';
 
 part 'converter.dart';
 part 'relations.dart';
+part 'joins.dart';
 
 abstract class Entity<Parent extends Entity<Parent>> {
   DriverContract _driver = DB.defaultDriver;
@@ -96,10 +97,11 @@ class UpdatedAtColumn extends TableColumn {
 /// Use this to reference other entities
 class reference extends TableColumn {
   final Type type;
+  final Symbol? field;
 
   final ForeignKeyAction? onUpdate, onDelete;
 
-  const reference(this.type, {super.name, this.onUpdate, this.onDelete});
+  const reference(this.type, {this.field, super.name, this.onUpdate, this.onDelete});
 }
 
 const primaryKey = PrimaryKey();

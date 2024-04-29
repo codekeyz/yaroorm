@@ -33,6 +33,12 @@ mixin UpdateOperation<Result extends Entity<Result>> {
   });
 }
 
+mixin RelationsOperation<T extends Entity<T>> {
+  withRelations(List<Join<T, Entity>> Function(JoinBuilder<T> builder) builder) {
+    return this;
+  }
+}
+
 mixin LimitOperation<ReturnType> {
   Future<List<ReturnType>> take(int limit);
 }
@@ -62,7 +68,7 @@ sealed class QueryBase<Owner> {
 }
 
 final class Query<T extends Entity<T>>
-    with ReadOperation<T>, InsertOperation<T>, UpdateOperation<T>, AggregateOperation {
+    with ReadOperation<T>, InsertOperation<T>, UpdateOperation<T>, AggregateOperation, RelationsOperation<T> {
   final DBEntity<T> entity;
   final String? database;
 
@@ -259,7 +265,7 @@ final class UpdateQuery extends QueryBase<UpdateQuery> {
   Future<void> execute() => runner.update(this);
 }
 
-final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with AggregateOperation {
+final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with AggregateOperation, RelationsOperation<T> {
   final Set<String> fieldSelections;
   final Set<OrderBy<T>>? orderByProps;
   final WhereClause? whereClause;
