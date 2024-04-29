@@ -155,8 +155,6 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
     final queryName = '${className}Query';
     final typeDataName = getTypeDefName(className);
 
-    final allRelations = [...parsedEntity.hasManyGetters, ...parsedEntity.belongsToGetters];
-
     final library = Library((b) => b
       ..body.addAll([
         Method((m) => m
@@ -354,55 +352,10 @@ return switch(field) {
           ..name = '${className}RelationsBuilder'
           ..on = refer('JoinBuilder<$className>')
           ..methods.addAll([
-            // generate for :belongsTo
             if (parsedEntity.belongsToGetters.isNotEmpty)
-              ...parsedEntity.belongsToGetters.map((e) {
-                final belongsToClass = e.getter!.returnType as InterfaceType;
-                final relatedClass = belongsToClass.typeArguments.last.element as ClassElement;
-                final referenceField = parsedEntity.referencedFields
-                    .firstWhere((e) => e.reader.peek('type')!.typeValue.element!.name == relatedClass.name);
-
-                final parsedRelatedClass = ParsedEntityClass.parse(relatedClass);
-                final customField = referenceField.reader.peek('field')?.symbolValue;
-
-                final referenceColumn = parsedRelatedClass.allFields.firstWhereOrNull(
-                      (e) => Symbol(e.name) == customField,
-                    ) ??
-                    parsedRelatedClass.primaryKey!.field;
-
-                final joinClass = 'Join<$className, ${relatedClass.name}>';
-                return Method(
-                  (m) => m
-                    ..name = e.name
-                    ..type = MethodType.getter
-                    ..lambda = true
-                    ..returns = refer(joinClass)
-                    ..body = Code('''$joinClass(#${referenceField.field.name}, on: #${referenceColumn.name})'''),
-                );
-              }),
-
-            // generate for :hasMany
+              ...parsedEntity.belongsToGetters.map((field) => _generateJoinForBelongsTo(parsedEntity, field.getter!)),
             if (parsedEntity.hasManyGetters.isNotEmpty)
-              ...parsedEntity.hasManyGetters.map((e) {
-                final hasMany = e.getter!.returnType as InterfaceType;
-                final hasManyOfClass = hasMany.typeArguments.last.element as ClassElement;
-                final parsedRelatedClass = ParsedEntityClass.parse(hasManyOfClass);
-
-                final referenceField = parsedRelatedClass.referencedFields
-                    .firstWhere((e) => e.reader.peek('type')!.typeValue.element == classElement);
-
-                final joinClass = 'Join<$className, ${hasManyOfClass.name}>';
-                return Method(
-                  (m) => m
-                    ..name = e.name
-                    ..type = MethodType.getter
-                    ..lambda = true
-                    ..returns = refer(joinClass)
-                    ..body = Code(
-                      '''$joinClass(#${getFieldDbName(primaryKey.field)}, on: #${referenceField.field.name})''',
-                    ),
-                );
-              }),
+              ...parsedEntity.hasManyGetters.map((field) => _generateJoinForHasMany(parsedEntity, field.getter!)),
           ])),
       ]));
 
@@ -486,5 +439,57 @@ return switch(field) {
 
     /// TODO(codekeyz): resolve constructor for TypeConverters
     throw UnsupportedError('Parameters for TypeConverters not yet supported');
+  }
+
+  /// Generate JOIN for BelongsTo getters on Entity
+  Method _generateJoinForBelongsTo(
+    ParsedEntityClass parent,
+    PropertyAccessorElement getter,
+  ) {
+    final belongsToClass = getter.returnType as InterfaceType;
+    final relatedClass = belongsToClass.typeArguments.last.element as ClassElement;
+    final referenceField =
+        parent.referencedFields.firstWhere((e) => e.reader.peek('type')!.typeValue.element!.name == relatedClass.name);
+
+    final parsedRelatedClass = ParsedEntityClass.parse(relatedClass);
+    final customField = referenceField.reader.peek('field')?.symbolValue;
+
+    final referenceColumn = parsedRelatedClass.allFields.firstWhereOrNull((e) => Symbol(e.name) == customField) ??
+        parsedRelatedClass.primaryKey!.field;
+
+    final joinClass = 'Join<${parent.className}, ${parsedRelatedClass.className}>';
+    return Method(
+      (m) => m
+        ..name = getter.name
+        ..type = MethodType.getter
+        ..lambda = true
+        ..returns = refer(joinClass)
+        ..body = Code('''$joinClass(#${referenceField.field.name}, on: #${referenceColumn.name})'''),
+    );
+  }
+
+  /// Generate JOIN for BelongsTo getters on Entity
+  Method _generateJoinForHasMany(
+    ParsedEntityClass parent,
+    PropertyAccessorElement getter,
+  ) {
+    final hasMany = getter.returnType as InterfaceType;
+    final hasManyOfClass = hasMany.typeArguments.last.element as ClassElement;
+    final parsedRelatedClass = ParsedEntityClass.parse(hasManyOfClass);
+
+    final referenceField = parsedRelatedClass.referencedFields
+        .firstWhere((e) => e.reader.peek('type')!.typeValue.element == parent.element);
+
+    final joinClass = 'Join<${parent.className}, ${hasManyOfClass.name}>';
+    return Method(
+      (m) => m
+        ..name = getter.name
+        ..type = MethodType.getter
+        ..lambda = true
+        ..returns = refer(joinClass)
+        ..body = Code(
+          '''$joinClass(#${getFieldDbName(parent.primaryKey!.field)}, on: #${referenceField.field.name})''',
+        ),
+    );
   }
 }

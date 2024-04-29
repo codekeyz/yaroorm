@@ -7,6 +7,7 @@ import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/file_system/physical_file_system.dart';
 import 'package:collection/collection.dart';
+import 'package:grammer/grammer.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
@@ -152,6 +153,11 @@ Stream<(ResolvedLibraryResult, String, String)> _libraries(AnalysisContextCollec
 typedef FieldElementAndReader = ({FieldElement field, ConstantReader reader});
 
 final class ParsedEntityClass {
+  final ClassElement element;
+
+  final String table;
+  final String className;
+
   final List<FieldElement> allFields;
 
   final List<FieldElement> getters;
@@ -179,7 +185,10 @@ final class ParsedEntityClass {
         ...normalFields,
       ];
 
-  const ParsedEntityClass({
+  const ParsedEntityClass(
+    this.table,
+    this.className,
+    this.element, {
     this.primaryKey,
     this.createdAtField,
     this.updatedAtField,
@@ -187,13 +196,17 @@ final class ParsedEntityClass {
     this.getters = const [],
   });
 
-  factory ParsedEntityClass.parse(ClassElement element) {
+  factory ParsedEntityClass.parse(ClassElement element, {ConstantReader? reader}) {
+    final tableName = element.name.toPlural().first.pascalCase.toLowerCase();
     final fields = element.fields.where(_allowedTypes).toList();
     final primaryKey = _getFieldAnnotationByType(fields, entity.PrimaryKey);
     final createdAt = _getFieldAnnotationByType(fields, entity.CreatedAtColumn);
     final updatedAt = _getFieldAnnotationByType(fields, entity.UpdatedAtColumn);
 
     return ParsedEntityClass(
+      tableName,
+      element.name,
+      element,
       allFields: fields,
       getters: element.fields.where((e) => e.getter?.isSynthetic == false).toList(),
       primaryKey: primaryKey,
