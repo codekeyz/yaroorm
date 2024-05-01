@@ -1,5 +1,6 @@
 // ignore_for_file: camel_case_types
 
+import 'dart:async';
 import 'dart:collection';
 
 import 'package:meta/meta.dart';
@@ -14,8 +15,11 @@ import '../driver/driver.dart';
 
 part 'converter.dart';
 part 'relations.dart';
+part 'joins.dart';
 
 abstract class Entity<Parent extends Entity<Parent>> {
+  final Map<Type, dynamic> _relationsPreloaded = {};
+
   DriverContract _driver = DB.defaultDriver;
 
   DBEntity<Parent>? _typeDataCache;
@@ -30,23 +34,38 @@ abstract class Entity<Parent extends Entity<Parent>> {
     if (connection != null) _driver = DB.driver(connection!);
   }
 
-  withDriver(DriverContract driver) {
+  Entity<Parent> withDriver(DriverContract driver) {
     return this.._driver = driver;
   }
 
+  @internal
+  Entity<Parent> withRelationsData(Map<Type, dynamic> data) {
+    _relationsPreloaded
+      ..clear()
+      ..addAll(data);
+    return this;
+  }
+
   @protected
-  HasMany<Parent, RelatedModel> hasMany<RelatedModel extends Entity<RelatedModel>>([String? foreignKey]) {
+  HasMany<Parent, RelatedModel> hasMany<RelatedModel extends Entity<RelatedModel>>() {
     final relatedModelTypeData = Query.getEntity<RelatedModel>();
     final referenceField = relatedModelTypeData.referencedFields.firstWhere((e) => e.reference.dartType == Parent);
+
+    var relation = _relationsPreloaded[HasMany<Parent, RelatedModel>];
+    if (relation is Map && relation.isEmpty) {
+      relation = <Map<String, dynamic>>[];
+    }
+
     return HasMany<Parent, RelatedModel>._(
-      foreignKey ?? referenceField.columnName,
+      referenceField.columnName,
       this as Parent,
+      relation,
     );
   }
 
   @protected
-  BelongsTo<Parent, RelatedModel> belongsTo<RelatedModel extends Entity<RelatedModel>>([String? foreignKey]) {
-    final parentFieldName = foreignKey ?? Query.getEntity<RelatedModel>().primaryKey.columnName;
+  BelongsTo<Parent, RelatedModel> belongsTo<RelatedModel extends Entity<RelatedModel>>() {
+    final parentFieldName = Query.getEntity<RelatedModel>().primaryKey.columnName;
     final referenceField = typeData.referencedFields.firstWhere((e) => e.reference.dartType == RelatedModel);
     final referenceFieldValue = typeData.mirror(this as Parent).get(referenceField.dartName);
 
@@ -54,6 +73,7 @@ abstract class Entity<Parent extends Entity<Parent>> {
       parentFieldName,
       this as Parent,
       referenceFieldValue,
+      _relationsPreloaded[BelongsTo<Parent, RelatedModel>],
     );
   }
 }
@@ -96,10 +116,11 @@ class UpdatedAtColumn extends TableColumn {
 /// Use this to reference other entities
 class reference extends TableColumn {
   final Type type;
+  final Symbol? field;
 
   final ForeignKeyAction? onUpdate, onDelete;
 
-  const reference(this.type, {super.name, this.onUpdate, this.onDelete});
+  const reference(this.type, {this.field, super.name, this.onUpdate, this.onDelete});
 }
 
 const primaryKey = PrimaryKey();

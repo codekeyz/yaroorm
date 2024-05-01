@@ -33,6 +33,12 @@ mixin UpdateOperation<Result extends Entity<Result>> {
   });
 }
 
+mixin RelationsOperation<T extends Entity<T>> {
+  withRelations(List<Join<T, Entity, EntityRelation<T, Entity>>> Function(JoinBuilder<T> builder) builder) {
+    return this;
+  }
+}
+
 mixin LimitOperation<ReturnType> {
   Future<List<ReturnType>> take(int limit);
 }
@@ -62,9 +68,10 @@ sealed class QueryBase<Owner> {
 }
 
 final class Query<T extends Entity<T>>
-    with ReadOperation<T>, InsertOperation<T>, UpdateOperation<T>, AggregateOperation {
+    with ReadOperation<T>, InsertOperation<T>, UpdateOperation<T>, AggregateOperation, RelationsOperation<T> {
   final DBEntity<T> entity;
   final String? database;
+  final List<Join> _joins;
 
   late final String tableName;
 
@@ -74,7 +81,9 @@ final class Query<T extends Entity<T>>
 
   static final Map<Type, DBEntity> _typedatas = {};
 
-  Query._({String? tableName, this.database}) : entity = Query.getEntity<T>() {
+  Query._({String? tableName, this.database})
+      : entity = Query.getEntity<T>(),
+        _joins = [] {
     this.tableName = tableName ?? entity.tableName;
   }
 
@@ -134,7 +143,11 @@ final class Query<T extends Entity<T>>
       }
     }
     final recordId = await runner.insert(
-      InsertQuery(this, data: entityMapToDbData<T>(data, converters)),
+      InsertQuery(
+        this,
+        data: entityMapToDbData<T>(data, converters),
+        primaryKey: entity.primaryKey.columnName,
+      ),
     );
 
     return (await findOne(where: (q) => q.$equal(entity.primaryKey.columnName, recordId)))!;
@@ -154,6 +167,7 @@ final class Query<T extends Entity<T>>
       offset: offset,
       whereClause: whereClause,
       orderByProps: orderBy?.toSet(),
+      joins: _joins,
     );
 
     final results = await runner.query(readQ);
@@ -164,7 +178,7 @@ final class Query<T extends Entity<T>>
   @override
   Future<T?> findOne({WhereBuilder<T>? where}) async {
     final whereClause = where?.call(WhereClauseBuilder<T>._());
-    final readQ = ReadQuery._(this, limit: 1, whereClause: whereClause);
+    final readQ = ReadQuery._(this, limit: 1, whereClause: whereClause, joins: _joins);
     final results = await runner.query(readQ);
     if (results.isEmpty) return null;
     return results.map(_wrapRawResult).first;
@@ -195,13 +209,24 @@ final class Query<T extends Entity<T>>
   }
 
   /// [T] is the expected type passed to [Query] via Query<T>
-  T _wrapRawResult(Map<String, dynamic>? result) {
-    if (result == null) return result as dynamic;
+  T _wrapRawResult(Map<String, dynamic> result) {
+    final Map<Type, Map<String, dynamic>> joinResults = {};
+    for (final join in _joins) {
+      final entries = result.entries
+          .where((e) => e.key.startsWith('${join.resultKey}.'))
+          .map((e) => MapEntry<String, dynamic>(e.key.replaceFirst('${join.resultKey}.', '').trim(), e.value));
+      if (entries.every((e) => e.value == null)) {
+        joinResults[join.relation] = {};
+      } else {
+        joinResults[join.relation] = {}..addEntries(entries);
+      }
+    }
+
     return serializedPropsToEntity<T>(
       result,
       entity,
       converters,
-    );
+    ).withRelationsData(joinResults).withDriver(runner) as T;
   }
 
   ReadQuery<T> get _readQuery => ReadQuery<T>._(this);
@@ -229,6 +254,14 @@ final class Query<T extends Entity<T>>
 
   @override
   Future<num> sum(String field) => SumAggregate(_readQuery, field).get();
+
+  @override
+  Query<T> withRelations(List<Join<T, Entity, EntityRelation<T, Entity>>> Function(JoinBuilder<T> builder) builder) {
+    _joins
+      ..clear()
+      ..addAll(builder.call(_JoinBuilderImpl<T>()));
+    return this;
+  }
 }
 
 mixin AggregateOperation {
@@ -259,10 +292,11 @@ final class UpdateQuery extends QueryBase<UpdateQuery> {
   Future<void> execute() => runner.update(this);
 }
 
-final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with AggregateOperation {
+final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with AggregateOperation, RelationsOperation<T> {
   final Set<String> fieldSelections;
   final Set<OrderBy<T>>? orderByProps;
   final WhereClause? whereClause;
+  final List<Join> joins;
   final int? limit, offset;
 
   final Query<T> $query;
@@ -272,6 +306,7 @@ final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with Agg
     this.whereClause,
     this.orderByProps,
     this.fieldSelections = const {},
+    this.joins = const [],
     this.limit,
     this.offset,
   }) : super($query);
@@ -337,12 +372,29 @@ final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with Agg
   Future<void> delete() async {
     return DeleteQuery(_query, whereClause: whereClause!).execute();
   }
+
+  @override
+  ReadQuery<T> withRelations(
+    List<Join<T, Entity, EntityRelation<T, Entity>>> Function(JoinBuilder<T> builder) builder,
+  ) {
+    joins
+      ..clear()
+      ..addAll(builder.call(_JoinBuilderImpl<T>()));
+    return this;
+  }
 }
+
+final class _JoinBuilderImpl<T extends Entity<T>> extends JoinBuilder<T> {}
 
 final class InsertQuery extends QueryBase<InsertQuery> {
   final Map<String, dynamic> data;
+  final String primaryKey;
 
-  InsertQuery(super.tableName, {required this.data});
+  InsertQuery(
+    super.tableName, {
+    required this.data,
+    required this.primaryKey,
+  });
 
   @override
   Future<dynamic> execute() => runner.insert(this);
@@ -352,9 +404,14 @@ final class InsertQuery extends QueryBase<InsertQuery> {
 }
 
 final class InsertManyQuery extends QueryBase<InsertManyQuery> {
+  final String primaryKey;
   final List<Map<String, dynamic>> values;
 
-  InsertManyQuery(super.tableName, {required this.values});
+  InsertManyQuery(
+    super.tableName, {
+    required this.values,
+    required this.primaryKey,
+  });
 
   @override
   String get statement => runner.serializer.acceptInsertManyQuery(this);

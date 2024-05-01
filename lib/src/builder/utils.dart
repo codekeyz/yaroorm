@@ -7,6 +7,7 @@ import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/file_system/physical_file_system.dart';
 import 'package:collection/collection.dart';
+import 'package:grammer/grammer.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
@@ -20,12 +21,8 @@ class YaroormCliException implements Exception {
   YaroormCliException(this.message) : super();
 
   @override
-  String toString() {
-    return 'ORM CLI Error: $message';
-  }
+  String toString() => 'ORM CLI Error: $message';
 }
-
-typedef FieldData = ({FieldElement field, ConstantReader reader});
 
 TypeChecker typeChecker(Type type) => TypeChecker.fromRuntime(type);
 
@@ -40,6 +37,11 @@ String getFieldDbName(FieldElement element) {
     return ConstantReader(meta).peek('name')?.stringValue ?? elementName;
   }
   return elementName;
+}
+
+String getTableName(ClassElement element) {
+  final meta = typeChecker(entity.Table).firstAnnotationOf(element, throwOnUnresolved: false);
+  return ConstantReader(meta).peek('name')?.stringValue ?? element.name.toPlural().first.snakeCase.toLowerCase();
 }
 
 String getTypeDefName(String className) {
@@ -150,5 +152,96 @@ Stream<(ResolvedLibraryResult, String, String)> _libraries(AnalysisContextCollec
         yield (library, filePath, context.contextRoot.root.path);
       }
     }
+  }
+}
+
+typedef FieldElementAndReader = ({FieldElement field, ConstantReader reader});
+
+final class ParsedEntityClass {
+  final ClassElement element;
+
+  final String table;
+  final String className;
+
+  final List<FieldElement> allFields;
+
+  final List<FieldElement> getters;
+
+  final FieldElementAndReader? primaryKey, createdAtField, updatedAtField;
+
+  List<FieldElementAndReader> get referencedFields => _getFieldsAndReaders(normalFields, entity.reference);
+
+  List<FieldElement> get hasManyGetters =>
+      getters.where((getter) => typeChecker(entity.HasMany).isExactlyType(getter.type)).toList();
+
+  List<FieldElement> get belongsToGetters =>
+      getters.where((getter) => typeChecker(entity.BelongsTo).isExactlyType(getter.type)).toList();
+
+  /// All other properties aside primarykey, updatedAt and createdAt.
+  List<FieldElement> get normalFields =>
+      allFields.where((e) => ![createdAtField?.field, updatedAtField?.field, primaryKey!.field].contains(e)).toList();
+
+  bool get hasAutoIncrementingPrimaryKey {
+    return primaryKey!.reader.peek('autoIncrement')!.boolValue;
+  }
+
+  List<FieldElement> get fieldsRequiredForCreate => [
+        if (!hasAutoIncrementingPrimaryKey) primaryKey!.field,
+        ...normalFields,
+      ];
+
+  const ParsedEntityClass(
+    this.table,
+    this.className,
+    this.element, {
+    this.primaryKey,
+    this.createdAtField,
+    this.updatedAtField,
+    required this.allFields,
+    this.getters = const [],
+  });
+
+  factory ParsedEntityClass.parse(ClassElement element, {ConstantReader? reader}) {
+    final tableName = getTableName(element);
+    final fields = element.fields.where(_allowedTypes).toList();
+    final primaryKey = _getFieldAnnotationByType(fields, entity.PrimaryKey);
+    final createdAt = _getFieldAnnotationByType(fields, entity.CreatedAtColumn);
+    final updatedAt = _getFieldAnnotationByType(fields, entity.UpdatedAtColumn);
+
+    return ParsedEntityClass(
+      tableName,
+      element.name,
+      element,
+      allFields: fields,
+      getters: element.fields.where((e) => e.getter?.isSynthetic == false).toList(),
+      primaryKey: primaryKey,
+      createdAtField: createdAt,
+      updatedAtField: updatedAt,
+    );
+  }
+
+  static bool _allowedTypes(FieldElement field) {
+    return field.getter?.isSynthetic ?? false;
+  }
+
+  static FieldElementAndReader? _getFieldAnnotationByType(List<FieldElement> fields, Type type) {
+    for (final field in fields) {
+      final result = typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
+      if (result != null) {
+        return (field: field, reader: ConstantReader(result));
+      }
+    }
+    return null;
+  }
+
+  static List<FieldElementAndReader> _getFieldsAndReaders(List<FieldElement> fields, Type type) {
+    return fields
+        .map((field) {
+          final result = typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
+          if (result == null) return null;
+          return (field: field, reader: ConstantReader(result));
+        })
+        .whereNotNull()
+        .toList();
   }
 }

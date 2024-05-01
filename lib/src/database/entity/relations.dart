@@ -7,14 +7,18 @@ abstract class EntityRelation<Parent extends Entity<Parent>, RelatedModel extend
 
   EntityRelation(this.parent) : _query = Query.table<RelatedModel>().driver(parent._driver);
 
-  Object get ownerId {
+  Object get parentId {
     final typeInfo = parent.typeData;
     return typeInfo.mirror.call(parent).get(typeInfo.primaryKey.dartName)!;
   }
 
   DriverContract get _driver => parent._driver;
 
-  get();
+  bool _usingEntityCache = false;
+
+  bool get isUsingEntityCache => _usingEntityCache;
+
+  get({bool refresh = false});
 
   delete();
 }
@@ -25,10 +29,10 @@ final class HasOne<Parent extends Entity<Parent>, RelatedModel extends Entity<Re
 
   HasOne._(this.foreignKey, super._owner);
 
-  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, ownerId));
+  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, parentId));
 
   @override
-  Future<RelatedModel?> get() => $readQuery.findOne();
+  FutureOr<RelatedModel?> get({bool refresh = false}) => $readQuery.findOne();
 
   @override
   Future<void> delete() => $readQuery.delete();
@@ -38,14 +42,35 @@ final class HasOne<Parent extends Entity<Parent>, RelatedModel extends Entity<Re
 
 final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>>
     extends EntityRelation<Parent, RelatedModel> {
+  final List<Map<String, dynamic>>? _cache;
   final String foreignKey;
 
-  HasMany._(this.foreignKey, super.parent);
+  HasMany._(this.foreignKey, super.parent, this._cache);
 
-  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, ownerId));
+  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, parentId));
 
   @override
-  Future<List<RelatedModel>> get({int? limit, int? offset, List<OrderBy<RelatedModel>>? orderBy}) {
+  FutureOr<List<RelatedModel>> get({
+    int? limit,
+    int? offset,
+    List<OrderBy<RelatedModel>>? orderBy,
+    bool refresh = false,
+  }) async {
+    if (_cache != null) {
+      _usingEntityCache = true;
+      if (_cache!.isEmpty) return <RelatedModel>[];
+
+      final typeData = Query.getEntity<RelatedModel>();
+      return _cache!
+          .map((data) => serializedPropsToEntity<RelatedModel>(
+                data,
+                typeData,
+                combineConverters(typeData.converters, _driver.typeconverters),
+              ))
+          .toList();
+    }
+
+    _usingEntityCache = false;
     return $readQuery.findMany(
       limit: limit,
       offset: offset,
@@ -53,7 +78,7 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
     );
   }
 
-  Future<RelatedModel?> get first => $readQuery.findOne();
+  FutureOr<RelatedModel?> get first => $readQuery.findOne();
 
   @override
   Future<void> delete() => $readQuery.delete();
@@ -61,17 +86,33 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
 
 final class BelongsTo<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>>
     extends EntityRelation<Parent, RelatedModel> {
+  final Map<String, dynamic>? _cache;
   final String foreignKey;
   final dynamic value;
 
-  BelongsTo._(this.foreignKey, super.parent, this.value);
+  BelongsTo._(this.foreignKey, super.parent, this.value, this._cache);
 
   ReadQuery<RelatedModel> get _readQuery {
     return Query.table<RelatedModel>().driver(_driver).where((q) => q.$equal(foreignKey, value));
   }
 
   @override
-  Future<RelatedModel?> get() => _readQuery.findOne();
+  FutureOr<RelatedModel?> get({bool refresh = false}) async {
+    if (_cache != null && !refresh) {
+      _usingEntityCache = true;
+      if (_cache!.isEmpty) return null;
+
+      final typeData = Query.getEntity<RelatedModel>();
+      return serializedPropsToEntity<RelatedModel>(
+        _cache!,
+        typeData,
+        combineConverters(typeData.converters, _driver.typeconverters),
+      );
+    }
+
+    _usingEntityCache = false;
+    return _readQuery.findOne();
+  }
 
   @override
   Future<void> delete() => _readQuery.delete();
