@@ -28,7 +28,7 @@ final class HasOne<Parent extends Entity<Parent>, RelatedModel extends Entity<Re
   ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, parentId));
 
   @override
-  Future<RelatedModel?> get({bool refresh = false}) => $readQuery.findOne();
+  FutureOr<RelatedModel?> get({bool refresh = false}) => $readQuery.findOne();
 
   @override
   Future<void> delete() => $readQuery.delete();
@@ -46,7 +46,7 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
   ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, parentId));
 
   @override
-  Future<List<RelatedModel>> get({
+  FutureOr<List<RelatedModel>> get({
     int? limit,
     int? offset,
     List<OrderBy<RelatedModel>>? orderBy,
@@ -59,7 +59,7 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
     );
   }
 
-  Future<RelatedModel?> get first => $readQuery.findOne();
+  FutureOr<RelatedModel?> get first => $readQuery.findOne();
 
   @override
   Future<void> delete() => $readQuery.delete();
@@ -78,7 +78,7 @@ final class BelongsTo<Parent extends Entity<Parent>, RelatedModel extends Entity
   }
 
   @override
-  Future<RelatedModel?> get({bool refresh = false}) async {
+  FutureOr<RelatedModel?> get({bool refresh = false}) async {
     if (_cache.isNotEmpty && !refresh) {
       final typeData = Query.getEntity<RelatedModel>();
       return serializedPropsToEntity<RelatedModel>(
