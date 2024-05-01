@@ -47,18 +47,11 @@ void runRelationsE2ETest(String connectionName) {
         orderBy: [OrderPostBy.title(OrderDirection.desc)],
       );
       expect(posts, hasLength(3));
-      expect(
-          posts.map((e) => {
-                'id': e.id,
-                'title': e.title,
-                'desc': e.description,
-                'userId': e.userId
-              }),
-          [
-            {'id': 3, 'title': 'Coo Kie 3', 'desc': 'foo bar 6', 'userId': 1},
-            {'id': 2, 'title': 'Bee Moo 2', 'desc': 'foo bar 5', 'userId': 1},
-            {'id': 1, 'title': 'Aoo bar 1', 'desc': 'foo bar 4', 'userId': 1}
-          ]);
+      expect(posts.map((e) => {'id': e.id, 'title': e.title, 'desc': e.description, 'userId': e.userId}), [
+        {'id': 3, 'title': 'Coo Kie 3', 'desc': 'foo bar 6', 'userId': 1},
+        {'id': 2, 'title': 'Bee Moo 2', 'desc': 'foo bar 5', 'userId': 1},
+        {'id': 1, 'title': 'Aoo bar 1', 'desc': 'foo bar 4', 'userId': 1}
+      ]);
     });
 
     test('should fetch posts with owners', () async {
@@ -83,12 +76,9 @@ void runRelationsE2ETest(String connectionName) {
       await post.comments.add(comment: 'This post looks abit old');
 
       comments = await post.comments.get();
-      expect(
-          comments.map(
-              (c) => {'id': c.id, 'comment': c.comment, 'postId': c.postId}),
-          [
-            {'id': 1, 'comment': 'This post looks abit old', 'postId': post.id}
-          ]);
+      expect(comments.map((c) => {'id': c.id, 'comment': c.comment, 'postId': c.postId}), [
+        {'id': 1, 'comment': 'This post looks abit old', 'postId': post.id}
+      ]);
 
       await post.comments.add(comment: 'oh, another comment');
     });
