@@ -1,13 +1,11 @@
 part of 'entity.dart';
 
-abstract class EntityRelation<Parent extends Entity<Parent>,
-    RelatedModel extends Entity<RelatedModel>> {
+abstract class EntityRelation<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>> {
   final Parent parent;
 
   late final Query<RelatedModel> _query;
 
-  EntityRelation(this.parent)
-      : _query = Query.table<RelatedModel>().driver(parent._driver);
+  EntityRelation(this.parent) : _query = Query.table<RelatedModel>().driver(parent._driver);
 
   Object get parentId {
     final typeInfo = parent.typeData;
@@ -25,15 +23,13 @@ abstract class EntityRelation<Parent extends Entity<Parent>,
   delete();
 }
 
-final class HasOne<Parent extends Entity<Parent>,
-        RelatedModel extends Entity<RelatedModel>>
+final class HasOne<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>>
     extends EntityRelation<Parent, RelatedModel> {
   final String foreignKey;
 
   HasOne._(this.foreignKey, super._owner);
 
-  ReadQuery<RelatedModel> get $readQuery =>
-      _query.where((q) => q.$equal(foreignKey, parentId));
+  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, parentId));
 
   @override
   FutureOr<RelatedModel?> get({bool refresh = false}) => $readQuery.findOne();
@@ -44,16 +40,14 @@ final class HasOne<Parent extends Entity<Parent>,
   Future<void> exists() => $readQuery.exists();
 }
 
-final class HasMany<Parent extends Entity<Parent>,
-        RelatedModel extends Entity<RelatedModel>>
+final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>>
     extends EntityRelation<Parent, RelatedModel> {
   final List<Map<String, dynamic>>? _cache;
   final String foreignKey;
 
   HasMany._(this.foreignKey, super.parent, this._cache);
 
-  ReadQuery<RelatedModel> get $readQuery =>
-      _query.where((q) => q.$equal(foreignKey, parentId));
+  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, parentId));
 
   @override
   FutureOr<List<RelatedModel>> get({
@@ -90,8 +84,7 @@ final class HasMany<Parent extends Entity<Parent>,
   Future<void> delete() => $readQuery.delete();
 }
 
-final class BelongsTo<Parent extends Entity<Parent>,
-        RelatedModel extends Entity<RelatedModel>>
+final class BelongsTo<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>>
     extends EntityRelation<Parent, RelatedModel> {
   final Map<String, dynamic>? _cache;
   final String foreignKey;
@@ -100,9 +93,7 @@ final class BelongsTo<Parent extends Entity<Parent>,
   BelongsTo._(this.foreignKey, super.parent, this.value, this._cache);
 
   ReadQuery<RelatedModel> get _readQuery {
-    return Query.table<RelatedModel>()
-        .driver(_driver)
-        .where((q) => q.$equal(foreignKey, value));
+    return Query.table<RelatedModel>().driver(_driver).where((q) => q.$equal(foreignKey, value));
   }
 
   @override
