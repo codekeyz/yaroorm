@@ -144,8 +144,8 @@ final class ReferencedField<T extends Entity<T>> implements DBEntityField {
 
   final bool _nullable;
 
-  final String _referencedColumnName;
-  final Symbol _referencedDartName;
+  // final String _referencedColumnName;
+  // final Symbol _referencedDartName;
 
   final ForeignKeyAction? onUpdate, onDelete;
 
@@ -157,9 +157,10 @@ final class ReferencedField<T extends Entity<T>> implements DBEntityField {
     this.onUpdate,
   })  : _nullable = nullable,
         _dartName = from.$1,
-        _columnName = from.$2,
-        _referencedDartName = to.$1,
-        _referencedColumnName = to.$2;
+        _columnName = from.$2
+  // ,_referencedDartName = to.$1,
+  // _referencedColumnName = to.$2
+  ;
 
   DBEntity<T> get reference => Query.getEntity<T>();
 
