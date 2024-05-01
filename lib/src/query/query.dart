@@ -222,7 +222,7 @@ final class Query<T extends Entity<T>>
       result,
       entity,
       converters,
-    ).withRelationsData(joinResults) as T;
+    ).withRelationsData(joinResults).withDriver(runner) as T;
   }
 
   ReadQuery<T> get _readQuery => ReadQuery<T>._(this);

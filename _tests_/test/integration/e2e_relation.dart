@@ -30,7 +30,7 @@ void runRelationsE2ETest(String connectionName) {
       hasTables = await Future.wait(tableNames.map(driver.hasTable));
       expect(hasTables.every((e) => e), isTrue);
 
-      testUser1 = await UserQuery.create(
+      testUser1 = await UserQuery.driver(driver).create(
         firstname: 'Baba',
         lastname: 'Tunde',
         age: 29,
@@ -55,9 +55,7 @@ void runRelationsE2ETest(String connectionName) {
     });
 
     test('should fetch posts with owners', () async {
-      final posts = await PostQuery.withRelations((post) => [
-            post.owner,
-          ]).findMany();
+      final posts = await PostQuery.driver(driver).withRelations((post) => [post.owner]).findMany();
       final post = posts.first;
 
       final owner = await post.owner;
@@ -85,23 +83,21 @@ void runRelationsE2ETest(String connectionName) {
 
     test('should add post for another user', () async {
       final testuser = usersList.last;
-      anotherUser = await UserQuery.create(
+      anotherUser = await UserQuery.driver(driver).create(
         firstname: testuser.firstname,
         lastname: testuser.lastname,
         age: testuser.age,
         homeAddress: testuser.homeAddress,
       );
 
-      final user = anotherUser;
+      expect(anotherUser.id, isNotNull);
+      expect(anotherUser.id != testUser1.id, isTrue);
 
-      expect(user.id, isNotNull);
-      expect(user.id != testUser1.id, isTrue);
-
-      var anotherUserPosts = await user.posts.get();
+      var anotherUserPosts = await anotherUser.posts.get();
       expect(anotherUserPosts, isEmpty);
 
-      await user.posts.add(title: 'Another Post', description: 'wham bamn');
-      anotherUserPosts = await user.posts.get();
+      await anotherUser.posts.add(title: 'Another Post', description: 'wham bamn');
+      anotherUserPosts = await anotherUser.posts.get();
       expect(anotherUserPosts, hasLength(1));
 
       final anotherUserPost = anotherUserPosts.first;
