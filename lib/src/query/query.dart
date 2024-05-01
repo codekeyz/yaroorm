@@ -213,8 +213,11 @@ final class Query<T extends Entity<T>>
       final entries = result.entries
           .where((e) => e.key.startsWith('${join.resultKey}.'))
           .map((e) => MapEntry<String, dynamic>(e.key.replaceFirst('${join.resultKey}.', '').trim(), e.value));
-      if (entries.isEmpty) continue;
-      joinResults[join.relation] = {}..addEntries(entries);
+      if (entries.every((e) => e.value == null)) {
+        joinResults[join.relation] = {};
+      } else {
+        joinResults[join.relation] = {}..addEntries(entries);
+      }
     }
 
     return serializedPropsToEntity<T>(

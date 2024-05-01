@@ -38,7 +38,7 @@ final class HasOne<Parent extends Entity<Parent>, RelatedModel extends Entity<Re
 
 final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>>
     extends EntityRelation<Parent, RelatedModel> {
-  final Map<String, dynamic> _cache;
+  final List<Map<String, dynamic>>? _cache;
   final String foreignKey;
 
   HasMany._(this.foreignKey, super.parent, this._cache);
@@ -51,7 +51,20 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
     int? offset,
     List<OrderBy<RelatedModel>>? orderBy,
     bool refresh = false,
-  }) {
+  }) async {
+    if (_cache != null) {
+      if (_cache!.isEmpty) return <RelatedModel>[];
+
+      final typeData = Query.getEntity<RelatedModel>();
+      return _cache!
+          .map((data) => serializedPropsToEntity<RelatedModel>(
+                data,
+                typeData,
+                combineConverters(typeData.converters, _driver.typeconverters),
+              ))
+          .toList();
+    }
+
     return $readQuery.findMany(
       limit: limit,
       offset: offset,
@@ -67,7 +80,7 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
 
 final class BelongsTo<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>>
     extends EntityRelation<Parent, RelatedModel> {
-  final Map<String, dynamic> _cache;
+  final Map<String, dynamic>? _cache;
   final String foreignKey;
   final dynamic value;
 
@@ -79,10 +92,12 @@ final class BelongsTo<Parent extends Entity<Parent>, RelatedModel extends Entity
 
   @override
   FutureOr<RelatedModel?> get({bool refresh = false}) async {
-    if (_cache.isNotEmpty && !refresh) {
+    if (_cache != null && !refresh) {
+      if (_cache!.isEmpty) return null;
+
       final typeData = Query.getEntity<RelatedModel>();
       return serializedPropsToEntity<RelatedModel>(
-        _cache,
+        _cache!,
         typeData,
         combineConverters(typeData.converters, _driver.typeconverters),
       );

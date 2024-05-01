@@ -50,10 +50,16 @@ abstract class Entity<Parent extends Entity<Parent>> {
   HasMany<Parent, RelatedModel> hasMany<RelatedModel extends Entity<RelatedModel>>() {
     final relatedModelTypeData = Query.getEntity<RelatedModel>();
     final referenceField = relatedModelTypeData.referencedFields.firstWhere((e) => e.reference.dartType == Parent);
+
+    var relation = _relationsPreloaded[HasMany<Parent, RelatedModel>];
+    if (relation is Map && relation.isEmpty) {
+      relation = <Map<String, dynamic>>[];
+    }
+
     return HasMany<Parent, RelatedModel>._(
       referenceField.columnName,
       this as Parent,
-      _relationsPreloaded[HasMany<Parent, RelatedModel>],
+      relation,
     );
   }
 
