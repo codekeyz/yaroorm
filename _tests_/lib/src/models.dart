@@ -33,7 +33,12 @@ class Post extends Entity<Post> {
   final String title;
   final String description;
 
-  @reference(User, name: 'user_id', onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.cascade)
+  @reference(
+    User,
+    name: 'user_id',
+    onUpdate: ForeignKeyAction.cascade,
+    onDelete: ForeignKeyAction.cascade,
+  )
   final int userId;
 
   @createdAtCol
@@ -52,12 +57,14 @@ class Post extends Entity<Post> {
   });
 
   HasMany<Post, PostComment> get comments => hasMany<PostComment>();
+
+  BelongsTo<Post, User> get owner => belongsTo<User>();
 }
 
 @Table('post_comments')
 class PostComment extends Entity<PostComment> {
   @primaryKey
-  final String id;
+  final int id;
   final String comment;
 
   @reference(Post, name: 'post_id', onDelete: ForeignKeyAction.cascade)

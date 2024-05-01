@@ -1,168 +1,153 @@
-// import 'package:test/test.dart';
-// import 'package:yaroorm/yaroorm.dart';
+import 'package:test/test.dart';
+import 'package:yaroorm/yaroorm.dart';
+import 'package:yaroorm_tests/src/models.dart';
+import 'package:yaroorm_tests/test_data.dart';
 
-// import 'fixtures/migrator.dart';
-// import 'fixtures/test_data.dart';
+import '../util.dart';
 
-// void runRelationsE2ETest(String connectionName) {
-//   final driver = DB.driver(connectionName);
+void runRelationsE2ETest(String connectionName) {
+  final driver = DB.driver(connectionName);
 
-//   final tables = [User, Post, PostComment].map((e) => getEntityTableName(e));
+  return group('with ${driver.type.name} driver', () {
+    late User testUser1, anotherUser;
 
-//   test('tables names',
-//       () => expect(tables, ['users', 'posts', 'post_comments']));
+    final tableNames = [
+      getEntityTableName<User>(),
+      getEntityTableName<Post>(),
+      getEntityTableName<PostComment>(),
+    ];
 
-//   return group('with ${driver.type.name} driver', () {
-//     User? testUser1, anotherUser;
+    setUpAll(() async {
+      await driver.connect();
 
-//     setUpAll(() async {
-//       await driver.connect();
+      expect(driver.isOpen, isTrue);
 
-//       expect(driver.isOpen, isTrue);
+      var hasTables = await Future.wait(tableNames.map(driver.hasTable));
+      expect(hasTables.every((e) => e), isFalse);
 
-//       var hasTables = await Future.wait(tables.map(driver.hasTable));
-//       expect(hasTables.every((e) => e), isFalse);
+      await runMigrator(connectionName, 'migrate');
 
-//       await runMigrator(connectionName, 'migrate');
+      hasTables = await Future.wait(tableNames.map(driver.hasTable));
+      expect(hasTables.every((e) => e), isTrue);
 
-//       hasTables = await Future.wait(tables.map(driver.hasTable));
-//       expect(hasTables.every((e) => e), isTrue);
+      testUser1 = await UserQuery.create(
+        firstname: 'Baba',
+        lastname: 'Tunde',
+        age: 29,
+        homeAddress: 'Owerri, Nigeria',
+      );
+    });
 
-//       testUser1 = await User(
-//               firstname: 'Baba',
-//               lastname: 'Tunde',
-//               age: 29,
-//               homeAddress: "Owerri, Nigeria")
-//           .withDriver(driver)
-//           .save();
-//       expect(
-//           testUser1, isA<User>().having((p0) => p0.id, 'has primary key', 1));
-//     });
+    test('should add many posts for User', () async {
+      await testUser1.posts.add(title: 'Aoo bar 1', description: 'foo bar 4');
+      await testUser1.posts.add(title: 'Bee Moo 2', description: 'foo bar 5');
+      await testUser1.posts.add(title: 'Coo Kie 3', description: 'foo bar 6');
 
-//     test('should add many posts for User', () async {
-//       final postsToAdd = <Post>[
-//         Post('Foo Bar 1', 'foo bar 4'),
-//         Post('Mee Moo 2', 'foo bar 5'),
-//         Post('Coo Kie 3', 'foo bar 6'),
-//       ];
+      final posts = await testUser1.posts.get(
+        orderBy: [OrderPostBy.title(OrderDirection.desc)],
+      );
+      expect(posts, hasLength(3));
+      expect(
+          posts.map((e) => {
+                'id': e.id,
+                'title': e.title,
+                'desc': e.description,
+                'userId': e.userId
+              }),
+          [
+            {'id': 3, 'title': 'Coo Kie 3', 'desc': 'foo bar 6', 'userId': 1},
+            {'id': 2, 'title': 'Bee Moo 2', 'desc': 'foo bar 5', 'userId': 1},
+            {'id': 1, 'title': 'Aoo bar 1', 'desc': 'foo bar 4', 'userId': 1}
+          ]);
+    });
 
-//       await testUser1!.posts.addAll(postsToAdd);
+    test('should fetch posts with owners', () async {
+      final posts = await PostQuery.withRelations((post) => [
+            post.owner,
+          ]).findMany();
+      final post = posts.first;
 
-//       final posts = await testUser1!.posts.orderByAsc('title').get();
-//       expect(posts, hasLength(3));
-//       expect(
-//           posts.every((e) =>
-//               e.createdAt != null &&
-//               e.updatedAt != null &&
-//               e.userId == testUser1!.id),
-//           isTrue);
-//       expect(
-//           posts.map((e) => {
-//                 'id': e.id,
-//                 'title': e.title,
-//                 'desc': e.description,
-//                 'userId': e.userId!
-//               }),
-//           [
-//             {'id': 3, 'title': 'Coo Kie 3', 'desc': 'foo bar 6', 'userId': 1},
-//             {'id': 1, 'title': 'Foo Bar 1', 'desc': 'foo bar 4', 'userId': 1},
-//             {'id': 2, 'title': 'Mee Moo 2', 'desc': 'foo bar 5', 'userId': 1},
-//           ]);
-//     });
+      final owner = await post.owner;
+      final result = await owner.get();
+      expect(owner.isUsingEntityCache, isTrue);
+      expect(result, isA<User>());
+    });
 
-//     test('should add comments for post', () async {
-//       final post = await testUser1!.posts.first();
-//       expect(post, isA<Post>());
+    test('should add comments for post', () async {
+      final post = await testUser1.posts.first!;
+      expect(post, isA<Post>());
 
-//       var comments = await post!.comments.get();
-//       expect(comments, isEmpty);
+      var comments = await post!.comments.get();
+      expect(comments, isEmpty);
 
-//       final c = PostComment('this post looks abit old')
-//         ..id = 'some_random_uuid_32893782738';
-//       await post.comments.add(c);
+      await post.comments.add(comment: 'This post looks abit old');
 
-//       comments = await post.comments.get();
-//       expect(
-//           comments.map(
-//               (e) => {'id': c.id, 'comment': c.comment, 'postId': e.postId}),
-//           [
-//             {
-//               'id': 'some_random_uuid_32893782738',
-//               'comment': 'this post looks abit old',
-//               'postId': 1
-//             }
-//           ]);
+      comments = await post.comments.get();
+      expect(
+          comments.map(
+              (c) => {'id': c.id, 'comment': c.comment, 'postId': c.postId}),
+          [
+            {'id': 1, 'comment': 'This post looks abit old', 'postId': post.id}
+          ]);
 
-//       await post.comments.add(PostComment('oh, another comment')
-//         ..id = 'jagaban_299488474773_uuid_3i848');
-//       comments = await post.comments.orderByDesc('comment').get();
-//       expect(comments, hasLength(2));
-//       expect(
-//           comments.map(
-//               (e) => {'id': e.id, 'comment': e.comment, 'postId': e.postId}),
-//           [
-//             {
-//               'id': 'some_random_uuid_32893782738',
-//               'comment': 'this post looks abit old',
-//               'postId': 1
-//             },
-//             {
-//               'id': 'jagaban_299488474773_uuid_3i848',
-//               'comment': 'oh, another comment',
-//               'postId': 1
-//             }
-//           ]);
-//     });
+      await post.comments.add(comment: 'oh, another comment');
+    });
 
-//     test('should add post for another user', () async {
-//       anotherUser = await usersList.last.withDriver(driver).save();
-//       final user = anotherUser as User;
+    test('should add post for another user', () async {
+      final testuser = usersList.last;
+      anotherUser = await UserQuery.create(
+        firstname: testuser.firstname,
+        lastname: testuser.lastname,
+        age: testuser.age,
+        homeAddress: testuser.homeAddress,
+      );
 
-//       expect(user.id, isNotNull);
-//       expect(user.id != testUser1!.id, isTrue);
+      final user = anotherUser;
 
-//       var anotherUserPosts = await user.posts.get();
-//       expect(anotherUserPosts, isEmpty);
+      expect(user.id, isNotNull);
+      expect(user.id != testUser1.id, isTrue);
 
-//       await user.posts.add(Post('Another Post', 'wham bamn'));
-//       anotherUserPosts = await user.posts.get();
-//       expect(anotherUserPosts, hasLength(1));
+      var anotherUserPosts = await user.posts.get();
+      expect(anotherUserPosts, isEmpty);
 
-//       final anotherUserPost = anotherUserPosts.first;
-//       expect(anotherUserPost.userId!, anotherUser!.id!);
+      await user.posts.add(title: 'Another Post', description: 'wham bamn');
+      anotherUserPosts = await user.posts.get();
+      expect(anotherUserPosts, hasLength(1));
 
-//       await anotherUserPost.comments.addAll([
-//         PostComment('ah ah')..id = '_id_394',
-//         PostComment('oh oh')..id = '_id_394885',
-//       ]);
+      final anotherUserPost = anotherUserPosts.first;
+      expect(anotherUserPost.userId, anotherUser.id);
 
-//       expect(await anotherUserPost.comments.get(), hasLength(2));
-//     });
+      await anotherUserPost.comments.add(comment: 'ah ah');
+      await anotherUserPost.comments.add(comment: 'oh oh');
 
-//     test('should delete comments for post', () async {
-//       expect(testUser1, isNotNull);
-//       final posts = await testUser1!.posts.get();
-//       expect(posts, hasLength(3));
+      expect(await anotherUserPost.comments.get(), hasLength(2));
+    });
 
-//       // ignore: curly_braces_in_flow_control_structures
-//       for (final post in posts) await post.comments.delete();
+    test('should delete comments for post', () async {
+      expect(testUser1, isNotNull);
+      final posts = await testUser1.posts.get();
+      expect(posts, hasLength(3));
 
-//       expect(
-//           await Future.wait(posts.map((e) => e.comments.get())), [[], [], []]);
+      // ignore: curly_braces_in_flow_control_structures
+      for (final post in posts) await post.comments.delete();
 
-//       await testUser1!.posts.delete();
+      for (final post in posts) {
+        expect(await post.comments.get(), []);
+      }
 
-//       expect(await testUser1!.posts.get(), isEmpty);
-//     });
+      await testUser1.posts.delete();
 
-//     tearDownAll(() async {
-//       await runMigrator(connectionName, 'migrate:reset');
+      expect(await testUser1.posts.get(), isEmpty);
+    });
 
-//       final hasTables = await Future.wait(tables.map(driver.hasTable));
-//       expect(hasTables.every((e) => e), isFalse);
+    tearDownAll(() async {
+      await runMigrator(connectionName, 'migrate:reset');
 
-//       await driver.disconnect();
-//       expect(driver.isOpen, isFalse);
-//     });
-//   });
-// }
+      final hasTables = await Future.wait(tableNames.map(driver.hasTable));
+      expect(hasTables.every((e) => e), isFalse);
+
+      await driver.disconnect();
+      expect(driver.isOpen, isFalse);
+    });
+  });
+}
