@@ -143,7 +143,11 @@ final class Query<T extends Entity<T>>
       }
     }
     final recordId = await runner.insert(
-      InsertQuery(this, data: entityMapToDbData<T>(data, converters)),
+      InsertQuery(
+        this,
+        data: entityMapToDbData<T>(data, converters),
+        primaryKey: entity.primaryKey.columnName,
+      ),
     );
 
     return (await findOne(where: (q) => q.$equal(entity.primaryKey.columnName, recordId)))!;
@@ -384,8 +388,13 @@ final class _JoinBuilderImpl<T extends Entity<T>> extends JoinBuilder<T> {}
 
 final class InsertQuery extends QueryBase<InsertQuery> {
   final Map<String, dynamic> data;
+  final String primaryKey;
 
-  InsertQuery(super.tableName, {required this.data});
+  InsertQuery(
+    super.tableName, {
+    required this.data,
+    required this.primaryKey,
+  });
 
   @override
   Future<dynamic> execute() => runner.insert(this);
@@ -395,9 +404,14 @@ final class InsertQuery extends QueryBase<InsertQuery> {
 }
 
 final class InsertManyQuery extends QueryBase<InsertManyQuery> {
+  final String primaryKey;
   final List<Map<String, dynamic>> values;
 
-  InsertManyQuery(super.tableName, {required this.values});
+  InsertManyQuery(
+    super.tableName, {
+    required this.values,
+    required this.primaryKey,
+  });
 
   @override
   String get statement => runner.serializer.acceptInsertManyQuery(this);

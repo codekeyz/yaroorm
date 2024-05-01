@@ -32,7 +32,7 @@ services:
       POSTGRES_PASSWORD: 'password'
       POSTGRES_DB: test_db
     ports:
-      - "3002:3306"
+      - "3002:5432"
     volumes:
       - postgresdb_data:/var/lib/psql/data
 

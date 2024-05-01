@@ -67,9 +67,8 @@ final class PostgreSqlDriver implements DatabaseDriver {
   @override
   Future<dynamic> insert(InsertQuery query) async {
     if (!isOpen) await connect();
-    final primaryKey = await _getPrimaryKeyColumn(query.tableName);
     final values = {...query.data};
-    final sql = _pgsqlSerializer.acceptInsertQuery(query, primaryKey: primaryKey);
+    final sql = _pgsqlSerializer.acceptInsertQuery(query);
     final result = await db!.execute(pg.Sql.named(sql), parameters: values);
     return result[0][0];
   }
@@ -124,21 +123,6 @@ final class PostgreSqlDriver implements DatabaseDriver {
     return result?.expand((x) => x).toList();
   }
 
-  Future<String> _getPrimaryKeyColumn(String tableName) async {
-    final result = await db?.execute('''SELECT pg_attribute.attname 
-FROM pg_index, pg_class, pg_attribute, pg_namespace 
-WHERE 
-  pg_class.oid = '"$tableName"'::regclass AND 
-  indrelid = pg_class.oid AND 
-  nspname = 'public' AND 
-  pg_class.relnamespace = pg_namespace.oid AND 
-  pg_attribute.attrelid = pg_class.oid AND 
-  pg_attribute.attnum = any(pg_index.indkey)
- AND indisprimary;''');
-
-    return result?[0][0] as String;
-  }
-
   @override
   List<EntityTypeConverter> get typeconverters => [booleanConverter];
 }
@@ -164,7 +148,7 @@ class _PgSqlDriverTransactor extends DriverTransactor {
   Future<int> insert(InsertQuery query) async {
     final sql = _pgsqlSerializer.acceptInsertQuery(query);
     final result = await txn.execute(pg.Sql.named(sql), parameters: query.data);
-    return result.affectedRows;
+    return result.first.toColumnMap()[query.primaryKey];
   }
 
   @override
@@ -200,12 +184,10 @@ class PgSqlPrimitiveSerializer extends MySqlPrimitiveSerializer {
   const PgSqlPrimitiveSerializer();
 
   @override
-  String acceptInsertQuery(InsertQuery query, {String? primaryKey}) {
+  String acceptInsertQuery(InsertQuery query) {
     final keys = query.data.keys;
     final parameters = keys.map((e) => '@$e').join(', ');
-    final sql = 'INSERT INTO ${query.tableName} (${keys.map(escapeStr).join(', ')}) VALUES ($parameters)';
-    if (primaryKey == null) return '$sql$terminator';
-    return '$sql RETURNING "$primaryKey"$terminator';
+    return 'INSERT INTO ${query.tableName} (${keys.map(escapeStr).join(', ')}) VALUES ($parameters) RETURNING "${query.primaryKey}"$terminator';
   }
 
   @override
@@ -231,7 +213,7 @@ class PgSqlPrimitiveSerializer extends MySqlPrimitiveSerializer {
       final values = dataMap.values.map((value) => "'$value'").join(', ');
       return '($values)';
     }).join(', ');
-    return 'INSERT INTO ${query.tableName} ($fields) VALUES $values$terminator';
+    return 'INSERT INTO ${query.tableName} ($fields) VALUES $values RETURNING ${query.primaryKey}$terminator';
   }
 
   @override
