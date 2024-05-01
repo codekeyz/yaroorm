@@ -17,6 +17,8 @@ part 'relations.dart';
 part 'joins.dart';
 
 abstract class Entity<Parent extends Entity<Parent>> {
+  final Map<Type, dynamic> _relationsPreloaded = {};
+
   DriverContract _driver = DB.defaultDriver;
 
   DBEntity<Parent>? _typeDataCache;
@@ -31,8 +33,16 @@ abstract class Entity<Parent extends Entity<Parent>> {
     if (connection != null) _driver = DB.driver(connection!);
   }
 
-  withDriver(DriverContract driver) {
+  Entity<Parent> withDriver(DriverContract driver) {
     return this.._driver = driver;
+  }
+
+  @internal
+  Entity<Parent> withRelationsData(Map<Type, dynamic> data) {
+    _relationsPreloaded
+      ..clear()
+      ..addAll(data);
+    return this;
   }
 
   @protected
@@ -42,6 +52,7 @@ abstract class Entity<Parent extends Entity<Parent>> {
     return HasMany<Parent, RelatedModel>._(
       referenceField.columnName,
       this as Parent,
+      _relationsPreloaded[HasMany<Parent, RelatedModel>],
     );
   }
 
@@ -55,6 +66,7 @@ abstract class Entity<Parent extends Entity<Parent>> {
       parentFieldName,
       this as Parent,
       referenceFieldValue,
+      _relationsPreloaded[BelongsTo<Parent, RelatedModel>],
     );
   }
 }

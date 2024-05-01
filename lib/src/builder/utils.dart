@@ -39,6 +39,11 @@ String getFieldDbName(FieldElement element) {
   return elementName;
 }
 
+String getTableName(ClassElement element) {
+  final meta = typeChecker(entity.Table).firstAnnotationOf(element, throwOnUnresolved: false);
+  return ConstantReader(meta).peek('name')?.stringValue ?? element.name.toPlural().first.snakeCase.toLowerCase();
+}
+
 String getTypeDefName(String className) {
   return '${className.snakeCase}TypeData';
 }
@@ -197,7 +202,7 @@ final class ParsedEntityClass {
   });
 
   factory ParsedEntityClass.parse(ClassElement element, {ConstantReader? reader}) {
-    final tableName = element.name.toPlural().first.pascalCase.toLowerCase();
+    final tableName = getTableName(element);
     final fields = element.fields.where(_allowedTypes).toList();
     final primaryKey = _getFieldAnnotationByType(fields, entity.PrimaryKey);
     final createdAt = _getFieldAnnotationByType(fields, entity.CreatedAtColumn);

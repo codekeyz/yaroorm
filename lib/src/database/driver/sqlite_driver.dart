@@ -209,9 +209,21 @@ class SqliteSerializer extends PrimitiveSerializer {
     /// SELECT
     final tableName = escapeStr(query.tableName);
     final selectStatement = acceptSelect(tableName, query.fieldSelections.toList());
-    queryBuilder
-      ..write(selectStatement)
-      ..write('FROM $tableName');
+    queryBuilder.write(selectStatement);
+
+    /// JOINS
+    if (query.joins.isNotEmpty) {
+      final selections = query.joins.map((e) => e.aliasedForeignSelections.join(', ')).join(', ');
+      queryBuilder.write(', $selections FROM $tableName');
+
+      for (final join in query.joins) {
+        final field = '${join.fromTable}.${join.origin.$2}';
+        final referencedField = '${join.onTable}.${join.on.$2}';
+        queryBuilder.writeln(' JOIN ${join.onTable} ON $field = $referencedField');
+      }
+    } else {
+      queryBuilder.write(' FROM $tableName');
+    }
 
     /// WHERE
     final whereClause = query.whereClause;
@@ -315,8 +327,8 @@ class SqliteSerializer extends PrimitiveSerializer {
   @override
   String acceptSelect(String tableName, List<String> fields) {
     return fields.isEmpty
-        ? 'SELECT $tableName.* '
-        : 'SELECT ${fields.map((e) => '$tableName.${escapeStr(e)}').join(', ')} ';
+        ? 'SELECT $tableName.*'
+        : 'SELECT ${fields.map((e) => '$tableName.${escapeStr(e)}').join(', ')}';
   }
 
   @override

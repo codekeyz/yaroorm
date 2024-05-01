@@ -2,19 +2,26 @@ part of 'entity.dart';
 
 abstract class JoinBuilder<Owner extends Entity<Owner>> {}
 
-class Join<From extends Entity<From>, On extends Entity<On>> {
-  final _Element<From> origin;
-  final _Element<On> destination;
+class Join<Parent extends Entity<Parent>, Reference extends Entity<Reference>,
+    Relationship extends EntityRelation<Parent, Reference>> {
+  String get fromTable => Query.getEntity<Parent>().tableName;
+  String get onTable => Query.getEntity<Reference>().tableName;
 
-  Join(Symbol origin, {required Symbol on})
-      : origin = _Element<From>(origin),
-        destination = _Element<On>(on);
+  final Type relation;
+
+  final Entry<Parent> origin;
+  final Entry<Reference> on;
+
+  final String resultKey;
+
+  Iterable<String> get aliasedForeignSelections =>
+      Query.getEntity<Reference>().columns.map((e) => '$onTable.${e.columnName} as "$resultKey.${e.columnName}"');
+
+  Join(
+    this.resultKey, {
+    required this.origin,
+    required this.on,
+  }) : relation = Relationship;
 }
 
-final class _Element<T extends Entity<T>> {
-  final Symbol symbol;
-
-  DBEntity<T> get typeDef => Query.getEntity<T>();
-
-  const _Element(this.symbol);
-}
+typedef Entry<T extends Entity<T>> = (Symbol symbol, String columnName);

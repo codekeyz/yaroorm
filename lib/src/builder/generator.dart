@@ -63,7 +63,6 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
 
     final normalFields = parsedEntity.normalFields;
 
-    final tableName = annotation.peek('name')!.stringValue;
     final converters = annotation.peek('converters')!.listValue;
 
     final autoIncrementPrimaryKey = primaryKey.reader.peek('autoIncrement')!.boolValue;
@@ -176,7 +175,7 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
           ..lambda = true
           ..body = Code(
             '''DBEntity<$className>(
-                "$tableName",
+                "${parsedEntity.table}",
                 timestampsEnabled: $timestampsEnabled,
                 columns: ${fields.map(generateCodeForField).toList()},
                 mirror: _\$${className}EntityMirror.new,
@@ -447,49 +446,65 @@ return switch(field) {
     PropertyAccessorElement getter,
   ) {
     final belongsToClass = getter.returnType as InterfaceType;
-    final relatedClass = belongsToClass.typeArguments.last.element as ClassElement;
-    final referenceField =
-        parent.referencedFields.firstWhere((e) => e.reader.peek('type')!.typeValue.element!.name == relatedClass.name);
+    final getterName = getter.name;
+    final referencedClass = belongsToClass.typeArguments.last.element as ClassElement;
 
-    final parsedRelatedClass = ParsedEntityClass.parse(relatedClass);
-    final customField = referenceField.reader.peek('field')?.symbolValue;
+    // Field on :parent that establishes the relationship needed to make this work
+    final field = parent.referencedFields
+        .firstWhereOrNull((e) => e.reader.peek('type')!.typeValue.element!.name == referencedClass.name);
+    if (field == null) {
+      throw InvalidGenerationSourceError(
+        'No reference field found to establish :BELONGS_TO_${referencedClass.name} relation on ${parent.className}',
+        element: referencedClass,
+        todo: 'Did you forget to annotate with `@reference`',
+      );
+    }
 
-    final referenceColumn = parsedRelatedClass.allFields.firstWhereOrNull((e) => Symbol(e.name) == customField) ??
-        parsedRelatedClass.primaryKey!.field;
+    // Get the column on the foreign table which we're latching onto
+    final parsedReferenceClass = ParsedEntityClass.parse(referencedClass);
+    final referenceColumn = parsedReferenceClass.allFields
+            .firstWhereOrNull((e) => Symbol(e.name) == field.reader.peek('field')?.symbolValue) ??
+        parsedReferenceClass.primaryKey!.field;
 
-    final joinClass = 'Join<${parent.className}, ${parsedRelatedClass.className}>';
+    final relationship = 'BelongsTo<${parent.className}, ${referencedClass.name}>';
+    final joinClass = 'Join<${parent.className}, ${referencedClass.name}, $relationship>';
     return Method(
       (m) => m
-        ..name = getter.name
+        ..name = getterName
         ..type = MethodType.getter
         ..lambda = true
         ..returns = refer(joinClass)
-        ..body = Code('''$joinClass(#${referenceField.field.name}, on: #${referenceColumn.name})'''),
+        ..body = Code('''$joinClass("$getterName", 
+            origin: (#${field.field.name}, "${getFieldDbName(field.field)}"), 
+            on: (#${referenceColumn.name}, "${getFieldDbName(referenceColumn)}")
+          )'''),
     );
   }
 
-  /// Generate JOIN for BelongsTo getters on Entity
+  /// Generate JOIN for HasMany getters on Entity
   Method _generateJoinForHasMany(
     ParsedEntityClass parent,
     PropertyAccessorElement getter,
   ) {
     final hasMany = getter.returnType as InterfaceType;
-    final hasManyOfClass = hasMany.typeArguments.last.element as ClassElement;
-    final parsedRelatedClass = ParsedEntityClass.parse(hasManyOfClass);
+    final referencedClass = hasMany.typeArguments.last.element as ClassElement;
+    final parsedReferenceClass = ParsedEntityClass.parse(referencedClass);
 
-    final referenceField = parsedRelatedClass.referencedFields
+    final referenceField = parsedReferenceClass.referencedFields
         .firstWhere((e) => e.reader.peek('type')!.typeValue.element == parent.element);
 
-    final joinClass = 'Join<${parent.className}, ${hasManyOfClass.name}>';
+    final relationship = 'HasMany<${parent.className}, ${referencedClass.name}>';
+    final joinClass = 'Join<${parent.className}, ${referencedClass.name}, $relationship>';
     return Method(
       (m) => m
         ..name = getter.name
         ..type = MethodType.getter
         ..lambda = true
         ..returns = refer(joinClass)
-        ..body = Code(
-          '''$joinClass(#${getFieldDbName(parent.primaryKey!.field)}, on: #${referenceField.field.name})''',
-        ),
+        ..body = Code('''$joinClass("${getter.name}", 
+            origin: (#${parent.primaryKey!.field.name}, "${getFieldDbName(parent.primaryKey!.field)}"), 
+            on: (#${referenceField.field.name}, "${getFieldDbName(referenceField.field)}")
+          )'''),
     );
   }
 }
