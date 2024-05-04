@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common/sql.dart';
+import 'package:yaroorm/yaroorm.dart';
 
 import '../../migration.dart';
 import '../../primitives/serializer.dart';
@@ -87,13 +88,13 @@ final class SqliteDriver implements DatabaseDriver {
 
   @override
   Future<void> insertMany(InsertManyQuery query) async {
-    // final db = await _getDatabase();
-    // final batch = db.batch();
+    final sql = _serializer.acceptInsertManyQuery(query);
 
-    // for (final entry in query.values) {
-    //   final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, data: entry));
-    //   batch.rawInsert(sql, entry.values.toList());
-    // }
+    print(sql);
+
+    throw Exception();
+
+    final result = await (await _getDatabase()).execute(sql);
 
     // await batch.commit(noResult: true);
   }

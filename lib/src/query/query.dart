@@ -9,6 +9,18 @@ part '../primitives/where.dart';
 
 enum OrderDirection { asc, desc }
 
+abstract class CreateEntity<T extends Entity<T>> {
+  const CreateEntity();
+  @internal
+  Map<Symbol, dynamic> get toMap;
+}
+
+abstract class UpdateEntity<T extends Entity<T>> {
+  const UpdateEntity();
+  @internal
+  Map<Symbol, dynamic> get toMap;
+}
+
 mixin ReadOperation<Result extends Entity<Result>> {
   Future<Result?> findOne({
     WhereBuilder<Result>? where,
@@ -23,13 +35,14 @@ mixin ReadOperation<Result extends Entity<Result>> {
 }
 
 mixin InsertOperation<T extends Entity<T>> {
-  Future<T> $insert(Map<Symbol, dynamic> data);
+  Future<T> insert(CreateEntity<T> data);
+  Future<void> insertMany(List<CreateEntity<T>> datas);
 }
 
 mixin UpdateOperation<Result extends Entity<Result>> {
-  UpdateQuery $update({
+  UpdateQuery update({
     required WhereBuilder<Result> where,
-    required Map<Symbol, dynamic> values,
+    required UpdateEntity<Result> update,
   });
 }
 
@@ -128,29 +141,36 @@ final class Query<T extends Entity<T>>
   }
 
   @override
-  Future<T> $insert(Map<Symbol, dynamic> data) async {
+  Future<T> insert(CreateEntity<T> data) async {
+    final dataMap = data.toMap;
     if (entity.timestampsEnabled) {
       final now = DateTime.now();
       final createdAtField = entity.createdAtField;
       final updatedAtField = entity.updatedAtField;
 
       if (createdAtField != null) {
-        data[createdAtField.dartName] = now;
+        dataMap[createdAtField.dartName] = now;
       }
 
       if (updatedAtField != null) {
-        data[updatedAtField.dartName] = now;
+        dataMap[updatedAtField.dartName] = now;
       }
     }
+
     final recordId = await runner.insert(
       InsertQuery(
         this,
-        data: entityMapToDbData<T>(data, converters),
+        data: entityMapToDbData<T>(dataMap, converters),
         primaryKey: entity.primaryKey.columnName,
       ),
     );
 
     return (await findOne(where: (q) => q.$equal(entity.primaryKey.columnName, recordId)))!;
+  }
+
+  @override
+  Future<void> insertMany(List<CreateEntity<T>> datas) async {
+    throw Exception();
   }
 
   @override
@@ -185,10 +205,11 @@ final class Query<T extends Entity<T>>
   }
 
   @override
-  UpdateQuery $update({
+  UpdateQuery update({
     required WhereBuilder<T> where,
-    required Map<Symbol, dynamic> values,
+    required UpdateEntity<T> update,
   }) {
+    final values = update.toMap;
     final whereClause = where.call(WhereClauseBuilder<T>._());
 
     if (entity.timestampsEnabled) {
@@ -210,15 +231,15 @@ final class Query<T extends Entity<T>>
 
   /// [T] is the expected type passed to [Query] via Query<T>
   T _wrapRawResult(Map<String, dynamic> result) {
-    final Map<Type, Map<String, dynamic>> joinResults = {};
+    final Map<String, Map<String, dynamic>> joinResults = {};
     for (final join in _joins) {
       final entries = result.entries
           .where((e) => e.key.startsWith('${join.resultKey}.'))
           .map((e) => MapEntry<String, dynamic>(e.key.replaceFirst('${join.resultKey}.', '').trim(), e.value));
       if (entries.every((e) => e.value == null)) {
-        joinResults[join.relation] = {};
+        joinResults[join.key] = {};
       } else {
-        joinResults[join.relation] = {}..addEntries(entries);
+        joinResults[join.key] = {}..addEntries(entries);
       }
     }
 

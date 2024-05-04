@@ -18,7 +18,8 @@ part 'relations.dart';
 part 'joins.dart';
 
 abstract class Entity<Parent extends Entity<Parent>> {
-  final Map<Type, dynamic> _relationsPreloaded = {};
+  /// Key is of the form [Type]#{name}
+  final Map<String, dynamic> _relationsPreloaded = {};
 
   DriverContract _driver = DB.defaultDriver;
 
@@ -39,7 +40,7 @@ abstract class Entity<Parent extends Entity<Parent>> {
   }
 
   @internal
-  Entity<Parent> withRelationsData(Map<Type, dynamic> data) {
+  Entity<Parent> withRelationsData(Map<String, dynamic> data) {
     _relationsPreloaded
       ..clear()
       ..addAll(data);
@@ -52,8 +53,12 @@ abstract class Entity<Parent extends Entity<Parent>> {
     final referenceField = relatedModelTypeData.referencedFields.firstWhere((e) => e.reference.dartType == Parent);
 
     var relation = _relationsPreloaded[HasMany<Parent, RelatedModel>];
-    if (relation is Map && relation.isEmpty) {
-      relation = <Map<String, dynamic>>[];
+
+    if (relation is Map) {
+      if (relation.isEmpty)
+        relation = <Map<String, dynamic>>[];
+      else
+        relation = [relation.cast<String, dynamic>()];
     }
 
     return HasMany<Parent, RelatedModel>._(

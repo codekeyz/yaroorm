@@ -29,6 +29,10 @@ class InitializeOrmCommand extends Command<int> {
 
     try {
       final result = await resolveMigrationAndEntitiesInDir(workingDir);
+      if (result.migrations.isEmpty) {
+        progress.fail('Yaroorm 📦 not initialized. No migrations found.');
+        return ExitCode.software.code;
+      }
 
       await _initOrmInProject(workingDir, result.migrations, result.entities, result.dbConfig);
 
@@ -71,6 +75,13 @@ Future<void> _initOrmInProject(
         }))
       .mapIndexed((index, element) => (index: index, element: element));
 
+  final addMigrationsToDbCode = '''
+/// Configure Migrations Order
+DB.migrations.addAll([
+  ${sortedMigrationsList.map((mig) => mig.element.elements.map((classElement) => '_m${mig.index}.${classElement.name}()').join(', ')).join(', ')},
+]);
+''';
+
   final library = Library((p0) => p0
     ..comments.add('GENERATED CODE - DO NOT MODIFY BY HAND')
     ..directives.addAll([
@@ -86,14 +97,13 @@ Future<void> _initOrmInProject(
 /// Add Type Definitions to Query Runner
 ${entityNames.map((name) => 'Query.addTypeDef<$name>(${getTypeDefName(name)});').join('\n')}
 
-/// Configure Migrations Order
-DB.migrations.addAll([
-  ${sortedMigrationsList.map((mig) => mig.element.elements.map((classElement) => '_m${mig.index}.${classElement.name}()').join(', ')).join(', ')},
-]);
+${sortedMigrationsList.isNotEmpty ? addMigrationsToDbCode : ''}
 
 DB.init(config.${dbConfig.name});
 '''))));
+
   final emitter = DartEmitter.scoped(orderDirectives: true, useNullSafetySyntax: true);
+
   final code = DartFormatter().format([library.accept(emitter)].join('\n\n'));
 
   await databaseFile.writeAsString(code);

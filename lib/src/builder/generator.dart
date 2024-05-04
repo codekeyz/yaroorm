@@ -228,36 +228,15 @@ return switch(field) {
             ..name = field.name
             ..constant = true
             ..lambda = true
-            ..initializers.add(Code('super("${getFieldDbName(field)}", direction)'))
-            ..requiredParameters.add(Parameter((p) => p
+            ..initializers.add(Code('super("${getFieldDbName(field)}", order)'))
+            ..optionalParameters.add(Parameter((p) => p
               ..type = refer('OrderDirection')
-              ..name = 'direction')))))),
+              ..named = true
+              ..defaultTo = Code('OrderDirection.asc')
+              ..name = 'order')))))),
 
-        /// Generate Entity Create Extension
-        Extension(
-          (b) => b
-            ..name = '${className}QueryExtension'
-            ..on = refer('Query<$className>')
-            ..methods.addAll([
-              _generateGetByPropertyMethod(primaryKey.field, className),
-              ...normalFields.map((e) => _generateGetByPropertyMethod(e, className)),
-              Method(
-                (m) => m
-                  ..name = 'create'
-                  ..returns = refer('Future<$className>')
-                  ..optionalParameters.addAll(creatableFields.map(
-                    (field) => Parameter((p) => p
-                      ..name = field.name
-                      ..named = true
-                      ..type = refer('${field.type}')
-                      ..required = !field.type.isNullable),
-                  ))
-                  ..body = Code('''return \$insert({
-                ${creatableFields.map((e) => '#${e.name}: ${e.name}').join(',')}
-                });'''),
-              ),
-            ]),
-        ),
+        /// Generate Create/Update classes for entity
+        ..._generateCreateAndUpdateClasses(parsedEntity),
 
         /// Generate Typed Entity WhereBuilder Extension
         Extension((b) => b
@@ -266,34 +245,6 @@ return switch(field) {
           ..methods.addAll([
             _generateFieldWhereClause(primaryKey.field, className),
             ...normalFields.map((e) => _generateFieldWhereClause(e, className)),
-          ])),
-
-        /// Generate Typed Entity Update Extension
-        Extension((b) => b
-          ..name = '${className}UpdateExtension'
-          ..on = refer('ReadQuery<$className>')
-          ..methods.addAll([
-            Method(
-              (m) => m
-                ..name = 'update'
-                ..returns = refer('Future<void>')
-                ..modifier = MethodModifier.async
-                ..optionalParameters.addAll(normalFields.map(
-                  (field) => Parameter(
-                    (p) => p
-                      ..name = field.name
-                      ..named = true
-                      ..type = refer('value<${field.type.getDisplayString(withNullability: true)}>')
-                      ..defaultTo = Code('const NoValue()')
-                      ..required = false,
-                  ),
-                ))
-                ..body = Code('''await \$query.\$update(
-                  where: (_) => whereClause!,
-                  values: {
-                    ${normalFields.map((e) => 'if (${e.name} is! NoValue) #${e.name}: ${e.name}.val').join(',')},
-                  }).execute();'''),
-            ),
           ])),
 
         /// Generate Extension for HasMany creations
@@ -320,28 +271,29 @@ return switch(field) {
                   parsedRelatedEntity.fieldsRequiredForCreate.where((field) => field != referenceField);
 
               return Extension((b) => b
-                ..name = '${className}HasMany${relatedClassName}Extension'
-                ..on = refer('HasMany<$className, $relatedClassName>')
-                ..methods.addAll([
-                  Method(
-                    (m) => m
-                      ..name = 'add'
-                      ..returns = refer('Future<$relatedClassName>')
-                      ..optionalParameters.addAll(relatedEntityCreateFields.map(
-                        (field) => Parameter((p) => p
-                          ..name = field.name
-                          ..named = true
-                          ..type = refer('${field.type}')
-                          ..required = !field.type.isNullable),
-                      ))
-                      ..body = Code('''return  \$readQuery.\$query.\$insert({
-                      ${[
-                        ...relatedEntityCreateFields.map((e) => '#${e.name}: ${e.name}'),
-                        '#${referenceField.name}: parentId'
-                      ].join(',')}
-                });'''),
-                  ),
-                ]));
+                    ..name = '${className}HasMany${relatedClassName}Extension'
+                    ..on = refer('HasMany<$className, $relatedClassName>')
+                  //   ..methods.addAll([
+                  //     Method(
+                  //       (m) => m
+                  //         ..name = 'add'
+                  //         ..returns = refer('Future<$relatedClassName>')
+                  //         ..optionalParameters.addAll(relatedEntityCreateFields.map(
+                  //           (field) => Parameter((p) => p
+                  //             ..name = field.name
+                  //             ..named = true
+                  //             ..type = refer('${field.type}')
+                  //             ..required = !field.type.isNullable),
+                  //         ))
+                  //         ..body = Code('''return  \$readQuery.\$query.\$insert({
+                  //       ${[
+                  //           ...relatedEntityCreateFields.map((e) => '#${e.name}: ${e.name}'),
+                  //           '#${referenceField.name}: parentId'
+                  //         ].join(',')}
+                  // });'''),
+                  //     ),
+                  //   ]),
+                  );
             },
           )
         ],
@@ -362,6 +314,78 @@ return switch(field) {
       '// ignore_for_file: non_constant_identifier_names',
       library.accept(_emitter),
     ].join('\n\n'));
+  }
+
+  List<Class> _generateCreateAndUpdateClasses(ParsedEntityClass entity) {
+    final fieldsRequiredForCreate = entity.fieldsRequiredForCreate;
+    return [
+      Class(
+        (b) => b
+          ..name = 'New${entity.className}'
+          ..extend = refer('CreateEntity<${entity.className}>')
+          ..fields.addAll(fieldsRequiredForCreate.map(
+            (f) => Field((fb) => fb
+              ..name = f.name
+              ..type = refer(f.type.getDisplayString(withNullability: true))
+              ..modifier = FieldModifier.final$),
+          ))
+          ..constructors.add(
+            Constructor(
+              (c) => c
+                ..constant = true
+                ..optionalParameters.addAll(fieldsRequiredForCreate.map(
+                  (field) => Parameter((p) => p
+                    ..required = true
+                    ..named = true
+                    ..name = field.name
+                    ..toThis = true),
+                )),
+            ),
+          )
+          ..methods.add(
+            Method(
+              (m) => m
+                ..name = 'toMap'
+                ..returns = refer('Map<Symbol, dynamic>')
+                ..type = MethodType.getter
+                ..annotations.add(CodeExpression(Code('override')))
+                ..lambda = true
+                ..body = Code('{ ${fieldsRequiredForCreate.map((e) => '#${e.name} : ${e.name}').join(', ')} }'),
+            ),
+          ),
+      ),
+      Class((b) => b
+        ..name = 'Update${entity.className}'
+        ..extend = refer('UpdateEntity<${entity.className}>')
+        ..fields.addAll(fieldsRequiredForCreate.map((f) => Field(
+              (fb) => fb
+                ..name = f.name
+                ..type = refer('value<${f.type.getDisplayString(withNullability: true)}>')
+                ..modifier = FieldModifier.final$,
+            )))
+        ..constructors.add(
+          Constructor(
+            (c) => c
+              ..constant = true
+              ..optionalParameters.addAll(fieldsRequiredForCreate.map(
+                (field) => Parameter((p) => p
+                  ..named = true
+                  ..name = field.name
+                  ..toThis = true
+                  ..defaultTo = Code('const NoValue()')),
+              )),
+          ),
+        )
+        ..methods.add(Method((m) => m
+          ..name = 'toMap'
+          ..returns = refer('Map<Symbol, dynamic>')
+          ..type = MethodType.getter
+          ..annotations.add(CodeExpression(Code('override')))
+          ..lambda = true
+          ..body = Code('''{
+      ${entity.normalFields.map((e) => 'if (${e.name} is! NoValue) #${e.name}: ${e.name}.val${!e.type.isNullable ? '!' : ''}'.trim()).join(',')},
+}''')))),
+    ];
   }
 
   String _generateConstructorCode(String className, ConstructorElement constructor) {
