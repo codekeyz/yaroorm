@@ -2,7 +2,6 @@ import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common/sql.dart';
-import 'package:yaroorm/yaroorm.dart';
 
 import '../../migration.dart';
 import '../../primitives/serializer.dart';
@@ -88,15 +87,7 @@ final class SqliteDriver implements DatabaseDriver {
 
   @override
   Future<void> insertMany(InsertManyQuery query) async {
-    final sql = _serializer.acceptInsertManyQuery(query);
-
-    print(sql);
-
-    throw Exception();
-
-    final result = await (await _getDatabase()).execute(sql);
-
-    // await batch.commit(noResult: true);
+    return await (await _getDatabase()).transaction((txn) => _SqliteTransactor(txn).insertMany(query));
   }
 
   @override
@@ -164,14 +155,19 @@ class _SqliteTransactor implements DriverTransactor {
 
   @override
   Future<void> insertMany(InsertManyQuery query) async {
-    // final batch = _txn.batch();
+    final batch = _txn.batch();
 
-    // for (final entry in query.values) {
-    //   final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, data: entry));
-    //   batch.rawInsert(sql, entry.values.toList());
-    // }
+    for (final entry in query.values) {
+      final sql = _serializer.acceptInsertQuery(InsertQuery(
+        query.$query,
+        data: entry,
+        primaryKey: query.primaryKey,
+      ));
+      batch.rawInsert(sql, entry.values.toList());
+    }
 
-    // await batch.commit(noResult: true);
+    /// TODO(codekeyz): this returns entry IDS. verify the behavior when we have STRING IDs
+    await batch.commit(noResult: false, continueOnError: false);
   }
 
   @override
@@ -310,7 +306,9 @@ class SqliteSerializer extends PrimitiveSerializer {
 
   @override
   String acceptInsertManyQuery(InsertManyQuery query) {
-    throw UnimplementedError('No need to use this for SQLite Driver');
+    final fields = query.values.first.keys.map(escapeStr);
+    final params = List<String>.filled(fields.length, '?').join(', ');
+    return 'INSERT INTO ${escapeStr(query.tableName)} (${fields.join(', ')}) VALUES ($params)$terminator';
   }
 
   @override

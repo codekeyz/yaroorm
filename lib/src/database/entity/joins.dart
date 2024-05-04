@@ -12,6 +12,8 @@ class Join<Parent extends Entity<Parent>, Reference extends Entity<Reference>,
 
   final String resultKey;
 
+  /// This is the key that will be used to store the result of this
+  /// of this relation in [Entity] relations cache.
   final String key;
 
   Iterable<String> get aliasedForeignSelections =>
