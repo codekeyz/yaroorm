@@ -21,9 +21,7 @@ class MigrationResetCommand extends OrmCommand {
     await ensureMigrationsTableReady(driver);
 
     final migrationsList = await MigrationEntityQuery.driver(driver).findMany(
-      orderBy: [
-        OrderMigrationEntityBy.batch(OrderDirection.desc),
-      ],
+      orderBy: [OrderMigrationEntityBy.batch(order: OrderDirection.desc)],
     );
     if (migrationsList.isEmpty) {
       print('𐄂 skipped: reason:     no migrations to reset');

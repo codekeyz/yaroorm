@@ -41,9 +41,9 @@ class _$MigrationEntityEntityMirror extends EntityMirror<MigrationEntity> {
 }
 
 class OrderMigrationEntityBy extends OrderBy<MigrationEntity> {
-  const OrderMigrationEntityBy.migration(OrderDirection direction) : super("migration", direction);
+  const OrderMigrationEntityBy.migration({OrderDirection order = OrderDirection.asc}) : super("migration", order);
 
-  const OrderMigrationEntityBy.batch(OrderDirection direction) : super("batch", direction);
+  const OrderMigrationEntityBy.batch({OrderDirection order = OrderDirection.desc}) : super("batch", order);
 }
 
 extension MigrationEntityQueryExtension on Query<MigrationEntity> {
