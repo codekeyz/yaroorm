@@ -76,8 +76,8 @@ abstract class Entity<Parent extends Entity<Parent>> {
 
     return BelongsTo<Parent, RelatedModel>._(
       parentFieldName,
-      this as Parent,
       referenceFieldValue,
+      this as Parent,
       _relationsPreloaded[BelongsTo<Parent, RelatedModel>],
     );
   }

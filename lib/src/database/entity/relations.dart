@@ -14,9 +14,9 @@ abstract class EntityRelation<Parent extends Entity<Parent>, RelatedModel extend
 
   DriverContract get _driver => parent._driver;
 
-  bool _usingEntityCache = false;
-
-  bool get isUsingEntityCache => _usingEntityCache;
+  /// This holds preloaded values from `withRelation`
+  dynamic get value =>
+      throw StateError('No preloaded data for this relation. Did you forget to call `withRelations` ?');
 
   get({bool refresh = false});
 
@@ -49,9 +49,10 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
 
   ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, parentId));
 
-  List<RelatedModel> get result {
+  @override
+  List<RelatedModel> get value {
     if (_cache == null) {
-      throw StateError('No preloaded data for this relation. Did you forget to call `withRelations` ?');
+      return super.value;
     } else if (_cache!.isEmpty) {
       return <RelatedModel>[];
     }
@@ -73,12 +74,10 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
     List<OrderBy<RelatedModel>>? orderBy,
     bool refresh = false,
   }) async {
-    if (_cache != null) {
-      _usingEntityCache = true;
-      return result;
+    if (_cache != null && !refresh) {
+      return value;
     }
 
-    _usingEntityCache = false;
     return $readQuery.findMany(
       limit: limit,
       offset: offset,
@@ -96,17 +95,26 @@ final class BelongsTo<Parent extends Entity<Parent>, RelatedModel extends Entity
     extends EntityRelation<Parent, RelatedModel> {
   final Map<String, dynamic>? _cache;
   final String foreignKey;
-  final dynamic value;
+  final dynamic foreignKeyValue;
 
-  BelongsTo._(this.foreignKey, super.parent, this.value, this._cache);
+  BelongsTo._(
+    this.foreignKey,
+    this.foreignKeyValue,
+    super.parent,
+    this._cache,
+  );
 
   ReadQuery<RelatedModel> get _readQuery {
-    return Query.table<RelatedModel>().driver(_driver).where((q) => q.$equal(foreignKey, value));
+    return Query.table<RelatedModel>().driver(_driver).where((q) => q.$equal(
+          foreignKey,
+          foreignKeyValue,
+        ));
   }
 
-  RelatedModel? get result {
+  @override
+  RelatedModel? get value {
     if (_cache == null) {
-      throw StateError('No preloaded data for this relation. Did you forget to call `withRelations` ?');
+      return super.value;
     } else if (_cache!.isEmpty) {
       return null;
     }
@@ -121,11 +129,8 @@ final class BelongsTo<Parent extends Entity<Parent>, RelatedModel extends Entity
   @override
   FutureOr<RelatedModel?> get({bool refresh = false}) async {
     if (_cache != null && !refresh) {
-      _usingEntityCache = true;
-      return result;
+      return value;
     }
-
-    _usingEntityCache = false;
     return _readQuery.findOne();
   }
 

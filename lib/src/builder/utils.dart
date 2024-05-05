@@ -159,6 +159,7 @@ typedef FieldElementAndReader = ({FieldElement field, ConstantReader reader});
 
 final class ParsedEntityClass {
   final ClassElement element;
+  final ConstructorElement constructor;
 
   final String table;
   final String className;
@@ -167,7 +168,8 @@ final class ParsedEntityClass {
 
   final List<FieldElement> getters;
 
-  final FieldElementAndReader? primaryKey, createdAtField, updatedAtField;
+  final FieldElementAndReader primaryKey;
+  final FieldElementAndReader? createdAtField, updatedAtField;
 
   List<FieldElementAndReader> get referencedFields => _getFieldsAndReaders(normalFields, entity.reference);
 
@@ -185,6 +187,8 @@ final class ParsedEntityClass {
     return primaryKey!.reader.peek('autoIncrement')!.boolValue;
   }
 
+  bool get timestampsEnabled => (createdAtField ?? updatedAtField) != null;
+
   List<FieldElement> get fieldsRequiredForCreate => [
         if (!hasAutoIncrementingPrimaryKey) primaryKey!.field,
         ...normalFields,
@@ -194,7 +198,8 @@ final class ParsedEntityClass {
     this.table,
     this.className,
     this.element, {
-    this.primaryKey,
+    required this.primaryKey,
+    required this.constructor,
     this.createdAtField,
     this.updatedAtField,
     required this.allFields,
@@ -202,19 +207,32 @@ final class ParsedEntityClass {
   });
 
   factory ParsedEntityClass.parse(ClassElement element, {ConstantReader? reader}) {
+    final className = element.name;
     final tableName = getTableName(element);
     final fields = element.fields.where(_allowedTypes).toList();
     final primaryKey = _getFieldAnnotationByType(fields, entity.PrimaryKey);
     final createdAt = _getFieldAnnotationByType(fields, entity.CreatedAtColumn);
     final updatedAt = _getFieldAnnotationByType(fields, entity.UpdatedAtColumn);
 
+    // Check should have primary key
+    if (primaryKey == null) {
+      throw Exception("${element.name} Entity doesn't have primary key");
+    }
+
+    // Validate un-named class constructor
+    final primaryConstructor = element.constructors.firstWhereOrNull((e) => e.name == "");
+    if (primaryConstructor == null) {
+      throw '$className Entity does not have a default constructor';
+    }
+
     return ParsedEntityClass(
       tableName,
-      element.name,
+      className,
       element,
       allFields: fields,
       getters: element.fields.where((e) => e.getter?.isSynthetic == false).toList(),
       primaryKey: primaryKey,
+      constructor: primaryConstructor,
       createdAtField: createdAt,
       updatedAtField: updatedAt,
     );
