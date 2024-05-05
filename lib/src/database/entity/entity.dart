@@ -68,6 +68,7 @@ abstract class Entity<Parent extends Entity<Parent>> {
     );
   }
 
+  @protected
   HasOne<Parent, RelatedModel> hasOne<RelatedModel extends Entity<RelatedModel>>() {
     final relatedPrimaryKey = Query.getEntity<RelatedModel>().primaryKey.columnName;
     final typeData = Query.getEntity<Parent>();
