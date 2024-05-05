@@ -245,6 +245,7 @@ return switch(field) {
           ..methods.addAll([
             _generateFieldWhereClause(primaryKey.field, className),
             ...normalFields.map((e) => _generateFieldWhereClause(e, className)),
+            ..._generateWhereClauseForRelations(parsedEntity),
           ])),
 
         /// Generate Extension for HasMany creations
@@ -426,6 +427,29 @@ return switch(field) {
           ..body = Code('\$equal<$fieldType>("$dbColumnName", value)');
       },
     );
+  }
+
+  List<Method> _generateWhereClauseForRelations(ParsedEntityClass parsed) {
+    final result = <Method>[];
+
+    for (final (field) in [...parsed.hasManyGetters, ...parsed.belongsToGetters]) {
+      final hasMany = field.getter!.returnType as InterfaceType;
+      final referencedClass = hasMany.typeArguments.last.element as ClassElement;
+      final parsedReferenceClass = ParsedEntityClass.parse(referencedClass);
+
+      final returnType = 'WhereClauseBuilder<${referencedClass.name}>';
+
+      result.add(
+        Method((m) => m
+          ..name = field.name
+          ..lambda = true
+          ..type = MethodType.getter
+          ..returns = refer(returnType)
+          ..body = Code('$returnType(table: "${parsedReferenceClass.table}")')),
+      );
+    }
+
+    return result;
   }
 
   /// This generates GetByProperty for a field

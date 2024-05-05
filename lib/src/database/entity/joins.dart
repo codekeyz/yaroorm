@@ -14,7 +14,7 @@ class Join<Parent extends Entity<Parent>, Reference extends Entity<Reference>,
 
   /// This is the key that will be used to store the result of this
   /// of this relation in [Entity] relations cache.
-  final String key;
+  final Type key;
 
   Iterable<String> get aliasedForeignSelections =>
       Query.getEntity<Reference>().columns.map((e) => '$onTable.${e.columnName} as "$resultKey.${e.columnName}"');
@@ -23,7 +23,7 @@ class Join<Parent extends Entity<Parent>, Reference extends Entity<Reference>,
     this.resultKey, {
     required this.origin,
     required this.on,
-  }) : key = '$Relationship#$resultKey';
+  }) : key = Relationship;
 }
 
 typedef Entry<T extends Entity<T>> = (Symbol symbol, String columnName);

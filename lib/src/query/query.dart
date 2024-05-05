@@ -138,7 +138,7 @@ final class Query<T extends Entity<T>>
   }
 
   ReadQuery<T> where(WhereBuilder<T> builder) {
-    final whereClause = builder.call(WhereClauseBuilder<T>._());
+    final whereClause = builder.call(WhereClauseBuilder<T>());
     return ReadQuery<T>._(this, whereClause: whereClause);
   }
 
@@ -193,7 +193,7 @@ final class Query<T extends Entity<T>>
     int? limit,
     int? offset,
   }) async {
-    final whereClause = where?.call(WhereClauseBuilder<T>._());
+    final whereClause = where?.call(WhereClauseBuilder<T>());
     final readQ = ReadQuery._(
       this,
       limit: limit,
@@ -201,6 +201,7 @@ final class Query<T extends Entity<T>>
       whereClause: whereClause,
       orderByProps: orderBy?.toSet(),
       joins: _joins,
+      groupBys: [entity.primaryKey.columnName],
     );
 
     final results = await runner.query(readQ);
@@ -210,7 +211,7 @@ final class Query<T extends Entity<T>>
 
   @override
   Future<T?> findOne({WhereBuilder<T>? where}) async {
-    final whereClause = where?.call(WhereClauseBuilder<T>._());
+    final whereClause = where?.call(WhereClauseBuilder<T>());
     final readQ = ReadQuery._(this, limit: 1, whereClause: whereClause, joins: _joins);
     final results = await runner.query(readQ);
     if (results.isEmpty) return null;
@@ -223,7 +224,7 @@ final class Query<T extends Entity<T>>
     required UpdateEntity<T> update,
   }) {
     final values = update.toMap;
-    final whereClause = where.call(WhereClauseBuilder<T>._());
+    final whereClause = where.call(WhereClauseBuilder<T>());
 
     if (entity.timestampsEnabled) {
       final now = DateTime.now();
@@ -244,7 +245,7 @@ final class Query<T extends Entity<T>>
 
   /// [T] is the expected type passed to [Query] via Query<T>
   T _wrapRawResult(Map<String, dynamic> result) {
-    final Map<String, Map<String, dynamic>> joinResults = {};
+    final Map<Type, Map<String, dynamic>> joinResults = {};
     for (final join in _joins) {
       final entries = result.entries
           .where((e) => e.key.startsWith('${join.resultKey}.'))
@@ -332,6 +333,7 @@ final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with Agg
   final WhereClause? whereClause;
   final List<Join> joins;
   final int? limit, offset;
+  final List<String> groupBys;
 
   ReadQuery._(
     Query<T> query, {
@@ -339,6 +341,7 @@ final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with Agg
     this.orderByProps,
     this.fieldSelections = const {},
     this.joins = const [],
+    this.groupBys = const [],
     this.limit,
     this.offset,
   }) : super(query);

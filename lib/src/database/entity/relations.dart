@@ -49,6 +49,23 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
 
   ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, parentId));
 
+  List<RelatedModel> get result {
+    if (_cache == null) {
+      throw StateError('No preloaded data for this relation. Did you forget to call `withRelations` ?');
+    } else if (_cache!.isEmpty) {
+      return <RelatedModel>[];
+    }
+
+    final typeData = Query.getEntity<RelatedModel>();
+    return _cache!
+        .map((data) => serializedPropsToEntity<RelatedModel>(
+              data,
+              typeData,
+              combineConverters(typeData.converters, _driver.typeconverters),
+            ))
+        .toList();
+  }
+
   @override
   FutureOr<List<RelatedModel>> get({
     int? limit,
@@ -58,16 +75,7 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
   }) async {
     if (_cache != null) {
       _usingEntityCache = true;
-      if (_cache!.isEmpty) return <RelatedModel>[];
-
-      final typeData = Query.getEntity<RelatedModel>();
-      return _cache!
-          .map((data) => serializedPropsToEntity<RelatedModel>(
-                data,
-                typeData,
-                combineConverters(typeData.converters, _driver.typeconverters),
-              ))
-          .toList();
+      return result;
     }
 
     _usingEntityCache = false;
@@ -96,18 +104,25 @@ final class BelongsTo<Parent extends Entity<Parent>, RelatedModel extends Entity
     return Query.table<RelatedModel>().driver(_driver).where((q) => q.$equal(foreignKey, value));
   }
 
+  RelatedModel? get result {
+    if (_cache == null) {
+      throw StateError('No preloaded data for this relation. Did you forget to call `withRelations` ?');
+    } else if (_cache!.isEmpty) {
+      return null;
+    }
+    final typeData = Query.getEntity<RelatedModel>();
+    return serializedPropsToEntity<RelatedModel>(
+      _cache!,
+      typeData,
+      combineConverters(typeData.converters, _driver.typeconverters),
+    );
+  }
+
   @override
   FutureOr<RelatedModel?> get({bool refresh = false}) async {
     if (_cache != null && !refresh) {
       _usingEntityCache = true;
-      if (_cache!.isEmpty) return null;
-
-      final typeData = Query.getEntity<RelatedModel>();
-      return serializedPropsToEntity<RelatedModel>(
-        _cache!,
-        typeData,
-        combineConverters(typeData.converters, _driver.typeconverters),
-      );
+      return result;
     }
 
     _usingEntityCache = false;

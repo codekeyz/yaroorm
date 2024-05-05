@@ -228,6 +228,11 @@ class SqliteSerializer extends PrimitiveSerializer {
       queryBuilder.write(' WHERE ${acceptWhereClause(whereClause)}');
     }
 
+    /// GROUP BY
+    // if (query.groupBys.isNotEmpty) {
+    //   queryBuilder.write(' GROUP BY ${query.groupBys.map((e) => '$tableName.$e')}');
+    // }
+
     /// ORDER BY
     final orderBys = query.orderByProps ?? {};
     if (orderBys.isNotEmpty) {
@@ -355,7 +360,9 @@ class SqliteSerializer extends PrimitiveSerializer {
 
   @override
   String acceptWhereClauseValue(WhereClauseValue clauseValue) {
-    final field = escapeStr(clauseValue.field);
+    final tableName = clauseValue.table;
+    final field = tableName == null ? escapeStr(clauseValue.field) : '$tableName.${escapeStr(clauseValue.field)}';
+
     final value = clauseValue.value;
     final valueOperator = clauseValue.operator;
     final wrapped = acceptPrimitiveValue(value);

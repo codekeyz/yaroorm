@@ -32,11 +32,7 @@ final class DBEntity<T extends Entity<T>> {
 
   final bool timestampsEnabled;
 
-  static PrimaryKeyField? _primaryKeyCache;
-  PrimaryKeyField get primaryKey {
-    if (_primaryKeyCache != null) return _primaryKeyCache!;
-    return _primaryKeyCache = columns.firstWhereOrNull((e) => e is PrimaryKeyField) as PrimaryKeyField;
-  }
+  PrimaryKeyField get primaryKey => columns.firstWhereOrNull((e) => e is PrimaryKeyField) as PrimaryKeyField;
 
   CreatedAtField? get createdAtField =>
       !timestampsEnabled ? null : columns.firstWhereOrNull((e) => e is CreatedAtField) as CreatedAtField?;
