@@ -67,7 +67,6 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
 
     final autoIncrementPrimaryKey = primaryKey.reader.peek('autoIncrement')!.boolValue;
     final timestampsEnabled = (createdAtField ?? updatedAtField) != null;
-    final creatableFields = parsedEntity.fieldsRequiredForCreate;
 
     String generateCodeForField(FieldElement e) {
       final symbol = '#${e.name}';
@@ -104,20 +103,28 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
           final onDelete = metaReader.peek('onDelete')?.objectValue.variable!.name;
 
           final customPassedReferenceSymbol = metaReader.peek('field')?.symbolValue;
-
           late FieldElement referenceField;
           if (customPassedReferenceSymbol != null) {
             final foundField =
                 parsedClass.allFields.firstWhereOrNull((e) => Symbol(e.name) == customPassedReferenceSymbol);
             if (foundField == null) {
               throw InvalidGenerationSourceError(
-                'Referenced Symbol `$customPassedReferenceSymbol` does not exist on `${element.name}` class.',
+                'Referenced field `$customPassedReferenceSymbol` does not exist on `${element.name}` class.',
                 element: e,
               );
             }
             referenceField = foundField;
           } else {
             referenceField = parsedClass.primaryKey!.field;
+          }
+
+          if (referenceField.type != e.type) {
+            throw InvalidGenerationSourceError(
+              'Type-mismatch between referenced field '
+              '`$className.${e.name}` (${e.type.getDisplayString(withNullability: true)}) and '
+              '`${element.name}.${referenceField.name}` (${referenceField.type.getDisplayString(withNullability: true)})',
+              element: e,
+            );
           }
 
           return '''DBEntityField.referenced<${element.name}>(
