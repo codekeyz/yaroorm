@@ -25,11 +25,16 @@ abstract class EntityRelation<Parent extends Entity<Parent>, RelatedModel extend
 
 final class HasOne<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>>
     extends EntityRelation<Parent, RelatedModel> {
-  final String foreignKey;
+  final String relatedModelPrimaryKey;
+  final dynamic relatedModelValue;
 
-  HasOne._(this.foreignKey, super._owner);
+  HasOne._(
+    this.relatedModelPrimaryKey,
+    this.relatedModelValue,
+    super._owner,
+  );
 
-  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, parentId));
+  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(relatedModelPrimaryKey, relatedModelValue));
 
   @override
   FutureOr<RelatedModel?> get({bool refresh = false}) => $readQuery.findOne();
