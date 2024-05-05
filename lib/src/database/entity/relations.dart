@@ -59,7 +59,7 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
 
     final typeData = Query.getEntity<RelatedModel>();
     return _cache!
-        .map((data) => serializedPropsToEntity<RelatedModel>(
+        .map((data) => dbDataToEntity<RelatedModel>(
               data,
               typeData,
               combineConverters(typeData.converters, _driver.typeconverters),
@@ -119,7 +119,7 @@ final class BelongsTo<Parent extends Entity<Parent>, RelatedModel extends Entity
       return null;
     }
     final typeData = Query.getEntity<RelatedModel>();
-    return serializedPropsToEntity<RelatedModel>(
+    return dbDataToEntity<RelatedModel>(
       _cache!,
       typeData,
       combineConverters(typeData.converters, _driver.typeconverters),

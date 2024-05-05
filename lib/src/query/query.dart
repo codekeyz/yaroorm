@@ -257,7 +257,7 @@ final class Query<T extends Entity<T>>
       }
     }
 
-    return serializedPropsToEntity<T>(
+    return dbDataToEntity<T>(
       result,
       entity,
       converters,

@@ -99,7 +99,7 @@ UnmodifiableMapView<String, dynamic> entityMapToDbData<T extends Entity<T>>(
 }
 
 @internal
-Model serializedPropsToEntity<Model extends Entity<Model>>(
+Model dbDataToEntity<Model extends Entity<Model>>(
   Map<String, dynamic> dataFromDb,
   DBEntity<Model> entity,
   Map<Type, EntityTypeConverter> converters,
