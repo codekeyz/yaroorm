@@ -180,17 +180,22 @@ final class ParsedEntityClass {
       getters.where((getter) => typeChecker(entity.BelongsTo).isExactlyType(getter.type)).toList();
 
   /// All other properties aside primarykey, updatedAt and createdAt.
-  List<FieldElement> get normalFields =>
-      allFields.where((e) => ![createdAtField?.field, updatedAtField?.field, primaryKey!.field].contains(e)).toList();
+  List<FieldElement> get normalFields => allFields
+      .where((e) => ![
+            primaryKey.field,
+            createdAtField?.field,
+            updatedAtField?.field,
+          ].contains(e))
+      .toList();
 
   bool get hasAutoIncrementingPrimaryKey {
-    return primaryKey!.reader.peek('autoIncrement')!.boolValue;
+    return primaryKey.reader.peek('autoIncrement')!.boolValue;
   }
 
   bool get timestampsEnabled => (createdAtField ?? updatedAtField) != null;
 
   List<FieldElement> get fieldsRequiredForCreate => [
-        if (!hasAutoIncrementingPrimaryKey) primaryKey!.field,
+        if (!hasAutoIncrementingPrimaryKey) primaryKey.field,
         ...normalFields,
       ];
 
