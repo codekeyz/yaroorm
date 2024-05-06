@@ -185,30 +185,47 @@ return switch(field) {
               final relatedEntityCreateFields =
                   parsedRelatedEntity.fieldsRequiredForCreate.where((field) => field != referenceField);
 
-              return Extension((b) => b
-                    ..name = '${className}HasMany${relatedClassName}Extension'
-                    ..on = refer('HasMany<$className, $relatedClassName>')
-                  //   ..methods.addAll([
-                  //     Method(
-                  //       (m) => m
-                  //         ..name = 'add'
-                  //         ..returns = refer('Future<$relatedClassName>')
-                  //         ..optionalParameters.addAll(relatedEntityCreateFields.map(
-                  //           (field) => Parameter((p) => p
-                  //             ..name = field.name
-                  //             ..named = true
-                  //             ..type = refer('${field.type}')
-                  //             ..required = !field.type.isNullable),
-                  //         ))
-                  //         ..body = Code('''return  \$readQuery.\$query.\$insert({
-                  //       ${[
-                  //           ...relatedEntityCreateFields.map((e) => '#${e.name}: ${e.name}'),
-                  //           '#${referenceField.name}: parentId'
-                  //         ].join(',')}
-                  // });'''),
-                  //     ),
-                  //   ]),
-                  );
+              return Class((b) => b
+                ..name = 'New${relatedClass.name}For$className'
+                ..extend = refer('CreateRelatedEntity<$className, ${relatedClass.name}>')
+                ..fields.addAll(relatedEntityCreateFields.map(
+                  (f) => Field((fb) => fb
+                    ..name = f.name
+                    ..type = refer(f.type.getDisplayString(withNullability: true))
+                    ..modifier = FieldModifier.final$),
+                ))
+                ..constructors.add(
+                  Constructor(
+                    (c) => c
+                      ..constant = true
+                      ..optionalParameters.addAll(relatedEntityCreateFields.map(
+                        (field) => Parameter((p) => p
+                          ..required = true
+                          ..named = true
+                          ..name = field.name
+                          ..toThis = true),
+                      )),
+                  ),
+                )
+                ..methods.addAll([
+                  Method((m) => m
+                    ..name = 'field'
+                    ..returns = refer('Symbol')
+                    ..type = MethodType.getter
+                    ..type = MethodType.getter
+                    ..annotations.add(CodeExpression(Code('override')))
+                    ..lambda = true
+                    ..body = Code('#${referenceField.name}')),
+                  Method(
+                    (m) => m
+                      ..name = 'toMap'
+                      ..returns = refer('Map<Symbol, dynamic>')
+                      ..type = MethodType.getter
+                      ..annotations.add(CodeExpression(Code('override')))
+                      ..lambda = true
+                      ..body = Code('{ ${relatedEntityCreateFields.map((e) => '#${e.name} : ${e.name}').join(', ')} }'),
+                  ),
+                ]));
             },
           )
         ],

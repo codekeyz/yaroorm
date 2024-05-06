@@ -23,6 +23,15 @@ abstract class UpdateEntity<T extends Entity<T>> {
   Map<Symbol, dynamic> get toMap;
 }
 
+abstract class CreateRelatedEntity<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>> {
+  const CreateRelatedEntity();
+
+  Symbol get field;
+
+  @internal
+  Map<Symbol, dynamic> get toMap;
+}
+
 mixin ReadOperation<Result extends Entity<Result>> {
   Future<Result?> findOne({
     WhereBuilder<Result>? where,

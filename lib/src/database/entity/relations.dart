@@ -94,6 +94,23 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
 
   @override
   Future<void> delete() => $readQuery.delete();
+
+  Future<RelatedModel> insert(CreateRelatedEntity<Parent, RelatedModel> related) async {
+    final data = _CreateEntity<RelatedModel>({...related.toMap, related.field: parentId});
+    return $readQuery.$query.insert(data);
+  }
+
+  Future<void> insertMany(List<CreateRelatedEntity<Parent, RelatedModel>> related) async {
+    final data = related.map((e) => _CreateEntity<RelatedModel>({...e.toMap, e.field: parentId})).toList();
+    return $readQuery.$query.insertMany(data);
+  }
+}
+
+class _CreateEntity<T extends Entity<T>> extends CreateEntity<T> {
+  final Map<Symbol, dynamic> _data;
+  const _CreateEntity(this._data);
+  @override
+  Map<Symbol, dynamic> get toMap => _data;
 }
 
 final class BelongsTo<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>>
