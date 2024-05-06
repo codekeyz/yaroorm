@@ -92,9 +92,7 @@ final class MySqlDriver implements DatabaseDriver {
 
   @override
   Future<void> insertMany(InsertManyQuery query) async {
-    // for (final value in query.values) {
-    //   await insert(InsertQuery(query.tableName, data: value));
-    // }
+    return await _dbConnection.transactional((conn) => _MysqlTransactor(conn, type).insertMany(query));
   }
 
   @override
@@ -165,9 +163,10 @@ class _MysqlTransactor extends DriverTransactor {
 
   @override
   Future<void> insertMany(InsertManyQuery query) async {
-    // for (final value in query.values) {
-    //   await insert(InsertQuery(query.tableName, data: value));
-    // }
+    final sql = _serializer.acceptInsertManyQuery(query);
+    for (final value in query.values) {
+      await _dbConn.execute(sql, value);
+    }
   }
 
   @override
@@ -365,6 +364,13 @@ class MySqlPrimitiveSerializer extends SqliteSerializer {
   @override
   String acceptInsertQuery(InsertQuery query) {
     final keys = query.data.keys;
+    final parameters = keys.map((e) => ':$e').join(', ');
+    return 'INSERT INTO ${query.tableName} (${keys.join(', ')}) VALUES ($parameters)$terminator';
+  }
+
+  @override
+  String acceptInsertManyQuery(InsertManyQuery query) {
+    final keys = query.values.first.keys;
     final parameters = keys.map((e) => ':$e').join(', ');
     return 'INSERT INTO ${query.tableName} (${keys.join(', ')}) VALUES ($parameters)$terminator';
   }
