@@ -12,11 +12,11 @@ topics:
   - sqlite
 
 environment:
-  sdk: ^3.0.0
+  sdk: ^3.2.0
 
 dependencies:
-  sqflite_common_ffi: 2.3.0+4
-  sqflite_common: 2.5.3
+  sqflite_common_ffi: ^2.3.3
+  sqflite_common: ^2.5.4
   mysql_client: ^0.0.27
   postgres: ^3.2.0
 
@@ -26,7 +26,7 @@ dependencies:
   collection: ^1.18.0
 
   # Code-Gen
-  analyzer: '>=5.13.0 <7.0.0'
+  analyzer: ^6.4.1
   code_builder: ^4.10.0
   source_gen: ^1.5.0
   dart_style: ^2.3.0
