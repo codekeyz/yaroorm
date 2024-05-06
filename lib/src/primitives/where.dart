@@ -127,51 +127,76 @@ class WhereClauseBuilder<T extends Entity<T>> with WhereOperation {
 
   @override
   WhereClauseValue<V> $equal<V>(String field, V value) {
+    _ensureHasField(field);
     return WhereClauseValue<V>._(field, Operator.EQUAL, value, table: table);
   }
 
   @override
   WhereClauseValue $notEqual<V>(String field, V value) {
+    _ensureHasField(field);
     return WhereClauseValue._(field, Operator.NOT_EQUAL, value, table: table);
   }
 
   @override
   WhereClauseValue<List<V>> $isIn<V>(String field, List<V> values) {
+    _ensureHasField(field);
     return WhereClauseValue._(field, Operator.IN, values, table: table);
   }
 
   @override
   WhereClauseValue<List<V>> $isNotIn<V>(String field, List<V> values) {
+    _ensureHasField(field);
     return WhereClauseValue._(field, Operator.NOT_IN, values, table: table);
   }
 
   @override
   WhereClauseValue $isLike(String field, String pattern) {
+    _ensureHasField(field);
     return WhereClauseValue._(field, Operator.LIKE, pattern, table: table);
   }
 
   @override
   WhereClauseValue $isNotLike(String field, String pattern) {
+    _ensureHasField(field);
     return WhereClauseValue._(field, Operator.NOT_LIKE, pattern, table: table);
   }
 
   @override
   WhereClauseValue $isNull(String field) {
+    _ensureHasField(field);
     return WhereClauseValue._(field, Operator.NULL, null, table: table);
   }
 
   @override
   WhereClauseValue $isNotNull(String field) {
+    _ensureHasField(field);
     return WhereClauseValue._(field, Operator.NOT_NULL, null, table: table);
   }
 
   @override
   WhereClauseValue<List<V>> $isBetween<V>(String field, List<V> values) {
+    _ensureHasField(field);
     return WhereClauseValue._(field, Operator.BETWEEN, values, table: table);
   }
 
   @override
   WhereClauseValue<List<V>> $isNotBetween<V>(String field, List<V> values) {
-    return WhereClauseValue._(field, Operator.NOT_BETWEEN, values, table: table);
+    _ensureHasField(field);
+    return WhereClauseValue._(
+      field,
+      Operator.NOT_BETWEEN,
+      values,
+      table: table,
+    );
+  }
+
+  void _ensureHasField(String field) {
+    final typeData = Query.getEntity<T>();
+    final hasField = typeData.columns.any((e) => e.columnName == field);
+    if (!hasField) {
+      throw ArgumentError(
+        'Field `${typeData.tableName}.$field` not found on $T Entity. Did you mis-spell it ?',
+      );
+    }
   }
 }
