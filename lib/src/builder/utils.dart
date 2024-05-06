@@ -166,27 +166,22 @@ final class ParsedEntityClass {
 
   final List<FieldElement> allFields;
 
+  /// {current_field_in_class : external entity being referenced and field}
+  final Map<Symbol, ({ParsedEntityClass entity, Symbol field})> bindings;
+
   final List<FieldElement> getters;
+
+  /// All other properties aside primarykey, updatedAt and createdAt.
+  final List<FieldElement> normalFields;
 
   final FieldElementAndReader primaryKey;
   final FieldElementAndReader? createdAtField, updatedAtField;
-
-  List<FieldElementAndReader> get referencedFields => _getFieldsAndReaders(normalFields, entity.reference);
 
   List<FieldElement> get hasManyGetters =>
       getters.where((getter) => typeChecker(entity.HasMany).isExactlyType(getter.type)).toList();
 
   List<FieldElement> get belongsToGetters =>
       getters.where((getter) => typeChecker(entity.BelongsTo).isExactlyType(getter.type)).toList();
-
-  /// All other properties aside primarykey, updatedAt and createdAt.
-  List<FieldElement> get normalFields => allFields
-      .where((e) => ![
-            primaryKey.field,
-            createdAtField?.field,
-            updatedAtField?.field,
-          ].contains(e))
-      .toList();
 
   bool get hasAutoIncrementingPrimaryKey {
     return primaryKey.reader.peek('autoIncrement')!.boolValue;
@@ -205,6 +200,8 @@ final class ParsedEntityClass {
     this.element, {
     required this.primaryKey,
     required this.constructor,
+    required this.normalFields,
+    this.bindings = const {},
     this.createdAtField,
     this.updatedAtField,
     required this.allFields,
@@ -227,7 +224,47 @@ final class ParsedEntityClass {
     // Validate un-named class constructor
     final primaryConstructor = element.constructors.firstWhereOrNull((e) => e.name == "");
     if (primaryConstructor == null) {
-      throw '$className Entity does not have a default constructor';
+      throw InvalidGenerationSource(
+        '$className Entity does not have a default constructor',
+        element: element,
+      );
+    }
+
+    final fieldNames = fields.map((e) => e.name);
+    final notAllowedProps = primaryConstructor.children.where((e) => !fieldNames.contains(e.name));
+    if (notAllowedProps.isNotEmpty) {
+      throw InvalidGenerationSource(
+        'These props are not allowed in $className Entity default constructor: ${notAllowedProps.join(', ')}',
+        element: notAllowedProps.first,
+      );
+    }
+
+    final normalFields =
+        fields.where((e) => ![primaryKey.field, createdAt?.field, updatedAt?.field].contains(e)).toList();
+
+    final fieldsWithBindings = _getFieldsAndReaders(normalFields, entity.bindTo);
+
+    final Map<Symbol, ({ParsedEntityClass entity, Symbol field})> bindings = {};
+
+    for (final field in fieldsWithBindings) {
+      final relatedClass = field.reader.peek('type')!.typeValue.element as ClassElement;
+      final parsedRelatedClass = ParsedEntityClass.parse(relatedClass);
+
+      /// Check the field we're binding onto. If provided, validate that if exists
+      /// if not, use the related class primary key
+      Symbol? fieldToBind = field.reader.peek('on')?.symbolValue;
+      if (fieldToBind != null) {
+        if (parsedRelatedClass.allFields.any((e) => Symbol(e.name) != fieldToBind)) {
+          throw InvalidGenerationSource(
+            'Field $fieldToBind used in Binding does not exist on ${parsedRelatedClass.className} Entity',
+            element: field.field,
+          );
+        }
+      } else {
+        fieldToBind = Symbol(parsedRelatedClass.primaryKey.field.name);
+      }
+
+      bindings[Symbol(field.field.name)] = (entity: parsedRelatedClass, field: fieldToBind);
     }
 
     return ParsedEntityClass(
@@ -235,6 +272,8 @@ final class ParsedEntityClass {
       className,
       element,
       allFields: fields,
+      bindings: bindings,
+      normalFields: normalFields,
       getters: element.fields.where((e) => e.getter?.isSynthetic == false).toList(),
       primaryKey: primaryKey,
       constructor: primaryConstructor,

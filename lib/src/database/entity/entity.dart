@@ -134,13 +134,13 @@ class UpdatedAtColumn extends TableColumn {
 }
 
 /// Use this to reference other entities
-class reference extends TableColumn {
+class bindTo {
   final Type type;
-  final Symbol? field;
+  final Symbol? on;
 
   final ForeignKeyAction? onUpdate, onDelete;
 
-  const reference(this.type, {this.field, super.name, this.onUpdate, this.onDelete});
+  const bindTo(this.type, {this.on, this.onUpdate, this.onDelete});
 }
 
 const primaryKey = PrimaryKey();

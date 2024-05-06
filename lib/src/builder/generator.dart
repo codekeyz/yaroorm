@@ -45,14 +45,6 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
     final updatedAtField = parsedEntity.updatedAtField?.field;
     final primaryConstructor = parsedEntity.constructor;
 
-    final fieldNames = fields.map((e) => e.name);
-    final notAllowedProps = primaryConstructor.children.where((e) => !fieldNames.contains(e.name));
-    if (notAllowedProps.isNotEmpty) {
-      throw Exception(
-        'These props are not allowed in $className Entity default constructor: ${notAllowedProps.join(', ')}',
-      );
-    }
-
     final normalFields = parsedEntity.normalFields;
 
     final converters = annotation.peek('converters')!.listValue;
@@ -163,82 +155,82 @@ return switch(field) {
           ])),
 
         /// Generate Extension for HasMany creations
-        if (parsedEntity.hasManyGetters.isNotEmpty) ...[
-          ...parsedEntity.hasManyGetters.map(
-            (hasManyField) {
-              final hasManyClass = hasManyField.getter!.returnType as InterfaceType;
-              final relatedClass = hasManyClass.typeArguments.last.element as ClassElement;
-              final relatedClassName = relatedClass.name;
+        // if (parsedEntity.hasManyGetters.isNotEmpty) ...[
+        //   ...parsedEntity.hasManyGetters.map(
+        //     (hasManyField) {
+        //       final hasManyClass = hasManyField.getter!.returnType as InterfaceType;
+        //       final relatedClass = hasManyClass.typeArguments.last.element as ClassElement;
+        //       final relatedClassName = relatedClass.name;
 
-              final parsedRelatedEntity = ParsedEntityClass.parse(relatedClass);
-              final referenceField = parsedRelatedEntity.referencedFields
-                  .firstWhereOrNull((e) => e.reader.peek('type')!.typeValue.element!.name == className)
-                  ?.field;
-              if (referenceField == null) {
-                throw InvalidGenerationSourceError(
-                  'No reference field found for $className in $relatedClassName',
-                  element: relatedClass,
-                  todo: 'Did you forget to annotate with `@reference`',
-                );
-              }
+        //       final parsedRelatedEntity = ParsedEntityClass.parse(relatedClass);
+        //       final referenceField = parsedRelatedEntity.referencedFields
+        //           .firstWhereOrNull((e) => e.reader.peek('type')!.typeValue.element!.name == className)
+        //           ?.field;
+        //       if (referenceField == null) {
+        //         throw InvalidGenerationSourceError(
+        //           'No reference field found for $className in $relatedClassName',
+        //           element: relatedClass,
+        //           todo: 'Did you forget to annotate with `@reference`',
+        //         );
+        //       }
 
-              final relatedEntityCreateFields =
-                  parsedRelatedEntity.fieldsRequiredForCreate.where((field) => field != referenceField);
+        //       final relatedEntityCreateFields =
+        //           parsedRelatedEntity.fieldsRequiredForCreate.where((field) => field != referenceField);
 
-              return Class((b) => b
-                ..name = 'New${relatedClass.name}For$className'
-                ..extend = refer('CreateRelatedEntity<$className, ${relatedClass.name}>')
-                ..fields.addAll(relatedEntityCreateFields.map(
-                  (f) => Field((fb) => fb
-                    ..name = f.name
-                    ..type = refer(f.type.getDisplayString(withNullability: true))
-                    ..modifier = FieldModifier.final$),
-                ))
-                ..constructors.add(
-                  Constructor(
-                    (c) => c
-                      ..constant = true
-                      ..optionalParameters.addAll(relatedEntityCreateFields.map(
-                        (field) => Parameter((p) => p
-                          ..required = true
-                          ..named = true
-                          ..name = field.name
-                          ..toThis = true),
-                      )),
-                  ),
-                )
-                ..methods.addAll([
-                  Method((m) => m
-                    ..name = 'field'
-                    ..returns = refer('Symbol')
-                    ..type = MethodType.getter
-                    ..type = MethodType.getter
-                    ..annotations.add(CodeExpression(Code('override')))
-                    ..lambda = true
-                    ..body = Code('#${referenceField.name}')),
-                  Method(
-                    (m) => m
-                      ..name = 'toMap'
-                      ..returns = refer('Map<Symbol, dynamic>')
-                      ..type = MethodType.getter
-                      ..annotations.add(CodeExpression(Code('override')))
-                      ..lambda = true
-                      ..body = Code('{ ${relatedEntityCreateFields.map((e) => '#${e.name} : ${e.name}').join(', ')} }'),
-                  ),
-                ]));
-            },
-          )
-        ],
+        //       return Class((b) => b
+        //         ..name = 'New${relatedClass.name}For$className'
+        //         ..extend = refer('CreateRelatedEntity<$className, ${relatedClass.name}>')
+        //         ..fields.addAll(relatedEntityCreateFields.map(
+        //           (f) => Field((fb) => fb
+        //             ..name = f.name
+        //             ..type = refer(f.type.getDisplayString(withNullability: true))
+        //             ..modifier = FieldModifier.final$),
+        //         ))
+        //         ..constructors.add(
+        //           Constructor(
+        //             (c) => c
+        //               ..constant = true
+        //               ..optionalParameters.addAll(relatedEntityCreateFields.map(
+        //                 (field) => Parameter((p) => p
+        //                   ..required = true
+        //                   ..named = true
+        //                   ..name = field.name
+        //                   ..toThis = true),
+        //               )),
+        //           ),
+        //         )
+        //         ..methods.addAll([
+        //           Method((m) => m
+        //             ..name = 'field'
+        //             ..returns = refer('Symbol')
+        //             ..type = MethodType.getter
+        //             ..type = MethodType.getter
+        //             ..annotations.add(CodeExpression(Code('override')))
+        //             ..lambda = true
+        //             ..body = Code('#${referenceField.name}')),
+        //           Method(
+        //             (m) => m
+        //               ..name = 'toMap'
+        //               ..returns = refer('Map<Symbol, dynamic>')
+        //               ..type = MethodType.getter
+        //               ..annotations.add(CodeExpression(Code('override')))
+        //               ..lambda = true
+        //               ..body = Code('{ ${relatedEntityCreateFields.map((e) => '#${e.name} : ${e.name}').join(', ')} }'),
+        //           ),
+        //         ]));
+        //     },
+        //   )
+        // ],
 
         /// Generate Extension for loading relations
         Extension((b) => b
           ..name = '${className}RelationsBuilder'
           ..on = refer('JoinBuilder<$className>')
           ..methods.addAll([
-            if (parsedEntity.belongsToGetters.isNotEmpty)
-              ...parsedEntity.belongsToGetters.map((field) => _generateJoinForBelongsTo(parsedEntity, field.getter!)),
-            if (parsedEntity.hasManyGetters.isNotEmpty)
-              ...parsedEntity.hasManyGetters.map((field) => _generateJoinForHasMany(parsedEntity, field.getter!)),
+            // if (parsedEntity.belongsToGetters.isNotEmpty)
+            //   ...parsedEntity.belongsToGetters.map((field) => _generateJoinForBelongsTo(parsedEntity, field.getter!)),
+            // if (parsedEntity.hasManyGetters.isNotEmpty)
+            //   ...parsedEntity.hasManyGetters.map((field) => _generateJoinForHasMany(parsedEntity, field.getter!)),
           ])),
       ]));
 
@@ -440,7 +432,7 @@ return switch(field) {
 
     if (meta != null) {
       final metaReader = ConstantReader(meta);
-      final isReferenceField = typeChecker(entity.reference).isExactly(meta.type!.element!);
+      final isReferenceField = typeChecker(entity.bindTo).isExactly(meta.type!.element!);
 
       if (isReferenceField) {
         final referencedType = metaReader.peek('type')!.typeValue;
@@ -517,70 +509,70 @@ return switch(field) {
   }
 
   /// Generate JOIN for BelongsTo getters on Entity
-  Method _generateJoinForBelongsTo(
-    ParsedEntityClass parent,
-    PropertyAccessorElement getter,
-  ) {
-    final belongsToClass = getter.returnType as InterfaceType;
-    final getterName = getter.name;
-    final referencedClass = belongsToClass.typeArguments.last.element as ClassElement;
+  // Method _generateJoinForBelongsTo(
+  //   ParsedEntityClass parent,
+  //   PropertyAccessorElement getter,
+  // ) {
+  //   final belongsToClass = getter.returnType as InterfaceType;
+  //   final getterName = getter.name;
+  //   final referencedClass = belongsToClass.typeArguments.last.element as ClassElement;
 
-    // Field on :parent that establishes the relationship needed to make this work
-    final field = parent.referencedFields
-        .firstWhereOrNull((e) => e.reader.peek('type')!.typeValue.element!.name == referencedClass.name);
-    if (field == null) {
-      throw InvalidGenerationSourceError(
-        'No reference field found to establish :BELONGS_TO_${referencedClass.name} relation on ${parent.className}',
-        element: referencedClass,
-        todo: 'Did you forget to annotate with `@reference`',
-      );
-    }
+  //   // Field on :parent that establishes the relationship needed to make this work
+  //   final field = parent.referencedFields
+  //       .firstWhereOrNull((e) => e.reader.peek('type')!.typeValue.element!.name == referencedClass.name);
+  //   if (field == null) {
+  //     throw InvalidGenerationSourceError(
+  //       'No reference field found to establish :BELONGS_TO_${referencedClass.name} relation on ${parent.className}',
+  //       element: referencedClass,
+  //       todo: 'Did you forget to annotate with `@reference`',
+  //     );
+  //   }
 
-    // Get the column on the foreign table which we're latching onto
-    final parsedReferenceClass = ParsedEntityClass.parse(referencedClass);
-    final referenceColumn = parsedReferenceClass.allFields
-            .firstWhereOrNull((e) => Symbol(e.name) == field.reader.peek('field')?.symbolValue) ??
-        parsedReferenceClass.primaryKey.field;
+  //   // Get the column on the foreign table which we're latching onto
+  //   final parsedReferenceClass = ParsedEntityClass.parse(referencedClass);
+  //   final referenceColumn = parsedReferenceClass.allFields
+  //           .firstWhereOrNull((e) => Symbol(e.name) == field.reader.peek('field')?.symbolValue) ??
+  //       parsedReferenceClass.primaryKey.field;
 
-    final relationship = 'BelongsTo<${parent.className}, ${referencedClass.name}>';
-    final joinClass = 'Join<${parent.className}, ${referencedClass.name}, $relationship>';
-    return Method(
-      (m) => m
-        ..name = getterName
-        ..type = MethodType.getter
-        ..lambda = true
-        ..returns = refer(joinClass)
-        ..body = Code('''$joinClass("$getterName", 
-            origin: (#${field.field.name}, "${getFieldDbName(field.field)}"), 
-            on: (#${referenceColumn.name}, "${getFieldDbName(referenceColumn)}")
-          )'''),
-    );
-  }
+  //   final relationship = 'BelongsTo<${parent.className}, ${referencedClass.name}>';
+  //   final joinClass = 'Join<${parent.className}, ${referencedClass.name}, $relationship>';
+  //   return Method(
+  //     (m) => m
+  //       ..name = getterName
+  //       ..type = MethodType.getter
+  //       ..lambda = true
+  //       ..returns = refer(joinClass)
+  //       ..body = Code('''$joinClass("$getterName",
+  //           origin: (#${field.field.name}, "${getFieldDbName(field.field)}"),
+  //           on: (#${referenceColumn.name}, "${getFieldDbName(referenceColumn)}")
+  //         )'''),
+  //   );
+  // }
 
   /// Generate JOIN for HasMany getters on Entity
-  Method _generateJoinForHasMany(
-    ParsedEntityClass parent,
-    PropertyAccessorElement getter,
-  ) {
-    final hasMany = getter.returnType as InterfaceType;
-    final referencedClass = hasMany.typeArguments.last.element as ClassElement;
-    final parsedReferenceClass = ParsedEntityClass.parse(referencedClass);
+  // Method _generateJoinForHasMany(
+  //   ParsedEntityClass parent,
+  //   PropertyAccessorElement getter,
+  // ) {
+  //   final hasMany = getter.returnType as InterfaceType;
+  //   final referencedClass = hasMany.typeArguments.last.element as ClassElement;
+  //   final parsedReferenceClass = ParsedEntityClass.parse(referencedClass);
 
-    final referenceField = parsedReferenceClass.referencedFields
-        .firstWhere((e) => e.reader.peek('type')!.typeValue.element == parent.element);
+  //   final referenceField = parsedReferenceClass.referencedFields
+  //       .firstWhere((e) => e.reader.peek('type')!.typeValue.element == parent.element);
 
-    final relationship = 'HasMany<${parent.className}, ${referencedClass.name}>';
-    final joinClass = 'Join<${parent.className}, ${referencedClass.name}, $relationship>';
-    return Method(
-      (m) => m
-        ..name = getter.name
-        ..type = MethodType.getter
-        ..lambda = true
-        ..returns = refer(joinClass)
-        ..body = Code('''$joinClass("${getter.name}", 
-            origin: (#${parent.primaryKey.field.name}, "${getFieldDbName(parent.primaryKey.field)}"), 
-            on: (#${referenceField.field.name}, "${getFieldDbName(referenceField.field)}"),
-          )'''),
-    );
-  }
+  //   final relationship = 'HasMany<${parent.className}, ${referencedClass.name}>';
+  //   final joinClass = 'Join<${parent.className}, ${referencedClass.name}, $relationship>';
+  //   return Method(
+  //     (m) => m
+  //       ..name = getter.name
+  //       ..type = MethodType.getter
+  //       ..lambda = true
+  //       ..returns = refer(joinClass)
+  //       ..body = Code('''$joinClass("${getter.name}",
+  //           origin: (#${parent.primaryKey.field.name}, "${getFieldDbName(parent.primaryKey.field)}"),
+  //           on: (#${referenceField.field.name}, "${getFieldDbName(referenceField.field)}"),
+  //         )'''),
+  //   );
+  // }
 }
