@@ -58,12 +58,12 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
   List<RelatedModel> get value {
     if (_cache == null) {
       return super.value;
-    } else if (_cache!.isEmpty) {
+    } else if (_cache.isEmpty) {
       return <RelatedModel>[];
     }
 
     final typeData = Query.getEntity<RelatedModel>();
-    return _cache!
+    return _cache
         .map((data) => dbDataToEntity<RelatedModel>(
               data,
               typeData,
@@ -137,12 +137,12 @@ final class BelongsTo<Parent extends Entity<Parent>, RelatedModel extends Entity
   RelatedModel? get value {
     if (_cache == null) {
       return super.value;
-    } else if (_cache!.isEmpty) {
+    } else if (_cache.isEmpty) {
       return null;
     }
     final typeData = Query.getEntity<RelatedModel>();
     return dbDataToEntity<RelatedModel>(
-      _cache!,
+      _cache,
       typeData,
       combineConverters(typeData.converters, _driver.typeconverters),
     );

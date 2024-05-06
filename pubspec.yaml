@@ -12,7 +12,7 @@ topics:
   - sqlite
 
 environment:
-  sdk: ^3.2.0
+  sdk: ^3.3.1
 
 dependencies:
   sqflite_common_ffi: ^2.3.3
@@ -35,7 +35,7 @@ dependencies:
   # CLI
   mason_logger: ^0.2.11
   args: ^2.4.2
-  cli_completion: ^0.4.0
+  cli_completion: ^0.5.0
   path: ^1.9.0
   cli_table: ^1.0.2
 
