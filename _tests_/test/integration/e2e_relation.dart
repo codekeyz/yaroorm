@@ -30,21 +30,23 @@ void runRelationsE2ETest(String connectionName) {
       hasTables = await Future.wait(tableNames.map(driver.hasTable));
       expect(hasTables.every((e) => e), isTrue);
 
-      testUser1 = await UserQuery.driver(driver).create(
+      testUser1 = await UserQuery.driver(driver).insert(NewUser(
         firstname: 'Baba',
         lastname: 'Tunde',
         age: 29,
         homeAddress: 'Owerri, Nigeria',
-      );
+      ));
     });
 
     test('should add many posts for User', () async {
-      await testUser1.posts.add(title: 'Aoo bar 1', description: 'foo bar 4');
-      await testUser1.posts.add(title: 'Bee Moo 2', description: 'foo bar 5');
-      await testUser1.posts.add(title: 'Coo Kie 3', description: 'foo bar 6');
+      await testUser1.posts.insertMany([
+        NewPostForUser(title: 'Aoo bar 1', description: 'foo bar 4'),
+        NewPostForUser(title: 'Bee Moo 2', description: 'foo bar 5'),
+        NewPostForUser(title: 'Coo Kie 3', description: 'foo bar 6'),
+      ]);
 
       final posts = await testUser1.posts.get(
-        orderBy: [OrderPostBy.title(OrderDirection.desc)],
+        orderBy: [OrderPostBy.title(order: OrderDirection.desc)],
       );
       expect(posts, hasLength(3));
       expect(posts.map((e) => {'id': e.id, 'title': e.title, 'desc': e.description, 'userId': e.userId}), [
@@ -54,14 +56,14 @@ void runRelationsE2ETest(String connectionName) {
       ]);
     });
 
-    test('should fetch posts with owners', () async {
+    test('should fetch posts with owner', () async {
       final posts = await PostQuery.driver(driver).withRelations((post) => [post.owner]).findMany();
-      final post = posts.first;
 
-      final owner = await post.owner;
-      final result = await owner.get();
-      expect(owner.isUsingEntityCache, isTrue);
-      expect(result, isA<User>());
+      final owner = await posts.first.owner.value;
+      expect(
+        owner,
+        isA<User>().having((p0) => p0.firstname, 'has firstname', isNotNull),
+      );
     });
 
     test('should add comments for post', () async {
@@ -71,24 +73,32 @@ void runRelationsE2ETest(String connectionName) {
       var comments = await post!.comments.get();
       expect(comments, isEmpty);
 
-      await post.comments.add(comment: 'This post looks abit old');
-
-      comments = await post.comments.get();
-      expect(comments.map((c) => {'id': c.id, 'comment': c.comment, 'postId': c.postId}), [
-        {'id': 1, 'comment': 'This post looks abit old', 'postId': post.id}
+      await post.comments.insertMany([
+        NewPostCommentForPost(comment: 'This post looks abit old'),
+        NewPostCommentForPost(comment: 'oh, another comment'),
       ]);
 
-      await post.comments.add(comment: 'oh, another comment');
+      comments = await post.comments.get();
+      expect(
+          comments.map((c) => {
+                'id': c.id,
+                'comment': c.comment,
+                'postId': c.postId,
+              }),
+          [
+            {'id': 1, 'comment': 'This post looks abit old', 'postId': 1},
+            {'id': 2, 'comment': 'oh, another comment', 'postId': 1}
+          ]);
     });
 
     test('should add post for another user', () async {
       final testuser = usersList.last;
-      anotherUser = await UserQuery.driver(driver).create(
+      anotherUser = await UserQuery.driver(driver).insert(NewUser(
         firstname: testuser.firstname,
         lastname: testuser.lastname,
         age: testuser.age,
         homeAddress: testuser.homeAddress,
-      );
+      ));
 
       expect(anotherUser.id, isNotNull);
       expect(anotherUser.id != testUser1.id, isTrue);
@@ -96,15 +106,19 @@ void runRelationsE2ETest(String connectionName) {
       var anotherUserPosts = await anotherUser.posts.get();
       expect(anotherUserPosts, isEmpty);
 
-      await anotherUser.posts.add(title: 'Another Post', description: 'wham bamn');
+      await anotherUser.posts.insert(
+        NewPostForUser(title: 'Another Post', description: 'wham bamn'),
+      );
       anotherUserPosts = await anotherUser.posts.get();
       expect(anotherUserPosts, hasLength(1));
 
       final anotherUserPost = anotherUserPosts.first;
       expect(anotherUserPost.userId, anotherUser.id);
 
-      await anotherUserPost.comments.add(comment: 'ah ah');
-      await anotherUserPost.comments.add(comment: 'oh oh');
+      await anotherUserPost.comments.insertMany([
+        NewPostCommentForPost(comment: 'ah ah'),
+        NewPostCommentForPost(comment: 'oh oh'),
+      ]);
 
       expect(await anotherUserPost.comments.get(), hasLength(2));
     });

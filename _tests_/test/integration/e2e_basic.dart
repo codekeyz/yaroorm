@@ -27,12 +27,13 @@ void runBasicE2ETest(String connectionName) {
     test('should insert single user', () async {
       final firstData = usersList.first;
       final query = UserQuery.driver(driver);
-      final result = await query.create(
+
+      final result = await query.insert(NewUser(
         firstname: firstData.firstname,
         lastname: firstData.lastname,
         age: firstData.age,
         homeAddress: firstData.homeAddress,
-      );
+      ));
 
       final exists = await query.where((user) => user.id(result.id)).exists();
       expect(exists, isTrue);
@@ -41,14 +42,7 @@ void runBasicE2ETest(String connectionName) {
     test('should insert many users', () async {
       final query = UserQuery.driver(driver);
 
-      for (final user in usersList.skip(1)) {
-        await query.create(
-          firstname: user.firstname,
-          lastname: user.lastname,
-          age: user.age,
-          homeAddress: user.homeAddress,
-        );
-      }
+      await query.insertMany(usersList.skip(1).toList());
 
       expect(await query.count(), usersList.length);
     });
@@ -107,7 +101,10 @@ void runBasicE2ETest(String connectionName) {
       final user = await query.findOne();
       expect(user!.id, 1);
 
-      await query.update(firstname: value('Red Oil'), age: value(100));
+      await query.update(UpdateUser(
+        firstname: value('Red Oil'),
+        age: value(100),
+      ));
 
       final userFromDB = await query.findOne();
       expect(user, isNotNull);
@@ -123,7 +120,9 @@ void runBasicE2ETest(String connectionName) {
       expect(usersWithAge50.length, 4);
       expect(usersWithAge50.every((e) => e.age == 50), isTrue);
 
-      await age50Users.update(homeAddress: value('Keta, Ghana'));
+      await age50Users.update(
+        UpdateUser(homeAddress: value('Keta, Ghana')),
+      );
 
       final updatedResult = await age50Users.findMany();
       expect(updatedResult.length, 4);
@@ -147,7 +146,7 @@ void runBasicE2ETest(String connectionName) {
     test('should get all users between age 35 and 50', () async {
       final age50Users = await UserQuery.driver(driver)
           .where((user) => user.$isBetween('age', [35, 50]))
-          .findMany(orderBy: [OrderUserBy.age(OrderDirection.desc)]);
+          .findMany(orderBy: [OrderUserBy.age(order: OrderDirection.desc)]);
 
       expect(age50Users.length, 19);
       expect(age50Users.first.age, 50);
@@ -157,7 +156,7 @@ void runBasicE2ETest(String connectionName) {
     test('should get all users in somewhere in Nigeria', () async {
       final users = await UserQuery.driver(driver)
           .where((user) => user.$isLike('home_address', '%, Nigeria'))
-          .findMany(orderBy: [OrderUserBy.homeAddress(OrderDirection.asc)]);
+          .findMany(orderBy: [OrderUserBy.homeAddress()]);
 
       expect(users.length, 18);
       expect(users.first.homeAddress, 'Abuja, Nigeria');

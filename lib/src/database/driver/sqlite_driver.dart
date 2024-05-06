@@ -87,15 +87,7 @@ final class SqliteDriver implements DatabaseDriver {
 
   @override
   Future<void> insertMany(InsertManyQuery query) async {
-    // final db = await _getDatabase();
-    // final batch = db.batch();
-
-    // for (final entry in query.values) {
-    //   final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, data: entry));
-    //   batch.rawInsert(sql, entry.values.toList());
-    // }
-
-    // await batch.commit(noResult: true);
+    return await (await _getDatabase()).transaction((txn) => _SqliteTransactor(txn).insertMany(query));
   }
 
   @override
@@ -163,14 +155,19 @@ class _SqliteTransactor implements DriverTransactor {
 
   @override
   Future<void> insertMany(InsertManyQuery query) async {
-    // final batch = _txn.batch();
+    final batch = _txn.batch();
 
-    // for (final entry in query.values) {
-    //   final sql = _serializer.acceptInsertQuery(InsertQuery(query.tableName, data: entry));
-    //   batch.rawInsert(sql, entry.values.toList());
-    // }
+    for (final entry in query.values) {
+      final sql = _serializer.acceptInsertQuery(InsertQuery(
+        query.$query,
+        data: entry,
+        primaryKey: query.primaryKey,
+      ));
+      batch.rawInsert(sql, entry.values.toList());
+    }
 
-    // await batch.commit(noResult: true);
+    /// TODO(codekeyz): this returns entry IDS. verify the behavior when we have STRING IDs
+    await batch.commit(noResult: false, continueOnError: false);
   }
 
   @override
@@ -230,6 +227,11 @@ class SqliteSerializer extends PrimitiveSerializer {
     if (whereClause != null) {
       queryBuilder.write(' WHERE ${acceptWhereClause(whereClause)}');
     }
+
+    /// GROUP BY
+    // if (query.groupBys.isNotEmpty) {
+    //   queryBuilder.write(' GROUP BY ${query.groupBys.map((e) => '$tableName.$e')}');
+    // }
 
     /// ORDER BY
     final orderBys = query.orderByProps ?? {};
@@ -309,7 +311,9 @@ class SqliteSerializer extends PrimitiveSerializer {
 
   @override
   String acceptInsertManyQuery(InsertManyQuery query) {
-    throw UnimplementedError('No need to use this for SQLite Driver');
+    final fields = query.values.first.keys.map(escapeStr);
+    final params = List<String>.filled(fields.length, '?').join(', ');
+    return 'INSERT INTO ${escapeStr(query.tableName)} (${fields.join(', ')}) VALUES ($params)$terminator';
   }
 
   @override
@@ -356,7 +360,9 @@ class SqliteSerializer extends PrimitiveSerializer {
 
   @override
   String acceptWhereClauseValue(WhereClauseValue clauseValue) {
-    final field = escapeStr(clauseValue.field);
+    final tableName = clauseValue.table;
+    final field = tableName == null ? escapeStr(clauseValue.field) : '$tableName.${escapeStr(clauseValue.field)}';
+
     final value = clauseValue.value;
     final valueOperator = clauseValue.operator;
     final wrapped = acceptPrimitiveValue(value);

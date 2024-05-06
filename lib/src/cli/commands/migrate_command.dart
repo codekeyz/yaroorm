@@ -34,7 +34,10 @@ class MigrateCommand extends OrmCommand {
           await txnDriver.execute(sql);
         }
 
-        await MigrationEntityQuery.driver(txnDriver).create(migration: fileName, batch: batchNos);
+        await MigrationEntityQuery.driver(txnDriver).insert(NewMigrationEntity(
+          migration: fileName,
+          batch: batchNos,
+        ));
 
         migrationLogTable.add([fileName, '✅ migrated']);
       });

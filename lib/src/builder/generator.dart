@@ -43,113 +43,19 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
     final fields = parsedEntity.allFields;
     final createdAtField = parsedEntity.createdAtField?.field;
     final updatedAtField = parsedEntity.updatedAtField?.field;
-
-    if (primaryKey == null) {
-      throw Exception("$className Entity doesn't have primary key");
-    }
-
-    /// Validate class constructor
-    final primaryConstructor = classElement.constructors.firstWhereOrNull((e) => e.name == "");
-    if (primaryConstructor == null) {
-      throw '$className Entity does not have a default constructor';
-    }
+    final primaryConstructor = parsedEntity.constructor;
 
     final fieldNames = fields.map((e) => e.name);
     final notAllowedProps = primaryConstructor.children.where((e) => !fieldNames.contains(e.name));
     if (notAllowedProps.isNotEmpty) {
       throw Exception(
-          'These props are not allowed in $className Entity default constructor: ${notAllowedProps.join(', ')}');
+        'These props are not allowed in $className Entity default constructor: ${notAllowedProps.join(', ')}',
+      );
     }
 
     final normalFields = parsedEntity.normalFields;
 
     final converters = annotation.peek('converters')!.listValue;
-
-    final autoIncrementPrimaryKey = primaryKey.reader.peek('autoIncrement')!.boolValue;
-    final timestampsEnabled = (createdAtField ?? updatedAtField) != null;
-    final creatableFields = parsedEntity.fieldsRequiredForCreate;
-
-    String generateCodeForField(FieldElement e) {
-      final symbol = '#${e.name}';
-      final columnName = getFieldDbName(e);
-
-      final meta = typeChecker(entity.TableColumn).firstAnnotationOf(e, throwOnUnresolved: false);
-
-      final requiredOpts = '''
-              "$columnName",
-               ${e.type.getDisplayString(withNullability: false)},
-               $symbol
-            ''';
-
-      if (meta != null) {
-        final metaReader = ConstantReader(meta);
-        final isReferenceField = typeChecker(entity.reference).isExactly(meta.type!.element!);
-
-        if (isReferenceField) {
-          final referencedType = metaReader.peek('type')!.typeValue;
-          final element = referencedType.element as ClassElement;
-          final superType = element.supertype?.element;
-
-          if (superType == null || !typeChecker(entity.Entity).isExactly(superType)) {
-            throw InvalidGenerationSourceError(
-              'Generator cannot target field `${e.name}` on `$className` class.',
-              element: element,
-              todo: 'Type passed to [reference] annotation must be a subtype of `Entity`.',
-            );
-          }
-
-          final parsedClass = ParsedEntityClass.parse(element);
-
-          final onUpdate = metaReader.peek('onUpdate')?.objectValue.variable!.name;
-          final onDelete = metaReader.peek('onDelete')?.objectValue.variable!.name;
-
-          final customPassedReferenceSymbol = metaReader.peek('field')?.symbolValue;
-
-          late FieldElement referenceField;
-          if (customPassedReferenceSymbol != null) {
-            final foundField =
-                parsedClass.allFields.firstWhereOrNull((e) => Symbol(e.name) == customPassedReferenceSymbol);
-            if (foundField == null) {
-              throw InvalidGenerationSourceError(
-                'Referenced Symbol `$customPassedReferenceSymbol` does not exist on `${element.name}` class.',
-                element: e,
-              );
-            }
-            referenceField = foundField;
-          } else {
-            referenceField = parsedClass.primaryKey!.field;
-          }
-
-          return '''DBEntityField.referenced<${element.name}>(
-            ${[
-            '($symbol, "$columnName")',
-            '(#${referenceField.name}, "${getFieldDbName(referenceField)}")',
-            if (e.type.isNullable) 'nullable: true',
-            if (onUpdate != null) 'onUpdate: ForeignKeyAction.$onUpdate',
-            if (onDelete != null) 'onDelete: ForeignKeyAction.$onDelete',
-          ].join(', ')})''';
-        }
-      }
-
-      if (e == createdAtField) {
-        return '''DBEntityField.createdAt("$columnName", $symbol)''';
-      }
-
-      if (e == updatedAtField) {
-        return '''DBEntityField.updatedAt("$columnName", $symbol)''';
-      }
-
-      if (e == primaryKey.field) {
-        return '''DBEntityField.primaryKey(
-          $requiredOpts
-          ${autoIncrementPrimaryKey ? ', autoIncrement: true' : ''}
-          )''';
-      }
-
-      return '''DBEntityField(
-        $requiredOpts
-        ${e.type.isNullable ? ', nullable: true' : ''})''';
-    }
 
     final queryName = '${className}Query';
     final typeDataName = getTypeDefName(className);
@@ -176,8 +82,8 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
           ..body = Code(
             '''DBEntity<$className>(
                 "${parsedEntity.table}",
-                timestampsEnabled: $timestampsEnabled,
-                columns: ${fields.map(generateCodeForField).toList()},
+                timestampsEnabled: ${parsedEntity.timestampsEnabled},
+                columns: ${fields.map((field) => generateCodeForField(parsedEntity, field)).toList()},
                 mirror: _\$${className}EntityMirror.new,
                 build: (args) => ${_generateConstructorCode(className, primaryConstructor)},
                 ${converters.isEmpty ? '' : 'converters: ${converters.map(processAnnotation).toList()},'})''',
@@ -228,36 +134,15 @@ return switch(field) {
             ..name = field.name
             ..constant = true
             ..lambda = true
-            ..initializers.add(Code('super("${getFieldDbName(field)}", direction)'))
-            ..requiredParameters.add(Parameter((p) => p
+            ..initializers.add(Code('super("${getFieldDbName(field)}", order)'))
+            ..optionalParameters.add(Parameter((p) => p
               ..type = refer('OrderDirection')
-              ..name = 'direction')))))),
+              ..named = true
+              ..defaultTo = Code('OrderDirection.asc')
+              ..name = 'order')))))),
 
-        /// Generate Entity Create Extension
-        Extension(
-          (b) => b
-            ..name = '${className}QueryExtension'
-            ..on = refer('Query<$className>')
-            ..methods.addAll([
-              _generateGetByPropertyMethod(primaryKey.field, className),
-              ...normalFields.map((e) => _generateGetByPropertyMethod(e, className)),
-              Method(
-                (m) => m
-                  ..name = 'create'
-                  ..returns = refer('Future<$className>')
-                  ..optionalParameters.addAll(creatableFields.map(
-                    (field) => Parameter((p) => p
-                      ..name = field.name
-                      ..named = true
-                      ..type = refer('${field.type}')
-                      ..required = !field.type.isNullable),
-                  ))
-                  ..body = Code('''return \$insert({
-                ${creatableFields.map((e) => '#${e.name}: ${e.name}').join(',')}
-                });'''),
-              ),
-            ]),
-        ),
+        /// Generate Create/Update classes for entity
+        ..._generateCreateAndUpdateClasses(parsedEntity),
 
         /// Generate Typed Entity WhereBuilder Extension
         Extension((b) => b
@@ -266,34 +151,15 @@ return switch(field) {
           ..methods.addAll([
             _generateFieldWhereClause(primaryKey.field, className),
             ...normalFields.map((e) => _generateFieldWhereClause(e, className)),
+            ..._generateWhereClauseForRelations(parsedEntity),
           ])),
 
-        /// Generate Typed Entity Update Extension
         Extension((b) => b
-          ..name = '${className}UpdateExtension'
-          ..on = refer('ReadQuery<$className>')
+          ..name = '${className}WhereHelperExtension'
+          ..on = refer('Query<$className>')
           ..methods.addAll([
-            Method(
-              (m) => m
-                ..name = 'update'
-                ..returns = refer('Future<void>')
-                ..modifier = MethodModifier.async
-                ..optionalParameters.addAll(normalFields.map(
-                  (field) => Parameter(
-                    (p) => p
-                      ..name = field.name
-                      ..named = true
-                      ..type = refer('value<${field.type.getDisplayString(withNullability: true)}>')
-                      ..defaultTo = Code('const NoValue()')
-                      ..required = false,
-                  ),
-                ))
-                ..body = Code('''await \$query.\$update(
-                  where: (_) => whereClause!,
-                  values: {
-                    ${normalFields.map((e) => 'if (${e.name} is! NoValue) #${e.name}: ${e.name}.val').join(',')},
-                  }).execute();'''),
-            ),
+            _generateGetByPropertyMethod(primaryKey.field, className),
+            ...normalFields.map((e) => _generateGetByPropertyMethod(e, className)),
           ])),
 
         /// Generate Extension for HasMany creations
@@ -319,27 +185,45 @@ return switch(field) {
               final relatedEntityCreateFields =
                   parsedRelatedEntity.fieldsRequiredForCreate.where((field) => field != referenceField);
 
-              return Extension((b) => b
-                ..name = '${className}HasMany${relatedClassName}Extension'
-                ..on = refer('HasMany<$className, $relatedClassName>')
-                ..methods.addAll([
-                  Method(
-                    (m) => m
-                      ..name = 'add'
-                      ..returns = refer('Future<$relatedClassName>')
+              return Class((b) => b
+                ..name = 'New${relatedClass.name}For$className'
+                ..extend = refer('CreateRelatedEntity<$className, ${relatedClass.name}>')
+                ..fields.addAll(relatedEntityCreateFields.map(
+                  (f) => Field((fb) => fb
+                    ..name = f.name
+                    ..type = refer(f.type.getDisplayString(withNullability: true))
+                    ..modifier = FieldModifier.final$),
+                ))
+                ..constructors.add(
+                  Constructor(
+                    (c) => c
+                      ..constant = true
                       ..optionalParameters.addAll(relatedEntityCreateFields.map(
                         (field) => Parameter((p) => p
-                          ..name = field.name
+                          ..required = true
                           ..named = true
-                          ..type = refer('${field.type}')
-                          ..required = !field.type.isNullable),
-                      ))
-                      ..body = Code('''return  \$readQuery.\$query.\$insert({
-                      ${[
-                        ...relatedEntityCreateFields.map((e) => '#${e.name}: ${e.name}'),
-                        '#${referenceField.name}: parentId'
-                      ].join(',')}
-                });'''),
+                          ..name = field.name
+                          ..toThis = true),
+                      )),
+                  ),
+                )
+                ..methods.addAll([
+                  Method((m) => m
+                    ..name = 'field'
+                    ..returns = refer('Symbol')
+                    ..type = MethodType.getter
+                    ..type = MethodType.getter
+                    ..annotations.add(CodeExpression(Code('override')))
+                    ..lambda = true
+                    ..body = Code('#${referenceField.name}')),
+                  Method(
+                    (m) => m
+                      ..name = 'toMap'
+                      ..returns = refer('Map<Symbol, dynamic>')
+                      ..type = MethodType.getter
+                      ..annotations.add(CodeExpression(Code('override')))
+                      ..lambda = true
+                      ..body = Code('{ ${relatedEntityCreateFields.map((e) => '#${e.name} : ${e.name}').join(', ')} }'),
                   ),
                 ]));
             },
@@ -364,6 +248,78 @@ return switch(field) {
     ].join('\n\n'));
   }
 
+  List<Class> _generateCreateAndUpdateClasses(ParsedEntityClass entity) {
+    final fieldsRequiredForCreate = entity.fieldsRequiredForCreate;
+    return [
+      Class(
+        (b) => b
+          ..name = 'New${entity.className}'
+          ..extend = refer('CreateEntity<${entity.className}>')
+          ..fields.addAll(fieldsRequiredForCreate.map(
+            (f) => Field((fb) => fb
+              ..name = f.name
+              ..type = refer(f.type.getDisplayString(withNullability: true))
+              ..modifier = FieldModifier.final$),
+          ))
+          ..constructors.add(
+            Constructor(
+              (c) => c
+                ..constant = true
+                ..optionalParameters.addAll(fieldsRequiredForCreate.map(
+                  (field) => Parameter((p) => p
+                    ..required = true
+                    ..named = true
+                    ..name = field.name
+                    ..toThis = true),
+                )),
+            ),
+          )
+          ..methods.add(
+            Method(
+              (m) => m
+                ..name = 'toMap'
+                ..returns = refer('Map<Symbol, dynamic>')
+                ..type = MethodType.getter
+                ..annotations.add(CodeExpression(Code('override')))
+                ..lambda = true
+                ..body = Code('{ ${fieldsRequiredForCreate.map((e) => '#${e.name} : ${e.name}').join(', ')} }'),
+            ),
+          ),
+      ),
+      Class((b) => b
+        ..name = 'Update${entity.className}'
+        ..extend = refer('UpdateEntity<${entity.className}>')
+        ..fields.addAll(fieldsRequiredForCreate.map((f) => Field(
+              (fb) => fb
+                ..name = f.name
+                ..type = refer('value<${f.type.getDisplayString(withNullability: true)}>')
+                ..modifier = FieldModifier.final$,
+            )))
+        ..constructors.add(
+          Constructor(
+            (c) => c
+              ..constant = true
+              ..optionalParameters.addAll(fieldsRequiredForCreate.map(
+                (field) => Parameter((p) => p
+                  ..named = true
+                  ..name = field.name
+                  ..toThis = true
+                  ..defaultTo = Code('const NoValue()')),
+              )),
+          ),
+        )
+        ..methods.add(Method((m) => m
+          ..name = 'toMap'
+          ..returns = refer('Map<Symbol, dynamic>')
+          ..type = MethodType.getter
+          ..annotations.add(CodeExpression(Code('override')))
+          ..lambda = true
+          ..body = Code('''{
+      ${entity.normalFields.map((e) => 'if (${e.name} is! NoValue) #${e.name}: ${e.name}.val${!e.type.isNullable ? '!' : ''}'.trim()).join(',')},
+}''')))),
+    ];
+  }
+
   String _generateConstructorCode(String className, ConstructorElement constructor) {
     final sb = StringBuffer()..write('$className(');
 
@@ -385,7 +341,7 @@ return switch(field) {
     return (sb..write(')')).toString();
   }
 
-  /// This generates WHERE-EQUAL Clauses for a field
+  /// This generates WHERE-EQUAL clause value for a field
   Method _generateFieldWhereClause(FieldElement field, String className) {
     final dbColumnName = getFieldDbName(field);
     final fieldType = field.type.getDisplayString(withNullability: true);
@@ -404,6 +360,30 @@ return switch(field) {
     );
   }
 
+  /// Generate typed Where Filters for entity relations
+  List<Method> _generateWhereClauseForRelations(ParsedEntityClass parsed) {
+    final result = <Method>[];
+
+    for (final (field) in [...parsed.hasManyGetters, ...parsed.belongsToGetters]) {
+      final hasMany = field.getter!.returnType as InterfaceType;
+      final referencedClass = hasMany.typeArguments.last.element as ClassElement;
+      final parsedReferenceClass = ParsedEntityClass.parse(referencedClass);
+
+      final returnType = 'WhereClauseBuilder<${referencedClass.name}>';
+
+      result.add(
+        Method((m) => m
+          ..name = field.name
+          ..lambda = true
+          ..type = MethodType.getter
+          ..returns = refer(returnType)
+          ..body = Code('$returnType(table: "${parsedReferenceClass.table}")')),
+      );
+    }
+
+    return result;
+  }
+
   /// This generates GetByProperty for a field
   Method _generateGetByPropertyMethod(FieldElement field, String className) {
     final fieldName = field.name;
@@ -418,7 +398,7 @@ return switch(field) {
           ..requiredParameters.add(Parameter((p) => p
             ..name = 'val'
             ..type = refer(fieldType)))
-          ..body = Code('findOne(where: (q) => q.$fieldName(val))');
+          ..body = Code('findOne(where: (${className.toLowerCase()}) => ${className.toLowerCase()}.$fieldName(val))');
       },
     );
   }
@@ -438,6 +418,102 @@ return switch(field) {
 
     /// TODO(codekeyz): resolve constructor for TypeConverters
     throw UnsupportedError('Parameters for TypeConverters not yet supported');
+  }
+
+  /// Generate DBEntityField for each of the class fields
+  String generateCodeForField(ParsedEntityClass parsedClass, FieldElement e) {
+    final className = parsedClass.className;
+    final createdAtField = parsedClass.createdAtField?.field;
+    final updatedAtField = parsedClass.updatedAtField?.field;
+    final primaryKey = parsedClass.primaryKey;
+
+    final symbol = '#${e.name}';
+    final columnName = getFieldDbName(e);
+
+    final meta = typeChecker(entity.TableColumn).firstAnnotationOf(e, throwOnUnresolved: false);
+
+    final requiredOpts = '''
+              "$columnName",
+               ${e.type.getDisplayString(withNullability: false)},
+               $symbol
+            ''';
+
+    if (meta != null) {
+      final metaReader = ConstantReader(meta);
+      final isReferenceField = typeChecker(entity.reference).isExactly(meta.type!.element!);
+
+      if (isReferenceField) {
+        final referencedType = metaReader.peek('type')!.typeValue;
+        final element = referencedType.element as ClassElement;
+        final superType = element.supertype?.element;
+
+        if (superType == null || !typeChecker(entity.Entity).isExactly(superType)) {
+          throw InvalidGenerationSourceError(
+            'Generator cannot target field `${e.name}` on `$className` class.',
+            element: element,
+            todo: 'Type passed to [reference] annotation must be a subtype of `Entity`.',
+          );
+        }
+
+        final parsedClass = ParsedEntityClass.parse(element);
+
+        final onUpdate = metaReader.peek('onUpdate')?.objectValue.variable!.name;
+        final onDelete = metaReader.peek('onDelete')?.objectValue.variable!.name;
+
+        final customPassedReferenceSymbol = metaReader.peek('field')?.symbolValue;
+        late FieldElement referenceField;
+        if (customPassedReferenceSymbol != null) {
+          final foundField =
+              parsedClass.allFields.firstWhereOrNull((e) => Symbol(e.name) == customPassedReferenceSymbol);
+          if (foundField == null) {
+            throw InvalidGenerationSourceError(
+              'Referenced field `$customPassedReferenceSymbol` does not exist on `${element.name}` class.',
+              element: e,
+            );
+          }
+          referenceField = foundField;
+        } else {
+          referenceField = parsedClass.primaryKey.field;
+        }
+
+        if (referenceField.type != e.type) {
+          throw InvalidGenerationSourceError(
+            'Type-mismatch between referenced field '
+            '`$className.${e.name}` (${e.type.getDisplayString(withNullability: true)}) and '
+            '`${element.name}.${referenceField.name}` (${referenceField.type.getDisplayString(withNullability: true)})',
+            element: e,
+          );
+        }
+
+        return '''DBEntityField.referenced<${element.name}>(
+            ${[
+          '($symbol, "$columnName")',
+          '(#${referenceField.name}, "${getFieldDbName(referenceField)}")',
+          if (e.type.isNullable) 'nullable: true',
+          if (onUpdate != null) 'onUpdate: ForeignKeyAction.$onUpdate',
+          if (onDelete != null) 'onDelete: ForeignKeyAction.$onDelete',
+        ].join(', ')})''';
+      }
+    }
+
+    if (e == createdAtField) {
+      return '''DBEntityField.createdAt("$columnName", $symbol)''';
+    }
+
+    if (e == updatedAtField) {
+      return '''DBEntityField.updatedAt("$columnName", $symbol)''';
+    }
+
+    if (e == primaryKey.field) {
+      return '''DBEntityField.primaryKey(
+          $requiredOpts
+          ${parsedClass.hasAutoIncrementingPrimaryKey ? ', autoIncrement: true' : ''}
+          )''';
+    }
+
+    return '''DBEntityField(
+        $requiredOpts
+        ${e.type.isNullable ? ', nullable: true' : ''})''';
   }
 
   /// Generate JOIN for BelongsTo getters on Entity
@@ -464,7 +540,7 @@ return switch(field) {
     final parsedReferenceClass = ParsedEntityClass.parse(referencedClass);
     final referenceColumn = parsedReferenceClass.allFields
             .firstWhereOrNull((e) => Symbol(e.name) == field.reader.peek('field')?.symbolValue) ??
-        parsedReferenceClass.primaryKey!.field;
+        parsedReferenceClass.primaryKey.field;
 
     final relationship = 'BelongsTo<${parent.className}, ${referencedClass.name}>';
     final joinClass = 'Join<${parent.className}, ${referencedClass.name}, $relationship>';
@@ -502,8 +578,8 @@ return switch(field) {
         ..lambda = true
         ..returns = refer(joinClass)
         ..body = Code('''$joinClass("${getter.name}", 
-            origin: (#${parent.primaryKey!.field.name}, "${getFieldDbName(parent.primaryKey!.field)}"), 
-            on: (#${referenceField.field.name}, "${getFieldDbName(referenceField.field)}")
+            origin: (#${parent.primaryKey.field.name}, "${getFieldDbName(parent.primaryKey.field)}"), 
+            on: (#${referenceField.field.name}, "${getFieldDbName(referenceField.field)}"),
           )'''),
     );
   }

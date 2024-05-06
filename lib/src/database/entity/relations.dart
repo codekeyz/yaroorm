@@ -14,9 +14,9 @@ abstract class EntityRelation<Parent extends Entity<Parent>, RelatedModel extend
 
   DriverContract get _driver => parent._driver;
 
-  bool _usingEntityCache = false;
-
-  bool get isUsingEntityCache => _usingEntityCache;
+  /// This holds preloaded values from `withRelation`
+  dynamic get value =>
+      throw StateError('No preloaded data for this relation. Did you forget to call `withRelations` ?');
 
   get({bool refresh = false});
 
@@ -25,11 +25,16 @@ abstract class EntityRelation<Parent extends Entity<Parent>, RelatedModel extend
 
 final class HasOne<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>>
     extends EntityRelation<Parent, RelatedModel> {
-  final String foreignKey;
+  final String relatedModelPrimaryKey;
+  final dynamic relatedModelValue;
 
-  HasOne._(this.foreignKey, super._owner);
+  HasOne._(
+    this.relatedModelPrimaryKey,
+    this.relatedModelValue,
+    super._owner,
+  );
 
-  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, parentId));
+  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(relatedModelPrimaryKey, relatedModelValue));
 
   @override
   FutureOr<RelatedModel?> get({bool refresh = false}) => $readQuery.findOne();
@@ -50,27 +55,34 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
   ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, parentId));
 
   @override
+  List<RelatedModel> get value {
+    if (_cache == null) {
+      return super.value;
+    } else if (_cache.isEmpty) {
+      return <RelatedModel>[];
+    }
+
+    final typeData = Query.getEntity<RelatedModel>();
+    return _cache
+        .map((data) => dbDataToEntity<RelatedModel>(
+              data,
+              typeData,
+              combineConverters(typeData.converters, _driver.typeconverters),
+            ))
+        .toList();
+  }
+
+  @override
   FutureOr<List<RelatedModel>> get({
     int? limit,
     int? offset,
     List<OrderBy<RelatedModel>>? orderBy,
     bool refresh = false,
   }) async {
-    if (_cache != null) {
-      _usingEntityCache = true;
-      if (_cache!.isEmpty) return <RelatedModel>[];
-
-      final typeData = Query.getEntity<RelatedModel>();
-      return _cache!
-          .map((data) => serializedPropsToEntity<RelatedModel>(
-                data,
-                typeData,
-                combineConverters(typeData.converters, _driver.typeconverters),
-              ))
-          .toList();
+    if (_cache != null && !refresh) {
+      return value;
     }
 
-    _usingEntityCache = false;
     return $readQuery.findMany(
       limit: limit,
       offset: offset,
@@ -82,35 +94,65 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
 
   @override
   Future<void> delete() => $readQuery.delete();
+
+  Future<RelatedModel> insert(CreateRelatedEntity<Parent, RelatedModel> related) async {
+    final data = _CreateEntity<RelatedModel>({...related.toMap, related.field: parentId});
+    return $readQuery.$query.insert(data);
+  }
+
+  Future<void> insertMany(List<CreateRelatedEntity<Parent, RelatedModel>> related) async {
+    final data = related.map((e) => _CreateEntity<RelatedModel>({...e.toMap, e.field: parentId})).toList();
+    return $readQuery.$query.insertMany(data);
+  }
+}
+
+class _CreateEntity<T extends Entity<T>> extends CreateEntity<T> {
+  final Map<Symbol, dynamic> _data;
+  const _CreateEntity(this._data);
+  @override
+  Map<Symbol, dynamic> get toMap => _data;
 }
 
 final class BelongsTo<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>>
     extends EntityRelation<Parent, RelatedModel> {
   final Map<String, dynamic>? _cache;
   final String foreignKey;
-  final dynamic value;
+  final dynamic foreignKeyValue;
 
-  BelongsTo._(this.foreignKey, super.parent, this.value, this._cache);
+  BelongsTo._(
+    this.foreignKey,
+    this.foreignKeyValue,
+    super.parent,
+    this._cache,
+  );
 
   ReadQuery<RelatedModel> get _readQuery {
-    return Query.table<RelatedModel>().driver(_driver).where((q) => q.$equal(foreignKey, value));
+    return Query.table<RelatedModel>().driver(_driver).where((q) => q.$equal(
+          foreignKey,
+          foreignKeyValue,
+        ));
+  }
+
+  @override
+  RelatedModel? get value {
+    if (_cache == null) {
+      return super.value;
+    } else if (_cache.isEmpty) {
+      return null;
+    }
+    final typeData = Query.getEntity<RelatedModel>();
+    return dbDataToEntity<RelatedModel>(
+      _cache,
+      typeData,
+      combineConverters(typeData.converters, _driver.typeconverters),
+    );
   }
 
   @override
   FutureOr<RelatedModel?> get({bool refresh = false}) async {
     if (_cache != null && !refresh) {
-      _usingEntityCache = true;
-      if (_cache!.isEmpty) return null;
-
-      final typeData = Query.getEntity<RelatedModel>();
-      return serializedPropsToEntity<RelatedModel>(
-        _cache!,
-        typeData,
-        combineConverters(typeData.converters, _driver.typeconverters),
-      );
+      return value;
     }
-
-    _usingEntityCache = false;
     return _readQuery.findOne();
   }
 

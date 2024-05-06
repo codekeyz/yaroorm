@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:meta/meta.dart';
 
 import '../database/driver/driver.dart';
@@ -8,6 +10,27 @@ import 'aggregates.dart';
 part '../primitives/where.dart';
 
 enum OrderDirection { asc, desc }
+
+abstract class CreateEntity<T extends Entity<T>> {
+  const CreateEntity();
+  @internal
+  Map<Symbol, dynamic> get toMap;
+}
+
+abstract class UpdateEntity<T extends Entity<T>> {
+  const UpdateEntity();
+  @internal
+  Map<Symbol, dynamic> get toMap;
+}
+
+abstract class CreateRelatedEntity<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>> {
+  const CreateRelatedEntity();
+
+  Symbol get field;
+
+  @internal
+  Map<Symbol, dynamic> get toMap;
+}
 
 mixin ReadOperation<Result extends Entity<Result>> {
   Future<Result?> findOne({
@@ -23,13 +46,14 @@ mixin ReadOperation<Result extends Entity<Result>> {
 }
 
 mixin InsertOperation<T extends Entity<T>> {
-  Future<T> $insert(Map<Symbol, dynamic> data);
+  Future<T> insert(CreateEntity<T> data);
+  Future<void> insertMany(List<CreateEntity<T>> datas);
 }
 
 mixin UpdateOperation<Result extends Entity<Result>> {
-  UpdateQuery $update({
+  UpdateQuery update({
     required WhereBuilder<Result> where,
-    required Map<Symbol, dynamic> values,
+    required UpdateEntity<Result> update,
   });
 }
 
@@ -54,15 +78,15 @@ sealed class QueryBase<Owner> {
   final String tableName;
   final String? database;
 
-  final Query _query;
+  final Query $query;
 
-  DriverContract get runner => _query.runner;
+  DriverContract get runner => $query.runner;
 
   Future<void> execute();
 
-  QueryBase(this._query)
-      : tableName = _query.tableName,
-        database = _query.database;
+  QueryBase(this.$query)
+      : tableName = $query.tableName,
+        database = $query.database;
 
   String get statement;
 }
@@ -123,34 +147,54 @@ final class Query<T extends Entity<T>>
   }
 
   ReadQuery<T> where(WhereBuilder<T> builder) {
-    final whereClause = builder.call(WhereClauseBuilder<T>._());
+    final whereClause = builder.call(WhereClauseBuilder<T>());
+    whereClause.validate(_joins);
+
     return ReadQuery<T>._(this, whereClause: whereClause);
   }
 
-  @override
-  Future<T> $insert(Map<Symbol, dynamic> data) async {
+  UnmodifiableMapView<String, dynamic> _prepareCreate(CreateEntity<T> data) {
+    final dataMap = data.toMap;
     if (entity.timestampsEnabled) {
       final now = DateTime.now();
       final createdAtField = entity.createdAtField;
       final updatedAtField = entity.updatedAtField;
 
       if (createdAtField != null) {
-        data[createdAtField.dartName] = now;
+        dataMap[createdAtField.dartName] = now;
       }
 
       if (updatedAtField != null) {
-        data[updatedAtField.dartName] = now;
+        dataMap[updatedAtField.dartName] = now;
       }
     }
+    return entityMapToDbData<T>(dataMap, converters);
+  }
+
+  @override
+  Future<T> insert(CreateEntity<T> data) async {
+    final dataMap = _prepareCreate(data);
     final recordId = await runner.insert(
       InsertQuery(
         this,
-        data: entityMapToDbData<T>(data, converters),
+        data: dataMap,
         primaryKey: entity.primaryKey.columnName,
       ),
     );
 
     return (await findOne(where: (q) => q.$equal(entity.primaryKey.columnName, recordId)))!;
+  }
+
+  @override
+  Future<void> insertMany(List<CreateEntity<T>> datas) async {
+    final dataMap = datas.map(_prepareCreate).toList();
+    await runner.insertMany(
+      InsertManyQuery(
+        this,
+        values: dataMap,
+        primaryKey: entity.primaryKey.columnName,
+      ),
+    );
   }
 
   @override
@@ -160,7 +204,9 @@ final class Query<T extends Entity<T>>
     int? limit,
     int? offset,
   }) async {
-    final whereClause = where?.call(WhereClauseBuilder<T>._());
+    final whereClause = where?.call(WhereClauseBuilder<T>());
+    whereClause?.validate(_joins);
+
     final readQ = ReadQuery._(
       this,
       limit: limit,
@@ -168,6 +214,7 @@ final class Query<T extends Entity<T>>
       whereClause: whereClause,
       orderByProps: orderBy?.toSet(),
       joins: _joins,
+      groupBys: [entity.primaryKey.columnName],
     );
 
     final results = await runner.query(readQ);
@@ -177,7 +224,9 @@ final class Query<T extends Entity<T>>
 
   @override
   Future<T?> findOne({WhereBuilder<T>? where}) async {
-    final whereClause = where?.call(WhereClauseBuilder<T>._());
+    final whereClause = where?.call(WhereClauseBuilder<T>());
+    whereClause?.validate(_joins);
+
     final readQ = ReadQuery._(this, limit: 1, whereClause: whereClause, joins: _joins);
     final results = await runner.query(readQ);
     if (results.isEmpty) return null;
@@ -185,11 +234,14 @@ final class Query<T extends Entity<T>>
   }
 
   @override
-  UpdateQuery $update({
+  UpdateQuery update({
     required WhereBuilder<T> where,
-    required Map<Symbol, dynamic> values,
+    required UpdateEntity<T> update,
   }) {
-    final whereClause = where.call(WhereClauseBuilder<T>._());
+    final whereClause = where.call(WhereClauseBuilder<T>());
+    whereClause.validate(_joins);
+
+    final values = update.toMap;
 
     if (entity.timestampsEnabled) {
       final now = DateTime.now();
@@ -216,13 +268,13 @@ final class Query<T extends Entity<T>>
           .where((e) => e.key.startsWith('${join.resultKey}.'))
           .map((e) => MapEntry<String, dynamic>(e.key.replaceFirst('${join.resultKey}.', '').trim(), e.value));
       if (entries.every((e) => e.value == null)) {
-        joinResults[join.relation] = {};
+        joinResults[join.key] = {};
       } else {
-        joinResults[join.relation] = {}..addEntries(entries);
+        joinResults[join.key] = {}..addEntries(entries);
       }
     }
 
-    return serializedPropsToEntity<T>(
+    return dbDataToEntity<T>(
       result,
       entity,
       converters,
@@ -286,7 +338,7 @@ final class UpdateQuery extends QueryBase<UpdateQuery> {
   UpdateQuery(super.tableName, {required this.whereClause, required this.data});
 
   @override
-  String get statement => _query.runner.serializer.acceptUpdateQuery(this);
+  String get statement => $query.runner.serializer.acceptUpdateQuery(this);
 
   @override
   Future<void> execute() => runner.update(this);
@@ -298,24 +350,27 @@ final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with Agg
   final WhereClause? whereClause;
   final List<Join> joins;
   final int? limit, offset;
-
-  final Query<T> $query;
+  final List<String> groupBys;
 
   ReadQuery._(
-    this.$query, {
+    Query<T> super.query, {
     this.whereClause,
     this.orderByProps,
     this.fieldSelections = const {},
     this.joins = const [],
+    this.groupBys = const [],
     this.limit,
     this.offset,
-  }) : super($query);
+  });
 
   @override
-  Future<List<Map<String, dynamic>>> execute() => runner.query(this);
+  Query<T> get $query => (super.$query) as Query<T>;
 
   @override
   String get statement => runner.serializer.acceptReadQuery(this);
+
+  @override
+  Future<List<Map<String, dynamic>>> execute() => runner.query(this);
 
   @override
   Future<num> average(String field) {
@@ -343,18 +398,12 @@ final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with Agg
     return SumAggregate(this, field).get();
   }
 
-  Future<List<T>> findMany({
-    int? limit,
-    int? offset,
-    List<OrderBy<T>>? orderBy,
-  }) {
-    return $query.findMany(
-      limit: limit,
-      offset: offset,
-      where: (_) => whereClause!,
-      orderBy: orderBy,
-    );
-  }
+  Future<List<T>> findMany({int? limit, int? offset, List<OrderBy<T>>? orderBy}) => $query.findMany(
+        limit: limit,
+        offset: offset,
+        where: (_) => whereClause!,
+        orderBy: orderBy,
+      );
 
   Future<bool> exists() async {
     final existsQuery = ReadQuery._(
@@ -369,9 +418,10 @@ final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with Agg
 
   Future<T?> findOne() => $query.findOne(where: (_) => whereClause!);
 
-  Future<void> delete() async {
-    return DeleteQuery(_query, whereClause: whereClause!).execute();
-  }
+  Future<void> delete() => DeleteQuery(
+        $query,
+        whereClause: whereClause!,
+      ).execute();
 
   @override
   ReadQuery<T> withRelations(
@@ -382,6 +432,13 @@ final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with Agg
       ..addAll(builder.call(_JoinBuilderImpl<T>()));
     return this;
   }
+
+  Future<void> update(UpdateEntity<T> update) => $query
+      .update(
+        where: (_) => whereClause!,
+        update: update,
+      )
+      .execute();
 }
 
 final class _JoinBuilderImpl<T extends Entity<T>> extends JoinBuilder<T> {}
@@ -391,7 +448,7 @@ final class InsertQuery extends QueryBase<InsertQuery> {
   final String primaryKey;
 
   InsertQuery(
-    super.tableName, {
+    super._query, {
     required this.data,
     required this.primaryKey,
   });

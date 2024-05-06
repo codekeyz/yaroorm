@@ -41,21 +41,15 @@ class _$MigrationEntityEntityMirror extends EntityMirror<MigrationEntity> {
 }
 
 class OrderMigrationEntityBy extends OrderBy<MigrationEntity> {
-  const OrderMigrationEntityBy.migration(OrderDirection direction) : super("migration", direction);
+  const OrderMigrationEntityBy.migration({OrderDirection order = OrderDirection.asc}) : super("migration", order);
 
-  const OrderMigrationEntityBy.batch(OrderDirection direction) : super("batch", direction);
+  const OrderMigrationEntityBy.batch({OrderDirection order = OrderDirection.desc}) : super("batch", order);
 }
 
 extension MigrationEntityQueryExtension on Query<MigrationEntity> {
   Future<MigrationEntity?> findById(int val) => findOne(where: (q) => q.id(val));
   Future<MigrationEntity?> findByMigration(String val) => findOne(where: (q) => q.migration(val));
   Future<MigrationEntity?> findByBatch(int val) => findOne(where: (q) => q.batch(val));
-  Future<MigrationEntity> create({
-    required String migration,
-    required int batch,
-  }) {
-    return $insert({#migration: migration, #batch: batch});
-  }
 }
 
 extension MigrationEntityWhereBuilderExtension on WhereClauseBuilder<MigrationEntity> {
@@ -64,14 +58,33 @@ extension MigrationEntityWhereBuilderExtension on WhereClauseBuilder<MigrationEn
   WhereClauseValue batch(int value) => $equal<int>("batch", value);
 }
 
-extension MigrationEntityUpdateExtension on ReadQuery<MigrationEntity> {
-  Future<void> update({
-    value<String> migration = const NoValue(),
-    value<int> batch = const NoValue(),
-  }) async {
-    await $query.$update(where: (_) => whereClause!, values: {
-      if (migration is! NoValue) #migration: migration.val,
-      if (batch is! NoValue) #batch: batch.val,
-    }).execute();
-  }
+class NewMigrationEntity extends CreateEntity<MigrationEntity> {
+  const NewMigrationEntity({
+    required this.migration,
+    required this.batch,
+  });
+
+  final String migration;
+
+  final int batch;
+
+  @override
+  Map<Symbol, dynamic> get toMap => {#migration: migration, #batch: batch};
+}
+
+class UpdateMigrationEntity extends UpdateEntity<MigrationEntity> {
+  const UpdateMigrationEntity({
+    this.migration = const NoValue(),
+    this.batch = const NoValue(),
+  });
+
+  final value<String> migration;
+
+  final value<int> batch;
+
+  @override
+  Map<Symbol, dynamic> get toMap => {
+        if (migration is! NoValue) #migration: migration.val!,
+        if (batch is! NoValue) #batch: batch.val!,
+      };
 }

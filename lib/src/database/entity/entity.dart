@@ -52,14 +52,34 @@ abstract class Entity<Parent extends Entity<Parent>> {
     final referenceField = relatedModelTypeData.referencedFields.firstWhere((e) => e.reference.dartType == Parent);
 
     var relation = _relationsPreloaded[HasMany<Parent, RelatedModel>];
-    if (relation is Map && relation.isEmpty) {
-      relation = <Map<String, dynamic>>[];
+
+    if (relation is Map) {
+      if (relation.isEmpty) {
+        relation = <Map<String, dynamic>>[];
+      } else {
+        relation = [relation.cast<String, dynamic>()];
+      }
     }
 
     return HasMany<Parent, RelatedModel>._(
       referenceField.columnName,
       this as Parent,
       relation,
+    );
+  }
+
+  @protected
+  HasOne<Parent, RelatedModel> hasOne<RelatedModel extends Entity<RelatedModel>>() {
+    final relatedPrimaryKey = Query.getEntity<RelatedModel>().primaryKey.columnName;
+    final typeData = Query.getEntity<Parent>();
+
+    final field = typeData.referencedFields.firstWhere((e) => e.reference.dartType == RelatedModel);
+    final referenceFieldValue = typeData.mirror(this as Parent).get(field.dartName);
+
+    return HasOne<Parent, RelatedModel>._(
+      relatedPrimaryKey,
+      referenceFieldValue,
+      this as Parent,
     );
   }
 
@@ -71,8 +91,8 @@ abstract class Entity<Parent extends Entity<Parent>> {
 
     return BelongsTo<Parent, RelatedModel>._(
       parentFieldName,
-      this as Parent,
       referenceFieldValue,
+      this as Parent,
       _relationsPreloaded[BelongsTo<Parent, RelatedModel>],
     );
   }
