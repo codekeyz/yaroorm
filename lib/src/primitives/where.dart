@@ -111,7 +111,7 @@ class WhereClauseValue<ValueType> extends WhereClause {
   @override
   void validate(List<Join> joins) {
     if (table == null) return;
-    final tableJoined = joins.any((e) => [e.onTable, e.fromTable].contains(table));
+    final tableJoined = joins.any((e) => [e.on.table, e.origin.table].contains(table));
     if (!tableJoined) {
       throw ArgumentError(
         'No Joins found to enable `$table.$field ${operator.name} $value` Did you forget to call `.withRelations` ?',

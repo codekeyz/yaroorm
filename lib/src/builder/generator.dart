@@ -68,11 +68,11 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
           ..body = Code('Schema.fromEntity<$className>()')),
         Method((m) => m
           ..name = typeDataName
-          ..returns = refer('DBEntity<$className>')
+          ..returns = refer('EntityTypeDefinition<$className>')
           ..type = MethodType.getter
           ..lambda = true
           ..body = Code(
-            '''DBEntity<$className>(
+            '''EntityTypeDefinition<$className>(
                 "${parsedEntity.table}",
                 timestampsEnabled: ${parsedEntity.timestampsEnabled},
                 columns: ${fields.map((field) => generateCodeForField(parsedEntity, field)).toList()},
@@ -227,10 +227,10 @@ return switch(field) {
           ..name = '${className}RelationsBuilder'
           ..on = refer('JoinBuilder<$className>')
           ..methods.addAll([
-            // if (parsedEntity.belongsToGetters.isNotEmpty)
-            //   ...parsedEntity.belongsToGetters.map((field) => _generateJoinForBelongsTo(parsedEntity, field.getter!)),
-            // if (parsedEntity.hasManyGetters.isNotEmpty)
-            //   ...parsedEntity.hasManyGetters.map((field) => _generateJoinForHasMany(parsedEntity, field.getter!)),
+            if (parsedEntity.belongsToGetters.isNotEmpty)
+              ...parsedEntity.belongsToGetters.map((field) => _generateJoinForBelongsTo(parsedEntity, field.getter!)),
+            if (parsedEntity.hasManyGetters.isNotEmpty)
+              ...parsedEntity.hasManyGetters.map((field) => _generateJoinForHasMany(parsedEntity, field.getter!)),
           ])),
       ]));
 
@@ -509,70 +509,74 @@ return switch(field) {
   }
 
   /// Generate JOIN for BelongsTo getters on Entity
-  // Method _generateJoinForBelongsTo(
-  //   ParsedEntityClass parent,
-  //   PropertyAccessorElement getter,
-  // ) {
-  //   final belongsToClass = getter.returnType as InterfaceType;
-  //   final getterName = getter.name;
-  //   final referencedClass = belongsToClass.typeArguments.last.element as ClassElement;
+  Method _generateJoinForBelongsTo(
+    ParsedEntityClass parent,
+    PropertyAccessorElement getter,
+  ) {
+    final belongsTo = getter.returnType as InterfaceType;
+    final getterName = getter.name;
+    final relatedClass = ParsedEntityClass.parse(belongsTo.typeArguments.last.element as ClassElement);
 
-  //   // Field on :parent that establishes the relationship needed to make this work
-  //   final field = parent.referencedFields
-  //       .firstWhereOrNull((e) => e.reader.peek('type')!.typeValue.element!.name == referencedClass.name);
-  //   if (field == null) {
-  //     throw InvalidGenerationSourceError(
-  //       'No reference field found to establish :BELONGS_TO_${referencedClass.name} relation on ${parent.className}',
-  //       element: referencedClass,
-  //       todo: 'Did you forget to annotate with `@reference`',
-  //     );
-  //   }
+    final bindings = parent.bindings;
+    if (bindings.isEmpty) {
+      throw InvalidGenerationSource(
+        'No bindings found to enable BelongsTo relation for ${relatedClass.className} in ${parent.className}. Did you forget to use `@bindTo` ?',
+        element: getter,
+      );
+    }
 
-  //   // Get the column on the foreign table which we're latching onto
-  //   final parsedReferenceClass = ParsedEntityClass.parse(referencedClass);
-  //   final referenceColumn = parsedReferenceClass.allFields
-  //           .firstWhereOrNull((e) => Symbol(e.name) == field.reader.peek('field')?.symbolValue) ??
-  //       parsedReferenceClass.primaryKey.field;
+    /// TODO(codekey): be able to specify binding to use
+    final bindingToUse = bindings.entries.firstWhere((e) => e.value.entity.element == relatedClass.element);
+    final field = parent.allFields.firstWhere((e) => Symbol(e.name) == bindingToUse.key);
+    final foreignField = relatedClass.allFields.firstWhere((e) => Symbol(e.name) == bindingToUse.value.field);
 
-  //   final relationship = 'BelongsTo<${parent.className}, ${referencedClass.name}>';
-  //   final joinClass = 'Join<${parent.className}, ${referencedClass.name}, $relationship>';
-  //   return Method(
-  //     (m) => m
-  //       ..name = getterName
-  //       ..type = MethodType.getter
-  //       ..lambda = true
-  //       ..returns = refer(joinClass)
-  //       ..body = Code('''$joinClass("$getterName",
-  //           origin: (#${field.field.name}, "${getFieldDbName(field.field)}"),
-  //           on: (#${referenceColumn.name}, "${getFieldDbName(referenceColumn)}")
-  //         )'''),
-  //   );
-  // }
+    final joinClass = 'Join<${parent.className}, ${relatedClass.className}>';
+    return Method(
+      (m) => m
+        ..name = getterName
+        ..type = MethodType.getter
+        ..lambda = true
+        ..returns = refer(joinClass)
+        ..body = Code('''$joinClass("$getterName",
+            origin: (table: "${parent.table}", column: "${getFieldDbName(field)}"),
+            on: (table: "${relatedClass.table}", column: "${getFieldDbName(foreignField)}"),
+            key: BelongsTo<${parent.className}, ${relatedClass.className}>,
+          )'''),
+    );
+  }
 
   /// Generate JOIN for HasMany getters on Entity
-  // Method _generateJoinForHasMany(
-  //   ParsedEntityClass parent,
-  //   PropertyAccessorElement getter,
-  // ) {
-  //   final hasMany = getter.returnType as InterfaceType;
-  //   final referencedClass = hasMany.typeArguments.last.element as ClassElement;
-  //   final parsedReferenceClass = ParsedEntityClass.parse(referencedClass);
+  Method _generateJoinForHasMany(
+    ParsedEntityClass parent,
+    PropertyAccessorElement getter,
+  ) {
+    final hasMany = getter.returnType as InterfaceType;
+    final relatedClass = ParsedEntityClass.parse(hasMany.typeArguments.last.element as ClassElement);
 
-  //   final referenceField = parsedReferenceClass.referencedFields
-  //       .firstWhere((e) => e.reader.peek('type')!.typeValue.element == parent.element);
+    final bindings = relatedClass.bindings;
+    if (bindings.isEmpty) {
+      throw InvalidGenerationSource(
+        'No bindings found to enable HasMany relation for ${relatedClass.className} in ${parent.className}. Did you forget to use `@bindTo` ?',
+        element: getter,
+      );
+    }
 
-  //   final relationship = 'HasMany<${parent.className}, ${referencedClass.name}>';
-  //   final joinClass = 'Join<${parent.className}, ${referencedClass.name}, $relationship>';
-  //   return Method(
-  //     (m) => m
-  //       ..name = getter.name
-  //       ..type = MethodType.getter
-  //       ..lambda = true
-  //       ..returns = refer(joinClass)
-  //       ..body = Code('''$joinClass("${getter.name}",
-  //           origin: (#${parent.primaryKey.field.name}, "${getFieldDbName(parent.primaryKey.field)}"),
-  //           on: (#${referenceField.field.name}, "${getFieldDbName(referenceField.field)}"),
-  //         )'''),
-  //   );
-  // }
+    /// TODO(codekey): be able to specify binding to use
+    final bindingToUse = bindings.entries.firstWhere((e) => e.value.entity.element == parent.element);
+    final foreignField = relatedClass.allFields.firstWhere((e) => Symbol(e.name) == bindingToUse.key);
+
+    final joinClass = 'Join<${parent.className}, ${relatedClass.className}>';
+    return Method(
+      (m) => m
+        ..name = getter.name
+        ..type = MethodType.getter
+        ..lambda = true
+        ..returns = refer(joinClass)
+        ..body = Code('''$joinClass("${getter.name}",
+            origin: (table: "${parent.table}", column: "${getFieldDbName(parent.primaryKey.field)}"),           
+            on: (table: "${relatedClass.table}", column: "${getFieldDbName(foreignField)}"),
+            key: HasMany<${parent.className}, ${relatedClass.className}>,
+          )'''),
+    );
+  }
 }

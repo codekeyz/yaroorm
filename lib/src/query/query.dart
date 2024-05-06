@@ -58,7 +58,7 @@ mixin UpdateOperation<Result extends Entity<Result>> {
 }
 
 mixin RelationsOperation<T extends Entity<T>> {
-  withRelations(List<Join<T, Entity, EntityRelation<T, Entity>>> Function(JoinBuilder<T> builder) builder) {
+  withRelations(List<Join<T, Entity>> Function(JoinBuilder<T> builder) builder) {
     return this;
   }
 }
@@ -93,7 +93,7 @@ sealed class QueryBase<Owner> {
 
 final class Query<T extends Entity<T>>
     with ReadOperation<T>, InsertOperation<T>, UpdateOperation<T>, AggregateOperation, RelationsOperation<T> {
-  final DBEntity<T> entity;
+  final EntityTypeDefinition<T> entity;
   final String? database;
   final List<Join> _joins;
 
@@ -103,7 +103,7 @@ final class Query<T extends Entity<T>>
 
   Map<Type, EntityTypeConverter> get converters => combineConverters(entity.converters, runner.typeconverters);
 
-  static final Map<Type, DBEntity> _typedatas = {};
+  static final Map<Type, EntityTypeDefinition> _typedatas = {};
 
   Query._({String? tableName, this.database})
       : entity = Query.getEntity<T>(),
@@ -130,7 +130,7 @@ final class Query<T extends Entity<T>>
     return Query<Model>._(tableName: tableName, database: database);
   }
 
-  static void addTypeDef<T extends Entity<T>>(DBEntity<T> entity) {
+  static void addTypeDef<T extends Entity<T>>(EntityTypeDefinition<T> entity) {
     var type = T;
     if (type == Entity) type = entity.dartType;
     if (type == Entity) throw Exception();
@@ -138,7 +138,7 @@ final class Query<T extends Entity<T>>
   }
 
   @internal
-  static DBEntity<T> getEntity<T extends Entity<T>>({Type? type}) {
+  static EntityTypeDefinition<T> getEntity<T extends Entity<T>>({Type? type}) {
     type ??= T;
     if (!_typedatas.containsKey(type)) {
       throw Exception('Type Data not found for $type');
@@ -308,7 +308,7 @@ final class Query<T extends Entity<T>>
   Future<num> sum(String field) => SumAggregate(_readQuery, field).get();
 
   @override
-  Query<T> withRelations(List<Join<T, Entity, EntityRelation<T, Entity>>> Function(JoinBuilder<T> builder) builder) {
+  Query<T> withRelations(List<Join<T, Entity>> Function(JoinBuilder<T> builder) builder) {
     _joins
       ..clear()
       ..addAll(builder.call(_JoinBuilderImpl<T>()));
@@ -425,7 +425,7 @@ final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with Agg
 
   @override
   ReadQuery<T> withRelations(
-    List<Join<T, Entity, EntityRelation<T, Entity>>> Function(JoinBuilder<T> builder) builder,
+    List<Join<T, Entity>> Function(JoinBuilder<T> builder) builder,
   ) {
     joins
       ..clear()

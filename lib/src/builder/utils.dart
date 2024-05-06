@@ -45,7 +45,7 @@ String getTableName(ClassElement element) {
 }
 
 String getTypeDefName(String className) {
-  return '${className.snakeCase}TypeData';
+  return '${className.snakeCase}TypeDef';
 }
 
 final _numberRegex = RegExp(r'\d+');
@@ -306,4 +306,9 @@ final class ParsedEntityClass {
         .whereNotNull()
         .toList();
   }
+}
+
+String symbolToString(Symbol symbol) {
+  final symbolAsString = symbol.toString();
+  return symbolAsString.substring(8, symbolAsString.length - 2);
 }

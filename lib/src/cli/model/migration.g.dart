@@ -10,7 +10,7 @@ part of 'migration.dart';
 
 Query<MigrationEntity> get MigrationEntityQuery => DB.query<MigrationEntity>();
 CreateSchema get MigrationEntitySchema => Schema.fromEntity<MigrationEntity>();
-DBEntity<MigrationEntity> get migration_entityTypeData => DBEntity<MigrationEntity>(
+EntityTypeDefinition<MigrationEntity> get migration_entityTypeData => EntityTypeDefinition<MigrationEntity>(
       "migrations",
       timestampsEnabled: false,
       columns: [

@@ -19,7 +19,7 @@ abstract class EntityMirror<T> {
   Object? get(Symbol field);
 }
 
-final class DBEntity<T extends Entity<T>> {
+final class EntityTypeDefinition<T extends Entity<T>> {
   Type get dartType => T;
 
   final String tableName;
@@ -44,7 +44,7 @@ final class DBEntity<T extends Entity<T>> {
 
   Iterable<DBEntityField> get editableColumns => columns.where((e) => e != primaryKey);
 
-  const DBEntity(
+  const EntityTypeDefinition(
     this.tableName, {
     this.columns = const [],
     required this.mirror,
@@ -144,9 +144,6 @@ final class ReferencedField<T extends Entity<T>> implements DBEntityField {
 
   final bool _nullable;
 
-  // final String _referencedColumnName;
-  // final Symbol _referencedDartName;
-
   final ForeignKeyAction? onUpdate, onDelete;
 
   ReferencedField._(
@@ -157,12 +154,9 @@ final class ReferencedField<T extends Entity<T>> implements DBEntityField {
     this.onUpdate,
   })  : _nullable = nullable,
         _dartName = from.$1,
-        _columnName = from.$2
-  // ,_referencedDartName = to.$1,
-  // _referencedColumnName = to.$2
-  ;
+        _columnName = from.$2;
 
-  DBEntity<T> get reference => Query.getEntity<T>();
+  EntityTypeDefinition<T> get reference => Query.getEntity<T>();
 
   @override
   String get columnName => _columnName;

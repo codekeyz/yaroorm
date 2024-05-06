@@ -22,8 +22,8 @@ abstract class Entity<Parent extends Entity<Parent>> {
 
   DriverContract _driver = DB.defaultDriver;
 
-  DBEntity<Parent>? _typeDataCache;
-  DBEntity<Parent> get typeData {
+  EntityTypeDefinition<Parent>? _typeDataCache;
+  EntityTypeDefinition<Parent> get typeData {
     if (_typeDataCache != null) return _typeDataCache!;
     return _typeDataCache = Query.getEntity<Parent>();
   }
