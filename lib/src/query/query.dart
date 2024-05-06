@@ -139,6 +139,8 @@ final class Query<T extends Entity<T>>
 
   ReadQuery<T> where(WhereBuilder<T> builder) {
     final whereClause = builder.call(WhereClauseBuilder<T>());
+    whereClause.validate(_joins);
+
     return ReadQuery<T>._(this, whereClause: whereClause);
   }
 
@@ -194,6 +196,8 @@ final class Query<T extends Entity<T>>
     int? offset,
   }) async {
     final whereClause = where?.call(WhereClauseBuilder<T>());
+    whereClause?.validate(_joins);
+
     final readQ = ReadQuery._(
       this,
       limit: limit,
@@ -212,6 +216,8 @@ final class Query<T extends Entity<T>>
   @override
   Future<T?> findOne({WhereBuilder<T>? where}) async {
     final whereClause = where?.call(WhereClauseBuilder<T>());
+    whereClause?.validate(_joins);
+
     final readQ = ReadQuery._(this, limit: 1, whereClause: whereClause, joins: _joins);
     final results = await runner.query(readQ);
     if (results.isEmpty) return null;
@@ -223,8 +229,10 @@ final class Query<T extends Entity<T>>
     required WhereBuilder<T> where,
     required UpdateEntity<T> update,
   }) {
-    final values = update.toMap;
     final whereClause = where.call(WhereClauseBuilder<T>());
+    whereClause.validate(_joins);
+
+    final values = update.toMap;
 
     if (entity.timestampsEnabled) {
       final now = DateTime.now();

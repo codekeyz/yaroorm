@@ -56,14 +56,33 @@ typedef CompareWithValue<Value> = ({Operator operator, Value? value});
 abstract interface class WhereClause {
   final List<WhereClause> values;
   WhereClause(this.values, {String? table});
+
+  @internal
+  void validate(List<Join> joins);
 }
 
 class $AndGroup extends WhereClause {
   $AndGroup._(super.values);
+
+  @override
+  void validate(List<Join> joins) {
+    final clauseValues = values.whereType<WhereClauseValue>();
+    for (final val in clauseValues) {
+      val.validate(joins);
+    }
+  }
 }
 
 class $OrGroup extends WhereClause {
   $OrGroup._(super.values);
+
+  @override
+  void validate(List<Join> joins) {
+    final clauseValues = values.whereType<WhereClauseValue>();
+    for (final val in clauseValues) {
+      val.validate(joins);
+    }
+  }
 }
 
 class WhereClauseValue<ValueType> extends WhereClause {
@@ -86,6 +105,17 @@ class WhereClauseValue<ValueType> extends WhereClause {
           '$field ${operator.name} $value',
         );
       }
+    }
+  }
+
+  @override
+  void validate(List<Join> joins) {
+    if (table == null) return;
+    final tableJoined = joins.any((e) => [e.onTable, e.fromTable].contains(table));
+    if (!tableJoined) {
+      throw ArgumentError(
+        'No Joins found to enable `$table.$field ${operator.name} $value` Did you forget to call `.withRelations` ?',
+      );
     }
   }
 }
