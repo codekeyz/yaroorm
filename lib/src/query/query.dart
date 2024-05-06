@@ -353,7 +353,7 @@ final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with Agg
   final List<String> groupBys;
 
   ReadQuery._(
-    Query<T> query, {
+    Query<T> super.query, {
     this.whereClause,
     this.orderByProps,
     this.fieldSelections = const {},
@@ -361,7 +361,7 @@ final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with Agg
     this.groupBys = const [],
     this.limit,
     this.offset,
-  }) : super(query);
+  });
 
   @override
   Query<T> get $query => (super.$query) as Query<T>;
