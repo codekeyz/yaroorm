@@ -154,74 +154,6 @@ return switch(field) {
             ...normalFields.map((e) => _generateGetByPropertyMethod(e, className)),
           ])),
 
-        /// Generate Extension for HasMany creations
-        // if (parsedEntity.hasManyGetters.isNotEmpty) ...[
-        //   ...parsedEntity.hasManyGetters.map(
-        //     (hasManyField) {
-        //       final hasManyClass = hasManyField.getter!.returnType as InterfaceType;
-        //       final relatedClass = hasManyClass.typeArguments.last.element as ClassElement;
-        //       final relatedClassName = relatedClass.name;
-
-        //       final parsedRelatedEntity = ParsedEntityClass.parse(relatedClass);
-        //       final referenceField = parsedRelatedEntity.referencedFields
-        //           .firstWhereOrNull((e) => e.reader.peek('type')!.typeValue.element!.name == className)
-        //           ?.field;
-        //       if (referenceField == null) {
-        //         throw InvalidGenerationSourceError(
-        //           'No reference field found for $className in $relatedClassName',
-        //           element: relatedClass,
-        //           todo: 'Did you forget to annotate with `@reference`',
-        //         );
-        //       }
-
-        //       final relatedEntityCreateFields =
-        //           parsedRelatedEntity.fieldsRequiredForCreate.where((field) => field != referenceField);
-
-        //       return Class((b) => b
-        //         ..name = 'New${relatedClass.name}For$className'
-        //         ..extend = refer('CreateRelatedEntity<$className, ${relatedClass.name}>')
-        //         ..fields.addAll(relatedEntityCreateFields.map(
-        //           (f) => Field((fb) => fb
-        //             ..name = f.name
-        //             ..type = refer(f.type.getDisplayString(withNullability: true))
-        //             ..modifier = FieldModifier.final$),
-        //         ))
-        //         ..constructors.add(
-        //           Constructor(
-        //             (c) => c
-        //               ..constant = true
-        //               ..optionalParameters.addAll(relatedEntityCreateFields.map(
-        //                 (field) => Parameter((p) => p
-        //                   ..required = true
-        //                   ..named = true
-        //                   ..name = field.name
-        //                   ..toThis = true),
-        //               )),
-        //           ),
-        //         )
-        //         ..methods.addAll([
-        //           Method((m) => m
-        //             ..name = 'field'
-        //             ..returns = refer('Symbol')
-        //             ..type = MethodType.getter
-        //             ..type = MethodType.getter
-        //             ..annotations.add(CodeExpression(Code('override')))
-        //             ..lambda = true
-        //             ..body = Code('#${referenceField.name}')),
-        //           Method(
-        //             (m) => m
-        //               ..name = 'toMap'
-        //               ..returns = refer('Map<Symbol, dynamic>')
-        //               ..type = MethodType.getter
-        //               ..annotations.add(CodeExpression(Code('override')))
-        //               ..lambda = true
-        //               ..body = Code('{ ${relatedEntityCreateFields.map((e) => '#${e.name} : ${e.name}').join(', ')} }'),
-        //           ),
-        //         ]));
-        //     },
-        //   )
-        // ],
-
         /// Generate Extension for loading relations
         Extension((b) => b
           ..name = '${className}RelationsBuilder'
@@ -232,6 +164,61 @@ return switch(field) {
             if (parsedEntity.hasManyGetters.isNotEmpty)
               ...parsedEntity.hasManyGetters.map((field) => _generateJoinForHasMany(parsedEntity, field.getter!)),
           ])),
+
+        /// Generate Class for enabling Insert for HasMany creations
+        if (parsedEntity.hasManyGetters.isNotEmpty) ...[
+          ...parsedEntity.hasManyGetters.map((hasManyField) {
+            final hasManyClass = hasManyField.getter!.returnType as InterfaceType;
+            final parsedRelatedEntity =
+                ParsedEntityClass.parse(hasManyClass.typeArguments.last.element as ClassElement);
+
+            final referenceField =
+                parsedRelatedEntity.bindings.entries.firstWhere((e) => e.value.entity.element == parsedEntity.element);
+
+            final relatedEntityCreateFields =
+                parsedRelatedEntity.fieldsRequiredForCreate.where((field) => Symbol(field.name) != referenceField.key);
+
+            return Class((b) => b
+              ..name = 'New${parsedRelatedEntity.className}For$className'
+              ..extend = refer('CreateRelatedEntity<$className, ${parsedRelatedEntity.className}>')
+              ..fields.addAll(relatedEntityCreateFields.map(
+                (f) => Field((fb) => fb
+                  ..name = f.name
+                  ..type = refer(f.type.getDisplayString(withNullability: true))
+                  ..modifier = FieldModifier.final$),
+              ))
+              ..constructors.add(
+                Constructor((c) => c
+                  ..constant = true
+                  ..optionalParameters.addAll(relatedEntityCreateFields.map(
+                    (field) => Parameter((p) => p
+                      ..required = true
+                      ..named = true
+                      ..name = field.name
+                      ..toThis = true),
+                  ))),
+              )
+              ..methods.addAll([
+                Method((m) => m
+                  ..name = 'field'
+                  ..returns = refer('Symbol')
+                  ..type = MethodType.getter
+                  ..type = MethodType.getter
+                  ..annotations.add(CodeExpression(Code('override')))
+                  ..lambda = true
+                  ..body = Code('#${symbolToString(referenceField.key)}')),
+                Method(
+                  (m) => m
+                    ..name = 'toMap'
+                    ..returns = refer('Map<Symbol, dynamic>')
+                    ..type = MethodType.getter
+                    ..annotations.add(CodeExpression(Code('override')))
+                    ..lambda = true
+                    ..body = Code('{ ${relatedEntityCreateFields.map((e) => '#${e.name} : ${e.name}').join(', ')} }'),
+                ),
+              ]));
+          })
+        ],
       ]));
 
     return DartFormatter().format([
