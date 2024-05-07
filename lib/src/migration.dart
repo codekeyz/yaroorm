@@ -190,15 +190,20 @@ abstract class Schema {
           table = make(table, prop);
         }
 
-        for (final prop in entity.referencedFields) {
+        for (final binding in entity.bindings.entries) {
+          final prop = entity.columns.firstWhere((e) => e.dartName == binding.key);
+          final referenceTypeData = binding.value.referenceTypeDef;
+          final referenceColumn = binding.value.reference;
+
           final foreignKey = ForeignKey(
             entity.tableName,
             prop.columnName,
-            foreignTable: prop.reference.tableName,
-            foreignTableColumn: prop.reference.primaryKey.columnName,
-            onUpdate: prop.onUpdate,
-            onDelete: prop.onDelete,
+            foreignTable: referenceTypeData.tableName,
+            foreignTableColumn: referenceColumn.columnName,
+            onUpdate: binding.value.onUpdate,
+            onDelete: binding.value.onDelete,
           );
+
           table.foreign(foreignKey);
         }
 

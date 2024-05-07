@@ -1,7 +1,6 @@
 import 'package:collection/collection.dart';
 
 import 'database/entity/entity.dart';
-import 'migration.dart';
 import 'query/query.dart';
 
 String getEntityTableName<T extends Entity<T>>() => Query.getEntity<T>().tableName;
@@ -20,7 +19,9 @@ abstract class EntityMirror<T> {
 }
 
 class Binding<Parent extends Entity<Parent>, Related extends Entity<Related>> extends bindTo {
-  const Binding({required super.on, super.onDelete, super.onUpdate}) : super(Parent);
+  EntityTypeDefinition<Related> get referenceTypeDef => Query.getEntity<Related>();
+  DBEntityField get reference => referenceTypeDef.columns.firstWhere((e) => e.dartName == on!);
+  const Binding({required Symbol super.on, super.onDelete, super.onUpdate}) : super(Related);
 }
 
 final class EntityTypeDefinition<T extends Entity<T>> {
