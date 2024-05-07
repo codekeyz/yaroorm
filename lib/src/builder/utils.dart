@@ -167,7 +167,7 @@ final class ParsedEntityClass {
   final List<FieldElement> allFields;
 
   /// {current_field_in_class : external entity being referenced and field}
-  final Map<Symbol, ({ParsedEntityClass entity, Symbol field})> bindings;
+  final Map<Symbol, ({ParsedEntityClass entity, Symbol field, ConstantReader reader})> bindings;
 
   final List<FieldElement> getters;
 
@@ -244,7 +244,7 @@ final class ParsedEntityClass {
 
     final fieldsWithBindings = _getFieldsAndReaders(normalFields, entity.bindTo);
 
-    final Map<Symbol, ({ParsedEntityClass entity, Symbol field})> bindings = {};
+    final Map<Symbol, ({ParsedEntityClass entity, Symbol field, ConstantReader reader})> bindings = {};
 
     for (final field in fieldsWithBindings) {
       final relatedClass = field.reader.peek('type')!.typeValue.element as ClassElement;
@@ -264,7 +264,7 @@ final class ParsedEntityClass {
         fieldToBind = Symbol(parsedRelatedClass.primaryKey.field.name);
       }
 
-      bindings[Symbol(field.field.name)] = (entity: parsedRelatedClass, field: fieldToBind);
+      bindings[Symbol(field.field.name)] = (entity: parsedRelatedClass, field: fieldToBind, reader: field.reader);
     }
 
     return ParsedEntityClass(

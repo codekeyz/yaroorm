@@ -44,7 +44,7 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
     final createdAtField = parsedEntity.createdAtField?.field;
     final updatedAtField = parsedEntity.updatedAtField?.field;
     final primaryConstructor = parsedEntity.constructor;
-
+    final bindings = parsedEntity.bindings;
     final normalFields = parsedEntity.normalFields;
 
     final converters = annotation.peek('converters')!.listValue;
@@ -78,6 +78,15 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
                 columns: ${fields.map((field) => generateCodeForField(parsedEntity, field)).toList()},
                 mirror: _\$${className}EntityMirror.new,
                 build: (args) => ${_generateConstructorCode(className, primaryConstructor)},
+                ${bindings.isEmpty ? '' : 'bindings: { ${bindings.entries.map(
+                  (e) => _generateCodeForBinding(
+                    className,
+                    e.value.entity.className,
+                    e.key,
+                    e.value.field,
+                    e.value.reader,
+                  ),
+                ).join(', ')}, },'}
                 ${converters.isEmpty ? '' : 'converters: ${converters.map(processAnnotation).toList()},'})''',
           )),
 
@@ -401,7 +410,6 @@ return switch(field) {
 
   /// Generate DBEntityField for each of the class fields
   String generateCodeForField(ParsedEntityClass parsedClass, FieldElement e) {
-    final className = parsedClass.className;
     final createdAtField = parsedClass.createdAtField?.field;
     final updatedAtField = parsedClass.updatedAtField?.field;
     final primaryKey = parsedClass.primaryKey;
@@ -409,71 +417,11 @@ return switch(field) {
     final symbol = '#${e.name}';
     final columnName = getFieldDbName(e);
 
-    final meta = typeChecker(entity.TableColumn).firstAnnotationOf(e, throwOnUnresolved: false);
-
     final requiredOpts = '''
               "$columnName",
                ${e.type.getDisplayString(withNullability: false)},
                $symbol
             ''';
-
-    if (meta != null) {
-      final metaReader = ConstantReader(meta);
-      final isReferenceField = typeChecker(entity.bindTo).isExactly(meta.type!.element!);
-
-      if (isReferenceField) {
-        final referencedType = metaReader.peek('type')!.typeValue;
-        final element = referencedType.element as ClassElement;
-        final superType = element.supertype?.element;
-
-        if (superType == null || !typeChecker(entity.Entity).isExactly(superType)) {
-          throw InvalidGenerationSourceError(
-            'Generator cannot target field `${e.name}` on `$className` class.',
-            element: element,
-            todo: 'Type passed to [reference] annotation must be a subtype of `Entity`.',
-          );
-        }
-
-        final parsedClass = ParsedEntityClass.parse(element);
-
-        final onUpdate = metaReader.peek('onUpdate')?.objectValue.variable!.name;
-        final onDelete = metaReader.peek('onDelete')?.objectValue.variable!.name;
-
-        final customPassedReferenceSymbol = metaReader.peek('field')?.symbolValue;
-        late FieldElement referenceField;
-        if (customPassedReferenceSymbol != null) {
-          final foundField =
-              parsedClass.allFields.firstWhereOrNull((e) => Symbol(e.name) == customPassedReferenceSymbol);
-          if (foundField == null) {
-            throw InvalidGenerationSourceError(
-              'Referenced field `$customPassedReferenceSymbol` does not exist on `${element.name}` class.',
-              element: e,
-            );
-          }
-          referenceField = foundField;
-        } else {
-          referenceField = parsedClass.primaryKey.field;
-        }
-
-        if (referenceField.type != e.type) {
-          throw InvalidGenerationSourceError(
-            'Type-mismatch between referenced field '
-            '`$className.${e.name}` (${e.type.getDisplayString(withNullability: true)}) and '
-            '`${element.name}.${referenceField.name}` (${referenceField.type.getDisplayString(withNullability: true)})',
-            element: e,
-          );
-        }
-
-        return '''DBEntityField.referenced<${element.name}>(
-            ${[
-          '($symbol, "$columnName")',
-          '(#${referenceField.name}, "${getFieldDbName(referenceField)}")',
-          if (e.type.isNullable) 'nullable: true',
-          if (onUpdate != null) 'onUpdate: ForeignKeyAction.$onUpdate',
-          if (onDelete != null) 'onDelete: ForeignKeyAction.$onDelete',
-        ].join(', ')})''';
-      }
-    }
 
     if (e == createdAtField) {
       return '''DBEntityField.createdAt("$columnName", $symbol)''';
@@ -565,5 +513,24 @@ return switch(field) {
             key: HasMany<${parent.className}, ${relatedClass.className}>,
           )'''),
     );
+  }
+
+  String _generateCodeForBinding(
+    String className,
+    String relatedClass,
+    Symbol field,
+    Symbol on,
+    ConstantReader reader,
+  ) {
+    final onUpdate = reader.peek('onUpdate')?.objectValue.variable!.name;
+    final onDelete = reader.peek('onDelete')?.objectValue.variable!.name;
+
+    return '''
+        #${symbolToString(field)} : Binding<$className, $relatedClass>(
+          ${[
+      'on: #${symbolToString(on)}',
+      if (onUpdate != null) 'onUpdate: ForeignKeyAction.$onUpdate',
+      if (onDelete != null) 'onDelete: ForeignKeyAction.$onDelete',
+    ].join(', ')} ,)''';
   }
 }
