@@ -3,6 +3,8 @@ import 'package:yaroorm/yaroorm.dart';
 import 'package:yaroorm_tests/src/models.dart';
 import 'package:yaroorm_tests/test_data.dart';
 
+import 'package:yaroorm/src/reflection.dart';
+
 import '../util.dart';
 
 void runRelationsE2ETest(String connectionName) {

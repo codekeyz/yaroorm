@@ -49,7 +49,8 @@ abstract class Entity<Parent extends Entity<Parent>> {
   @protected
   HasMany<Parent, RelatedModel> hasMany<RelatedModel extends Entity<RelatedModel>>() {
     final relatedModelTypeData = Query.getEntity<RelatedModel>();
-    final referenceField = relatedModelTypeData.referencedFields.firstWhere((e) => e.reference.dartType == Parent);
+    final binding = relatedModelTypeData.bindings.entries.firstWhere((e) => e.value.type == Parent);
+    final referenceField = relatedModelTypeData.columns.firstWhere((e) => e.dartName == binding.key);
 
     var relation = _relationsPreloaded[HasMany<Parent, RelatedModel>];
 
@@ -73,8 +74,8 @@ abstract class Entity<Parent extends Entity<Parent>> {
     final relatedPrimaryKey = Query.getEntity<RelatedModel>().primaryKey.columnName;
     final typeData = Query.getEntity<Parent>();
 
-    final field = typeData.referencedFields.firstWhere((e) => e.reference.dartType == RelatedModel);
-    final referenceFieldValue = typeData.mirror(this as Parent).get(field.dartName);
+    final binding = typeData.bindings.entries.firstWhere((e) => e.value.type == RelatedModel);
+    final referenceFieldValue = typeData.mirror(this as Parent).get(binding.key);
 
     return HasOne<Parent, RelatedModel>._(
       relatedPrimaryKey,
@@ -86,8 +87,9 @@ abstract class Entity<Parent extends Entity<Parent>> {
   @protected
   BelongsTo<Parent, RelatedModel> belongsTo<RelatedModel extends Entity<RelatedModel>>() {
     final parentFieldName = Query.getEntity<RelatedModel>().primaryKey.columnName;
-    final referenceField = typeData.referencedFields.firstWhere((e) => e.reference.dartType == RelatedModel);
-    final referenceFieldValue = typeData.mirror(this as Parent).get(referenceField.dartName);
+
+    final binding = typeData.bindings.entries.firstWhere((e) => e.value.type == RelatedModel);
+    final referenceFieldValue = typeData.mirror(this as Parent).get(binding.key);
 
     return BelongsTo<Parent, RelatedModel>._(
       parentFieldName,

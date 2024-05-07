@@ -12,9 +12,8 @@ class Join<Parent extends Entity<Parent>, Reference extends Entity<Reference>> {
   /// of this relation in [Entity] relations cache.
   final Type key;
 
-  Iterable<String> get aliasedForeignSelections => Query.getEntity<Reference>()
-      .columns
-      .map((e) => '${origin.table}.${e.columnName} as "$resultKey.${e.columnName}"');
+  Iterable<String> get aliasedForeignSelections =>
+      Query.getEntity<Reference>().columns.map((e) => '${on.table}.${e.columnName} as "$resultKey.${e.columnName}"');
 
   Join(
     this.resultKey, {
