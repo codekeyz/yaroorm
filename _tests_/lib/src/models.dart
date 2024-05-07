@@ -33,12 +33,7 @@ class Post extends Entity<Post> {
   final String title;
   final String description;
 
-  @reference(
-    User,
-    name: 'user_id',
-    onUpdate: ForeignKeyAction.cascade,
-    onDelete: ForeignKeyAction.cascade,
-  )
+  @bindTo(User, onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.cascade)
   final int userId;
 
   @createdAtCol
@@ -67,7 +62,7 @@ class PostComment extends Entity<PostComment> {
   final int id;
   final String comment;
 
-  @reference(Post, name: 'post_id', onDelete: ForeignKeyAction.cascade)
+  @bindTo(Post, onDelete: ForeignKeyAction.cascade)
   final int postId;
 
   PostComment(this.id, this.comment, {required this.postId});

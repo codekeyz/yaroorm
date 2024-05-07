@@ -101,7 +101,7 @@ UnmodifiableMapView<String, dynamic> entityMapToDbData<T extends Entity<T>>(
 @internal
 Model dbDataToEntity<Model extends Entity<Model>>(
   Map<String, dynamic> dataFromDb,
-  DBEntity<Model> entity,
+  EntityTypeDefinition<Model> entity,
   Map<Type, EntityTypeConverter> converters,
 ) {
   final resultsMap = <Symbol, dynamic>{};

@@ -1,7 +1,6 @@
 import 'package:collection/collection.dart';
 
 import 'database/entity/entity.dart';
-import 'migration.dart';
 import 'query/query.dart';
 
 String getEntityTableName<T extends Entity<T>>() => Query.getEntity<T>().tableName;
@@ -19,11 +18,19 @@ abstract class EntityMirror<T> {
   Object? get(Symbol field);
 }
 
-final class DBEntity<T extends Entity<T>> {
+class Binding<Parent extends Entity<Parent>, Related extends Entity<Related>> extends bindTo {
+  EntityTypeDefinition<Related> get referenceTypeDef => Query.getEntity<Related>();
+  DBEntityField get reference => referenceTypeDef.columns.firstWhere((e) => e.dartName == on!);
+  const Binding({required Symbol super.on, super.onDelete, super.onUpdate}) : super(Related);
+}
+
+final class EntityTypeDefinition<T extends Entity<T>> {
   Type get dartType => T;
 
   final String tableName;
   final List<DBEntityField> columns;
+
+  final Map<Symbol, Binding<T, Entity>> bindings;
 
   final EntityInstanceReflector<T> mirror;
   final EntityInstanceBuilder<T> build;
@@ -40,13 +47,12 @@ final class DBEntity<T extends Entity<T>> {
   UpdatedAtField? get updatedAtField =>
       !timestampsEnabled ? null : columns.firstWhereOrNull((e) => e is UpdatedAtField) as UpdatedAtField?;
 
-  Iterable<ReferencedField> get referencedFields => columns.whereType<ReferencedField>();
-
   Iterable<DBEntityField> get editableColumns => columns.where((e) => e != primaryKey);
 
-  const DBEntity(
+  const EntityTypeDefinition(
     this.tableName, {
     this.columns = const [],
+    this.bindings = const {},
     required this.mirror,
     required this.build,
     this.timestampsEnabled = false,
@@ -96,22 +102,6 @@ final class DBEntityField {
   static UpdatedAtField updatedAt(String columnName, Symbol dartName) {
     return UpdatedAtField._(columnName, dartName);
   }
-
-  static ReferencedField<T> referenced<T extends Entity<T>>(
-    Refer from,
-    Refer to, {
-    bool nullable = false,
-    ForeignKeyAction? onUpdate,
-    ForeignKeyAction? onDelete,
-  }) {
-    return ReferencedField<T>._(
-      from,
-      to,
-      nullable: nullable,
-      onUpdate: onUpdate,
-      onDelete: onDelete,
-    );
-  }
 }
 
 final class PrimaryKeyField extends DBEntityField {
@@ -134,48 +124,4 @@ final class CreatedAtField extends DBEntityField {
 
 final class UpdatedAtField extends DBEntityField {
   const UpdatedAtField._(String columnName, Symbol dartName) : super(columnName, DateTime, dartName);
-}
-
-typedef Refer = (Symbol symbol, String dbname);
-
-final class ReferencedField<T extends Entity<T>> implements DBEntityField {
-  final String _columnName;
-  final Symbol _dartName;
-
-  final bool _nullable;
-
-  // final String _referencedColumnName;
-  // final Symbol _referencedDartName;
-
-  final ForeignKeyAction? onUpdate, onDelete;
-
-  ReferencedField._(
-    Refer from,
-    Refer to, {
-    bool nullable = false,
-    this.onDelete,
-    this.onUpdate,
-  })  : _nullable = nullable,
-        _dartName = from.$1,
-        _columnName = from.$2
-  // ,_referencedDartName = to.$1,
-  // _referencedColumnName = to.$2
-  ;
-
-  DBEntity<T> get reference => Query.getEntity<T>();
-
-  @override
-  String get columnName => _columnName;
-
-  @override
-  Symbol get dartName => _dartName;
-
-  @override
-  bool get isPrimaryKey => false;
-
-  @override
-  bool get nullable => _nullable;
-
-  @override
-  Type get type => reference.primaryKey.type;
 }
