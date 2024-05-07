@@ -214,9 +214,9 @@ class SqliteSerializer extends PrimitiveSerializer {
       queryBuilder.write(', $selections FROM $tableName');
 
       for (final join in query.joins) {
-        final field = '${join.origin.table}.${join.origin.column}';
-        final referencedField = '${join.on.table}.${join.on.column}';
-        queryBuilder.writeln(' LEFT JOIN ${join.on.table} ON $field = $referencedField');
+        final field = '${escapeStr(join.origin.table)}.${escapeStr(join.origin.column)}';
+        final referencedField = '${escapeStr(join.on.table)}.${escapeName(join.on.column)}';
+        queryBuilder.writeln(' LEFT JOIN ${escapeName(join.on.table)} ON $field = $referencedField');
       }
     } else {
       queryBuilder.write(' FROM $tableName');
