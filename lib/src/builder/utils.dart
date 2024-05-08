@@ -253,8 +253,10 @@ final class ParsedEntityClass {
       /// Check the field we're binding onto. If provided, validate that if exists
       /// if not, use the related class primary key
       Symbol? fieldToBind = field.reader.peek('on')?.symbolValue;
+
       if (fieldToBind != null) {
-        if (parsedRelatedClass.allFields.any((e) => Symbol(e.name) != fieldToBind)) {
+        final fields = parsedRelatedClass.allFields.map((e) => Symbol(e.name));
+        if (!fields.contains(fieldToBind)) {
           throw InvalidGenerationSource(
             'Field $fieldToBind used in Binding does not exist on ${parsedRelatedClass.className} Entity',
             element: field.field,

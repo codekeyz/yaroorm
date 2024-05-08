@@ -180,6 +180,8 @@ return switch(field) {
             final parsedRelatedEntity =
                 ParsedEntityClass.parse(hasManyClass.typeArguments.last.element as ClassElement);
 
+            print(parsedRelatedEntity);
+
             final referenceField =
                 parsedRelatedEntity.bindings.entries.firstWhere((e) => e.value.entity.element == parsedEntity.element);
 
@@ -507,7 +509,7 @@ return switch(field) {
         ..lambda = true
         ..returns = refer(joinClass)
         ..body = Code('''$joinClass("${getter.name}",
-            origin: (table: "${parent.table}", column: "${getFieldDbName(parent.primaryKey.field)}"),           
+            origin: (table: "${parent.table}", column: "${getFieldDbName(parent.primaryKey.field)}"),
             on: (table: "${relatedClass.table}", column: "${getFieldDbName(foreignField)}"),
             key: HasMany<${parent.className}, ${relatedClass.className}>,
           )'''),
