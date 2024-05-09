@@ -180,8 +180,6 @@ return switch(field) {
             final parsedRelatedEntity =
                 ParsedEntityClass.parse(hasManyClass.typeArguments.last.element as ClassElement);
 
-            print(parsedRelatedEntity);
-
             final referenceField =
                 parsedRelatedEntity.bindings.entries.firstWhere((e) => e.value.entity.element == parsedEntity.element);
 

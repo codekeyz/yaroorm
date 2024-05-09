@@ -165,7 +165,7 @@ void runBasicE2ETest(String connectionName) {
 
     test('should get all users where age is 30 or 52', () async {
       final users = await UserQuery.driver(driver)
-          .where((user) => user.or([
+          .where((user) => or([
                 user.age(30),
                 user.age(52),
               ]))
