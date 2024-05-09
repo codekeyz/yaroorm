@@ -101,11 +101,11 @@ abstract class Entity<Parent extends Entity<Parent>> {
 
 @Target({TargetKind.classType})
 class Table {
-  final String name;
+  final String? name;
   final List<EntityTypeConverter> converters;
 
-  const Table(
-    this.name, {
+  const Table({
+    this.name,
     this.converters = const [],
   });
 }

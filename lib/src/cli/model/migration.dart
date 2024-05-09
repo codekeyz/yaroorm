@@ -4,7 +4,7 @@ import '../../../yaroorm.dart';
 
 part 'migration.g.dart';
 
-@Table('migrations')
+@Table(name: 'migrations')
 class MigrationEntity extends Entity<MigrationEntity> {
   @primaryKey
   final int id;
