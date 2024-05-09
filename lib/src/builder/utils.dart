@@ -41,11 +41,11 @@ String getFieldDbName(FieldElement element) {
 
 String getTableName(ClassElement element) {
   final meta = typeChecker(entity.Table).firstAnnotationOf(element, throwOnUnresolved: false);
-  return ConstantReader(meta).peek('name')?.stringValue ?? element.name.toPlural().first.snakeCase.toLowerCase();
+  return ConstantReader(meta).peek('name')?.stringValue ?? element.name.snakeCase.toPlural().first.toLowerCase();
 }
 
 String getTypeDefName(String className) {
-  return '${className.snakeCase}TypeDef';
+  return '${className.pascalCase.toLowerCase()}TypeDef';
 }
 
 final _numberRegex = RegExp(r'\d+');

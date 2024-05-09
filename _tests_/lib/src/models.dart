@@ -33,7 +33,8 @@ class Post extends Entity<Post> {
   final String title;
   final String description;
 
-  @bindTo(User, onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.cascade)
+  @bindTo(User,
+      onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.cascade)
   final int userId;
 
   @createdAtCol
@@ -56,6 +57,7 @@ class Post extends Entity<Post> {
   BelongsTo<Post, User> get owner => belongsTo<User>();
 }
 
+@Table()
 class PostComment extends Entity<PostComment> {
   @primaryKey
   final int id;
