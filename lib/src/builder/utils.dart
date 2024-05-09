@@ -252,18 +252,20 @@ final class ParsedEntityClass {
 
       /// Check the field we're binding onto. If provided, validate that if exists
       /// if not, use the related class primary key
-      Symbol? fieldToBind = field.reader.peek('on')?.symbolValue;
+      final fieldToBind = field.reader.peek('on')?.symbolValue ?? Symbol(parsedRelatedClass.primaryKey.field.name);
+      final referencedField = parsedRelatedClass.allFields.firstWhereOrNull((e) => Symbol(e.name) == fieldToBind);
+      if (referencedField == null) {
+        throw InvalidGenerationSource(
+          'Field $fieldToBind used in Binding does not exist on ${parsedRelatedClass.className} Entity',
+          element: field.field,
+        );
+      }
 
-      if (fieldToBind != null) {
-        final fields = parsedRelatedClass.allFields.map((e) => Symbol(e.name));
-        if (!fields.contains(fieldToBind)) {
-          throw InvalidGenerationSource(
-            'Field $fieldToBind used in Binding does not exist on ${parsedRelatedClass.className} Entity',
-            element: field.field,
-          );
-        }
-      } else {
-        fieldToBind = Symbol(parsedRelatedClass.primaryKey.field.name);
+      if (referencedField.type != field.field.type) {
+        throw InvalidGenerationSource(
+          'Type-mismatch between fields $className.${field.field.name}(${field.field.type}) and ${parsedRelatedClass.className}.${referencedField.name}(${referencedField.type})',
+          element: field.field,
+        );
       }
 
       bindings[Symbol(field.field.name)] = (entity: parsedRelatedClass, field: fieldToBind, reader: field.reader);
