@@ -54,24 +54,15 @@ void runRelationsE2ETest(String connectionName) {
         orderBy: [OrderPostBy.title(order: OrderDirection.desc)],
       );
       expect(posts, hasLength(3));
-      expect(
-          posts.map((e) => {
-                'id': e.id,
-                'title': e.title,
-                'desc': e.description,
-                'userId': e.userId
-              }),
-          [
-            {'id': 3, 'title': 'Coo Kie 3', 'desc': 'foo bar 6', 'userId': 1},
-            {'id': 2, 'title': 'Bee Moo 2', 'desc': 'foo bar 5', 'userId': 1},
-            {'id': 1, 'title': 'Aoo bar 1', 'desc': 'foo bar 4', 'userId': 1}
-          ]);
+      expect(posts.map((e) => {'id': e.id, 'title': e.title, 'desc': e.description, 'userId': e.userId}), [
+        {'id': 3, 'title': 'Coo Kie 3', 'desc': 'foo bar 6', 'userId': 1},
+        {'id': 2, 'title': 'Bee Moo 2', 'desc': 'foo bar 5', 'userId': 1},
+        {'id': 1, 'title': 'Aoo bar 1', 'desc': 'foo bar 4', 'userId': 1}
+      ]);
     });
 
     test('should fetch posts with owner', () async {
-      final posts = await PostQuery.driver(driver)
-          .withRelations((post) => [post.owner])
-          .findMany();
+      final posts = await PostQuery.driver(driver).withRelations((post) => [post.owner]).findMany();
 
       final owner = await posts.first.owner.value;
       expect(
@@ -93,28 +84,25 @@ void runRelationsE2ETest(String connectionName) {
       await post.comments.insertMany([
         NewPostCommentForPost(
           id: firstId,
-          comment: 'This post looks abit old',
+          comment: 'A new post looks abit old',
         ),
         NewPostCommentForPost(
           id: secondId,
-          comment: 'oh, another comment',
+          comment: 'Come, let us explore Dart',
         ),
       ]);
 
       comments = await post.comments.get(orderBy: [
-        OrderPostCommentBy.comment(),
+        OrderPostCommentBy.comment(order: OrderDirection.desc),
       ]);
 
       expect(comments.every((e) => e.postId == post.id), isTrue);
       expect(comments.map((e) => e.id), containsAll([firstId, secondId]));
 
-      expect(
-          comments.map(
-              (c) => {'id': c.id, 'comment': c.comment, 'postId': c.postId}),
-          [
-            {'id': firstId, 'comment': 'This post looks abit old', 'postId': 1},
-            {'id': secondId, 'comment': 'oh, another comment', 'postId': 1}
-          ]);
+      expect(comments.map((c) => c.toJson()), [
+        {'id': secondId, 'comment': 'Come, let us explore Dart', 'postId': 1},
+        {'id': firstId, 'comment': 'A new post looks abit old', 'postId': 1},
+      ]);
     });
 
     test('should add post for another user', () async {

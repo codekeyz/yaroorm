@@ -67,4 +67,10 @@ class PostComment extends Entity<PostComment> {
   final int postId;
 
   PostComment(this.id, this.comment, {required this.postId});
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'comment': comment,
+        'postId': postId,
+      };
 }
