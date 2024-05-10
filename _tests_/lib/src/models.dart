@@ -58,8 +58,9 @@ class Post extends Entity<Post> {
 
 @table
 class PostComment extends Entity<PostComment> {
-  @primaryKey
-  final int id;
+  @PrimaryKey(autoIncrement: false)
+  final String id;
+
   final String comment;
 
   @bindTo(Post, onDelete: ForeignKeyAction.cascade)

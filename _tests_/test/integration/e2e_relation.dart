@@ -1,4 +1,5 @@
 import 'package:test/test.dart';
+import 'package:uuid/uuid.dart';
 import 'package:yaroorm/yaroorm.dart';
 import 'package:yaroorm_tests/src/models.dart';
 import 'package:yaroorm_tests/test_data.dart';
@@ -6,6 +7,8 @@ import 'package:yaroorm_tests/test_data.dart';
 import 'package:yaroorm/src/reflection.dart';
 
 import '../util.dart';
+
+final uuid = Uuid();
 
 void runRelationsE2ETest(String connectionName) {
   final driver = DB.driver(connectionName);
@@ -51,15 +54,24 @@ void runRelationsE2ETest(String connectionName) {
         orderBy: [OrderPostBy.title(order: OrderDirection.desc)],
       );
       expect(posts, hasLength(3));
-      expect(posts.map((e) => {'id': e.id, 'title': e.title, 'desc': e.description, 'userId': e.userId}), [
-        {'id': 3, 'title': 'Coo Kie 3', 'desc': 'foo bar 6', 'userId': 1},
-        {'id': 2, 'title': 'Bee Moo 2', 'desc': 'foo bar 5', 'userId': 1},
-        {'id': 1, 'title': 'Aoo bar 1', 'desc': 'foo bar 4', 'userId': 1}
-      ]);
+      expect(
+          posts.map((e) => {
+                'id': e.id,
+                'title': e.title,
+                'desc': e.description,
+                'userId': e.userId
+              }),
+          [
+            {'id': 3, 'title': 'Coo Kie 3', 'desc': 'foo bar 6', 'userId': 1},
+            {'id': 2, 'title': 'Bee Moo 2', 'desc': 'foo bar 5', 'userId': 1},
+            {'id': 1, 'title': 'Aoo bar 1', 'desc': 'foo bar 4', 'userId': 1}
+          ]);
     });
 
     test('should fetch posts with owner', () async {
-      final posts = await PostQuery.driver(driver).withRelations((post) => [post.owner]).findMany();
+      final posts = await PostQuery.driver(driver)
+          .withRelations((post) => [post.owner])
+          .findMany();
 
       final owner = await posts.first.owner.value;
       expect(
@@ -75,14 +87,25 @@ void runRelationsE2ETest(String connectionName) {
       var comments = await post!.comments.get();
       expect(comments, isEmpty);
 
+      final firstId = uuid.v4();
+      final secondId = uuid.v4();
+
       await post.comments.insertMany([
-        NewPostCommentForPost(comment: 'This post looks abit old'),
-        NewPostCommentForPost(comment: 'oh, another comment'),
+        NewPostCommentForPost(
+          id: firstId,
+          comment: 'This post looks abit old',
+        ),
+        NewPostCommentForPost(
+          id: secondId,
+          comment: 'oh, another comment',
+        ),
       ]);
 
       comments = await post.comments.get();
 
       expect(comments.every((e) => e.postId == post.id), isTrue);
+      expect(comments.map((e) => e.id), containsAll([firstId, secondId]));
+
       expect(
           comments.map((c) => {
                 'id': c.id,
@@ -120,8 +143,8 @@ void runRelationsE2ETest(String connectionName) {
       expect(anotherUserPost.userId, anotherUser.id);
 
       await anotherUserPost.comments.insertMany([
-        NewPostCommentForPost(comment: 'ah ah'),
-        NewPostCommentForPost(comment: 'oh oh'),
+        NewPostCommentForPost(id: uuid.v4(), comment: 'ah ah'),
+        NewPostCommentForPost(id: uuid.v4(), comment: 'oh oh'),
       ]);
 
       expect(await anotherUserPost.comments.get(), hasLength(2));

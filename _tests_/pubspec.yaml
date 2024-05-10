@@ -9,5 +9,6 @@ environment:
 
 dependencies:
   build_runner: ^2.4.9
+  uuid: ^4.4.0
   yaroorm: 
     path: ../
