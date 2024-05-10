@@ -58,12 +58,19 @@ class Post extends Entity<Post> {
 
 @table
 class PostComment extends Entity<PostComment> {
-  @primaryKey
-  final int id;
+  @PrimaryKey(autoIncrement: false)
+  final String id;
+
   final String comment;
 
   @bindTo(Post, onDelete: ForeignKeyAction.cascade)
   final int postId;
 
   PostComment(this.id, this.comment, {required this.postId});
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'comment': comment,
+        'postId': postId,
+      };
 }

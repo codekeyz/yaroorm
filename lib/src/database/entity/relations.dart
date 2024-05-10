@@ -8,7 +8,7 @@ abstract class EntityRelation<Parent extends Entity<Parent>, RelatedModel extend
   EntityRelation(this.parent) : _query = Query.table<RelatedModel>().driver(parent._driver);
 
   Object get parentId {
-    final typeInfo = parent.typeData;
+    final typeInfo = parent._typeDef;
     return typeInfo.mirror.call(parent).get(typeInfo.primaryKey.dartName)!;
   }
 
@@ -19,6 +19,8 @@ abstract class EntityRelation<Parent extends Entity<Parent>, RelatedModel extend
       throw StateError('No preloaded data for this relation. Did you forget to call `withRelations` ?');
 
   get({bool refresh = false});
+
+  bool get loaded;
 
   delete();
 }
@@ -35,6 +37,9 @@ final class HasOne<Parent extends Entity<Parent>, RelatedModel extends Entity<Re
     super._owner,
     this._cache,
   );
+
+  @override
+  bool get loaded => _cache != null;
 
   @override
   RelatedModel? get value {
@@ -74,6 +79,9 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
   HasMany._(this.foreignKey, super.parent, this._cache);
 
   ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, parentId));
+
+  @override
+  bool get loaded => _cache != null;
 
   @override
   List<RelatedModel> get value {
@@ -139,6 +147,9 @@ final class BelongsTo<Parent extends Entity<Parent>, RelatedModel extends Entity
   final Map<String, dynamic>? _cache;
   final String foreignKey;
   final dynamic foreignKeyValue;
+
+  @override
+  bool get loaded => _cache != null;
 
   BelongsTo._(
     this.foreignKey,

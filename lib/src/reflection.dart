@@ -47,6 +47,9 @@ final class EntityTypeDefinition<T extends Entity<T>> {
   UpdatedAtField? get updatedAtField =>
       !timestampsEnabled ? null : columns.firstWhereOrNull((e) => e is UpdatedAtField) as UpdatedAtField?;
 
+  Iterable<DBEntityField> get fieldsRequiredForCreate =>
+      primaryKey.autoIncrement ? columns.where((e) => e != primaryKey) : columns;
+
   Iterable<DBEntityField> get editableColumns => columns.where((e) => e != primaryKey);
 
   const EntityTypeDefinition(

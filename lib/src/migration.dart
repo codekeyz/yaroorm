@@ -202,9 +202,13 @@ abstract class Schema {
     return CreateSchema<T>._(
       entity.tableName,
       (table) {
+        final primaryKey = entity.primaryKey;
         table.id(
           name: entity.primaryKey.columnName,
           autoIncrement: entity.primaryKey.autoIncrement,
+
+          /// TODO(codekeyz): is this the right way to do this?
+          type: primaryKey.type == String ? 'VARCHAR(255)' : null,
         );
 
         for (final prop in entity.columns.where((e) => !e.isPrimaryKey)) {
