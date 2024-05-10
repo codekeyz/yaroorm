@@ -25,19 +25,40 @@ abstract class EntityRelation<Parent extends Entity<Parent>, RelatedModel extend
 
 final class HasOne<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>>
     extends EntityRelation<Parent, RelatedModel> {
-  final String relatedModelPrimaryKey;
-  final dynamic relatedModelValue;
+  final String _relatedModelPrimaryKey;
+  final dynamic _relatedModelValue;
+  final Map<String, dynamic>? _cache;
 
   HasOne._(
-    this.relatedModelPrimaryKey,
-    this.relatedModelValue,
+    this._relatedModelPrimaryKey,
+    this._relatedModelValue,
     super._owner,
+    this._cache,
   );
 
-  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(relatedModelPrimaryKey, relatedModelValue));
+  @override
+  RelatedModel? get value {
+    if (_cache == null) {
+      return super.value;
+    } else if (_cache.isEmpty) {
+      return null;
+    }
+    final typeData = Query.getEntity<RelatedModel>();
+    return dbDataToEntity<RelatedModel>(
+      _cache,
+      typeData,
+      combineConverters(typeData.converters, _driver.typeconverters),
+    );
+  }
+
+  @internal
+  ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(_relatedModelPrimaryKey, _relatedModelValue));
 
   @override
-  FutureOr<RelatedModel?> get({bool refresh = false}) => $readQuery.findOne();
+  FutureOr<RelatedModel?> get({bool refresh = false}) async {
+    if (_cache != null && !refresh) return value;
+    return $readQuery.findOne();
+  }
 
   @override
   Future<void> delete() => $readQuery.delete();

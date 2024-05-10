@@ -18,7 +18,7 @@ part 'relations.dart';
 part 'joins.dart';
 
 abstract class Entity<Parent extends Entity<Parent>> {
-  final Map<Type, dynamic> _relationsPreloaded = {};
+  final Map<String, dynamic> _relationsPreloaded = {};
 
   DriverContract _driver = DB.defaultDriver;
 
@@ -39,7 +39,7 @@ abstract class Entity<Parent extends Entity<Parent>> {
   }
 
   @internal
-  Entity<Parent> withRelationsData(Map<Type, dynamic> data) {
+  Entity<Parent> withRelationsData(Map<String, dynamic> data) {
     _relationsPreloaded
       ..clear()
       ..addAll(data);
@@ -47,12 +47,15 @@ abstract class Entity<Parent extends Entity<Parent>> {
   }
 
   @protected
-  HasMany<Parent, RelatedModel> hasMany<RelatedModel extends Entity<RelatedModel>>({Symbol? field}) {
+  HasMany<Parent, RelatedModel> hasMany<RelatedModel extends Entity<RelatedModel>>(
+    String methodName, {
+    Symbol? foreignKey,
+  }) {
     final relatedModelTypeData = Query.getEntity<RelatedModel>();
-    field ??= relatedModelTypeData.bindings.entries.firstWhere((e) => e.value.type == Parent).key;
-    final referenceField = relatedModelTypeData.columns.firstWhere((e) => e.dartName == field);
+    foreignKey ??= relatedModelTypeData.bindings.entries.firstWhere((e) => e.value.type == Parent).key;
+    final referenceField = relatedModelTypeData.columns.firstWhere((e) => e.dartName == foreignKey);
 
-    var relation = _relationsPreloaded[HasMany<Parent, RelatedModel>];
+    var relation = _relationsPreloaded[Join._getKey(HasMany<Parent, RelatedModel>, methodName)];
 
     if (relation is Map) {
       if (relation.isEmpty) {
@@ -70,12 +73,12 @@ abstract class Entity<Parent extends Entity<Parent>> {
   }
 
   @protected
-  HasOne<Parent, RelatedModel> hasOne<RelatedModel extends Entity<RelatedModel>>({Symbol? field}) {
+  HasOne<Parent, RelatedModel> hasOne<RelatedModel extends Entity<RelatedModel>>({Symbol? foreignKey}) {
     final relatedPrimaryKey = Query.getEntity<RelatedModel>().primaryKey.columnName;
     final typeData = Query.getEntity<Parent>();
 
-    field ??= typeData.bindings.entries.firstWhere((e) => e.value.type == RelatedModel).key;
-    final referenceFieldValue = typeData.mirror(this as Parent).get(field);
+    foreignKey ??= typeData.bindings.entries.firstWhere((e) => e.value.type == RelatedModel).key;
+    final referenceFieldValue = typeData.mirror(this as Parent).get(foreignKey);
 
     return HasOne<Parent, RelatedModel>._(
       relatedPrimaryKey,
@@ -85,16 +88,19 @@ abstract class Entity<Parent extends Entity<Parent>> {
   }
 
   @protected
-  BelongsTo<Parent, RelatedModel> belongsTo<RelatedModel extends Entity<RelatedModel>>({Symbol? field}) {
+  BelongsTo<Parent, RelatedModel> belongsTo<RelatedModel extends Entity<RelatedModel>>(
+    String methodName, {
+    Symbol? foreignKey,
+  }) {
     final parentFieldName = Query.getEntity<RelatedModel>().primaryKey.columnName;
-    field ??= typeData.bindings.entries.firstWhere((e) => e.value.type == RelatedModel).key;
-    final referenceFieldValue = typeData.mirror(this as Parent).get(field);
+    foreignKey ??= typeData.bindings.entries.firstWhere((e) => e.value.type == RelatedModel).key;
+    final referenceFieldValue = typeData.mirror(this as Parent).get(foreignKey);
 
     return BelongsTo<Parent, RelatedModel>._(
       parentFieldName,
       referenceFieldValue,
       this as Parent,
-      _relationsPreloaded[BelongsTo<Parent, RelatedModel>],
+      _relationsPreloaded[Join._getKey(BelongsTo<Parent, RelatedModel>, methodName)],
     );
   }
 }
@@ -145,14 +151,15 @@ class bindTo {
 }
 
 const primaryKey = PrimaryKey();
+const table = Table();
 const createdAtCol = CreatedAtColumn();
 const updatedAtCol = UpdatedAtColumn();
 
-class value<T> {
+class value<T extends Object> {
   final T? val;
   const value(this.val);
 }
 
-class NoValue<T> extends value<T> {
+class NoValue<T extends Object> extends value<T> {
   const NoValue() : super(null);
 }
