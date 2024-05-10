@@ -22,11 +22,7 @@ abstract class Entity<Parent extends Entity<Parent>> {
 
   DriverContract _driver = DB.defaultDriver;
 
-  EntityTypeDefinition<Parent>? _typeDataCache;
-  EntityTypeDefinition<Parent> get typeData {
-    if (_typeDataCache != null) return _typeDataCache!;
-    return _typeDataCache = Query.getEntity<Parent>();
-  }
+  EntityTypeDefinition<Parent> get _typeDef => Query.getEntity<Parent>();
 
   String? get connection => null;
 
@@ -97,8 +93,8 @@ abstract class Entity<Parent extends Entity<Parent>> {
     Symbol? foreignKey,
   }) {
     final parentFieldName = Query.getEntity<RelatedModel>().primaryKey.columnName;
-    foreignKey ??= typeData.bindings.entries.firstWhere((e) => e.value.type == RelatedModel).key;
-    final referenceFieldValue = typeData.mirror(this as Parent).get(foreignKey);
+    foreignKey ??= _typeDef.bindings.entries.firstWhere((e) => e.value.type == RelatedModel).key;
+    final referenceFieldValue = _typeDef.mirror(this as Parent).get(foreignKey);
 
     return BelongsTo<Parent, RelatedModel>._(
       parentFieldName,
