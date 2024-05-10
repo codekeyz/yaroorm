@@ -5,12 +5,16 @@ import '../entity/entity.dart';
 import '../../query/query.dart';
 
 import '../../primitives/serializer.dart';
+import '../entity/misc.dart';
 import 'driver.dart';
 import 'sqlite_driver.dart';
 
 final _serializer = MySqlPrimitiveSerializer();
 
-const _mysqlTypeConverters = <EntityTypeConverter>[dateTimeConverter];
+const _mysqlTypeConverters = <EntityTypeConverter>[
+  dateTimeConverter,
+  ...defaultListConverters,
+];
 
 final class MySqlDriver implements DatabaseDriver {
   final DatabaseConnection config;

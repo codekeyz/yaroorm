@@ -10,37 +10,6 @@ abstract class EntityTypeConverter<DartType, DBType> {
   DartType? fromDbType(DBType? value);
 }
 
-class DateTimeConverter extends EntityTypeConverter<DateTime, String> {
-  const DateTimeConverter();
-
-  String padValue(v) => v.toString().padLeft(2, '0');
-
-  @override
-  DateTime? fromDbType(String? value) {
-    return value == null ? null : DateTime.parse(value);
-  }
-
-  @override
-  String? toDbType(DateTime? value) {
-    return value == null
-        ? null
-        : '${value.year}-${padValue(value.month)}-${padValue(value.day)} ${padValue(value.hour)}:${padValue(value.minute)}:${padValue(value.second)}';
-  }
-}
-
-class BooleanConverter extends EntityTypeConverter<bool, int> {
-  const BooleanConverter();
-
-  @override
-  bool? fromDbType(int? value) => value == null ? null : value != 0;
-
-  @override
-  int? toDbType(bool? value) => (value == null || value == false) ? 0 : 1;
-}
-
-const dateTimeConverter = DateTimeConverter();
-const booleanConverter = BooleanConverter();
-
 Map<Type, EntityTypeConverter> combineConverters(
   List<EntityTypeConverter> custom,
   List<EntityTypeConverter> driverProvided,

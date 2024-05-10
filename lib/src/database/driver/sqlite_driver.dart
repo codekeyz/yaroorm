@@ -8,11 +8,16 @@ import '../../primitives/serializer.dart';
 import '../../query/aggregates.dart';
 import '../../query/query.dart';
 import '../entity/entity.dart' hide value;
+import '../entity/misc.dart';
 import 'driver.dart';
 
 final _serializer = const SqliteSerializer();
 
-const _sqliteTypeConverters = <EntityTypeConverter>[booleanConverter, dateTimeConverter];
+const _sqliteTypeConverters = <EntityTypeConverter>[
+  booleanConverter,
+  dateTimeConverter,
+  ...defaultListConverters,
+];
 
 final class SqliteDriver implements DatabaseDriver {
   final DatabaseConnection config;

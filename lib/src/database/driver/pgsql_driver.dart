@@ -5,6 +5,7 @@ import '../../migration.dart';
 import '../../primitives/serializer.dart';
 import '../../query/query.dart';
 import '../entity/entity.dart' hide value;
+import '../entity/misc.dart';
 import 'driver.dart';
 import 'mysql_driver.dart';
 
@@ -124,7 +125,10 @@ final class PostgreSqlDriver implements DatabaseDriver {
   }
 
   @override
-  List<EntityTypeConverter> get typeconverters => [booleanConverter];
+  List<EntityTypeConverter> get typeconverters => [
+        booleanConverter,
+        ...defaultListConverters,
+      ];
 }
 
 class _PgSqlDriverTransactor extends DriverTransactor {
