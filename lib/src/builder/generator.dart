@@ -169,6 +169,8 @@ return switch(field) {
           ..methods.addAll([
             if (parsedEntity.belongsToGetters.isNotEmpty)
               ...parsedEntity.belongsToGetters.map((field) => _generateJoinForBelongsTo(parsedEntity, field.getter!)),
+            if (parsedEntity.hasOneGetters.isNotEmpty)
+              ...parsedEntity.hasOneGetters.map((field) => _generateJoinForHasOne(parsedEntity, field.getter!)),
             if (parsedEntity.hasManyGetters.isNotEmpty)
               ...parsedEntity.hasManyGetters.map((field) => _generateJoinForHasMany(parsedEntity, field.getter!)),
           ])),
@@ -351,7 +353,7 @@ return switch(field) {
   List<Method> _generateWhereClauseForRelations(ParsedEntityClass parsed) {
     final result = <Method>[];
 
-    for (final (field) in [...parsed.hasManyGetters, ...parsed.belongsToGetters]) {
+    for (final (field) in [...parsed.hasManyGetters, ...parsed.belongsToGetters, ...parsed.hasOneGetters]) {
       final hasMany = field.getter!.returnType as InterfaceType;
       final referencedClass = hasMany.typeArguments.last.element as ClassElement;
       final parsedReferenceClass = ParsedEntityClass.parse(referencedClass);
@@ -518,6 +520,43 @@ return switch(field) {
             origin: (table: "${parent.table}", column: "${getFieldDbName(parent.primaryKey.field)}"),
             on: (table: "${relatedClass.table}", column: "${getFieldDbName(foreignField)}"),
             key: HasMany<${parent.className}, ${relatedClass.className}>,
+          )'''),
+    );
+  }
+
+  /// Generate JOIN for HasOne getters on Entity
+  Method _generateJoinForHasOne(
+    ParsedEntityClass parent,
+    PropertyAccessorElement getter,
+  ) {
+    final hasOne = getter.returnType as InterfaceType;
+    final getterName = getter.name;
+    final relatedClass = ParsedEntityClass.parse(hasOne.typeArguments.last.element as ClassElement);
+
+    final bindings = parent.bindings;
+    if (bindings.isEmpty) {
+      throw InvalidGenerationSource(
+        'No bindings found to enable HasOne relation for ${relatedClass.className} in ${parent.className}. Did you forget to use `@bindTo` ?',
+        element: getter,
+      );
+    }
+
+    /// TODO(codekey): be able to specify binding to use
+    final bindingToUse = bindings.entries.firstWhere((e) => e.value.entity.element == relatedClass.element);
+    final field = parent.allFields.firstWhere((e) => Symbol(e.name) == bindingToUse.key);
+    final foreignField = relatedClass.allFields.firstWhere((e) => Symbol(e.name) == bindingToUse.value.field);
+
+    final joinClass = 'Join<${parent.className}, ${relatedClass.className}>';
+    return Method(
+      (m) => m
+        ..name = getterName
+        ..type = MethodType.getter
+        ..lambda = true
+        ..returns = refer(joinClass)
+        ..body = Code('''$joinClass("$getterName",
+            origin: (table: "${parent.table}", column: "${getFieldDbName(field)}"),
+            on: (table: "${relatedClass.table}", column: "${getFieldDbName(foreignField)}"),
+            key: HasOne<${parent.className}, ${relatedClass.className}>,
           )'''),
     );
   }

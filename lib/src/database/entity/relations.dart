@@ -36,6 +36,8 @@ final class HasOne<Parent extends Entity<Parent>, RelatedModel extends Entity<Re
     this._cache,
   );
 
+  bool get loaded => _cache != null;
+
   @override
   RelatedModel? get value {
     if (_cache == null) {
@@ -74,6 +76,8 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
   HasMany._(this.foreignKey, super.parent, this._cache);
 
   ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, parentId));
+
+  bool get loaded => _cache != null;
 
   @override
   List<RelatedModel> get value {
@@ -139,6 +143,8 @@ final class BelongsTo<Parent extends Entity<Parent>, RelatedModel extends Entity
   final Map<String, dynamic>? _cache;
   final String foreignKey;
   final dynamic foreignKeyValue;
+
+  bool get loaded => _cache != null;
 
   BelongsTo._(
     this.foreignKey,

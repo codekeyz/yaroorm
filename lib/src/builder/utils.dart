@@ -184,6 +184,9 @@ final class ParsedEntityClass {
   List<FieldElement> get belongsToGetters =>
       getters.where((getter) => typeChecker(entity.BelongsTo).isExactlyType(getter.type)).toList();
 
+  List<FieldElement> get hasOneGetters =>
+      getters.where((getter) => typeChecker(entity.HasOne).isExactlyType(getter.type)).toList();
+
   bool get hasAutoIncrementingPrimaryKey {
     return primaryKey.reader.peek('autoIncrement')!.boolValue;
   }
