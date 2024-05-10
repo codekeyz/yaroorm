@@ -8,7 +8,7 @@ abstract class EntityRelation<Parent extends Entity<Parent>, RelatedModel extend
   EntityRelation(this.parent) : _query = Query.table<RelatedModel>().driver(parent._driver);
 
   Object get parentId {
-    final typeInfo = parent.typeData;
+    final typeInfo = parent._typeDef;
     return typeInfo.mirror.call(parent).get(typeInfo.primaryKey.dartName)!;
   }
 
