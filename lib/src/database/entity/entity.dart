@@ -73,7 +73,10 @@ abstract class Entity<Parent extends Entity<Parent>> {
   }
 
   @protected
-  HasOne<Parent, RelatedModel> hasOne<RelatedModel extends Entity<RelatedModel>>({Symbol? foreignKey}) {
+  HasOne<Parent, RelatedModel> hasOne<RelatedModel extends Entity<RelatedModel>>(
+    String methodName, {
+    Symbol? foreignKey,
+  }) {
     final relatedPrimaryKey = Query.getEntity<RelatedModel>().primaryKey.columnName;
     final typeData = Query.getEntity<Parent>();
 
@@ -84,6 +87,7 @@ abstract class Entity<Parent extends Entity<Parent>> {
       relatedPrimaryKey,
       referenceFieldValue,
       this as Parent,
+      _relationsPreloaded[Join._getKey(HasOne<Parent, RelatedModel>, methodName)],
     );
   }
 
