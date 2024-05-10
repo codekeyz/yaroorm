@@ -97,16 +97,10 @@ void runRelationsE2ETest(String connectionName) {
       expect(comments.every((e) => e.postId == post.id), isTrue);
       expect(comments.map((e) => e.id), containsAll([firstId, secondId]));
 
-      expect(
-          comments.map((c) => {
-                'id': c.id,
-                'comment': c.comment,
-                'postId': c.postId,
-              }),
-          [
-            {'id': 1, 'comment': 'This post looks abit old', 'postId': 1},
-            {'id': 2, 'comment': 'oh, another comment', 'postId': 1}
-          ]);
+      expect(comments.map((c) => {'id': c.id, 'comment': c.comment, 'postId': c.postId}), [
+        {'id': firstId, 'comment': 'This post looks abit old', 'postId': 1},
+        {'id': secondId, 'comment': 'oh, another comment', 'postId': 1}
+      ]);
     });
 
     test('should add post for another user', () async {
