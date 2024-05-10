@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer/dart/analysis/results.dart';
+import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -30,9 +31,9 @@ extension DartTypeExt on DartType {
   bool get isNullable => nullabilitySuffix == NullabilitySuffix.question;
 }
 
-String getFieldDbName(FieldElement element) {
+String getFieldDbName(FieldElement element, {DartObject? meta}) {
   final elementName = element.name;
-  final meta = typeChecker(entity.TableColumn).firstAnnotationOf(element, throwOnUnresolved: false);
+  meta ??= typeChecker(entity.TableColumn).firstAnnotationOf(element, throwOnUnresolved: false);
   if (meta != null) {
     return ConstantReader(meta).peek('name')?.stringValue ?? elementName;
   }

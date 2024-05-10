@@ -11,7 +11,7 @@ class User extends Entity<User> {
   final String lastname;
   final int age;
 
-  @TableColumn(name: 'home_address')
+  @TableColumn(name: 'home_address', unique: true)
   final String homeAddress;
 
   User({

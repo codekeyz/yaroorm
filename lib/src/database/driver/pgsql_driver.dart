@@ -235,8 +235,14 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   }
 
   @override
-  void datetime(String name, {bool nullable = false, DateTime? defaultValue}) {
-    statements.add(makeColumn(name, 'TIMESTAMP', nullable: nullable, defaultValue: defaultValue));
+  void datetime(String name, {bool nullable = false, DateTime? defaultValue, unique = false}) {
+    statements.add(makeColumn(
+      name,
+      'TIMESTAMP',
+      nullable: nullable,
+      defaultValue: defaultValue,
+      unique: unique,
+    ));
   }
 
   @override
@@ -245,8 +251,14 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   }
 
   @override
-  void boolean(String name, {nullable = false, defaultValue}) {
-    statements.add(makeColumn(name, 'BOOLEAN', nullable: nullable, defaultValue: defaultValue));
+  void boolean(String name, {nullable = false, defaultValue, unique = false}) {
+    statements.add(makeColumn(
+      name,
+      'BOOLEAN',
+      nullable: nullable,
+      defaultValue: defaultValue,
+      unique: unique,
+    ));
   }
 
   @override
@@ -261,8 +273,15 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
     num? defaultValue,
     int? precision,
     int? scale,
+    unique = false,
   }) {
-    statements.add(makeColumn(name, 'DOUBLE PRECISION', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(
+      name,
+      'DOUBLE PRECISION',
+      nullable: nullable,
+      defaultValue: defaultValue,
+      unique: unique,
+    ));
   }
 
   @override
@@ -272,8 +291,15 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
     num? defaultValue,
     int? precision = 10,
     int? scale = 0,
+    unique = false,
   }) {
-    statements.add(makeColumn(name, 'NUMERIC($precision, $scale)', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(
+      name,
+      'NUMERIC($precision, $scale)',
+      nullable: nullable,
+      defaultValue: defaultValue,
+      unique: unique,
+    ));
   }
 
   @override
@@ -281,6 +307,7 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
     String name, {
     bool nullable = false,
     num? defaultValue,
+    unique = false,
   }) {
     throw UnimplementedError('tinyInt not implemented for Postgres');
   }
@@ -290,8 +317,15 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
     String name, {
     bool nullable = false,
     num? defaultValue,
+    unique = false,
   }) {
-    statements.add(makeColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(
+      name,
+      'INTEGER',
+      nullable: nullable,
+      defaultValue: defaultValue,
+      unique: unique,
+    ));
   }
 
   @override
@@ -302,8 +336,15 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
     String? charset,
     String? collate,
     int length = 1,
+    unique = false,
   }) {
-    statements.add(makeColumn(name, 'TEXT', nullable: nullable, defaultValue: null));
+    statements.add(makeColumn(
+      name,
+      'TEXT',
+      nullable: nullable,
+      defaultValue: null,
+      unique: unique,
+    ));
   }
 
   @override
@@ -313,6 +354,7 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
     String? defaultValue,
     String? charset,
     String? collate,
+    unique = false,
   }) {
     throw UnimplementedError('longText not implemented for Postgres');
   }
@@ -324,6 +366,7 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
     String? defaultValue,
     String? charset,
     String? collate,
+    unique = false,
   }) {
     throw UnimplementedError('mediumText not implemented for Postgres');
   }
@@ -335,6 +378,7 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
     String? defaultValue,
     String? charset,
     String? collate,
+    unique = false,
   }) {
     throw UnimplementedError('tinyText not implemented for Postgres');
   }
@@ -372,11 +416,17 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
     String? defaultValue,
     String? charset,
     String? collate,
+    unique = false,
   }) {
     final sb = StringBuffer()
       ..write(
         'CREATE TYPE ${szler.escapeStr(name)} AS ENUM (${values.map((e) => "'$e'").join(', ')});',
       );
+
+    if (unique) {
+      sb.write(' UNIQUE');
+    }
+
     if (!nullable) {
       sb.write(' NOT NULL');
       if (defaultValue != null) sb.write(' DEFAULT $defaultValue');
@@ -385,8 +435,15 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   }
 
   @override
-  void set(String name, List<String> values,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+  void set(
+    String name,
+    List<String> values, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    unique = false,
+  }) {
     throw UnimplementedError('set not implemented for Postgres');
   }
 }

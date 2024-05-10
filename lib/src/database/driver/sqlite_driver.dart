@@ -433,8 +433,10 @@ class SqliteTableBlueprint extends TableBlueprint {
 
   PrimitiveSerializer get szler => _serializer;
 
-  String makeColumn(String name, String type, {nullable = false, defaultValue}) {
+  String makeColumn(String name, String type, {nullable = false, defaultValue, bool unique = false}) {
     final sb = StringBuffer()..write('${szler.escapeStr(name)} $type');
+    if (unique) sb.write(' UNIQUE');
+
     if (!nullable) {
       sb.write(' NOT NULL');
       if (defaultValue != null) {
@@ -455,23 +457,47 @@ class SqliteTableBlueprint extends TableBlueprint {
   }
 
   @override
-  void string(String name, {nullable = false, defaultValue}) {
-    statements.add(makeColumn(name, 'VARCHAR', nullable: nullable, defaultValue: defaultValue));
+  void string(String name, {nullable = false, defaultValue, bool unique = false}) {
+    statements.add(makeColumn(
+      name,
+      'VARCHAR',
+      nullable: nullable,
+      defaultValue: defaultValue,
+      unique: unique,
+    ));
   }
 
   @override
-  void double(String name, {nullable = false, defaultValue, int? precision, int? scale}) {
-    statements.add(makeColumn(name, 'REAL', nullable: nullable, defaultValue: defaultValue));
+  void double(String name, {nullable = false, defaultValue, int? precision, int? scale, bool unique = false}) {
+    statements.add(makeColumn(
+      name,
+      'REAL',
+      nullable: nullable,
+      defaultValue: defaultValue,
+      unique: unique,
+    ));
   }
 
   @override
-  void float(String name, {nullable = false, defaultValue, int? precision, int? scale}) {
-    statements.add(makeColumn(name, 'REAL', nullable: nullable, defaultValue: defaultValue));
+  void float(String name, {nullable = false, defaultValue, int? precision, int? scale, bool unique = false}) {
+    statements.add(makeColumn(
+      name,
+      'REAL',
+      nullable: nullable,
+      defaultValue: defaultValue,
+      unique: unique,
+    ));
   }
 
   @override
-  void integer(String name, {nullable = false, defaultValue}) {
-    statements.add(makeColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
+  void integer(String name, {nullable = false, defaultValue, bool unique = false}) {
+    statements.add(makeColumn(
+      name,
+      'INTEGER',
+      nullable: nullable,
+      defaultValue: defaultValue,
+      unique: unique,
+    ));
   }
 
   @override
@@ -485,23 +511,29 @@ class SqliteTableBlueprint extends TableBlueprint {
   }
 
   @override
-  void datetime(String name, {nullable = false, defaultValue}) {
-    statements.add(makeColumn(name, 'DATETIME', nullable: nullable, defaultValue: defaultValue?.toIso8601String()));
+  void datetime(String name, {nullable = false, defaultValue, bool unique = false}) {
+    statements.add(makeColumn(
+      name,
+      'DATETIME',
+      nullable: nullable,
+      defaultValue: defaultValue?.toIso8601String(),
+      unique: unique,
+    ));
   }
 
   @override
-  void timestamp(String name, {nullable = false, defaultValue}) {
-    datetime(name, nullable: nullable, defaultValue: defaultValue);
+  void timestamp(String name, {nullable = false, defaultValue, bool unique = false}) {
+    datetime(name, nullable: nullable, defaultValue: defaultValue, unique: unique);
   }
 
   @override
-  void date(String name, {bool nullable = false, DateTime? defaultValue}) {
-    datetime(name, nullable: nullable, defaultValue: defaultValue);
+  void date(String name, {bool nullable = false, DateTime? defaultValue, bool unique = false}) {
+    datetime(name, nullable: nullable, defaultValue: defaultValue, unique: unique);
   }
 
   @override
-  void time(String name, {bool nullable = false, DateTime? defaultValue}) {
-    datetime(name, nullable: nullable, defaultValue: defaultValue);
+  void time(String name, {bool nullable = false, DateTime? defaultValue, bool unique = false}) {
+    datetime(name, nullable: nullable, defaultValue: defaultValue, unique: unique);
   }
 
   @override
@@ -514,8 +546,14 @@ class SqliteTableBlueprint extends TableBlueprint {
   }
 
   @override
-  void bigInteger(String name, {bool nullable = false, num? defaultValue}) {
-    statements.add(makeColumn(name, 'BIGINT', nullable: nullable, defaultValue: defaultValue));
+  void bigInteger(String name, {bool nullable = false, num? defaultValue, bool unique = false}) {
+    statements.add(makeColumn(
+      name,
+      'BIGINT',
+      nullable: nullable,
+      defaultValue: defaultValue,
+      unique: unique,
+    ));
   }
 
   @override
@@ -525,85 +563,184 @@ class SqliteTableBlueprint extends TableBlueprint {
   }
 
   @override
-  void bit(String name, {bool nullable = false, int? defaultValue}) {
-    statements.add(makeColumn(name, 'INTEGER', nullable: nullable, defaultValue: defaultValue));
+  void bit(String name, {bool nullable = false, int? defaultValue, bool unique = false}) {
+    statements.add(makeColumn(
+      name,
+      'INTEGER',
+      nullable: nullable,
+      defaultValue: defaultValue,
+      unique: unique,
+    ));
   }
 
   @override
-  void char(String name,
-      {bool nullable = false, int length = 1, String? defaultValue, String? charset, String? collate}) {
-    statements.add(makeColumn(name, 'CHAR($length)', nullable: nullable, defaultValue: defaultValue));
+  void char(
+    String name, {
+    bool nullable = false,
+    int length = 1,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    bool unique = false,
+  }) {
+    statements.add(makeColumn(
+      name,
+      'CHAR($length)',
+      nullable: nullable,
+      defaultValue: defaultValue,
+      unique: unique,
+    ));
   }
 
   @override
-  void decimal(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
-    statements.add(makeColumn(name, 'DECIMAL($precision, $scale)', nullable: nullable, defaultValue: defaultValue));
+  void decimal(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+    int? precision,
+    int? scale,
+    bool unique = false,
+  }) {
+    statements.add(makeColumn(
+      name,
+      'DECIMAL($precision, $scale)',
+      nullable: nullable,
+      defaultValue: defaultValue,
+      unique: unique,
+    ));
   }
 
   @override
-  void enums(String name, List<String> values,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
-    statements.add(makeColumn(name, 'TEXT CHECK ($name IN (${values.map((e) => "'$e'").join(', ')}))',
-        nullable: nullable, defaultValue: defaultValue));
+  void enums(
+    String name,
+    List<String> values, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    bool unique = false,
+  }) {
+    statements.add(makeColumn(
+      name,
+      'TEXT CHECK ($name IN (${values.map((e) => "'$e'").join(', ')}))',
+      nullable: nullable,
+      defaultValue: defaultValue,
+      unique: unique,
+    ));
   }
 
   @override
-  void mediumText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
-    string(name, nullable: nullable, defaultValue: defaultValue);
+  void mediumText(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    bool unique = false,
+  }) {
+    string(name, nullable: nullable, defaultValue: defaultValue, unique: unique);
   }
 
   @override
-  void longText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
-    string(name, nullable: nullable, defaultValue: defaultValue);
+  void longText(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    bool unique = false,
+  }) {
+    string(name, nullable: nullable, defaultValue: defaultValue, unique: unique);
   }
 
   @override
-  void mediumInteger(String name, {bool nullable = false, num? defaultValue}) {
-    integer(name, nullable: nullable, defaultValue: defaultValue);
+  void mediumInteger(String name, {bool nullable = false, num? defaultValue, bool unique = false}) {
+    integer(name, nullable: nullable, defaultValue: defaultValue, unique: unique);
   }
 
   @override
-  void numeric(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
-    integer(name, nullable: nullable, defaultValue: defaultValue);
+  void numeric(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+    int? precision,
+    int? scale,
+    bool unique = false,
+  }) {
+    integer(name, nullable: nullable, defaultValue: defaultValue, unique: unique);
   }
 
   @override
-  void set(String name, List<String> values,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+  void set(
+    String name,
+    List<String> values, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    bool unique = false,
+  }) {
     throw UnimplementedError();
   }
 
   @override
-  void smallInteger(String name, {bool nullable = false, num? defaultValue}) {
-    integer(name, nullable: nullable, defaultValue: defaultValue);
+  void smallInteger(String name, {bool nullable = false, num? defaultValue, bool unique = false}) {
+    integer(name, nullable: nullable, defaultValue: defaultValue, unique: unique);
   }
 
   @override
-  void text(String name,
-      {int length = 1, bool nullable = false, String? defaultValue, String? charset, String? collate}) {
-    string(name, nullable: nullable, defaultValue: defaultValue);
+  void text(
+    String name, {
+    int length = 1,
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    bool unique = false,
+  }) {
+    string(name, nullable: nullable, defaultValue: defaultValue, unique: unique);
   }
 
   @override
-  void tinyInt(String name, {bool nullable = false, num? defaultValue}) {
-    integer(name, nullable: nullable, defaultValue: defaultValue);
+  void tinyInt(String name, {bool nullable = false, num? defaultValue, bool unique = false}) {
+    integer(name, nullable: nullable, defaultValue: defaultValue, unique: unique);
   }
 
   @override
-  void tinyText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
-    string(name, nullable: nullable, defaultValue: defaultValue);
+  void tinyText(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    bool unique = false,
+  }) {
+    string(name, nullable: nullable, defaultValue: defaultValue, unique: unique);
   }
 
   @override
-  void varbinary(String name,
-      {bool nullable = false, int size = 1, String? defaultValue, String? charset, String? collate}) {
+  void varbinary(
+    String name, {
+    bool nullable = false,
+    int size = 1,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+  }) {
     binary(name, nullable: nullable, defaultValue: defaultValue);
   }
 
   @override
-  void varchar(String name,
-      {bool nullable = false, String? defaultValue, int length = 255, String? charset, String? collate}) {
-    string(name, nullable: nullable, defaultValue: defaultValue);
+  void varchar(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    int length = 255,
+    String? charset,
+    String? collate,
+    bool unique = false,
+  }) {
+    string(name, nullable: nullable, defaultValue: defaultValue, unique: unique);
   }
 
   @override

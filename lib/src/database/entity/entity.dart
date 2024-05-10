@@ -124,8 +124,9 @@ class Table {
 class TableColumn {
   final String? name;
   final bool nullable;
+  final bool unique;
 
-  const TableColumn({this.name, this.nullable = false});
+  const TableColumn({this.name, this.nullable = false, this.unique = false});
 }
 
 @Target({TargetKind.field})

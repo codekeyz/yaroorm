@@ -71,6 +71,7 @@ final class DBEntityField {
   final Type type;
 
   final bool nullable;
+  final bool unique;
 
   bool get isPrimaryKey => false;
 
@@ -79,6 +80,7 @@ final class DBEntityField {
     this.type,
     this.dartName, {
     this.nullable = false,
+    this.unique = false,
   });
 
   static PrimaryKeyField primaryKey(
