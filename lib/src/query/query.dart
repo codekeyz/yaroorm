@@ -148,7 +148,9 @@ final class Query<T extends Entity<T>>
 
   ReadQuery<T> where(WhereBuilder<T> builder) {
     final whereClause = builder.call(WhereClauseBuilder<T>());
-    whereClause.validate(_joins);
+    whereClause
+      ..validate(_joins)
+      .._withConverters(converters);
 
     return ReadQuery<T>._(this, whereClause: whereClause);
   }

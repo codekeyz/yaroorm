@@ -59,6 +59,8 @@ abstract interface class WhereClause {
 
   @internal
   void validate(List<Join> joins);
+
+  void _withConverters(Map<Type, EntityTypeConverter> converters);
 }
 
 class $AndGroup extends WhereClause {
@@ -69,6 +71,14 @@ class $AndGroup extends WhereClause {
     final clauseValues = values.whereType<WhereClauseValue>();
     for (final val in clauseValues) {
       val.validate(joins);
+    }
+  }
+
+  @override
+  void _withConverters(Map<Type, EntityTypeConverter> converters) {
+    final clauseValues = values.whereType<WhereClauseValue>();
+    for (final val in clauseValues) {
+      val._withConverters(converters);
     }
   }
 }
@@ -83,21 +93,32 @@ class $OrGroup extends WhereClause {
       val.validate(joins);
     }
   }
+
+  @override
+  void _withConverters(Map<Type, EntityTypeConverter> converters) {
+    final clauseValues = values.whereType<WhereClauseValue>();
+    for (final val in clauseValues) {
+      val._withConverters(converters);
+    }
+  }
 }
 
 class WhereClauseValue<ValueType> extends WhereClause {
   final String field;
   final Operator operator;
-  final ValueType value;
+  final dynamic _value;
 
   final String? table;
+
+  final Map<Type, EntityTypeConverter> _converters = {};
 
   WhereClauseValue._(
     this.field,
     this.operator,
-    this.value, {
+    ValueType value, {
     this.table,
-  }) : super(const []) {
+  })  : _value = value,
+        super(const []) {
     if ([Operator.BETWEEN, Operator.NOT_BETWEEN].contains(operator)) {
       if (value is! Iterable || (value as Iterable).length != 2) {
         throw ArgumentError(
@@ -106,6 +127,12 @@ class WhereClauseValue<ValueType> extends WhereClause {
         );
       }
     }
+  }
+
+  dynamic get value {
+    final typeConverter = _converters[ValueType];
+    if (typeConverter == null) return _value;
+    return typeConverter.toDbType(_value);
   }
 
   @override
@@ -117,6 +144,13 @@ class WhereClauseValue<ValueType> extends WhereClause {
         'No Joins found to enable `$table.$field ${operator.name} $value` Did you forget to call `.withRelations` ?',
       );
     }
+  }
+
+  @override
+  void _withConverters(Map<Type, EntityTypeConverter> converters) {
+    _converters
+      ..clear()
+      ..addAll(converters);
   }
 }
 
@@ -182,12 +216,7 @@ class WhereClauseBuilder<T extends Entity<T>> with WhereOperation {
   @override
   WhereClauseValue<List<V>> $isNotBetween<V>(String field, List<V> values) {
     _ensureHasField(field);
-    return WhereClauseValue._(
-      field,
-      Operator.NOT_BETWEEN,
-      values,
-      table: table,
-    );
+    return WhereClauseValue._(field, Operator.NOT_BETWEEN, values, table: table);
   }
 
   void _ensureHasField(String field) {
