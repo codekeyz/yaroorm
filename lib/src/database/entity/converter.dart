@@ -75,7 +75,7 @@ UnmodifiableMapView<String, dynamic> entityMapToDbData<T extends Entity<T>>(
   bool onlyPropertiesPassed = false,
 }) {
   final entity = Query.getEntity<T>();
-  final editableFields = entity.editableColumns;
+  final editableFields = entity.fieldsRequiredForCreate;
 
   final resultsMap = <String, dynamic>{};
 
