@@ -13,6 +13,18 @@ import '../logger.dart';
 
 import 'package:path/path.dart' as path;
 
+Directory get databaseDir {
+  final dir = Directory(path.join(Directory.current.path, 'database'));
+  if (!dir.existsSync()) dir.createSync();
+  return dir;
+}
+
+Directory get migrationsDir {
+  final dir = Directory(path.join(databaseDir.path, 'migrations'));
+  if (!dir.existsSync()) dir.createSync();
+  return dir;
+}
+
 class InitializeOrmCommand extends Command<int> {
   static const String commandName = 'init';
 
@@ -34,7 +46,7 @@ class InitializeOrmCommand extends Command<int> {
         return ExitCode.software.code;
       }
 
-      await _initOrmInProject(workingDir, result.migrations, result.entities, result.dbConfig);
+      await initOrmInProject(workingDir, result.migrations, result.entities, result.dbConfig);
 
       progress.complete('Yaroorm 📦 initialized 🚀');
 
@@ -47,14 +59,14 @@ class InitializeOrmCommand extends Command<int> {
   }
 }
 
-Future<void> _initOrmInProject(
+Future<void> initOrmInProject(
   Directory workingDir,
   List<Item> migrations,
   List<Item> entities,
   TopLevelVariableElement dbConfig,
 ) async {
   final entityNames = entities.map((e) => e.elements.map((e) => e.name)).fold(<String>{}, (preV, e) => preV..addAll(e));
-  final databaseFile = File(path.join(workingDir.path, 'database', 'database.dart'));
+  final databaseFile = File(path.join(databaseDir.path, 'database.dart'));
 
   // Resolve ORM Config file import path
   const filePrefix = 'file://';

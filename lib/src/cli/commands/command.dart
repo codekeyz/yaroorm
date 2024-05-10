@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:args/command_runner.dart';
 import 'package:cli_table/cli_table.dart';
+import 'package:collection/collection.dart';
 import 'package:mason_logger/mason_logger.dart';
+import 'package:yaroorm/src/cli/logger.dart';
 import '../../../yaroorm.dart' hide Table;
 
 import '../model/migration.dart';
@@ -53,6 +55,11 @@ abstract class OrmCommand extends Command<int> {
 
   @override
   FutureOr<int> run() async {
+    if (ormConfig.connections.firstWhereOrNull((e) => e.name == dbConnection) == null) {
+      logger.err('No connection named ${cyan.wrap(dbConnection)}');
+      ExitCode.software.code;
+    }
+
     Query.addTypeDef<MigrationEntity>(migration_entityTypeData);
 
     final driver = DB.driver(dbConnection);

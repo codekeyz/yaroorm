@@ -60,6 +60,11 @@ DateTime parseMigrationFileDate(String fileName) {
       '${matches[0]}-${matches[1]}-${matches[2]} ${time.substring(0, 2)}:${time.substring(2, 4)}:${time.substring(4)}');
 }
 
+String getMigrationFileName(String name, DateTime date) {
+  String twoDigit(int number) => number.toString().padLeft(2, '0');
+  return '${date.year}_${twoDigit(date.month)}_${twoDigit(date.day)}_${twoDigit(date.hour)}${twoDigit(date.minute)}${twoDigit(date.second)}_$name';
+}
+
 Future<
     ({
       List<Item> migrations,

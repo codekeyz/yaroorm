@@ -1,11 +1,12 @@
 import 'package:cli_completion/cli_completion.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:args/command_runner.dart';
-import 'package:yaroorm/src/cli/commands/init_orm_command.dart';
 
 import 'commands/migrate_rollback_command.dart';
 import 'commands/migrate_fresh_command.dart';
 import 'commands/migrate_reset_command.dart';
+import 'commands/init_orm_command.dart';
+import 'commands/create_migration.dart';
 import 'commands/migrate_command.dart';
 import 'commands/command.dart';
 
@@ -19,7 +20,7 @@ class OrmCLIRunner extends CompletionCommandRunner<int> {
   static Future<void> start(List<String> args) async {
     run() async {
       try {
-        return await OrmCLIRunner._().run(args) ?? 0;
+        return (await OrmCLIRunner._().run(args)) ?? 0;
       } on UsageException catch (_) {
         print(_.toString());
         return ExitCode.software.code;
@@ -37,6 +38,8 @@ class OrmCLIRunner extends CompletionCommandRunner<int> {
     );
 
     addCommand(InitializeOrmCommand());
+    addCommand(CreateMigrationCommand());
+
     addCommand(MigrateCommand());
     addCommand(MigrateFreshCommand());
     addCommand(MigrationRollbackCommand());
