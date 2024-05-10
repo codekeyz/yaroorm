@@ -20,6 +20,8 @@ abstract class EntityRelation<Parent extends Entity<Parent>, RelatedModel extend
 
   get({bool refresh = false});
 
+  bool get loaded;
+
   delete();
 }
 
@@ -36,6 +38,7 @@ final class HasOne<Parent extends Entity<Parent>, RelatedModel extends Entity<Re
     this._cache,
   );
 
+  @override
   bool get loaded => _cache != null;
 
   @override
@@ -77,6 +80,7 @@ final class HasMany<Parent extends Entity<Parent>, RelatedModel extends Entity<R
 
   ReadQuery<RelatedModel> get $readQuery => _query.where((q) => q.$equal(foreignKey, parentId));
 
+  @override
   bool get loaded => _cache != null;
 
   @override
@@ -144,6 +148,7 @@ final class BelongsTo<Parent extends Entity<Parent>, RelatedModel extends Entity
   final String foreignKey;
   final dynamic foreignKeyValue;
 
+  @override
   bool get loaded => _cache != null;
 
   BelongsTo._(
