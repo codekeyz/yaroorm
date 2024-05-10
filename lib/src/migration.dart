@@ -12,11 +12,11 @@ abstract class TableBlueprint {
 
   void foreign(ForeignKey key);
 
-  void string(String name, {bool nullable = false, String? defaultValue});
+  void string(String name, {bool nullable = false, String? defaultValue, bool unique = false});
 
   void boolean(String name, {bool nullable = false, bool? defaultValue});
 
-  void timestamp(String name, {bool nullable = false, DateTime? defaultValue});
+  void timestamp(String name, {bool nullable = false, DateTime? defaultValue, bool unique = false});
 
   void datetime(String name, {bool nullable = false, DateTime? defaultValue});
 
@@ -34,25 +34,39 @@ abstract class TableBlueprint {
   /// NUMBER TYPES
   /// ----------------------------------------------------------------
 
-  void integer(String name, {bool nullable = false, num? defaultValue});
+  void integer(String name, {bool nullable = false, num? defaultValue, bool unique = false});
 
-  void double(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale});
+  void double(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale, bool unique = false});
 
-  void float(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale});
+  void float(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale, bool unique = false});
 
-  void tinyInt(String name, {bool nullable = false, num? defaultValue});
+  void tinyInt(String name, {bool nullable = false, num? defaultValue, bool unique = false});
 
-  void smallInteger(String name, {bool nullable = false, num? defaultValue});
+  void smallInteger(String name, {bool nullable = false, num? defaultValue, bool unique = false});
 
-  void mediumInteger(String name, {bool nullable = false, num? defaultValue});
+  void mediumInteger(String name, {bool nullable = false, num? defaultValue, bool unique = false});
 
-  void bigInteger(String name, {bool nullable = false, num? defaultValue});
+  void bigInteger(String name, {bool nullable = false, num? defaultValue, bool unique = false});
 
-  void decimal(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale});
+  void decimal(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+    int? precision,
+    int? scale,
+    bool unique = false,
+  });
 
-  void numeric(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale});
+  void numeric(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+    int? precision,
+    int? scale,
+    bool unique = false,
+  });
 
-  void bit(String name, {bool nullable = false, int? defaultValue});
+  void bit(String name, {bool nullable = false, int? defaultValue, bool unique = false});
 
   /// STRING TYPES
   /// ----------------------------------------------------------------
@@ -64,6 +78,7 @@ abstract class TableBlueprint {
     String? defaultValue,
     String? charset,
     String? collate,
+    bool unique = false,
   });
 
   void char(
@@ -73,6 +88,7 @@ abstract class TableBlueprint {
     String? defaultValue,
     String? charset,
     String? collate,
+    bool unique = false,
   });
 
   void varchar(
@@ -82,6 +98,7 @@ abstract class TableBlueprint {
     int length = 255,
     String? charset,
     String? collate,
+    bool unique = false,
   });
 
   void tinyText(
@@ -90,6 +107,7 @@ abstract class TableBlueprint {
     String? defaultValue,
     String? charset,
     String? collate,
+    bool unique = false,
   });
 
   void mediumText(
@@ -98,6 +116,7 @@ abstract class TableBlueprint {
     String? defaultValue,
     String? charset,
     String? collate,
+    bool unique = false,
   });
 
   void longText(
@@ -106,6 +125,7 @@ abstract class TableBlueprint {
     String? defaultValue,
     String? charset,
     String? collate,
+    bool unique = false,
   });
 
   void binary(
@@ -133,6 +153,7 @@ abstract class TableBlueprint {
     String? defaultValue,
     String? charset,
     String? collate,
+    bool unique = false,
   });
 
   void set(
@@ -142,6 +163,7 @@ abstract class TableBlueprint {
     String? defaultValue,
     String? charset,
     String? collate,
+    bool unique = false,
   });
 
   @protected
@@ -169,14 +191,13 @@ abstract class Schema {
   static CreateSchema fromEntity<T extends Entity<T>>() {
     final entity = Query.getEntity<T>();
 
-    TableBlueprint make(TableBlueprint table, DBEntityField field) {
-      return switch (field.type) {
-        const (int) => table..integer(field.columnName, nullable: field.nullable),
-        const (double) || const (num) => table..double(field.columnName, nullable: field.nullable),
-        const (DateTime) => table..datetime(field.columnName, nullable: field.nullable),
-        _ => table..string(field.columnName, nullable: field.nullable),
-      };
-    }
+    TableBlueprint make(TableBlueprint table, DBEntityField field) => switch (field.type) {
+          const (int) => table..integer(field.columnName, nullable: field.nullable, unique: field.unique),
+          const (double) || const (num) => table
+            ..double(field.columnName, nullable: field.nullable, unique: field.unique),
+          const (DateTime) => table..datetime(field.columnName, nullable: field.nullable),
+          _ => table..string(field.columnName, nullable: field.nullable, unique: field.unique),
+        };
 
     return CreateSchema<T>._(
       entity.tableName,

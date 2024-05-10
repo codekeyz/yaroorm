@@ -2,7 +2,7 @@ import 'package:yaroorm/yaroorm.dart';
 
 part 'models.g.dart';
 
-@Table('users')
+@table
 class User extends Entity<User> {
   @primaryKey
   final int id;
@@ -22,10 +22,10 @@ class User extends Entity<User> {
     required this.homeAddress,
   });
 
-  HasMany<User, Post> get posts => hasMany<Post>();
+  HasMany<User, Post> get posts => hasMany<Post>('posts');
 }
 
-@Table('posts')
+@Table(name: 'posts')
 class Post extends Entity<Post> {
   @primaryKey
   final int id;
@@ -51,12 +51,12 @@ class Post extends Entity<Post> {
     required this.updatedAt,
   });
 
-  HasMany<Post, PostComment> get comments => hasMany<PostComment>();
+  HasMany<Post, PostComment> get comments => hasMany<PostComment>('comments');
 
-  BelongsTo<Post, User> get owner => belongsTo<User>();
+  BelongsTo<Post, User> get owner => belongsTo<User>('owner');
 }
 
-@Table('post_comments')
+@table
 class PostComment extends Entity<PostComment> {
   @primaryKey
   final int id;

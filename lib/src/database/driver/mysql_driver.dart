@@ -190,85 +190,116 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
   }
 
   @override
-  void string(String name, {bool nullable = false, String? defaultValue, int length = 255}) {
-    statements.add(makeColumn(name, 'VARCHAR($length)', nullable: nullable, defaultValue: defaultValue));
+  void string(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    int length = 255,
+    bool unique = false,
+  }) {
+    statements.add(makeColumn(
+      name,
+      'VARCHAR($length)',
+      nullable: nullable,
+      defaultValue: defaultValue,
+      unique: unique,
+    ));
   }
 
   @override
-  void datetime(String name, {bool nullable = false, DateTime? defaultValue}) {
-    statements.add(makeColumn(name, 'DATETIME', nullable: nullable, defaultValue: defaultValue));
+  void datetime(
+    String name, {
+    bool nullable = false,
+    DateTime? defaultValue,
+    bool unique = false,
+  }) {
+    statements.add(makeColumn(name, 'DATETIME', nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void timestamp(String name, {bool nullable = false, DateTime? defaultValue}) {
-    statements.add(makeColumn(name, 'TIMESTAMP', nullable: nullable, defaultValue: defaultValue));
+  void timestamp(String name, {bool nullable = false, DateTime? defaultValue, bool unique = false}) {
+    statements.add(makeColumn(name, 'TIMESTAMP', nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void date(String name, {bool nullable = false, DateTime? defaultValue}) {
-    statements.add(makeColumn(name, 'DATE', nullable: nullable, defaultValue: defaultValue));
+  void date(String name, {bool nullable = false, DateTime? defaultValue, unique = false}) {
+    statements.add(makeColumn(name, 'DATE', nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void time(String name, {bool nullable = false, DateTime? defaultValue}) {
-    statements.add(makeColumn(name, 'TIME', nullable: nullable, defaultValue: defaultValue));
+  void time(String name, {bool nullable = false, DateTime? defaultValue, unique = false}) {
+    statements.add(makeColumn(name, 'TIME', nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void boolean(String name, {bool nullable = false, bool? defaultValue}) {
-    statements.add(makeColumn(name, 'BOOLEAN', nullable: nullable, defaultValue: defaultValue));
+  void boolean(String name, {bool nullable = false, bool? defaultValue, unique = false}) {
+    statements.add(makeColumn(name, 'BOOLEAN', nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   /// NUMERIC TYPES
   /// ----------------------------------------------------------------
 
   @override
-  void float(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+  void float(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale, unique = false}) {
     final type = 'FLOAT(${precision ?? 10}, ${scale ?? 0})';
-    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void double(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+  void double(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale, unique = false}) {
     final type = 'DOUBLE(${precision ?? 10}, ${scale ?? 0})';
-    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void tinyInt(String name, {bool nullable = false, num? defaultValue}) {
-    statements.add(makeColumn(name, 'TINYINT', nullable: nullable, defaultValue: defaultValue));
+  void tinyInt(String name, {bool nullable = false, num? defaultValue, unique = false}) {
+    statements.add(makeColumn(name, 'TINYINT', nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void smallInteger(String name, {bool nullable = false, num? defaultValue}) {
-    statements.add(makeColumn(name, 'SMALLINT', nullable: nullable, defaultValue: defaultValue));
+  void smallInteger(String name, {bool nullable = false, num? defaultValue, unique = false}) {
+    statements.add(makeColumn(name, 'SMALLINT', nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void mediumInteger(String name, {bool nullable = false, num? defaultValue}) {
-    statements.add(makeColumn(name, 'MEDIUMINT', nullable: nullable, defaultValue: defaultValue));
+  void mediumInteger(String name, {bool nullable = false, num? defaultValue, unique = false}) {
+    statements.add(makeColumn(name, 'MEDIUMINT', nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void bigInteger(String name, {bool nullable = false, num? defaultValue}) {
-    statements.add(makeColumn(name, 'BIGINT', nullable: nullable, defaultValue: defaultValue));
+  void bigInteger(String name, {bool nullable = false, num? defaultValue, unique = false}) {
+    statements.add(makeColumn(name, 'BIGINT', nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void decimal(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+  void decimal(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+    int? precision,
+    int? scale,
+    unique = false,
+  }) {
     final type = 'DECIMAL(${precision ?? 10}, ${scale ?? 0})';
-    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void numeric(String name, {bool nullable = false, num? defaultValue, int? precision, int? scale}) {
+  void numeric(
+    String name, {
+    bool nullable = false,
+    num? defaultValue,
+    int? precision,
+    int? scale,
+    unique = false,
+  }) {
     final type = 'NUMERIC(${precision ?? 10}, ${scale ?? 0})';
-    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void bit(String name, {bool nullable = false, int? defaultValue}) {
-    statements.add(makeColumn(name, 'BIT', nullable: nullable, defaultValue: defaultValue));
+  void bit(String name, {bool nullable = false, int? defaultValue, unique = false}) {
+    statements.add(makeColumn(name, 'BIT', nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   /// STRING TYPES
@@ -290,56 +321,112 @@ class MySqlDriverTableBlueprint extends SqliteTableBlueprint {
 
   /// TEXT type cannot have default values see here: https://dev.mysql.com/doc/refman/8.0/en/blob.html
   @override
-  void text(String name,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate, int length = 1}) {
+  void text(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    int length = 1,
+    unique = false,
+  }) {
     final type = _getStringType('TEXT($length)', charset: charset, collate: collate);
     statements.add(makeColumn(name, type, nullable: nullable, defaultValue: null));
   }
 
   @override
-  void longText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+  void longText(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    unique = false,
+  }) {
     final type = _getStringType('LONGTEXT', charset: charset, collate: collate);
-    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void mediumText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+  void mediumText(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    unique = false,
+  }) {
     final type = _getStringType('MEDIUMTEXT', charset: charset, collate: collate);
-    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void tinyText(String name, {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+  void tinyText(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    unique = false,
+  }) {
     final type = _getStringType('TINYTEXT', charset: charset, collate: collate);
-    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void char(String name,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate, int length = 1}) {
+  void char(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    int length = 1,
+    unique = false,
+  }) {
     final type = _getStringType('CHAR($length)', charset: charset, collate: collate);
-    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void varchar(String name,
-      {bool nullable = false, String? defaultValue, int length = 255, String? charset, String? collate}) {
+  void varchar(
+    String name, {
+    bool nullable = false,
+    String? defaultValue,
+    int length = 255,
+    String? charset,
+    String? collate,
+    unique = false,
+  }) {
     final type = _getStringType('VARCHAR($length)', charset: charset, collate: collate);
-    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void enums(String name, List<String> values,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+  void enums(
+    String name,
+    List<String> values, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    unique = false,
+  }) {
     final type = _getStringType('ENUM(${values.join(', ')})', charset: charset, collate: collate);
-    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override
-  void set(String name, List<String> values,
-      {bool nullable = false, String? defaultValue, String? charset, String? collate}) {
+  void set(
+    String name,
+    List<String> values, {
+    bool nullable = false,
+    String? defaultValue,
+    String? charset,
+    String? collate,
+    unique = false,
+  }) {
     final type = _getStringType('SET(${values.join(', ')})', charset: charset, collate: collate);
-    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue, unique: unique));
   }
 
   @override

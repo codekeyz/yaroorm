@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer/dart/analysis/results.dart';
+import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -30,9 +31,9 @@ extension DartTypeExt on DartType {
   bool get isNullable => nullabilitySuffix == NullabilitySuffix.question;
 }
 
-String getFieldDbName(FieldElement element) {
+String getFieldDbName(FieldElement element, {DartObject? meta}) {
   final elementName = element.name;
-  final meta = typeChecker(entity.TableColumn).firstAnnotationOf(element, throwOnUnresolved: false);
+  meta ??= typeChecker(entity.TableColumn).firstAnnotationOf(element, throwOnUnresolved: false);
   if (meta != null) {
     return ConstantReader(meta).peek('name')?.stringValue ?? elementName;
   }
@@ -41,11 +42,11 @@ String getFieldDbName(FieldElement element) {
 
 String getTableName(ClassElement element) {
   final meta = typeChecker(entity.Table).firstAnnotationOf(element, throwOnUnresolved: false);
-  return ConstantReader(meta).peek('name')?.stringValue ?? element.name.toPlural().first.snakeCase.toLowerCase();
+  return ConstantReader(meta).peek('name')?.stringValue ?? element.name.snakeCase.toPlural().first.toLowerCase();
 }
 
 String getTypeDefName(String className) {
-  return '${className.snakeCase}TypeDef';
+  return '${className.pascalCase.toLowerCase()}TypeDef';
 }
 
 final _numberRegex = RegExp(r'\d+');
@@ -252,16 +253,20 @@ final class ParsedEntityClass {
 
       /// Check the field we're binding onto. If provided, validate that if exists
       /// if not, use the related class primary key
-      Symbol? fieldToBind = field.reader.peek('on')?.symbolValue;
-      if (fieldToBind != null) {
-        if (parsedRelatedClass.allFields.any((e) => Symbol(e.name) != fieldToBind)) {
-          throw InvalidGenerationSource(
-            'Field $fieldToBind used in Binding does not exist on ${parsedRelatedClass.className} Entity',
-            element: field.field,
-          );
-        }
-      } else {
-        fieldToBind = Symbol(parsedRelatedClass.primaryKey.field.name);
+      final fieldToBind = field.reader.peek('on')?.symbolValue ?? Symbol(parsedRelatedClass.primaryKey.field.name);
+      final referencedField = parsedRelatedClass.allFields.firstWhereOrNull((e) => Symbol(e.name) == fieldToBind);
+      if (referencedField == null) {
+        throw InvalidGenerationSource(
+          'Field $fieldToBind used in Binding does not exist on ${parsedRelatedClass.className} Entity',
+          element: field.field,
+        );
+      }
+
+      if (referencedField.type != field.field.type) {
+        throw InvalidGenerationSource(
+          'Type-mismatch between fields $className.${field.field.name}(${field.field.type}) and ${parsedRelatedClass.className}.${referencedField.name}(${referencedField.type})',
+          element: field.field,
+        );
       }
 
       bindings[Symbol(field.field.name)] = (entity: parsedRelatedClass, field: fieldToBind, reader: field.reader);

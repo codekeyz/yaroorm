@@ -408,38 +408,46 @@ return switch(field) {
   }
 
   /// Generate DBEntityField for each of the class fields
-  String generateCodeForField(ParsedEntityClass parsedClass, FieldElement e) {
+  String generateCodeForField(ParsedEntityClass parsedClass, FieldElement field) {
     final createdAtField = parsedClass.createdAtField?.field;
     final updatedAtField = parsedClass.updatedAtField?.field;
     final primaryKey = parsedClass.primaryKey;
 
-    final symbol = '#${e.name}';
-    final columnName = getFieldDbName(e);
+    final meta = typeChecker(entity.TableColumn).firstAnnotationOf(field, throwOnUnresolved: false);
+
+    final symbol = '#${field.name}';
+    final columnName = getFieldDbName(field, meta: meta);
+    var unique = false;
+    if (meta != null) {
+      unique = ConstantReader(meta).peek('unique')?.boolValue ?? false;
+    }
 
     final requiredOpts = '''
               "$columnName",
-               ${e.type.getDisplayString(withNullability: false)},
-               $symbol
+               ${field.type.getDisplayString(withNullability: false)},
+               $symbol,
             ''';
 
-    if (e == createdAtField) {
+    if (field == createdAtField) {
       return '''DBEntityField.createdAt("$columnName", $symbol)''';
     }
 
-    if (e == updatedAtField) {
+    if (field == updatedAtField) {
       return '''DBEntityField.updatedAt("$columnName", $symbol)''';
     }
 
-    if (e == primaryKey.field) {
+    if (field == primaryKey.field) {
       return '''DBEntityField.primaryKey(
           $requiredOpts
-          ${parsedClass.hasAutoIncrementingPrimaryKey ? ', autoIncrement: true' : ''}
+          ${parsedClass.hasAutoIncrementingPrimaryKey ? 'autoIncrement: true, ' : ''}
           )''';
     }
 
     return '''DBEntityField(
         $requiredOpts
-        ${e.type.isNullable ? ', nullable: true' : ''})''';
+        ${field.type.isNullable ? 'nullable: true, ' : ''}
+        ${unique ? 'unique: true, ' : ''}
+        )''';
   }
 
   /// Generate JOIN for BelongsTo getters on Entity
@@ -507,7 +515,7 @@ return switch(field) {
         ..lambda = true
         ..returns = refer(joinClass)
         ..body = Code('''$joinClass("${getter.name}",
-            origin: (table: "${parent.table}", column: "${getFieldDbName(parent.primaryKey.field)}"),           
+            origin: (table: "${parent.table}", column: "${getFieldDbName(parent.primaryKey.field)}"),
             on: (table: "${relatedClass.table}", column: "${getFieldDbName(foreignField)}"),
             key: HasMany<${parent.className}, ${relatedClass.className}>,
           )'''),

@@ -262,7 +262,7 @@ final class Query<T extends Entity<T>>
 
   /// [T] is the expected type passed to [Query] via Query<T>
   T _wrapRawResult(Map<String, dynamic> result) {
-    final Map<Type, Map<String, dynamic>> joinResults = {};
+    final Map<String, Map<String, dynamic>> joinResults = {};
     for (final join in _joins) {
       final entries = result.entries
           .where((e) => e.key.startsWith('${join.resultKey}.'))

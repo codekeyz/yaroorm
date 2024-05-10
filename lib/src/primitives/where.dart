@@ -4,11 +4,11 @@ part of '../query/query.dart';
 
 typedef WhereBuilder<T extends Entity<T>> = WhereClause Function(WhereClauseBuilder<T> builder);
 
+$AndGroup and(List<WhereClauseValue> values) => $AndGroup._(values);
+
+$OrGroup or(List<WhereClauseValue> values) => $OrGroup._(values);
+
 mixin WhereOperation {
-  $AndGroup and(List<WhereClause> values) => $AndGroup._(values);
-
-  $OrGroup or(List<WhereClause> values) => $OrGroup._(values);
-
   WhereClauseValue $equal<T>(String field, T value);
 
   WhereClauseValue $notEqual<T>(String field, T value);
@@ -55,14 +55,14 @@ typedef CompareWithValue<Value> = ({Operator operator, Value? value});
 
 abstract interface class WhereClause {
   final List<WhereClause> values;
-  WhereClause(this.values, {String? table});
+  const WhereClause(this.values, {String? table});
 
   @internal
   void validate(List<Join> joins);
 }
 
 class $AndGroup extends WhereClause {
-  $AndGroup._(super.values);
+  const $AndGroup._(super.values);
 
   @override
   void validate(List<Join> joins) {
@@ -74,7 +74,7 @@ class $AndGroup extends WhereClause {
 }
 
 class $OrGroup extends WhereClause {
-  $OrGroup._(super.values);
+  const $OrGroup._(super.values);
 
   @override
   void validate(List<Join> joins) {
