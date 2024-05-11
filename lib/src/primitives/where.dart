@@ -106,7 +106,7 @@ class $OrGroup extends WhereClause {
 class WhereClauseValue<ValueType> extends WhereClause {
   final String field;
   final Operator operator;
-  final dynamic _value;
+  final ValueType value;
 
   final String? table;
 
@@ -115,10 +115,9 @@ class WhereClauseValue<ValueType> extends WhereClause {
   WhereClauseValue._(
     this.field,
     this.operator,
-    ValueType value, {
+    this.value, {
     this.table,
-  })  : _value = value,
-        super(const []) {
+  }) : super(const []) {
     if ([Operator.BETWEEN, Operator.NOT_BETWEEN].contains(operator)) {
       if (value is! Iterable || (value as Iterable).length != 2) {
         throw ArgumentError(
@@ -129,10 +128,10 @@ class WhereClauseValue<ValueType> extends WhereClause {
     }
   }
 
-  dynamic get value {
+  dynamic get dbValue {
     final typeConverter = _converters[ValueType];
-    if (typeConverter == null) return _value;
-    return typeConverter.toDbType(_value);
+    if (typeConverter == null) return value;
+    return typeConverter.toDbType(value);
   }
 
   @override

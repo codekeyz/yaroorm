@@ -357,7 +357,7 @@ class SqliteSerializer extends PrimitiveSerializer {
 
   @override
   dynamic acceptPrimitiveValue(value) => switch (value.runtimeType) {
-        const (int) || const (double) => value,
+        const (int) || const (double) || const (num) => value,
         const (List<String>) => '(${value.map((e) => "'$e'").join(', ')})',
         const (List<int>) || const (List<num>) || const (List<double>) => '(${value.join(', ')})',
         _ => "'$value'"
@@ -368,8 +368,11 @@ class SqliteSerializer extends PrimitiveSerializer {
     final tableName = clauseValue.table;
     final field = tableName == null ? escapeStr(clauseValue.field) : '$tableName.${escapeStr(clauseValue.field)}';
 
-    final value = clauseValue.value;
     final valueOperator = clauseValue.operator;
+
+    /// For this operators, Ignore the conversion of value to DB Type.
+    const operatorsToIgnore = [Operator.BETWEEN, Operator.NOT_BETWEEN];
+    final value = !operatorsToIgnore.contains(valueOperator) ? clauseValue.dbValue : clauseValue.value;
     final wrapped = acceptPrimitiveValue(value);
 
     return switch (valueOperator) {
