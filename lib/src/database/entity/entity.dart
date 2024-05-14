@@ -151,7 +151,7 @@ class bindTo {
   const bindTo(this.type, {this.on, this.onUpdate, this.onDelete});
 }
 
-const primaryKey = PrimaryKey();
+const autoIncrementPrimary = PrimaryKey(autoIncrement: true);
 const table = Table();
 const createdAtCol = CreatedAtColumn();
 const updatedAtCol = UpdatedAtColumn();
