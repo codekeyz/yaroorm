@@ -7,8 +7,10 @@ import 'migrate_command.dart';
 import 'migrate_reset_command.dart';
 
 class MigrateFreshCommand extends OrmCommand {
+  static const String commandName = 'migrate:fresh';
+
   @override
-  String get name => 'migrate:fresh';
+  String get name => commandName;
 
   @override
   String get description => 'reset and re-run all database migrations';

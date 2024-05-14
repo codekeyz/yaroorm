@@ -7,11 +7,13 @@ import '../model/migration.dart';
 import 'command.dart';
 
 class MigrateCommand extends OrmCommand {
+  static const String commandName = 'migrate';
+
   @override
   String get description => 'migrate your database';
 
   @override
-  String get name => 'migrate';
+  String get name => commandName;
 
   @override
   Future<void> execute(DatabaseDriver driver, {bool writeLogs = true}) async {

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:args/command_runner.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:mason_logger/mason_logger.dart';
@@ -9,10 +10,8 @@ import 'package:recase/recase.dart';
 import 'package:yaroorm/src/cli/commands/init_orm_command.dart';
 import 'package:yaroorm/src/cli/logger.dart';
 import '../../builder/utils.dart';
-import '../../database/driver/driver.dart';
-import 'command.dart';
 
-class CreateMigrationCommand extends OrmCommand {
+class CreateMigrationCommand extends Command<int> {
   static const String commandName = 'create';
 
   @override
@@ -22,12 +21,12 @@ class CreateMigrationCommand extends OrmCommand {
   String get name => commandName;
 
   @override
-  Future<void> execute(DatabaseDriver driver) async {
-    final defaultConn = ormConfig.defaultConnName;
+  Future<int> run() async {
     final name = argResults!.arguments.last.snakeCase;
     final time = DateTime.now();
     final fileName = getMigrationFileName(name, time);
     final directory = Directory.current;
+
     final progress = logger.progress('Create migration ${green.wrap(fileName)}');
 
     final library = Library((library) => library.body.addAll([
@@ -35,13 +34,6 @@ class CreateMigrationCommand extends OrmCommand {
           Class((c) => c
             ..name = name.pascalCase
             ..extend = refer('Migration')
-            ..constructors.addAll([
-              if (defaultConn != dbConnection)
-                Constructor((c) => c
-                  ..constant = true
-                  ..lambda = true
-                  ..initializers.add(Code('super(connection: "$dbConnection")')))
-            ])
             ..methods.addAll([
               Method.returnsVoid((m) => m
                 ..name = 'up'
@@ -68,11 +60,14 @@ class CreateMigrationCommand extends OrmCommand {
     final result = await resolveMigrationAndEntitiesInDir(directory);
     if (result.migrations.isEmpty) {
       progress.fail('Failed to create migration file.');
-      return;
+      return ExitCode.software.code;
     }
 
     await initOrmInProject(directory, result.migrations, result.entities, result.dbConfig);
+    await regenerateProxyMigrator();
 
     progress.complete('Migration file created ✅');
+
+    return ExitCode.success.code;
   }
 }

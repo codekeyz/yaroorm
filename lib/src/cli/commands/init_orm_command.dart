@@ -25,6 +25,13 @@ Directory get migrationsDir {
   return dir;
 }
 
+final databaseInitFile = File('${path.join(databaseDir.path, 'database')}.dart');
+
+final yaroormDirectory = path.join(Directory.current.path, '.dart_tool', 'yaroorm');
+final kernelFile = File(path.join(yaroormDirectory, 'migrator_kernel'));
+
+final dartFile = path.join(yaroormDirectory, 'migrator.dart');
+
 class InitializeOrmCommand extends Command<int> {
   static const String commandName = 'init';
 
