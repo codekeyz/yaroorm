@@ -13,6 +13,7 @@ import 'package:mason_logger/mason_logger.dart';
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
 
+import '../cli/commands/init_orm_command.dart';
 import '../database/database.dart' show UseORMConfig;
 import '../database/entity/entity.dart' as entity;
 import '../migration.dart' show Migration;
@@ -324,4 +325,36 @@ final class ParsedEntityClass {
 String symbolToString(Symbol symbol) {
   final symbolAsString = symbol.toString();
   return symbolAsString.substring(8, symbolAsString.length - 2);
+}
+
+Future<void> regenerateProxyMigrator() async {
+  if (await kernelFile.exists()) {
+    await kernelFile.delete();
+  }
+
+  /// TODO: regenerate kernel file and hash
+  ///     Process.start('dart', ['compile', 'kernel', dartFile, '-o', kernelFilePath], mode: ProcessStartMode.detached);
+}
+
+const _migratorFileContent = '''
+import 'package:yaroorm/src/cli/orm.dart';
+import 'package:yaroorm/yaroorm.dart';
+
+import '../../database/database.dart';
+
+void main(List<String> args) async {
+  initializeORM();
+
+  await OrmCLIRunner.start(args);
+}
+''';
+
+Future<void> ensureMigratorFile() async {
+  final dir = Directory(yaroormDirectory);
+  if (!dir.existsSync()) dir.createSync();
+
+  final migratorFile = File(dartFile);
+  if (!migratorFile.existsSync()) {
+    migratorFile.writeAsStringSync(_migratorFileContent);
+  }
 }

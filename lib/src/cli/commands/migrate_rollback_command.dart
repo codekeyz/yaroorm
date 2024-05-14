@@ -10,11 +10,13 @@ import '../model/migration.dart';
 import 'command.dart';
 
 class MigrationRollbackCommand extends OrmCommand {
+  static const String commandName = 'migrate:rollback';
+
   @override
   String get description => 'rollback last migration batch';
 
   @override
-  String get name => 'migrate:rollback';
+  String get name => commandName;
 
   @override
   Future<void> execute(DatabaseDriver driver) async {

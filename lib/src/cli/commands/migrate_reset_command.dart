@@ -10,11 +10,13 @@ import 'command.dart';
 import 'migrate_rollback_command.dart';
 
 class MigrationResetCommand extends OrmCommand {
+  static const String commandName = 'migrate:reset';
+
   @override
   String get description => 'reset database migrations';
 
   @override
-  String get name => 'migrate:reset';
+  String get name => commandName;
 
   @override
   Future<void> execute(DatabaseDriver driver, {bool writeLogs = true}) async {
