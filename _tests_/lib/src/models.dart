@@ -4,7 +4,7 @@ part 'models.g.dart';
 
 @table
 class User extends Entity<User> {
-  @primaryKey
+  @autoIncrementPrimary
   final int id;
 
   final String firstname;
@@ -22,12 +22,12 @@ class User extends Entity<User> {
     required this.homeAddress,
   });
 
-  HasMany<User, Post> get posts => hasMany<Post>('posts');
+  HasMany<User, Post> get posts => hasMany<Post>(#posts);
 }
 
 @Table(name: 'posts')
 class Post extends Entity<Post> {
-  @primaryKey
+  @autoIncrementPrimary
   final int id;
 
   final String title;
@@ -51,9 +51,9 @@ class Post extends Entity<Post> {
     required this.updatedAt,
   });
 
-  HasMany<Post, PostComment> get comments => hasMany<PostComment>('comments');
+  HasMany<Post, PostComment> get comments => hasMany<PostComment>(#comments);
 
-  BelongsTo<Post, User> get owner => belongsTo<User>('owner');
+  BelongsTo<Post, User> get owner => belongsTo<User>(#owner);
 }
 
 @table

@@ -176,13 +176,16 @@ final class Query<T extends Entity<T>>
   @override
   Future<T> insert(CreateEntity<T> data) async {
     final dataMap = _prepareCreate(data);
-    final recordId = await runner.insert(
+    var recordId = await runner.insert(
       InsertQuery(
         this,
         data: dataMap,
         primaryKey: entity.primaryKey.columnName,
       ),
     );
+    if (!entity.primaryKey.autoIncrement) {
+      recordId = data.toMap[entity.primaryKey.dartName].toString();
+    }
 
     return (await findOne(where: (q) => q.$equal(entity.primaryKey.columnName, recordId)))!;
   }

@@ -7,6 +7,7 @@ import 'package:meta/meta.dart';
 
 import 'package:meta/meta_meta.dart';
 
+import '../../builder/utils.dart';
 import '../../migration.dart';
 import '../../query/query.dart';
 import '../../reflection.dart';
@@ -44,14 +45,14 @@ abstract class Entity<Parent extends Entity<Parent>> {
 
   @protected
   HasMany<Parent, RelatedModel> hasMany<RelatedModel extends Entity<RelatedModel>>(
-    String methodName, {
+    Symbol methodName, {
     Symbol? foreignKey,
   }) {
     final relatedModelTypeData = Query.getEntity<RelatedModel>();
     foreignKey ??= relatedModelTypeData.bindings.entries.firstWhere((e) => e.value.type == Parent).key;
     final referenceField = relatedModelTypeData.columns.firstWhere((e) => e.dartName == foreignKey);
 
-    var relation = _relationsPreloaded[Join._getKey(HasMany<Parent, RelatedModel>, methodName)];
+    var relation = _relationsPreloaded[Join._getKey(HasMany<Parent, RelatedModel>, symbolToString(methodName))];
 
     if (relation is Map) {
       if (relation.isEmpty) {
@@ -70,7 +71,7 @@ abstract class Entity<Parent extends Entity<Parent>> {
 
   @protected
   HasOne<Parent, RelatedModel> hasOne<RelatedModel extends Entity<RelatedModel>>(
-    String methodName, {
+    Symbol methodName, {
     Symbol? foreignKey,
   }) {
     final relatedPrimaryKey = Query.getEntity<RelatedModel>().primaryKey.columnName;
@@ -83,13 +84,13 @@ abstract class Entity<Parent extends Entity<Parent>> {
       relatedPrimaryKey,
       referenceFieldValue,
       this as Parent,
-      _relationsPreloaded[Join._getKey(HasOne<Parent, RelatedModel>, methodName)],
+      _relationsPreloaded[Join._getKey(HasOne<Parent, RelatedModel>, symbolToString(methodName))],
     );
   }
 
   @protected
   BelongsTo<Parent, RelatedModel> belongsTo<RelatedModel extends Entity<RelatedModel>>(
-    String methodName, {
+    Symbol methodName, {
     Symbol? foreignKey,
   }) {
     final parentFieldName = Query.getEntity<RelatedModel>().primaryKey.columnName;
@@ -100,7 +101,7 @@ abstract class Entity<Parent extends Entity<Parent>> {
       parentFieldName,
       referenceFieldValue,
       this as Parent,
-      _relationsPreloaded[Join._getKey(BelongsTo<Parent, RelatedModel>, methodName)],
+      _relationsPreloaded[Join._getKey(BelongsTo<Parent, RelatedModel>, symbolToString(methodName))],
     );
   }
 }
@@ -128,7 +129,7 @@ class TableColumn {
 @Target({TargetKind.field})
 class PrimaryKey extends TableColumn {
   final bool autoIncrement;
-  const PrimaryKey({this.autoIncrement = true, super.name});
+  const PrimaryKey({this.autoIncrement = false, super.name});
 }
 
 @Target({TargetKind.field})
@@ -151,7 +152,7 @@ class bindTo {
   const bindTo(this.type, {this.on, this.onUpdate, this.onDelete});
 }
 
-const primaryKey = PrimaryKey();
+const autoIncrementPrimary = PrimaryKey(autoIncrement: true);
 const table = Table();
 const createdAtCol = CreatedAtColumn();
 const updatedAtCol = UpdatedAtColumn();
