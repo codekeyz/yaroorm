@@ -7,11 +7,14 @@ import 'package:meta/meta.dart';
 
 import 'package:meta/meta_meta.dart';
 
+import '../../macros/table.dart';
 import '../../migration.dart';
 import '../../query/query.dart';
 import '../../reflection.dart';
 import '../database.dart';
 import '../driver/driver.dart';
+
+export '../../macros/table.dart';
 
 part 'converter.dart';
 part 'relations.dart';
@@ -105,16 +108,16 @@ abstract class Entity<Parent extends Entity<Parent>> {
   }
 }
 
-@Target({TargetKind.classType})
-class Table {
-  final String? name;
-  final List<EntityTypeConverter> converters;
+// @Target({TargetKind.classType})
+// class Table {
+//   final String? name;
+//   final List<EntityTypeConverter> converters;
 
-  const Table({
-    this.name,
-    this.converters = const [],
-  });
-}
+//   const Table({
+//     this.name,
+//     this.converters = const [],
+//   });
+// }
 
 @Target({TargetKind.field})
 class TableColumn {

@@ -10,3 +10,5 @@ analyzer:
   exclude:
     - "**.reflectable.dart"
     - _tests_/
+  enable-experiment:
+    - macros
