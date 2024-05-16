@@ -355,8 +355,6 @@ Future<void> syncProxyMigratorIfNecessary() async {
 
   checkSum ??= await _getFileCheckSum(databaseInitFile);
 
-  print('Generating kernel snapshot');
-
   await Process.run(
     'dart',
     ['compile', 'kernel', migratorFile, '-o', kernelFile.path],
