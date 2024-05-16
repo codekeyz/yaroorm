@@ -12,6 +12,7 @@ import 'package:grammer/grammer.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
+import 'package:crypto/crypto.dart' show md5;
 
 import '../cli/commands/init_orm_command.dart';
 import '../database/database.dart' show UseORMConfig;
@@ -327,13 +328,37 @@ String symbolToString(Symbol symbol) {
   return symbolAsString.substring(8, symbolAsString.length - 2);
 }
 
-Future<void> regenerateProxyMigrator() async {
-  if (await kernelFile.exists()) {
-    await kernelFile.delete();
+Future<String> _getFileCheckSum(File file) async {
+  final bytes = await file.readAsBytes();
+  return md5.convert(bytes).toString();
+}
+
+Future<void> syncProxyMigratorIfNecessary() async {
+  if (!(await databaseInitFile.exists())) {
+    throw Exception('ORM Initializer (database.dart) file not found.');
   }
 
-  /// TODO: regenerate kernel file and hash
-  ///     Process.start('dart', ['compile', 'kernel', dartFile, '-o', kernelFilePath], mode: ProcessStartMode.detached);
+  String? checkSum;
+
+  final results = await Future.wait([kernelFile.exists(), migratorCheckSumFile.exists()]);
+  if (results.every((exists) => exists)) {
+    final allCheckSums = await Future.wait([
+      _getFileCheckSum(databaseInitFile),
+      migratorCheckSumFile.readAsString(),
+    ]);
+    if (allCheckSums.toSet().length == 1) return;
+    checkSum = allCheckSums.first;
+  }
+
+  if (kernelFile.existsSync()) await kernelFile.delete();
+  if (migratorCheckSumFile.existsSync()) await migratorCheckSumFile.delete();
+
+  checkSum ??= await _getFileCheckSum(databaseInitFile);
+
+  await Process.run(
+    'dart',
+    ['compile', 'kernel', migratorFile, '-o', kernelFile.path],
+  ).then((value) => migratorCheckSumFile.writeAsStringSync(checkSum!));
 }
 
 const _migratorFileContent = '''
@@ -353,8 +378,8 @@ Future<void> ensureMigratorFile() async {
   final dir = Directory(yaroormDirectory);
   if (!dir.existsSync()) dir.createSync();
 
-  final migratorFile = File(dartFile);
-  if (!migratorFile.existsSync()) {
-    migratorFile.writeAsStringSync(_migratorFileContent);
+  final file = File(migratorFile);
+  if (!file.existsSync()) {
+    await file.writeAsString(_migratorFileContent);
   }
 }

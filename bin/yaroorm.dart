@@ -25,11 +25,15 @@ void main(List<String> args) async {
   if (kernelFile.existsSync()) {
     process = await Process.start('dart', ['run', kernelFile.path, ...args]);
   } else {
-    process = await Process.start('dart', ['run', dartFile, ...args]);
+    process = await Process.start('dart', ['run', migratorFile, ...args]);
   }
 
   stdout.addStream(process.stdout);
   stderr.addStream(process.stderr);
 
-  if (!kernelFile.existsSync()) regenerateProxyMigrator();
+  final exitCode = await process.exitCode;
+
+  await syncProxyMigratorIfNecessary();
+
+  exit(exitCode);
 }
