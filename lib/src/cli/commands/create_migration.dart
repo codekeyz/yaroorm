@@ -55,7 +55,7 @@ class CreateMigrationCommand extends Command<int> {
     final file = File(path.join(migrationsDir.path, '$fileName.dart'));
 
     final emitter = DartEmitter(orderDirectives: true, useNullSafetySyntax: true);
-    file.writeAsStringSync(DartFormatter().format(library.accept(emitter).toString().split('\n').join('\n')));
+    await file.writeAsString(DartFormatter().format(library.accept(emitter).toString().split('\n').join('\n')));
 
     final result = await resolveMigrationAndEntitiesInDir(directory);
     if (result.migrations.isEmpty) {
@@ -63,8 +63,11 @@ class CreateMigrationCommand extends Command<int> {
       return ExitCode.software.code;
     }
 
-    await initOrmInProject(directory, result.migrations, result.entities, result.dbConfig);
-    await regenerateProxyMigrator();
+    await Future.wait([
+      if (migratorCheckSumFile.existsSync()) migratorCheckSumFile.delete(),
+      if (kernelFile.existsSync()) kernelFile.delete(),
+      initOrmInProject(directory, result.migrations, result.entities, result.dbConfig),
+    ]);
 
     progress.complete('Migration file created ✅');
 
