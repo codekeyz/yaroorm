@@ -51,15 +51,31 @@ String getTypeDefName(String className) {
   return '${className.pascalCase.toLowerCase()}TypeDef';
 }
 
-final _numberRegex = RegExp(r'\d+');
+final RegExp _migrationTimestampRegex = RegExp(r'(\d{4})_(\d{2})_(\d{2})_(\d{6})');
+
 DateTime parseMigrationFileDate(String fileName) {
-  final matches = _numberRegex.allMatches(fileName).map((e) => e.group(0)).toList();
-  final time = matches.last;
-  if (matches.isEmpty || matches.length != 4 || time!.length != 6) {
+  final match = _migrationTimestampRegex.firstMatch(fileName);
+  if (match == null) {
     throw YaroormCliException('Invalid migration name: -> $fileName');
   }
-  return DateTime.parse(
-      '${matches[0]}-${matches[1]}-${matches[2]} ${time.substring(0, 2)}:${time.substring(2, 4)}:${time.substring(4)}');
+
+  final year = match.group(1);
+  final month = match.group(2);
+  final day = match.group(3);
+  final time = match.group(4);
+
+  if (year == null || month == null || day == null || time == null) {
+    throw YaroormCliException('Invalid migration name: -> $fileName');
+  }
+
+  return DateTime(
+    int.parse(year),
+    int.parse(month),
+    int.parse(day),
+    int.parse(time.substring(0, 2)),
+    int.parse(time.substring(2, 4)),
+    int.parse(time.substring(4)),
+  );
 }
 
 String getMigrationFileName(String name, DateTime date) {
@@ -67,12 +83,13 @@ String getMigrationFileName(String name, DateTime date) {
   return '${date.year}_${twoDigit(date.month)}_${twoDigit(date.day)}_${twoDigit(date.hour)}${twoDigit(date.minute)}${twoDigit(date.second)}_$name';
 }
 
-Future<
-    ({
-      List<Item> migrations,
-      List<Item> entities,
-      TopLevelVariableElement dbConfig,
-    })> resolveMigrationAndEntitiesInDir(Directory workingDir) async {
+typedef ResolvedProject = ({
+  List<Item> migrations,
+  List<Item> entities,
+  TopLevelVariableElement dbConfig,
+});
+
+Future<ResolvedProject> resolveMigrationAndEntitiesInDir(Directory workingDir) async {
   final collection = AnalysisContextCollection(
     includedPaths: [workingDir.absolute.path],
     resourceProvider: PhysicalResourceProvider.INSTANCE,
@@ -92,18 +109,11 @@ Future<
       if (configIsInitiallyNull) {
         if (config is! TopLevelVariableElement || config.isPrivate) {
           throw YaroormCliException('ORM config has to be a top level public variable');
-          // progress.fail('🗙 ORM initialize step failed');
-          // logger.err();
-          // exit(ExitCode.software.code);
         }
 
         dbConfig = config;
       } else {
         throw YaroormCliException('Found more than one ORM Config');
-
-        // progress.fail('🗙 ORM initialize step failed');
-        // logger.err('Found more than one ORM Config');
-        // exit(ExitCode.software.code);
       }
     }
 
@@ -151,13 +161,22 @@ class Item {
 }
 
 Stream<(ResolvedLibraryResult, String, String)> _libraries(AnalysisContextCollection collection) async* {
-  for (var context in collection.contexts) {
+  for (final context in collection.contexts) {
     final analyzedFiles = context.contextRoot.analyzedFiles().toList();
-    final analyzedDartFiles = analyzedFiles.where((path) => path.endsWith('.dart') && !path.endsWith('_test.dart'));
-    for (final filePath in analyzedDartFiles) {
+
+    final futures =
+        analyzedFiles.where((path) => path.endsWith('.dart') && !path.endsWith('_test.dart')).map((filePath) async {
       final library = await context.currentSession.getResolvedLibrary(filePath);
-      if (library is ResolvedLibraryResult) {
-        yield (library, filePath, context.contextRoot.root.path);
+
+      print(library);
+
+      if (library is! ResolvedLibraryResult) return null;
+      return (library, filePath, context.contextRoot.root.path);
+    });
+
+    for (final result in await Future.wait(futures)) {
+      if (result != null) {
+        yield result;
       }
     }
   }
