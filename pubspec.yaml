@@ -26,7 +26,7 @@ dependencies:
   collection: ^1.18.0
 
   # Code-Gen
-  analyzer: ^6.5.0
+  analyzer: ^6.4.1
   code_builder: ^4.10.0
   source_gen: ^1.5.0
   dart_style: ^2.3.0
