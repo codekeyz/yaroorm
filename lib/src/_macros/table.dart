@@ -27,7 +27,7 @@ macro class Table implements ClassDeclarationsMacro, ClassDefinitionMacro {
     final parts = <Object>[
       ' external static ',
       NamedTypeAnnotationCode(name: queryIdentifier, typeArguments: [NamedTypeAnnotationCode(name: clazz.identifier)]),
-      ' get db;',
+      ' get query;',
     ];
 
     builder.declareInType(DeclarationCode.fromParts(parts));
@@ -38,7 +38,7 @@ macro class Table implements ClassDeclarationsMacro, ClassDefinitionMacro {
     ClassDeclaration clazz,
     TypeDefinitionBuilder typeBuilder,
   ) async {
-    final queryMethod = (await typeBuilder.methodsOf(clazz)).firstWhere((e) => e.identifier.name == 'db');
+    final queryMethod = (await typeBuilder.methodsOf(clazz)).firstWhere((e) => e.identifier.name == 'query');
     final builder = await typeBuilder.buildMethod(queryMethod.identifier);
 
     final dbIdentifier = await typeBuilder.resolveIdentifier(
