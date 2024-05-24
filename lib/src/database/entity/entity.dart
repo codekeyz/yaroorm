@@ -14,6 +14,8 @@ import '../../reflection.dart';
 import '../database.dart';
 import '../driver/driver.dart';
 
+export '../../_macros/table.dart';
+
 part 'converter.dart';
 part 'relations.dart';
 part 'joins.dart';
@@ -106,17 +108,6 @@ abstract class Entity<Parent extends Entity<Parent>> {
   }
 }
 
-@Target({TargetKind.classType})
-class Table {
-  final String? name;
-  final List<EntityTypeConverter> converters;
-
-  const Table({
-    this.name,
-    this.converters = const [],
-  });
-}
-
 @Target({TargetKind.field})
 class TableColumn {
   final String? name;
@@ -153,7 +144,6 @@ class bindTo {
 }
 
 const autoIncrementPrimary = PrimaryKey(autoIncrement: true);
-const table = Table();
 const createdAtCol = CreatedAtColumn();
 const updatedAtCol = UpdatedAtColumn();
 

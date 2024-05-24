@@ -3,7 +3,7 @@ import 'package:collection/collection.dart';
 import 'package:yaroorm/yaroorm.dart';
 import 'package:yaroorm_tests/src/models.dart';
 
-import '../../lib/test_data.dart';
+import 'package:yaroorm_tests/test_data.dart';
 import '../util.dart';
 
 void runBasicE2ETest(String connectionName) {

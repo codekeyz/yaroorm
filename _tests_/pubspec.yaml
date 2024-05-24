@@ -5,10 +5,16 @@ version: 0.0.1
 publish_to: none
 
 environment:
-  sdk: ^3.3.1
+  sdk: ^3.5.0-152.0.dev
 
 dependencies:
-  build_runner: ^2.4.9
+  collection: ^1.18.0
+  macros: ^0.1.0-main.5
   uuid: ^4.4.0
   yaroorm: 
     path: ../
+
+dev_dependencies:
+  lints:
+  build_runner: ^2.4.9
+  test: ^1.25.5

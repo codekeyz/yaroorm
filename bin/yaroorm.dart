@@ -23,9 +23,9 @@ void main(List<String> args) async {
   late Process process;
 
   if (kernelFile.existsSync()) {
-    process = await Process.start('dart', ['run', kernelFile.path, ...args]);
+    process = await Process.start('dart', ['run', '--enable-experiment=macros', kernelFile.path, ...args]);
   } else {
-    process = await Process.start('dart', ['run', migratorFile, ...args]);
+    process = await Process.start('dart', ['run', '--enable-experiment=macros', migratorFile, ...args]);
   }
 
   stdout.addStream(process.stdout);
