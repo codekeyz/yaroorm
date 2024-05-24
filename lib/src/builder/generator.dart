@@ -53,12 +53,6 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
     final library = Library((b) => b
       ..body.addAll([
         Method((m) => m
-          ..name = '${classElement.name.pascalCase}Schema'
-          ..returns = refer('CreateSchema')
-          ..lambda = true
-          ..type = MethodType.getter
-          ..body = Code('Schema.fromEntity<$className>()')),
-        Method((m) => m
           ..name = typeDataName
           ..returns = refer('EntityTypeDefinition<$className>')
           ..type = MethodType.getter
