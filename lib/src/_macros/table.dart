@@ -88,7 +88,7 @@ macro class Table implements ClassDeclarationsMacro, ClassDefinitionMacro {
 
     final parts = <Object>[
       ' external static ',
-      NamedTypeAnnotationCode(name: createSchemaIdentifier),
+      NamedTypeAnnotationCode(name: createSchemaIdentifier, typeArguments: [NamedTypeAnnotationCode(name: clazz.identifier)]),
       ' get schema;',
     ];
 
