@@ -17,6 +17,52 @@ macro class Table implements ClassDeclarationsMacro, ClassDefinitionMacro {
     ClassDeclaration clazz,
     MemberDeclarationBuilder builder,
   ) async {
+    await _declareQuery(clazz, builder);
+    await _declareSchema(clazz, builder);
+  }
+
+  @override
+  FutureOr<void> buildDefinitionForClass(
+    ClassDeclaration clazz,
+    TypeDefinitionBuilder typeBuilder,
+  ) async {
+    final queryMethod = (await typeBuilder.methodsOf(clazz)).firstWhere((e) => e.identifier.name == 'query');
+    final schemaMethod = (await typeBuilder.methodsOf(clazz)).firstWhere((e) => e.identifier.name == 'schema');
+
+    final queryBuilder = await typeBuilder.buildMethod(queryMethod.identifier);
+    final schemaBuilder = await typeBuilder.buildMethod(schemaMethod.identifier);
+
+    /// Generate Entity.query
+    final dbIdentifier = await typeBuilder.resolveIdentifier(
+      Uri.parse('package:yaroorm/src/database/database.dart'),
+      'DB',
+    );
+    final queryParts = <Object>[
+      ' => ',
+      NamedTypeAnnotationCode(name: dbIdentifier),
+      '.query<',
+      NamedTypeAnnotationCode(name: clazz.identifier),
+      '>',
+      name != null ? '("$name");' : '();',
+    ];
+    queryBuilder.augment(FunctionBodyCode.fromParts(queryParts));
+
+    /// Generate Entity.schema
+    final schemaIdentifier = await typeBuilder.resolveIdentifier(
+      Uri.parse('package:yaroorm/src/migration.dart'),
+      'Schema',
+    );
+    final schemaParts = <Object>[
+      ' => ',
+      NamedTypeAnnotationCode(name: schemaIdentifier),
+      '.fromEntity<',
+      NamedTypeAnnotationCode(name: clazz.identifier),
+      '>();',
+    ];
+    schemaBuilder.augment(FunctionBodyCode.fromParts(schemaParts));
+  }
+
+  Future<void> _declareQuery(ClassDeclaration clazz, MemberDeclarationBuilder builder) async {
     final queryIdentifier = await builder.resolveIdentifier(
       Uri.parse('package:yaroorm/src/query/query.dart'),
       'Query',
@@ -33,28 +79,19 @@ macro class Table implements ClassDeclarationsMacro, ClassDefinitionMacro {
     builder.declareInType(DeclarationCode.fromParts(parts));
   }
 
-  @override
-  FutureOr<void> buildDefinitionForClass(
-    ClassDeclaration clazz,
-    TypeDefinitionBuilder typeBuilder,
-  ) async {
-    final queryMethod = (await typeBuilder.methodsOf(clazz)).firstWhere((e) => e.identifier.name == 'query');
-    final builder = await typeBuilder.buildMethod(queryMethod.identifier);
-
-    final dbIdentifier = await typeBuilder.resolveIdentifier(
-      Uri.parse('package:yaroorm/src/database/database.dart'),
-      'DB',
-    );
+  Future<void> _declareSchema(ClassDeclaration clazz, MemberDeclarationBuilder builder) async {
+    final migrationUri = Uri.parse('package:yaroorm/src/migration.dart');
+    final (createSchemaIdentifier, schemaIdentifier) = await (
+      builder.resolveIdentifier(migrationUri, 'CreateSchema'),
+      builder.resolveIdentifier(migrationUri, 'Schema'),
+    ).wait;
 
     final parts = <Object>[
-      ' => ',
-      NamedTypeAnnotationCode(name: dbIdentifier),
-      '.query<',
-      NamedTypeAnnotationCode(name: clazz.identifier),
-      '>',
-      name != null ? '("$name");' : '();',
+      ' external static ',
+      NamedTypeAnnotationCode(name: createSchemaIdentifier),
+      ' get schema;',
     ];
 
-    builder.augment(FunctionBodyCode.fromParts(parts));
+    builder.declareInType(DeclarationCode.fromParts(parts));
   }
 }
