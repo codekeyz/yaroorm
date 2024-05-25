@@ -17,8 +17,11 @@ macro class Table implements ClassDeclarationsMacro, ClassDefinitionMacro {
     ClassDeclaration clazz,
     MemberDeclarationBuilder builder,
   ) async {
-    await _declareQuery(clazz, builder);
-    await _declareSchema(clazz, builder);
+    await [
+      _declareQuery(clazz, builder),
+      _declareSchema(clazz, builder),
+      _declareTypeInfo(clazz, builder),
+    ].wait;
   }
 
   @override
@@ -26,17 +29,25 @@ macro class Table implements ClassDeclarationsMacro, ClassDefinitionMacro {
     ClassDeclaration clazz,
     TypeDefinitionBuilder typeBuilder,
   ) async {
-    final queryMethod = (await typeBuilder.methodsOf(clazz)).firstWhere((e) => e.identifier.name == 'query');
-    final schemaMethod = (await typeBuilder.methodsOf(clazz)).firstWhere((e) => e.identifier.name == 'schema');
+    final (queryMethod, schemaMethod, typeInfoMethod) = (
+      Future.value((await typeBuilder.methodsOf(clazz)).firstWhere((e) => e.identifier.name == 'query')),
+      Future.value((await typeBuilder.methodsOf(clazz)).firstWhere((e) => e.identifier.name == 'schema')),
+      Future.value((await typeBuilder.methodsOf(clazz)).firstWhere((e) => e.identifier.name == 'typeInfo')),
+    ).wait;
 
-    final queryBuilder = await typeBuilder.buildMethod(queryMethod.identifier);
-    final schemaBuilder = await typeBuilder.buildMethod(schemaMethod.identifier);
+    final (queryBuilder, schemaBuilder, typeInfoBuilder) = await (
+      typeBuilder.buildMethod(queryMethod.identifier),
+      typeBuilder.buildMethod(schemaMethod.identifier),
+      typeBuilder.buildMethod(typeInfoMethod.identifier),
+    ).wait;
+
+    final (dbIdentifier, schemaIdentifier, typeDefIdentifier) = (
+      typeBuilder.resolveIdentifier(Uri.parse('package:yaroorm/src/database/database.dart'), 'DB'),
+      typeBuilder.resolveIdentifier(Uri.parse('package:yaroorm/src/migration.dart'), 'Schema'),
+      typeBuilder.resolveIdentifier(Uri.parse('package:yaroorm/src/reflection.dart'), 'EntityTypeDefinition'),
+    ).wait;
 
     /// Generate Entity.query
-    final dbIdentifier = await typeBuilder.resolveIdentifier(
-      Uri.parse('package:yaroorm/src/database/database.dart'),
-      'DB',
-    );
     final queryParts = <Object>[
       ' => ',
       NamedTypeAnnotationCode(name: dbIdentifier),
@@ -48,10 +59,6 @@ macro class Table implements ClassDeclarationsMacro, ClassDefinitionMacro {
     queryBuilder.augment(FunctionBodyCode.fromParts(queryParts));
 
     /// Generate Entity.schema
-    final schemaIdentifier = await typeBuilder.resolveIdentifier(
-      Uri.parse('package:yaroorm/src/migration.dart'),
-      'Schema',
-    );
     final schemaParts = <Object>[
       ' => ',
       NamedTypeAnnotationCode(name: schemaIdentifier),
@@ -60,6 +67,16 @@ macro class Table implements ClassDeclarationsMacro, ClassDefinitionMacro {
       '>();',
     ];
     schemaBuilder.augment(FunctionBodyCode.fromParts(schemaParts));
+
+    /// Generate Entity.schema
+    final typeInfoParts = <Object>[
+      ' => ',
+      NamedTypeAnnotationCode(
+          name: typeDefIdentifier, typeArguments: [NamedTypeAnnotationCode(name: clazz.identifier)]),
+      '("hello_world"',
+      ');',
+    ];
+    typeInfoMethod.augment(FunctionBodyCode.fromParts(typeInfoParts));
   }
 
   Future<void> _declareQuery(ClassDeclaration clazz, MemberDeclarationBuilder builder) async {
@@ -88,8 +105,25 @@ macro class Table implements ClassDeclarationsMacro, ClassDefinitionMacro {
 
     final parts = <Object>[
       ' external static ',
-      NamedTypeAnnotationCode(name: createSchemaIdentifier, typeArguments: [NamedTypeAnnotationCode(name: clazz.identifier)]),
+      NamedTypeAnnotationCode(
+          name: createSchemaIdentifier, typeArguments: [NamedTypeAnnotationCode(name: clazz.identifier)]),
       ' get schema;',
+    ];
+
+    builder.declareInType(DeclarationCode.fromParts(parts));
+  }
+
+  Future<void> _declareTypeInfo(ClassDeclaration clazz, MemberDeclarationBuilder builder) async {
+    final typeDefIdentifier = await builder.resolveIdentifier(
+      Uri.parse('package:yaroorm/src/reflection.dart'),
+      'EntityTypeDefinition',
+    );
+
+    final parts = <Object>[
+      ' external static ',
+      NamedTypeAnnotationCode(
+          name: typeDefIdentifier, typeArguments: [NamedTypeAnnotationCode(name: clazz.identifier)]),
+      ' get typeInfo;',
     ];
 
     builder.declareInType(DeclarationCode.fromParts(parts));
