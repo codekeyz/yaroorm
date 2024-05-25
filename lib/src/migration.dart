@@ -188,7 +188,7 @@ abstract class Schema {
 
   String toScript(TableBlueprint table);
 
-  static CreateSchema fromEntity<T extends Entity<T>>() {
+  static CreateSchema<T> fromEntity<T extends Entity<T>>() {
     final entity = Query.getEntity<T>();
 
     TableBlueprint make(TableBlueprint table, DBEntityField field) => switch (field.type) {

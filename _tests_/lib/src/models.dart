@@ -1,8 +1,7 @@
 import 'package:yaroorm/yaroorm.dart';
-
 part 'models.g.dart';
 
-@table
+@Table()
 class User extends Entity<User> {
   @autoIncrementPrimary
   final int id;
@@ -56,7 +55,7 @@ class Post extends Entity<Post> {
   BelongsTo<Post, User> get owner => belongsTo<User>(#owner);
 }
 
-@table
+@Table()
 class PostComment extends Entity<PostComment> {
   @PrimaryKey(autoIncrement: false)
   final String id;

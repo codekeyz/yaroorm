@@ -7,9 +7,6 @@ part of 'migration.dart';
 // **************************************************************************
 
 // ignore_for_file: non_constant_identifier_names
-
-Query<MigrationEntity> get MigrationEntityQuery => DB.query<MigrationEntity>();
-CreateSchema get MigrationEntitySchema => Schema.fromEntity<MigrationEntity>();
 EntityTypeDefinition<MigrationEntity> get migration_entityTypeData => EntityTypeDefinition<MigrationEntity>(
       "migrations",
       timestampsEnabled: false,

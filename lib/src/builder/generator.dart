@@ -48,23 +48,10 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
 
     final converters = annotation.peek('converters')!.listValue;
 
-    final queryName = '${className}Query';
     final typeDataName = getTypeDefName(className);
 
     final library = Library((b) => b
       ..body.addAll([
-        Method((m) => m
-          ..name = queryName
-          ..returns = refer('Query<$className>')
-          ..type = MethodType.getter
-          ..lambda = true
-          ..body = Code('DB.query<$className>()')),
-        Method((m) => m
-          ..name = '${classElement.name.pascalCase}Schema'
-          ..returns = refer('CreateSchema')
-          ..lambda = true
-          ..type = MethodType.getter
-          ..body = Code('Schema.fromEntity<$className>()')),
         Method((m) => m
           ..name = typeDataName
           ..returns = refer('EntityTypeDefinition<$className>')
