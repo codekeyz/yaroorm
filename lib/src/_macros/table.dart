@@ -20,7 +20,7 @@ macro class Table implements ClassDeclarationsMacro, ClassDefinitionMacro {
     await [
       _declareQuery(clazz, builder),
       _declareSchema(clazz, builder),
-      _declareTypeInfo(clazz, builder),
+      // _declareTypeInfo(clazz, builder),
     ].wait;
   }
 
@@ -29,11 +29,12 @@ macro class Table implements ClassDeclarationsMacro, ClassDefinitionMacro {
     ClassDeclaration clazz,
     TypeDefinitionBuilder typeBuilder,
   ) async {
+    final clazzMethods = await typeBuilder.methodsOf(clazz);
     final (queryMethod, schemaMethod, typeInfoMethod) = (
-      Future.value((await typeBuilder.methodsOf(clazz)).firstWhere((e) => e.identifier.name == 'query')),
-      Future.value((await typeBuilder.methodsOf(clazz)).firstWhere((e) => e.identifier.name == 'schema')),
-      Future.value((await typeBuilder.methodsOf(clazz)).firstWhere((e) => e.identifier.name == 'typeInfo')),
-    ).wait;
+      clazzMethods.firstWhere((e) => e.identifier.name == 'query'),
+      clazzMethods.firstWhere((e) => e.identifier.name == 'schema'),
+      clazzMethods.firstWhere((e) => e.identifier.name == 'typeInfo'),
+    );
 
     final (queryBuilder, schemaBuilder, typeInfoBuilder) = await (
       typeBuilder.buildMethod(queryMethod.identifier),
@@ -41,7 +42,7 @@ macro class Table implements ClassDeclarationsMacro, ClassDefinitionMacro {
       typeBuilder.buildMethod(typeInfoMethod.identifier),
     ).wait;
 
-    final (dbIdentifier, schemaIdentifier, typeDefIdentifier) = (
+    final (dbIdentifier, schemaIdentifier, typeDefIdentifier) = await (
       typeBuilder.resolveIdentifier(Uri.parse('package:yaroorm/src/database/database.dart'), 'DB'),
       typeBuilder.resolveIdentifier(Uri.parse('package:yaroorm/src/migration.dart'), 'Schema'),
       typeBuilder.resolveIdentifier(Uri.parse('package:yaroorm/src/reflection.dart'), 'EntityTypeDefinition'),
@@ -69,14 +70,16 @@ macro class Table implements ClassDeclarationsMacro, ClassDefinitionMacro {
     schemaBuilder.augment(FunctionBodyCode.fromParts(schemaParts));
 
     /// Generate Entity.schema
-    final typeInfoParts = <Object>[
-      ' => ',
-      NamedTypeAnnotationCode(
-          name: typeDefIdentifier, typeArguments: [NamedTypeAnnotationCode(name: clazz.identifier)]),
-      '("hello_world"',
-      ');',
-    ];
-    typeInfoMethod.augment(FunctionBodyCode.fromParts(typeInfoParts));
+    // final typeInfoParts = <Object>[
+    //   ' => ',
+    //   NamedTypeAnnotationCode(
+    //     name: typeDefIdentifier,
+    //     typeArguments: [NamedTypeAnnotationCode(name: clazz.identifier)],
+    //   ),
+    //   '("hello_world"',
+    //   ');',
+    // ];
+    // typeInfoMethod.augment(FunctionBodyCode.fromParts(typeInfoParts));
   }
 
   Future<void> _declareQuery(ClassDeclaration clazz, MemberDeclarationBuilder builder) async {
