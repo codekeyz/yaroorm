@@ -12,9 +12,7 @@ dependencies:
   macros: ^0.1.0-main.5
   uuid: ^4.4.0
   yaroorm:
-    git:
-      url: https://github.com/codekeyz/yaroorm.git
-      ref: feat/maybe-macros
+    path: ../
 
 dev_dependencies:
   lints:

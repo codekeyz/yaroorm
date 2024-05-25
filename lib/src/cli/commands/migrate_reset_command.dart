@@ -22,7 +22,7 @@ class MigrationResetCommand extends OrmCommand {
   Future<void> execute(DatabaseDriver driver, {bool writeLogs = true}) async {
     await ensureMigrationsTableReady(driver);
 
-    final migrationsList = await MigrationEntityQuery.driver(driver).findMany(
+    final migrationsList = await MigrationEntity.query.driver(driver).findMany(
       orderBy: [OrderMigrationEntityBy.batch(order: OrderDirection.desc)],
     );
     if (migrationsList.isEmpty) {
