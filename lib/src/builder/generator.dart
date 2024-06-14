@@ -194,7 +194,7 @@ return switch(field) {
               ..fields.addAll(relatedEntityCreateFields.map(
                 (f) => Field((fb) => fb
                   ..name = f.name
-                  ..type = refer(f.type.getDisplayString(withNullability: true))
+                  ..type = refer(f.type.getDisplayString())
                   ..modifier = FieldModifier.final$),
               ))
               ..constructors.add(
@@ -247,7 +247,7 @@ return switch(field) {
           ..fields.addAll(fieldsRequiredForCreate.map(
             (f) => Field((fb) => fb
               ..name = f.name
-              ..type = refer(f.type.getDisplayString(withNullability: true))
+              ..type = refer(f.type.getDisplayString())
               ..modifier = FieldModifier.final$),
           ))
           ..constructors.add(
@@ -281,7 +281,7 @@ return switch(field) {
         ..fields.addAll(fieldsRequiredForCreate.map((f) => Field(
               (fb) => fb
                 ..name = f.name
-                ..type = refer('value<${f.type.getDisplayString(withNullability: true)}>')
+                ..type = refer('value<${f.type.getDisplayString()}>')
                 ..modifier = FieldModifier.final$,
             )))
         ..constructors.add(
@@ -333,7 +333,7 @@ return switch(field) {
   /// This generates WHERE-EQUAL clause value for a field
   Method _generateFieldWhereClause(FieldElement field, String className) {
     final dbColumnName = getFieldDbName(field);
-    final fieldType = field.type.getDisplayString(withNullability: true);
+    final fieldType = field.type.getDisplayString();
 
     return Method(
       (m) {
@@ -376,7 +376,7 @@ return switch(field) {
   /// This generates GetByProperty for a field
   Method _generateGetByPropertyMethod(FieldElement field, String className) {
     final fieldName = field.name;
-    final fieldType = field.type.getDisplayString(withNullability: true);
+    final fieldType = field.type.getDisplayString();
 
     return Method(
       (m) {
@@ -426,8 +426,8 @@ return switch(field) {
 
     final requiredOpts = '''
               "$columnName",
-               ${field.type.getDisplayString(withNullability: false)},
-               $symbol,
+               ${field.type.getDisplayString()},
+               $symbol
             ''';
 
     if (field == createdAtField) {
@@ -440,8 +440,8 @@ return switch(field) {
 
     if (field == primaryKey.field) {
       return '''DBEntityField.primaryKey(
-          $requiredOpts
-          ${parsedClass.hasAutoIncrementingPrimaryKey ? 'autoIncrement: true, ' : ''}
+          $requiredOpts,
+          ${parsedClass.hasAutoIncrementingPrimaryKey ? 'autoIncrement: true' : ''}
           )''';
     }
 

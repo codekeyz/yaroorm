@@ -241,7 +241,8 @@ final class ParsedEntityClass {
   factory ParsedEntityClass.parse(ClassElement element, {ConstantReader? reader}) {
     final className = element.name;
     final tableName = getTableName(element);
-    final fields = element.fields.where(_allowedTypes).toList();
+    final fields = element.fields.where(_allowedTypes).toList(growable: false);
+
     final primaryKey = _getFieldAnnotationByType(fields, entity.PrimaryKey);
     final createdAt = _getFieldAnnotationByType(fields, entity.CreatedAtColumn);
     final updatedAt = _getFieldAnnotationByType(fields, entity.UpdatedAtColumn);
@@ -269,8 +270,9 @@ final class ParsedEntityClass {
       );
     }
 
-    final normalFields =
-        fields.where((e) => ![primaryKey.field, createdAt?.field, updatedAt?.field].contains(e)).toList();
+    final normalFields = fields
+        .where((e) => ![primaryKey.field, createdAt?.field, updatedAt?.field].contains(e))
+        .toList(growable: false);
 
     final fieldsWithBindings = _getFieldsAndReaders(normalFields, entity.bindTo);
 
@@ -330,15 +332,12 @@ final class ParsedEntityClass {
     return null;
   }
 
-  static List<FieldElementAndReader> _getFieldsAndReaders(List<FieldElement> fields, Type type) {
-    return fields
-        .map((field) {
-          final result = typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
-          if (result == null) return null;
-          return (field: field, reader: ConstantReader(result));
-        })
-        .whereNotNull()
-        .toList();
+  static Iterable<FieldElementAndReader> _getFieldsAndReaders(List<FieldElement> fields, Type type) sync* {
+    for (final field in fields) {
+      final result = typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
+      if (result == null) continue;
+      yield (field: field, reader: ConstantReader(result));
+    }
   }
 }
 
