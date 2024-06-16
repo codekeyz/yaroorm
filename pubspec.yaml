@@ -12,7 +12,7 @@ topics:
   - sqlite
 
 environment:
-  sdk: ^3.3.1
+  sdk: ^3.4.4
 
 dependencies:
   sqflite_common_ffi: ^2.3.3
