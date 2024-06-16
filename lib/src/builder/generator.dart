@@ -166,7 +166,7 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
               ..fields.addAll(relatedEntityCreateFields.map(
                 (f) => Field((fb) => fb
                   ..name = f.name
-                  ..type = refer(f.type.getDisplayString())
+                  ..type = refer(f.type.withNullability)
                   ..modifier = FieldModifier.final$),
               ))
               ..constructors.add(
@@ -219,7 +219,7 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
           ..fields.addAll(fieldsRequiredForCreate.map(
             (f) => Field((fb) => fb
               ..name = f.name
-              ..type = refer(f.type.getDisplayString())
+              ..type = refer(f.type.withNullability)
               ..modifier = FieldModifier.final$),
           ))
           ..constructors.add(
@@ -253,7 +253,7 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
         ..fields.addAll(fieldsRequiredForCreate.map((f) => Field(
               (fb) => fb
                 ..name = f.name
-                ..type = refer('value<${f.type.getDisplayString()}>')
+                ..type = refer('value<${f.type.withNullability}>')
                 ..modifier = FieldModifier.final$,
             )))
         ..constructors.add(
@@ -305,7 +305,7 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
   /// This generates WHERE-EQUAL clause value for a field
   Method _generateFieldWhereClause(FieldElement field, String className) {
     final dbColumnName = getFieldDbName(field);
-    final fieldType = field.type.getDisplayString();
+    final fieldType = field.type.withNullability;
 
     return Method(
       (m) {
@@ -348,7 +348,7 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
   /// This generates GetByProperty for a field
   Method _generateGetByPropertyMethod(FieldElement field, String className) {
     final fieldName = field.name;
-    final fieldType = field.type.getDisplayString();
+    final fieldType = field.type.withNullability;
 
     return Method(
       (m) {
@@ -398,7 +398,7 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
 
     final requiredOpts = '''
               "$columnName",
-               ${field.type.getDisplayString()},
+               ${field.type.withoutNullability},
                $symbol
             ''';
 
@@ -551,4 +551,10 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
       if (onDelete != null) 'onDelete: ForeignKeyAction.$onDelete',
     ].join(', ')} ,)''';
   }
+}
+
+extension on DartType {
+  String get withNullability => getDisplayString(withNullability: true);
+
+  String get withoutNullability => getDisplayString(withNullability: false);
 }
