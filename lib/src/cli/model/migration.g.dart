@@ -24,7 +24,7 @@ EntityTypeDefinition<MigrationEntity> get migration_entityTypeData => EntityType
         #batch => instance.batch,
         _ => throw Exception('Unknown property $field'),
       },
-      build: (args) => MigrationEntity(
+      builder: (args) => MigrationEntity(
         args[#id],
         args[#migration],
         args[#batch],

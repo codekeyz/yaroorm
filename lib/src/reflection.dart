@@ -33,7 +33,7 @@ final class EntityTypeDefinition<T extends Entity<T>> {
   final Map<Symbol, Binding<T, Entity>> bindings;
 
   final EntityInstanceReflector<T> mirror;
-  final EntityInstanceBuilder<T> build;
+  final EntityInstanceBuilder<T> builder;
 
   final List<EntityTypeConverter> converters;
 
@@ -57,7 +57,7 @@ final class EntityTypeDefinition<T extends Entity<T>> {
     this.columns = const [],
     this.bindings = const {},
     required this.mirror,
-    required this.build,
+    required this.builder,
     this.timestampsEnabled = false,
     this.converters = const [],
   });

@@ -75,8 +75,13 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
                 "${parsedEntity.table}",
                 timestampsEnabled: ${parsedEntity.timestampsEnabled},
                 columns: ${fields.map((field) => generateCodeForField(parsedEntity, field)).toList()},
-                mirror: _\$${className}EntityMirror.new,
-                build: (args) => ${_generateConstructorCode(className, primaryConstructor)},
+                mirror: (instance, field) => switch(field) {
+                    ${fields.map((e) => '''
+                      #${e.name} => instance.${e.name}
+                    ''').join(',')},
+                      _ => throw Exception('Unknown property \$field'),
+                },
+                builder: (args) => ${_generateConstructorCode(className, primaryConstructor)},
                 ${bindings.isEmpty ? '' : 'bindings: { ${bindings.entries.map(
                   (e) => _generateCodeForBinding(
                     className,
@@ -88,39 +93,6 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
                 ).join(', ')}, },'}
                 ${converters.isEmpty ? '' : 'converters: ${converters.map(processAnnotation).toList()},'})''',
           )),
-
-        /// Generate Entity Mirror for Reflection
-        Class(
-          (b) => b
-            ..name = '_\$${className}EntityMirror'
-            ..extend = refer('EntityMirror<$className>')
-            ..constructors.add(Constructor(
-              (b) => b
-                ..constant = true
-                ..requiredParameters.add(Parameter((p) => p
-                  ..toSuper = true
-                  ..name = 'instance')),
-            ))
-            ..methods.addAll([
-              Method(
-                (m) => m
-                  ..name = 'get'
-                  ..annotations.add(CodeExpression(Code('override')))
-                  ..requiredParameters.add(Parameter((p) => p
-                    ..name = 'field'
-                    ..type = refer('Symbol')))
-                  ..returns = refer('Object?')
-                  ..body = Code('''
-return switch(field) {
-  ${fields.map((e) => '''
-  #${e.name} => instance.${e.name}
-''').join(',')},
-  _ => throw Exception('Unknown property \$field'),
-};
-'''),
-              ),
-            ]),
-        ),
 
         /// Generate Typed OrderBy's
         Class((b) => b

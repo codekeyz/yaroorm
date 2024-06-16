@@ -77,5 +77,5 @@ Model dbDataToEntity<Model extends Entity<Model>>(
     resultsMap[entry.dartName] = typeConverter == null ? value : typeConverter.fromDbType(value);
   }
 
-  return entity.build(resultsMap);
+  return entity.builder(resultsMap);
 }
