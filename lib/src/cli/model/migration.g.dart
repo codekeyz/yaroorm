@@ -18,27 +18,18 @@ EntityTypeDefinition<MigrationEntity> get migration_entityTypeData => EntityType
         DBEntityField("migration", String, #migration),
         DBEntityField("batch", int, #batch)
       ],
-      mirror: _$MigrationEntityEntityMirror.new,
+      mirror: (instance, field) => switch (field) {
+        #id => instance.id,
+        #migration => instance.migration,
+        #batch => instance.batch,
+        _ => throw Exception('Unknown property $field'),
+      },
       build: (args) => MigrationEntity(
         args[#id],
         args[#migration],
         args[#batch],
       ),
     );
-
-class _$MigrationEntityEntityMirror extends EntityMirror<MigrationEntity> {
-  const _$MigrationEntityEntityMirror(super.instance);
-
-  @override
-  Object? get(Symbol field) {
-    return switch (field) {
-      #id => instance.id,
-      #migration => instance.migration,
-      #batch => instance.batch,
-      _ => throw Exception('Unknown property $field'),
-    };
-  }
-}
 
 class OrderMigrationEntityBy extends OrderBy<MigrationEntity> {
   const OrderMigrationEntityBy.migration({OrderDirection order = OrderDirection.asc}) : super("migration", order);

@@ -1,7 +1,6 @@
 // ignore_for_file: camel_case_types
 
 import 'dart:async';
-import 'dart:collection';
 
 import 'package:meta/meta.dart';
 
@@ -78,7 +77,7 @@ abstract class Entity<Parent extends Entity<Parent>> {
     final typeData = Query.getEntity<Parent>();
 
     foreignKey ??= typeData.bindings.entries.firstWhere((e) => e.value.type == RelatedModel).key;
-    final referenceFieldValue = typeData.mirror(this as Parent).get(foreignKey);
+    final referenceFieldValue = typeData.mirror(this as Parent, foreignKey);
 
     return HasOne<Parent, RelatedModel>._(
       relatedPrimaryKey,
@@ -95,7 +94,7 @@ abstract class Entity<Parent extends Entity<Parent>> {
   }) {
     final parentFieldName = Query.getEntity<RelatedModel>().primaryKey.columnName;
     foreignKey ??= _typeDef.bindings.entries.firstWhere((e) => e.value.type == RelatedModel).key;
-    final referenceFieldValue = _typeDef.mirror(this as Parent).get(foreignKey);
+    final referenceFieldValue = _typeDef.mirror(this as Parent, foreignKey);
 
     return BelongsTo<Parent, RelatedModel>._(
       parentFieldName,

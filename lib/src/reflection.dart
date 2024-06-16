@@ -7,7 +7,7 @@ String getEntityTableName<T extends Entity<T>>() => Query.getEntity<T>().tableNa
 
 String getEntityPrimaryKey<T extends Entity<T>>() => Query.getEntity<T>().primaryKey.columnName;
 
-typedef EntityInstanceReflector<T> = EntityMirror<T> Function(T instance);
+typedef EntityInstanceReflector<T extends Entity<T>> = Object? Function(T instance, Symbol field);
 
 typedef EntityInstanceBuilder<T> = T Function(Map<Symbol, dynamic> args);
 
