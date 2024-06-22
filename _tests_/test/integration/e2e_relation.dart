@@ -65,9 +65,26 @@ void runRelationsE2ETest(String connectionName) {
       final posts = await PostQuery.driver(driver).withRelations((post) => [post.owner]).findMany();
 
       final owner = await posts.first.owner.value;
+      expect(owner?.firstname, isNotNull);
+    });
+
+    test('should throw error when relation not loaded', () async {
+      final post = await PostQuery.driver(driver).findOne();
+
+      dynamic exception;
+      try {
+        post!.owner.value;
+      } catch (e) {
+        exception = e;
+      }
+
       expect(
-        owner,
-        isA<User>().having((p0) => p0.firstname, 'has firstname', isNotNull),
+        exception,
+        isA<StateError>().having(
+          (e) => e.message,
+          'has state error',
+          'No preloaded data for this relation. Did you forget to call `withRelations` ?',
+        ),
       );
     });
 
