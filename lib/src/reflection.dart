@@ -7,7 +7,7 @@ String getEntityTableName<T extends Entity<T>>() => Query.getEntity<T>().tableNa
 
 String getEntityPrimaryKey<T extends Entity<T>>() => Query.getEntity<T>().primaryKey.columnName;
 
-typedef EntityInstanceReflector<T> = EntityMirror<T> Function(T instance);
+typedef EntityInstanceReflector<T extends Entity<T>> = Object? Function(T instance, Symbol field);
 
 typedef EntityInstanceBuilder<T> = T Function(Map<Symbol, dynamic> args);
 
@@ -33,7 +33,7 @@ final class EntityTypeDefinition<T extends Entity<T>> {
   final Map<Symbol, Binding<T, Entity>> bindings;
 
   final EntityInstanceReflector<T> mirror;
-  final EntityInstanceBuilder<T> build;
+  final EntityInstanceBuilder<T> builder;
 
   final List<EntityTypeConverter> converters;
 
@@ -57,7 +57,7 @@ final class EntityTypeDefinition<T extends Entity<T>> {
     this.columns = const [],
     this.bindings = const {},
     required this.mirror,
-    required this.build,
+    required this.builder,
     this.timestampsEnabled = false,
     this.converters = const [],
   });

@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 import 'package:meta/meta.dart';
 
 import '../database/driver/driver.dart';
@@ -155,7 +153,7 @@ final class Query<T extends Entity<T>>
     return ReadQuery<T>._(this, whereClause: whereClause);
   }
 
-  UnmodifiableMapView<String, dynamic> _prepareCreate(CreateEntity<T> data) {
+  Map<String, dynamic> _prepareCreate(CreateEntity<T> data) {
     final dataMap = data.toMap;
     if (entity.timestampsEnabled) {
       final now = DateTime.now();

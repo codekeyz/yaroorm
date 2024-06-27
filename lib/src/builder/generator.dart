@@ -75,8 +75,13 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
                 "${parsedEntity.table}",
                 timestampsEnabled: ${parsedEntity.timestampsEnabled},
                 columns: ${fields.map((field) => generateCodeForField(parsedEntity, field)).toList()},
-                mirror: _\$${className}EntityMirror.new,
-                build: (args) => ${_generateConstructorCode(className, primaryConstructor)},
+                mirror: (instance, field) => switch(field) {
+                    ${fields.map((e) => '''
+                      #${e.name} => instance.${e.name}
+                    ''').join(',')},
+                      _ => throw Exception('Unknown property \$field'),
+                },
+                builder: (args) => ${_generateConstructorCode(className, primaryConstructor)},
                 ${bindings.isEmpty ? '' : 'bindings: { ${bindings.entries.map(
                   (e) => _generateCodeForBinding(
                     className,
@@ -88,39 +93,6 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
                 ).join(', ')}, },'}
                 ${converters.isEmpty ? '' : 'converters: ${converters.map(processAnnotation).toList()},'})''',
           )),
-
-        /// Generate Entity Mirror for Reflection
-        Class(
-          (b) => b
-            ..name = '_\$${className}EntityMirror'
-            ..extend = refer('EntityMirror<$className>')
-            ..constructors.add(Constructor(
-              (b) => b
-                ..constant = true
-                ..requiredParameters.add(Parameter((p) => p
-                  ..toSuper = true
-                  ..name = 'instance')),
-            ))
-            ..methods.addAll([
-              Method(
-                (m) => m
-                  ..name = 'get'
-                  ..annotations.add(CodeExpression(Code('override')))
-                  ..requiredParameters.add(Parameter((p) => p
-                    ..name = 'field'
-                    ..type = refer('Symbol')))
-                  ..returns = refer('Object?')
-                  ..body = Code('''
-return switch(field) {
-  ${fields.map((e) => '''
-  #${e.name} => instance.${e.name}
-''').join(',')},
-  _ => throw Exception('Unknown property \$field'),
-};
-'''),
-              ),
-            ]),
-        ),
 
         /// Generate Typed OrderBy's
         Class((b) => b
@@ -194,7 +166,7 @@ return switch(field) {
               ..fields.addAll(relatedEntityCreateFields.map(
                 (f) => Field((fb) => fb
                   ..name = f.name
-                  ..type = refer(f.type.getDisplayString(withNullability: true))
+                  ..type = refer(f.type.withNullability)
                   ..modifier = FieldModifier.final$),
               ))
               ..constructors.add(
@@ -247,7 +219,7 @@ return switch(field) {
           ..fields.addAll(fieldsRequiredForCreate.map(
             (f) => Field((fb) => fb
               ..name = f.name
-              ..type = refer(f.type.getDisplayString(withNullability: true))
+              ..type = refer(f.type.withNullability)
               ..modifier = FieldModifier.final$),
           ))
           ..constructors.add(
@@ -281,7 +253,7 @@ return switch(field) {
         ..fields.addAll(fieldsRequiredForCreate.map((f) => Field(
               (fb) => fb
                 ..name = f.name
-                ..type = refer('value<${f.type.getDisplayString(withNullability: true)}>')
+                ..type = refer('value<${f.type.withNullability}>')
                 ..modifier = FieldModifier.final$,
             )))
         ..constructors.add(
@@ -333,7 +305,7 @@ return switch(field) {
   /// This generates WHERE-EQUAL clause value for a field
   Method _generateFieldWhereClause(FieldElement field, String className) {
     final dbColumnName = getFieldDbName(field);
-    final fieldType = field.type.getDisplayString(withNullability: true);
+    final fieldType = field.type.withNullability;
 
     return Method(
       (m) {
@@ -376,7 +348,7 @@ return switch(field) {
   /// This generates GetByProperty for a field
   Method _generateGetByPropertyMethod(FieldElement field, String className) {
     final fieldName = field.name;
-    final fieldType = field.type.getDisplayString(withNullability: true);
+    final fieldType = field.type.withNullability;
 
     return Method(
       (m) {
@@ -426,8 +398,8 @@ return switch(field) {
 
     final requiredOpts = '''
               "$columnName",
-               ${field.type.getDisplayString(withNullability: false)},
-               $symbol,
+               ${field.type.withoutNullability},
+               $symbol
             ''';
 
     if (field == createdAtField) {
@@ -440,8 +412,8 @@ return switch(field) {
 
     if (field == primaryKey.field) {
       return '''DBEntityField.primaryKey(
-          $requiredOpts
-          ${parsedClass.hasAutoIncrementingPrimaryKey ? 'autoIncrement: true, ' : ''}
+          $requiredOpts,
+          ${parsedClass.hasAutoIncrementingPrimaryKey ? 'autoIncrement: true' : ''}
           )''';
     }
 
@@ -579,4 +551,10 @@ return switch(field) {
       if (onDelete != null) 'onDelete: ForeignKeyAction.$onDelete',
     ].join(', ')} ,)''';
   }
+}
+
+extension on DartType {
+  String get withNullability => getDisplayString(withNullability: true);
+
+  String get withoutNullability => getDisplayString(withNullability: false);
 }

@@ -1,7 +1,5 @@
 import 'package:yaroorm_tests/src/models.dart';
 
-typedef UserData = ({String firstname, String lastname, int age, String homeAddress});
-
 final usersList = <NewUser>[
   /// Ghana Users - [6]
   NewUser(

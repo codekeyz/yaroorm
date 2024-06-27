@@ -19,26 +19,23 @@ Map<Type, EntityTypeConverter> combineConverters(
   };
 }
 
-UnmodifiableMapView<String, dynamic> entityToDbData<Model extends Entity<Model>>(Model value) {
-  final entity = Query.getEntity<Model>(type: value.runtimeType);
-  final typeConverters = combineConverters(entity.converters, value._driver.typeconverters);
-  final mirror = entity.mirror(value);
+Map<String, dynamic> entityToDbData<Model extends Entity<Model>>(Model entity) {
+  final typeInfo = Query.getEntity<Model>(type: entity.runtimeType);
+  final typeConverters = combineConverters(typeInfo.converters, entity._driver.typeconverters);
 
   Object? getValue(DBEntityField field) {
-    final value = mirror.get(field.dartName);
+    final value = typeInfo.mirror(entity, field.dartName);
     final typeConverter = typeConverters[field.type];
     return typeConverter == null ? value : typeConverter.toDbType(value);
   }
 
-  final data = {
-    for (final entry in entity.editableColumns) entry.columnName: getValue(entry),
+  return {
+    for (final entry in typeInfo.editableColumns) entry.columnName: getValue(entry),
   };
-
-  return UnmodifiableMapView(data);
 }
 
 @internal
-UnmodifiableMapView<String, dynamic> entityMapToDbData<T extends Entity<T>>(
+Map<String, dynamic> entityMapToDbData<T extends Entity<T>>(
   Map<Symbol, dynamic> values,
   Map<Type, EntityTypeConverter> typeConverters, {
   bool onlyPropertiesPassed = false,
@@ -64,7 +61,7 @@ UnmodifiableMapView<String, dynamic> entityMapToDbData<T extends Entity<T>>(
     resultsMap[field.columnName] = value;
   }
 
-  return UnmodifiableMapView(resultsMap);
+  return resultsMap;
 }
 
 @internal
@@ -80,5 +77,5 @@ Model dbDataToEntity<Model extends Entity<Model>>(
     resultsMap[entry.dartName] = typeConverter == null ? value : typeConverter.fromDbType(value);
   }
 
-  return entity.build(resultsMap);
+  return entity.builder(resultsMap);
 }

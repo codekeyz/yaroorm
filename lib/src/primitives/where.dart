@@ -145,6 +145,10 @@ class WhereClauseValue<ValueType> extends WhereClause {
     }
   }
 
+  WhereClause operator &(WhereClauseValue other) => and([this, other]);
+
+  WhereClause operator |(WhereClauseValue other) => or([this, other]);
+
   @override
   void _withConverters(Map<Type, EntityTypeConverter> converters) {
     _converters

@@ -164,14 +164,12 @@ void runBasicE2ETest(String connectionName) {
     });
 
     test('should get all users where age is 30 or 52', () async {
-      final users = await UserQuery.driver(driver)
-          .where((user) => or([
-                user.age(30),
-                user.age(52),
-              ]))
-          .findMany();
+      final users = await UserQuery.driver(driver).where((user) => or([user.age(30), user.age(52)])).findMany();
+
+      final users2 = await UserQuery.driver(driver).where((user) => user.age(30) | user.age(52)).findMany();
 
       expect(users.every((e) => [30, 52].contains(e.age)), isTrue);
+      expect(users2.every((e) => [30, 52].contains(e.age)), isTrue);
     });
 
     test('should delete user', () async {

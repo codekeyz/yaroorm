@@ -9,7 +9,7 @@ abstract class EntityRelation<Parent extends Entity<Parent>, RelatedModel extend
 
   Object get parentId {
     final typeInfo = parent._typeDef;
-    return typeInfo.mirror.call(parent).get(typeInfo.primaryKey.dartName)!;
+    return typeInfo.mirror.call(parent, typeInfo.primaryKey.dartName)!;
   }
 
   DriverContract get _driver => parent._driver;
