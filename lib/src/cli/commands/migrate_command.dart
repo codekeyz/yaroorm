@@ -19,7 +19,8 @@ class MigrateCommand extends OrmCommand {
   Future<void> execute(DatabaseDriver driver, {bool writeLogs = true}) async {
     await ensureMigrationsTableReady(driver);
 
-    final lastBatchNumber = await getLastBatchNumber(driver, migrationTableName);
+    final lastBatchNumber =
+        await getLastBatchNumber(driver, migrationTableName);
     final batchNos = lastBatchNumber + 1;
 
     for (final migration in migrationDefinitions) {

@@ -18,7 +18,11 @@ final class PostgreSqlDriver implements DatabaseDriver {
   PostgreSqlDriver(this.config);
 
   @override
-  Future<DatabaseDriver> connect({int? maxConnections, bool? singleConnection, bool? secure}) async {
+  Future<DatabaseDriver> connect({
+    int? maxConnections,
+    bool? singleConnection,
+    bool? secure,
+  }) async {
     assert(maxConnections == null, 'Postgres max connections not supported');
     secure ??= false;
 
@@ -55,10 +59,14 @@ final class PostgreSqlDriver implements DatabaseDriver {
     await db?.close();
   }
 
-  Future<List<Map<String, dynamic>>> _execRawQuery(String script, {Map<String, dynamic>? parameters}) async {
+  Future<List<Map<String, dynamic>>> _execRawQuery(
+    String script, {
+    Map<String, dynamic>? parameters,
+  }) async {
     parameters ??= {};
     if (!isOpen) await connect();
-    final result = await db!.execute(pg.Sql.named(script), parameters: parameters);
+    final result =
+        await db!.execute(pg.Sql.named(script), parameters: parameters);
     return result.map((e) => e.toColumnMap()).toList();
   }
 
@@ -85,7 +93,10 @@ final class PostgreSqlDriver implements DatabaseDriver {
 
   @override
   Future<List<Map<String, dynamic>>> update(UpdateQuery query) {
-    return _execRawQuery(serializer.acceptUpdateQuery(query), parameters: query.data);
+    return _execRawQuery(
+      serializer.acceptUpdateQuery(query),
+      parameters: query.data,
+    );
   }
 
   @override
@@ -107,10 +118,13 @@ final class PostgreSqlDriver implements DatabaseDriver {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> rawQuery(String script) => _execRawQuery(script);
+  Future<List<Map<String, dynamic>>> rawQuery(String script) =>
+      _execRawQuery(script);
 
   @override
-  Future<void> transaction(void Function(DriverTransactor transactor) func) async {
+  Future<void> transaction(
+    void Function(DriverTransactor transactor) func,
+  ) async {
     if (!isOpen) await connect();
     if (db == null) return Future.value();
     return db!.runTx((txn) async => func(_PgSqlDriverTransactor(txn)));
@@ -198,7 +212,8 @@ class PgSqlPrimitiveSerializer extends MySqlPrimitiveSerializer {
   String acceptUpdateQuery(UpdateQuery query) {
     final queryBuilder = StringBuffer();
 
-    final fields = query.data.keys.map((e) => '${escapeStr(e)} = @$e').join(', ');
+    final fields =
+        query.data.keys.map((e) => '${escapeStr(e)} = @$e').join(', ');
 
     queryBuilder.write('UPDATE ${escapeStr(query.tableName)}');
 
@@ -239,7 +254,12 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
   }
 
   @override
-  void datetime(String name, {bool nullable = false, DateTime? defaultValue, unique = false}) {
+  void datetime(
+    String name, {
+    bool nullable = false,
+    DateTime? defaultValue,
+    unique = false,
+  }) {
     statements.add(makeColumn(
       name,
       'TIMESTAMP',
@@ -251,7 +271,8 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
 
   @override
   void blob(String name, {bool nullable = false, defaultValue}) {
-    statements.add(makeColumn(name, "BYTEA", nullable: nullable, defaultValue: null));
+    statements
+        .add(makeColumn(name, "BYTEA", nullable: nullable, defaultValue: null));
   }
 
   @override
@@ -396,7 +417,12 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
     String? collate,
     int size = 1,
   }) {
-    statements.add(makeColumn(name, "BYTEA", nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(
+      name,
+      "BYTEA",
+      nullable: nullable,
+      defaultValue: defaultValue,
+    ));
   }
 
   @override
@@ -409,7 +435,12 @@ class PgSqlTableBlueprint extends MySqlDriverTableBlueprint {
     int size = 1,
   }) {
     final type = 'BIT VARYING($size)';
-    statements.add(makeColumn(name, type, nullable: nullable, defaultValue: defaultValue));
+    statements.add(makeColumn(
+      name,
+      type,
+      nullable: nullable,
+      defaultValue: defaultValue,
+    ));
   }
 
   @override

@@ -15,7 +15,8 @@ const _commandsToRunInProxyClient = [
 ];
 
 void main(List<String> args) async {
-  final isACommandForProxy = args.isNotEmpty && _commandsToRunInProxyClient.contains(args[0]);
+  final isACommandForProxy =
+      args.isNotEmpty && _commandsToRunInProxyClient.contains(args[0]);
   if (!isACommandForProxy) return OrmCLIRunner.start(args);
 
   await ensureMigratorFile();

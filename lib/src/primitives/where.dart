@@ -2,7 +2,8 @@
 
 part of '../query/query.dart';
 
-typedef WhereBuilder<T extends Entity<T>> = WhereClause Function(WhereClauseBuilder<T> builder);
+typedef WhereBuilder<T extends Entity<T>> = WhereClause Function(
+    WhereClauseBuilder<T> builder);
 
 $AndGroup and(List<WhereClauseValue> values) => $AndGroup._(values);
 
@@ -137,7 +138,8 @@ class WhereClauseValue<ValueType> extends WhereClause {
   @override
   void validate(List<Join> joins) {
     if (table == null) return;
-    final tableJoined = joins.any((e) => [e.on.table, e.origin.table].contains(table));
+    final tableJoined =
+        joins.any((e) => [e.on.table, e.origin.table].contains(table));
     if (!tableJoined) {
       throw ArgumentError(
         'No Joins found to enable `$table.$field ${operator.name} $value` Did you forget to call `.withRelations` ?',
@@ -219,7 +221,8 @@ class WhereClauseBuilder<T extends Entity<T>> with WhereOperation {
   @override
   WhereClauseValue<List<V>> $isNotBetween<V>(String field, List<V> values) {
     _ensureHasField(field);
-    return WhereClauseValue._(field, Operator.NOT_BETWEEN, values, table: table);
+    return WhereClauseValue._(field, Operator.NOT_BETWEEN, values,
+        table: table);
   }
 
   void _ensureHasField(String field) {

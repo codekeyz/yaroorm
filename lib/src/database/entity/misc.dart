@@ -23,7 +23,8 @@ class DateTimeConverter extends EntityTypeConverter<DateTime, String> {
   String padValue(v) => v.toString().padLeft(2, '0');
 
   @override
-  DateTime? fromDbType(String? value) => value == null ? null : DateTime.parse(value);
+  DateTime? fromDbType(String? value) =>
+      value == null ? null : DateTime.parse(value);
 
   @override
   String? toDbType(DateTime? value) {
@@ -42,7 +43,8 @@ class BooleanConverter extends EntityTypeConverter<bool, int> {
   int? toDbType(bool? value) => (value == null || value == false) ? 0 : 1;
 }
 
-class _ListOfObject<T extends Object> extends EntityTypeConverter<List<T>, String> {
+class _ListOfObject<T extends Object>
+    extends EntityTypeConverter<List<T>, String> {
   const _ListOfObject();
   @override
   List<T> fromDbType(covariant String value) => List<T>.from(jsonDecode(value));

@@ -13,7 +13,8 @@ import 'utils.dart';
 
 final _emitter = DartEmitter(useNullSafetySyntax: true, orderDirectives: true);
 
-Builder generatorFactoryBuilder(BuilderOptions options) => SharedPartBuilder([EntityGenerator()], 'yaroorm');
+Builder generatorFactoryBuilder(BuilderOptions options) =>
+    SharedPartBuilder([EntityGenerator()], 'yaroorm');
 
 class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
   @override
@@ -131,7 +132,8 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
           ..on = refer('Query<$className>')
           ..methods.addAll([
             _generateGetByPropertyMethod(primaryKey.field, className),
-            ...normalFields.map((e) => _generateGetByPropertyMethod(e, className)),
+            ...normalFields
+                .map((e) => _generateGetByPropertyMethod(e, className)),
           ])),
 
         /// Generate Extension for loading relations
@@ -140,29 +142,36 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
           ..on = refer('JoinBuilder<$className>')
           ..methods.addAll([
             if (parsedEntity.belongsToGetters.isNotEmpty)
-              ...parsedEntity.belongsToGetters.map((field) => _generateJoinForBelongsTo(parsedEntity, field.getter!)),
+              ...parsedEntity.belongsToGetters.map((field) =>
+                  _generateJoinForBelongsTo(parsedEntity, field.getter!)),
             if (parsedEntity.hasOneGetters.isNotEmpty)
-              ...parsedEntity.hasOneGetters.map((field) => _generateJoinForHasOne(parsedEntity, field.getter!)),
+              ...parsedEntity.hasOneGetters.map((field) =>
+                  _generateJoinForHasOne(parsedEntity, field.getter!)),
             if (parsedEntity.hasManyGetters.isNotEmpty)
-              ...parsedEntity.hasManyGetters.map((field) => _generateJoinForHasMany(parsedEntity, field.getter!)),
+              ...parsedEntity.hasManyGetters.map((field) =>
+                  _generateJoinForHasMany(parsedEntity, field.getter!)),
           ])),
 
         /// Generate Class for enabling Insert for HasMany creations
         if (parsedEntity.hasManyGetters.isNotEmpty) ...[
           ...parsedEntity.hasManyGetters.map((hasManyField) {
-            final hasManyClass = hasManyField.getter!.returnType as InterfaceType;
-            final parsedRelatedEntity =
-                ParsedEntityClass.parse(hasManyClass.typeArguments.last.element as ClassElement);
+            final hasManyClass =
+                hasManyField.getter!.returnType as InterfaceType;
+            final parsedRelatedEntity = ParsedEntityClass.parse(
+                hasManyClass.typeArguments.last.element as ClassElement);
 
-            final referenceField =
-                parsedRelatedEntity.bindings.entries.firstWhere((e) => e.value.entity.element == parsedEntity.element);
+            final referenceField = parsedRelatedEntity.bindings.entries
+                .firstWhere(
+                    (e) => e.value.entity.element == parsedEntity.element);
 
-            final relatedEntityCreateFields =
-                parsedRelatedEntity.fieldsRequiredForCreate.where((field) => Symbol(field.name) != referenceField.key);
+            final relatedEntityCreateFields = parsedRelatedEntity
+                .fieldsRequiredForCreate
+                .where((field) => Symbol(field.name) != referenceField.key);
 
             return Class((b) => b
               ..name = 'New${parsedRelatedEntity.className}For$className'
-              ..extend = refer('CreateRelatedEntity<$className, ${parsedRelatedEntity.className}>')
+              ..extend = refer(
+                  'CreateRelatedEntity<$className, ${parsedRelatedEntity.className}>')
               ..fields.addAll(relatedEntityCreateFields.map(
                 (f) => Field((fb) => fb
                   ..name = f.name
@@ -196,7 +205,9 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
                     ..type = MethodType.getter
                     ..annotations.add(CodeExpression(Code('override')))
                     ..lambda = true
-                    ..body = Code('{ ${relatedEntityCreateFields.map((e) => '#${e.name} : ${e.name}').join(', ')} }'),
+                    ..body = Code(
+                      '{ ${relatedEntityCreateFields.map((e) => '#${e.name} : ${e.name}').join(', ')} }',
+                    ),
                 ),
               ]));
           })
@@ -243,7 +254,9 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
                 ..type = MethodType.getter
                 ..annotations.add(CodeExpression(Code('override')))
                 ..lambda = true
-                ..body = Code('{ ${fieldsRequiredForCreate.map((e) => '#${e.name} : ${e.name}').join(', ')} }'),
+                ..body = Code(
+                  '{ ${fieldsRequiredForCreate.map((e) => '#${e.name} : ${e.name}').join(', ')} }',
+                ),
             ),
           ),
       ),
@@ -281,7 +294,10 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
     ];
   }
 
-  String _generateConstructorCode(String className, ConstructorElement constructor) {
+  String _generateConstructorCode(
+    String className,
+    ConstructorElement constructor,
+  ) {
     final sb = StringBuffer()..write('$className(');
 
     final normalParams = constructor.type.normalParameterNames;
@@ -325,9 +341,14 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
   List<Method> _generateWhereClauseForRelations(ParsedEntityClass parsed) {
     final result = <Method>[];
 
-    for (final (field) in [...parsed.hasManyGetters, ...parsed.belongsToGetters, ...parsed.hasOneGetters]) {
+    for (final (field) in [
+      ...parsed.hasManyGetters,
+      ...parsed.belongsToGetters,
+      ...parsed.hasOneGetters
+    ]) {
       final hasMany = field.getter!.returnType as InterfaceType;
-      final referencedClass = hasMany.typeArguments.last.element as ClassElement;
+      final referencedClass =
+          hasMany.typeArguments.last.element as ClassElement;
       final parsedReferenceClass = ParsedEntityClass.parse(referencedClass);
 
       final returnType = 'WhereClauseBuilder<${referencedClass.name}>';
@@ -359,7 +380,9 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
           ..requiredParameters.add(Parameter((p) => p
             ..name = 'val'
             ..type = refer(fieldType)))
-          ..body = Code('findOne(where: (${className.toLowerCase()}) => ${className.toLowerCase()}.$fieldName(val))');
+          ..body = Code(
+            'findOne(where: (${className.toLowerCase()}) => ${className.toLowerCase()}.$fieldName(val))',
+          );
       },
     );
   }
@@ -367,7 +390,10 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
   /// Process entity annotation
   String processAnnotation(DartObject constantValue) {
     final classElement = constantValue.type!.element as ClassElement;
-    assert(classElement.supertype!.typeArguments.length == 2, 'Should have two type arguments');
+    assert(
+      classElement.supertype!.typeArguments.length == 2,
+      'Should have two type arguments',
+    );
 
     final variable = constantValue.variable;
     if (variable != null) return variable.name;
@@ -382,12 +408,18 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
   }
 
   /// Generate DBEntityField for each of the class fields
-  String generateCodeForField(ParsedEntityClass parsedClass, FieldElement field) {
+  String generateCodeForField(
+    ParsedEntityClass parsedClass,
+    FieldElement field,
+  ) {
     final createdAtField = parsedClass.createdAtField?.field;
     final updatedAtField = parsedClass.updatedAtField?.field;
     final primaryKey = parsedClass.primaryKey;
 
-    final meta = typeChecker(entity.TableColumn).firstAnnotationOf(field, throwOnUnresolved: false);
+    final meta = typeChecker(entity.TableColumn).firstAnnotationOf(
+      field,
+      throwOnUnresolved: false,
+    );
 
     final symbol = '#${field.name}';
     final columnName = getFieldDbName(field, meta: meta);
@@ -431,7 +463,9 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
   ) {
     final belongsTo = getter.returnType as InterfaceType;
     final getterName = getter.name;
-    final relatedClass = ParsedEntityClass.parse(belongsTo.typeArguments.last.element as ClassElement);
+    final relatedClass = ParsedEntityClass.parse(
+      belongsTo.typeArguments.last.element as ClassElement,
+    );
 
     final bindings = parent.bindings;
     if (bindings.isEmpty) {
@@ -442,9 +476,12 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
     }
 
     /// TODO(codekey): be able to specify binding to use
-    final bindingToUse = bindings.entries.firstWhere((e) => e.value.entity.element == relatedClass.element);
-    final field = parent.allFields.firstWhere((e) => Symbol(e.name) == bindingToUse.key);
-    final foreignField = relatedClass.allFields.firstWhere((e) => Symbol(e.name) == bindingToUse.value.field);
+    final bindingToUse = bindings.entries
+        .firstWhere((e) => e.value.entity.element == relatedClass.element);
+    final field =
+        parent.allFields.firstWhere((e) => Symbol(e.name) == bindingToUse.key);
+    final foreignField = relatedClass.allFields
+        .firstWhere((e) => Symbol(e.name) == bindingToUse.value.field);
 
     final joinClass = 'Join<${parent.className}, ${relatedClass.className}>';
     return Method(
@@ -467,7 +504,8 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
     PropertyAccessorElement getter,
   ) {
     final hasMany = getter.returnType as InterfaceType;
-    final relatedClass = ParsedEntityClass.parse(hasMany.typeArguments.last.element as ClassElement);
+    final relatedClass = ParsedEntityClass.parse(
+        hasMany.typeArguments.last.element as ClassElement);
 
     final bindings = relatedClass.bindings;
     if (bindings.isEmpty) {
@@ -478,8 +516,10 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
     }
 
     /// TODO(codekey): be able to specify binding to use
-    final bindingToUse = bindings.entries.firstWhere((e) => e.value.entity.element == parent.element);
-    final foreignField = relatedClass.allFields.firstWhere((e) => Symbol(e.name) == bindingToUse.key);
+    final bindingToUse = bindings.entries
+        .firstWhere((e) => e.value.entity.element == parent.element);
+    final foreignField = relatedClass.allFields
+        .firstWhere((e) => Symbol(e.name) == bindingToUse.key);
 
     final joinClass = 'Join<${parent.className}, ${relatedClass.className}>';
     return Method(
@@ -503,7 +543,8 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
   ) {
     final hasOne = getter.returnType as InterfaceType;
     final getterName = getter.name;
-    final relatedClass = ParsedEntityClass.parse(hasOne.typeArguments.last.element as ClassElement);
+    final relatedClass = ParsedEntityClass.parse(
+        hasOne.typeArguments.last.element as ClassElement);
 
     final bindings = parent.bindings;
     if (bindings.isEmpty) {
@@ -514,9 +555,12 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
     }
 
     /// TODO(codekey): be able to specify binding to use
-    final bindingToUse = bindings.entries.firstWhere((e) => e.value.entity.element == relatedClass.element);
-    final field = parent.allFields.firstWhere((e) => Symbol(e.name) == bindingToUse.key);
-    final foreignField = relatedClass.allFields.firstWhere((e) => Symbol(e.name) == bindingToUse.value.field);
+    final bindingToUse = bindings.entries
+        .firstWhere((e) => e.value.entity.element == relatedClass.element);
+    final field =
+        parent.allFields.firstWhere((e) => Symbol(e.name) == bindingToUse.key);
+    final foreignField = relatedClass.allFields
+        .firstWhere((e) => Symbol(e.name) == bindingToUse.value.field);
 
     final joinClass = 'Join<${parent.className}, ${relatedClass.className}>';
     return Method(

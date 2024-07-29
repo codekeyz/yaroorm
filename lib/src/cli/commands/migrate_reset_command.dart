@@ -31,7 +31,8 @@ class MigrationResetCommand extends OrmCommand {
     }
 
     final rollbacks = migrationDefinitions.reversed.map((e) {
-      final entry = migrationsList.firstWhereOrNull((entry) => e.name == entry.migration);
+      final entry =
+          migrationsList.firstWhereOrNull((entry) => e.name == entry.migration);
       return entry == null ? null : (entry: entry, schemas: e.down);
     }).whereNotNull();
 

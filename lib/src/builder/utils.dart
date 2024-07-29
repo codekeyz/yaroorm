@@ -35,7 +35,10 @@ extension DartTypeExt on DartType {
 
 String getFieldDbName(FieldElement element, {DartObject? meta}) {
   final elementName = element.name;
-  meta ??= typeChecker(entity.TableColumn).firstAnnotationOf(element, throwOnUnresolved: false);
+  meta ??= typeChecker(entity.TableColumn).firstAnnotationOf(
+    element,
+    throwOnUnresolved: false,
+  );
   if (meta != null) {
     return ConstantReader(meta).peek('name')?.stringValue ?? elementName;
   }
@@ -43,15 +46,18 @@ String getFieldDbName(FieldElement element, {DartObject? meta}) {
 }
 
 String getTableName(ClassElement element) {
-  final meta = typeChecker(entity.Table).firstAnnotationOf(element, throwOnUnresolved: false);
-  return ConstantReader(meta).peek('name')?.stringValue ?? element.name.snakeCase.toPlural().first.toLowerCase();
+  final meta = typeChecker(entity.Table)
+      .firstAnnotationOf(element, throwOnUnresolved: false);
+  return ConstantReader(meta).peek('name')?.stringValue ??
+      element.name.snakeCase.toPlural().first.toLowerCase();
 }
 
 String getTypeDefName(String className) {
   return '${className.pascalCase.toLowerCase()}TypeDef';
 }
 
-final RegExp _migrationTimestampRegex = RegExp(r'(\d{4})_(\d{2})_(\d{2})_(\d{6})');
+final RegExp _migrationTimestampRegex =
+    RegExp(r'(\d{4})_(\d{2})_(\d{2})_(\d{6})');
 
 DateTime parseMigrationFileDate(String fileName) {
   final match = _migrationTimestampRegex.firstMatch(fileName);
@@ -89,7 +95,8 @@ typedef ResolvedProject = ({
   TopLevelVariableElement dbConfig,
 });
 
-Future<ResolvedProject> resolveMigrationAndEntitiesInDir(Directory workingDir) async {
+Future<ResolvedProject> resolveMigrationAndEntitiesInDir(
+    Directory workingDir) async {
   final collection = AnalysisContextCollection(
     includedPaths: [workingDir.absolute.path],
     resourceProvider: PhysicalResourceProvider.INSTANCE,
@@ -103,12 +110,13 @@ Future<ResolvedProject> resolveMigrationAndEntitiesInDir(Directory workingDir) a
   await for (final (library, _, _) in _libraries(collection)) {
     /// Resolve ORM config
     final configIsInitiallyNull = dbConfig == null;
-    final config = library.element.topLevelElements
-        .firstWhereOrNull((element) => typeChecker(UseORMConfig).hasAnnotationOfExact(element));
+    final config = library.element.topLevelElements.firstWhereOrNull(
+        (element) => typeChecker(UseORMConfig).hasAnnotationOfExact(element));
     if (config != null) {
       if (configIsInitiallyNull) {
         if (config is! TopLevelVariableElement || config.isPrivate) {
-          throw YaroormCliException('ORM config has to be a top level public variable');
+          throw YaroormCliException(
+              'ORM config has to be a top level public variable');
         }
 
         dbConfig = config;
@@ -130,7 +138,8 @@ Future<ResolvedProject> resolveMigrationAndEntitiesInDir(Directory workingDir) a
   }
 
   if (dbConfig == null) {
-    throw YaroormCliException('Did you forget to annotate ORM Config with ${cyan.wrap('@DB.useConfig')} ?');
+    throw YaroormCliException(
+        'Did you forget to annotate ORM Config with ${cyan.wrap('@DB.useConfig')} ?');
   }
 
   return (migrations: migrations, entities: entities, dbConfig: dbConfig);
@@ -143,29 +152,40 @@ class Item {
   const Item(this.elements, this.path);
 }
 
-({Item? migrations, Item? entityClasses})? _validateLibrary(ResolvedLibraryResult library, String identifier) {
+({Item? migrations, Item? entityClasses})? _validateLibrary(
+    ResolvedLibraryResult library, String identifier) {
   final classElements = library.element.topLevelElements
-      .where((e) => !e.isPrivate && e is ClassElement && e.supertype != null && !e.isAbstract)
+      .where((e) =>
+          !e.isPrivate &&
+          e is ClassElement &&
+          e.supertype != null &&
+          !e.isAbstract)
       .toList()
       .cast<ClassElement>();
 
   if (classElements.isEmpty) return null;
 
-  final migrationClasses = classElements.where((element) => typeChecker(Migration).isExactlyType(element.supertype!));
-  final entityClasses = classElements.where((element) => typeChecker(entity.Entity).isExactlyType(element.supertype!));
+  final migrationClasses = classElements.where(
+      (element) => typeChecker(Migration).isExactlyType(element.supertype!));
+  final entityClasses = classElements.where((element) =>
+      typeChecker(entity.Entity).isExactlyType(element.supertype!));
 
   return (
-    migrations: migrationClasses.isEmpty ? null : Item(migrationClasses, identifier),
-    entityClasses: entityClasses.isEmpty ? null : Item(entityClasses, identifier),
+    migrations:
+        migrationClasses.isEmpty ? null : Item(migrationClasses, identifier),
+    entityClasses:
+        entityClasses.isEmpty ? null : Item(entityClasses, identifier),
   );
 }
 
-Stream<(ResolvedLibraryResult, String, String)> _libraries(AnalysisContextCollection collection) async* {
+Stream<(ResolvedLibraryResult, String, String)> _libraries(
+    AnalysisContextCollection collection) async* {
   for (final context in collection.contexts) {
     final analyzedFiles = context.contextRoot.analyzedFiles().toList();
 
-    final futures =
-        analyzedFiles.where((path) => path.endsWith('.dart') && !path.endsWith('_test.dart')).map((filePath) async {
+    final futures = analyzedFiles
+        .where((path) => path.endsWith('.dart') && !path.endsWith('_test.dart'))
+        .map((filePath) async {
       final library = await context.currentSession.getResolvedLibrary(filePath);
 
       print(library);
@@ -194,7 +214,9 @@ final class ParsedEntityClass {
   final List<FieldElement> allFields;
 
   /// {current_field_in_class : external entity being referenced and field}
-  final Map<Symbol, ({ParsedEntityClass entity, Symbol field, ConstantReader reader})> bindings;
+  final Map<Symbol,
+          ({ParsedEntityClass entity, Symbol field, ConstantReader reader})>
+      bindings;
 
   final List<FieldElement> getters;
 
@@ -204,14 +226,18 @@ final class ParsedEntityClass {
   final FieldElementAndReader primaryKey;
   final FieldElementAndReader? createdAtField, updatedAtField;
 
-  List<FieldElement> get hasManyGetters =>
-      getters.where((getter) => typeChecker(entity.HasMany).isExactlyType(getter.type)).toList();
+  List<FieldElement> get hasManyGetters => getters
+      .where((getter) => typeChecker(entity.HasMany).isExactlyType(getter.type))
+      .toList();
 
-  List<FieldElement> get belongsToGetters =>
-      getters.where((getter) => typeChecker(entity.BelongsTo).isExactlyType(getter.type)).toList();
+  List<FieldElement> get belongsToGetters => getters
+      .where(
+          (getter) => typeChecker(entity.BelongsTo).isExactlyType(getter.type))
+      .toList();
 
-  List<FieldElement> get hasOneGetters =>
-      getters.where((getter) => typeChecker(entity.HasOne).isExactlyType(getter.type)).toList();
+  List<FieldElement> get hasOneGetters => getters
+      .where((getter) => typeChecker(entity.HasOne).isExactlyType(getter.type))
+      .toList();
 
   bool get hasAutoIncrementingPrimaryKey {
     return primaryKey.reader.peek('autoIncrement')!.boolValue;
@@ -238,7 +264,8 @@ final class ParsedEntityClass {
     this.getters = const [],
   });
 
-  factory ParsedEntityClass.parse(ClassElement element, {ConstantReader? reader}) {
+  factory ParsedEntityClass.parse(ClassElement element,
+      {ConstantReader? reader}) {
     final className = element.name;
     final tableName = getTableName(element);
     final fields = element.fields.where(_allowedTypes).toList(growable: false);
@@ -253,7 +280,8 @@ final class ParsedEntityClass {
     }
 
     // Validate un-named class constructor
-    final primaryConstructor = element.constructors.firstWhereOrNull((e) => e.name == "");
+    final primaryConstructor =
+        element.constructors.firstWhereOrNull((e) => e.name == "");
     if (primaryConstructor == null) {
       throw InvalidGenerationSource(
         '$className Entity does not have a default constructor',
@@ -262,7 +290,8 @@ final class ParsedEntityClass {
     }
 
     final fieldNames = fields.map((e) => e.name);
-    final notAllowedProps = primaryConstructor.children.where((e) => !fieldNames.contains(e.name));
+    final notAllowedProps =
+        primaryConstructor.children.where((e) => !fieldNames.contains(e.name));
     if (notAllowedProps.isNotEmpty) {
       throw InvalidGenerationSource(
         'These props are not allowed in $className Entity default constructor: ${notAllowedProps.join(', ')}',
@@ -271,21 +300,28 @@ final class ParsedEntityClass {
     }
 
     final normalFields = fields
-        .where((e) => ![primaryKey.field, createdAt?.field, updatedAt?.field].contains(e))
+        .where((e) =>
+            ![primaryKey.field, createdAt?.field, updatedAt?.field].contains(e))
         .toList(growable: false);
 
-    final fieldsWithBindings = _getFieldsAndReaders(normalFields, entity.bindTo);
+    final fieldsWithBindings =
+        _getFieldsAndReaders(normalFields, entity.bindTo);
 
-    final Map<Symbol, ({ParsedEntityClass entity, Symbol field, ConstantReader reader})> bindings = {};
+    final Map<Symbol,
+            ({ParsedEntityClass entity, Symbol field, ConstantReader reader})>
+        bindings = {};
 
     for (final field in fieldsWithBindings) {
-      final relatedClass = field.reader.peek('type')!.typeValue.element as ClassElement;
+      final relatedClass =
+          field.reader.peek('type')!.typeValue.element as ClassElement;
       final parsedRelatedClass = ParsedEntityClass.parse(relatedClass);
 
       /// Check the field we're binding onto. If provided, validate that if exists
       /// if not, use the related class primary key
-      final fieldToBind = field.reader.peek('on')?.symbolValue ?? Symbol(parsedRelatedClass.primaryKey.field.name);
-      final referencedField = parsedRelatedClass.allFields.firstWhereOrNull((e) => Symbol(e.name) == fieldToBind);
+      final fieldToBind = field.reader.peek('on')?.symbolValue ??
+          Symbol(parsedRelatedClass.primaryKey.field.name);
+      final referencedField = parsedRelatedClass.allFields
+          .firstWhereOrNull((e) => Symbol(e.name) == fieldToBind);
       if (referencedField == null) {
         throw InvalidGenerationSource(
           'Field $fieldToBind used in Binding does not exist on ${parsedRelatedClass.className} Entity',
@@ -300,7 +336,11 @@ final class ParsedEntityClass {
         );
       }
 
-      bindings[Symbol(field.field.name)] = (entity: parsedRelatedClass, field: fieldToBind, reader: field.reader);
+      bindings[Symbol(field.field.name)] = (
+        entity: parsedRelatedClass,
+        field: fieldToBind,
+        reader: field.reader
+      );
     }
 
     return ParsedEntityClass(
@@ -310,7 +350,8 @@ final class ParsedEntityClass {
       allFields: fields,
       bindings: bindings,
       normalFields: normalFields,
-      getters: element.fields.where((e) => e.getter?.isSynthetic == false).toList(),
+      getters:
+          element.fields.where((e) => e.getter?.isSynthetic == false).toList(),
       primaryKey: primaryKey,
       constructor: primaryConstructor,
       createdAtField: createdAt,
@@ -322,9 +363,11 @@ final class ParsedEntityClass {
     return field.getter?.isSynthetic ?? false;
   }
 
-  static FieldElementAndReader? _getFieldAnnotationByType(List<FieldElement> fields, Type type) {
+  static FieldElementAndReader? _getFieldAnnotationByType(
+      List<FieldElement> fields, Type type) {
     for (final field in fields) {
-      final result = typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
+      final result =
+          typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
       if (result != null) {
         return (field: field, reader: ConstantReader(result));
       }
@@ -332,9 +375,11 @@ final class ParsedEntityClass {
     return null;
   }
 
-  static Iterable<FieldElementAndReader> _getFieldsAndReaders(List<FieldElement> fields, Type type) sync* {
+  static Iterable<FieldElementAndReader> _getFieldsAndReaders(
+      List<FieldElement> fields, Type type) sync* {
     for (final field in fields) {
-      final result = typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
+      final result =
+          typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
       if (result == null) continue;
       yield (field: field, reader: ConstantReader(result));
     }
@@ -358,7 +403,8 @@ Future<void> syncProxyMigratorIfNecessary() async {
 
   String? checkSum;
 
-  final results = await Future.wait([kernelFile.exists(), migratorCheckSumFile.exists()]);
+  final results =
+      await Future.wait([kernelFile.exists(), migratorCheckSumFile.exists()]);
   if (results.every((exists) => exists)) {
     final allCheckSums = await Future.wait([
       _getFileCheckSum(databaseInitFile),

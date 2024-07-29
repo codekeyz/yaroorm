@@ -3,11 +3,14 @@ import 'package:collection/collection.dart';
 import 'database/entity/entity.dart';
 import 'query/query.dart';
 
-String getEntityTableName<T extends Entity<T>>() => Query.getEntity<T>().tableName;
+String getEntityTableName<T extends Entity<T>>() =>
+    Query.getEntity<T>().tableName;
 
-String getEntityPrimaryKey<T extends Entity<T>>() => Query.getEntity<T>().primaryKey.columnName;
+String getEntityPrimaryKey<T extends Entity<T>>() =>
+    Query.getEntity<T>().primaryKey.columnName;
 
-typedef EntityInstanceReflector<T extends Entity<T>> = Object? Function(T instance, Symbol field);
+typedef EntityInstanceReflector<T extends Entity<T>> = Object? Function(
+    T instance, Symbol field);
 
 typedef EntityInstanceBuilder<T> = T Function(Map<Symbol, dynamic> args);
 
@@ -18,10 +21,14 @@ abstract class EntityMirror<T> {
   Object? get(Symbol field);
 }
 
-class Binding<Parent extends Entity<Parent>, Related extends Entity<Related>> extends bindTo {
-  EntityTypeDefinition<Related> get referenceTypeDef => Query.getEntity<Related>();
-  DBEntityField get reference => referenceTypeDef.columns.firstWhere((e) => e.dartName == on!);
-  const Binding({required Symbol super.on, super.onDelete, super.onUpdate}) : super(Related);
+class Binding<Parent extends Entity<Parent>, Related extends Entity<Related>>
+    extends bindTo {
+  EntityTypeDefinition<Related> get referenceTypeDef =>
+      Query.getEntity<Related>();
+  DBEntityField get reference =>
+      referenceTypeDef.columns.firstWhere((e) => e.dartName == on!);
+  const Binding({required Symbol super.on, super.onDelete, super.onUpdate})
+      : super(Related);
 }
 
 final class EntityTypeDefinition<T extends Entity<T>> {
@@ -39,18 +46,24 @@ final class EntityTypeDefinition<T extends Entity<T>> {
 
   final bool timestampsEnabled;
 
-  PrimaryKeyField get primaryKey => columns.firstWhereOrNull((e) => e is PrimaryKeyField) as PrimaryKeyField;
+  PrimaryKeyField get primaryKey =>
+      columns.firstWhereOrNull((e) => e is PrimaryKeyField) as PrimaryKeyField;
 
-  CreatedAtField? get createdAtField =>
-      !timestampsEnabled ? null : columns.firstWhereOrNull((e) => e is CreatedAtField) as CreatedAtField?;
+  CreatedAtField? get createdAtField => !timestampsEnabled
+      ? null
+      : columns.firstWhereOrNull((e) => e is CreatedAtField) as CreatedAtField?;
 
-  UpdatedAtField? get updatedAtField =>
-      !timestampsEnabled ? null : columns.firstWhereOrNull((e) => e is UpdatedAtField) as UpdatedAtField?;
+  UpdatedAtField? get updatedAtField => !timestampsEnabled
+      ? null
+      : columns.firstWhereOrNull((e) => e is UpdatedAtField) as UpdatedAtField?;
 
   Iterable<DBEntityField> get fieldsRequiredForCreate =>
-      primaryKey.autoIncrement ? columns.where((e) => e != primaryKey) : columns;
+      primaryKey.autoIncrement
+          ? columns.where((e) => e != primaryKey)
+          : columns;
 
-  Iterable<DBEntityField> get editableColumns => columns.where((e) => e != primaryKey);
+  Iterable<DBEntityField> get editableColumns =>
+      columns.where((e) => e != primaryKey);
 
   const EntityTypeDefinition(
     this.tableName, {
@@ -124,9 +137,11 @@ final class PrimaryKeyField extends DBEntityField {
 }
 
 final class CreatedAtField extends DBEntityField {
-  const CreatedAtField._(String columnName, Symbol dartName) : super(columnName, DateTime, dartName);
+  const CreatedAtField._(String columnName, Symbol dartName)
+      : super(columnName, DateTime, dartName);
 }
 
 final class UpdatedAtField extends DBEntityField {
-  const UpdatedAtField._(String columnName, Symbol dartName) : super(columnName, DateTime, dartName);
+  const UpdatedAtField._(String columnName, Symbol dartName)
+      : super(columnName, DateTime, dartName);
 }

@@ -15,13 +15,15 @@ Map<Type, EntityTypeConverter> combineConverters(
   List<EntityTypeConverter> driverProvided,
 ) {
   return {
-    for (final converter in [...custom, ...driverProvided]) converter._dartType: converter,
+    for (final converter in [...custom, ...driverProvided])
+      converter._dartType: converter,
   };
 }
 
 Map<String, dynamic> entityToDbData<Model extends Entity<Model>>(Model entity) {
   final typeInfo = Query.getEntity<Model>(type: entity.runtimeType);
-  final typeConverters = combineConverters(typeInfo.converters, entity._driver.typeconverters);
+  final typeConverters =
+      combineConverters(typeInfo.converters, entity._driver.typeconverters);
 
   Object? getValue(DBEntityField field) {
     final value = typeInfo.mirror(entity, field.dartName);
@@ -30,7 +32,8 @@ Map<String, dynamic> entityToDbData<Model extends Entity<Model>>(Model entity) {
   }
 
   return {
-    for (final entry in typeInfo.editableColumns) entry.columnName: getValue(entry),
+    for (final entry in typeInfo.editableColumns)
+      entry.columnName: getValue(entry),
   };
 }
 
@@ -47,7 +50,8 @@ Map<String, dynamic> entityMapToDbData<T extends Entity<T>>(
 
   final fieldsToWorkWith = !onlyPropertiesPassed
       ? editableFields
-      : values.keys.map((key) => editableFields.firstWhere((field) => field.dartName == key));
+      : values.keys.map(
+          (key) => editableFields.firstWhere((field) => field.dartName == key));
 
   for (final field in fieldsToWorkWith) {
     var value = values[field.dartName];
@@ -55,7 +59,8 @@ Map<String, dynamic> entityMapToDbData<T extends Entity<T>>(
     final typeConverter = typeConverters[field.type];
     value = typeConverter == null ? value : typeConverter.toDbType(value);
     if (!field.nullable && value == null) {
-      throw Exception('Null Value not allowed for Field ${field.dartName} on $T Entity');
+      throw Exception(
+          'Null Value not allowed for Field ${field.dartName} on $T Entity');
     }
 
     resultsMap[field.columnName] = value;
@@ -74,7 +79,8 @@ Model dbDataToEntity<Model extends Entity<Model>>(
   for (final entry in entity.columns) {
     final value = dataFromDb[entry.columnName];
     final typeConverter = converters[entry.type];
-    resultsMap[entry.dartName] = typeConverter == null ? value : typeConverter.fromDbType(value);
+    resultsMap[entry.dartName] =
+        typeConverter == null ? value : typeConverter.fromDbType(value);
   }
 
   return entity.builder(resultsMap);

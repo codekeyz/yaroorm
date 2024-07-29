@@ -12,3 +12,5 @@ dependencies:
   uuid: ^4.4.0
   yaroorm: 
     path: ../
+dev_dependencies:
+  test: ^1.25.8

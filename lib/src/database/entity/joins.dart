@@ -2,7 +2,8 @@ part of 'entity.dart';
 
 abstract class JoinBuilder<Owner extends Entity<Owner>> {}
 
-final class Join<Parent extends Entity<Parent>, Reference extends Entity<Reference>> {
+final class Join<Parent extends Entity<Parent>,
+    Reference extends Entity<Reference>> {
   final Entry<Parent> origin;
   final Entry<Reference> on;
 
@@ -13,7 +14,8 @@ final class Join<Parent extends Entity<Parent>, Reference extends Entity<Referen
   final String key;
 
   Iterable<String> get aliasedForeignSelections =>
-      Query.getEntity<Reference>().columns.map((e) => '${on.table}.${e.columnName} as "$resultKey.${e.columnName}"');
+      Query.getEntity<Reference>().columns.map(
+          (e) => '${on.table}.${e.columnName} as "$resultKey.${e.columnName}"');
 
   const Join(
     this.resultKey, {
@@ -22,8 +24,8 @@ final class Join<Parent extends Entity<Parent>, Reference extends Entity<Referen
     required Type key,
   }) : key = '$key#$resultKey';
 
-  static String _getKey(Type type, String methodName) {
-    return '$type#$methodName';
+  static String _getKey(Type type, Symbol methodName) {
+    return '$type#${symbolToString(methodName)}';
   }
 }
 

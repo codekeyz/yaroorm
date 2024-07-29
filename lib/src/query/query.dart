@@ -21,7 +21,8 @@ abstract class UpdateEntity<T extends Entity<T>> {
   Map<Symbol, dynamic> get toMap;
 }
 
-abstract class CreateRelatedEntity<Parent extends Entity<Parent>, RelatedModel extends Entity<RelatedModel>> {
+abstract class CreateRelatedEntity<Parent extends Entity<Parent>,
+    RelatedModel extends Entity<RelatedModel>> {
   const CreateRelatedEntity();
 
   Symbol get field;
@@ -56,9 +57,7 @@ mixin UpdateOperation<Result extends Entity<Result>> {
 }
 
 mixin RelationsOperation<T extends Entity<T>> {
-  withRelations(List<Join<T, Entity>> Function(JoinBuilder<T> builder) builder) {
-    return this;
-  }
+  withRelations(List<Join<T, Entity>> Function(JoinBuilder<T> builder) builder);
 }
 
 mixin LimitOperation<ReturnType> {
@@ -90,7 +89,12 @@ sealed class QueryBase<Owner> {
 }
 
 final class Query<T extends Entity<T>>
-    with ReadOperation<T>, InsertOperation<T>, UpdateOperation<T>, AggregateOperation, RelationsOperation<T> {
+    with
+        ReadOperation<T>,
+        InsertOperation<T>,
+        UpdateOperation<T>,
+        AggregateOperation,
+        RelationsOperation<T> {
   final EntityTypeDefinition<T> entity;
   final String? database;
   final List<Join> _joins;
@@ -99,7 +103,8 @@ final class Query<T extends Entity<T>>
 
   DriverContract? _queryDriver;
 
-  Map<Type, EntityTypeConverter> get converters => combineConverters(entity.converters, runner.typeconverters);
+  Map<Type, EntityTypeConverter> get converters =>
+      combineConverters(entity.converters, runner.typeconverters);
 
   static final Map<Type, EntityTypeDefinition> _typedatas = {};
 
@@ -111,7 +116,8 @@ final class Query<T extends Entity<T>>
 
   DriverContract get runner {
     if (_queryDriver == null) {
-      throw StateError('Driver not set for query. Make sure you supply a driver using .driver()');
+      throw StateError(
+          'Driver not set for query. Make sure you supply a driver using .driver()');
     }
     return _queryDriver!;
   }
@@ -121,7 +127,8 @@ final class Query<T extends Entity<T>>
     return this;
   }
 
-  static Query<Model> table<Model extends Entity<Model>>([String? tableName, String? database]) {
+  static Query<Model> table<Model extends Entity<Model>>(
+      [String? tableName, String? database]) {
     if (Model == Entity || Model == dynamic) {
       throw UnsupportedError('Query cannot receive Entity or dynamic as Type');
     }
@@ -185,7 +192,8 @@ final class Query<T extends Entity<T>>
       recordId = data.toMap[entity.primaryKey.dartName].toString();
     }
 
-    return (await findOne(where: (q) => q.$equal(entity.primaryKey.columnName, recordId)))!;
+    return (await findOne(
+        where: (q) => q.$equal(entity.primaryKey.columnName, recordId)))!;
   }
 
   @override
@@ -230,7 +238,8 @@ final class Query<T extends Entity<T>>
     final whereClause = where?.call(WhereClauseBuilder<T>());
     whereClause?.validate(_joins);
 
-    final readQ = ReadQuery._(this, limit: 1, whereClause: whereClause, joins: _joins);
+    final readQ =
+        ReadQuery._(this, limit: 1, whereClause: whereClause, joins: _joins);
     final results = await runner.query(readQ);
     if (results.isEmpty) return null;
     return results.map(_wrapRawResult).first;
@@ -269,7 +278,8 @@ final class Query<T extends Entity<T>>
     for (final join in _joins) {
       final entries = result.entries
           .where((e) => e.key.startsWith('${join.resultKey}.'))
-          .map((e) => MapEntry<String, dynamic>(e.key.replaceFirst('${join.resultKey}.', '').trim(), e.value));
+          .map((e) => MapEntry<String, dynamic>(
+              e.key.replaceFirst('${join.resultKey}.', '').trim(), e.value));
       if (entries.every((e) => e.value == null)) {
         joinResults[join.key] = {};
       } else {
@@ -311,7 +321,8 @@ final class Query<T extends Entity<T>>
   Future<num> sum(String field) => SumAggregate(_readQuery, field).get();
 
   @override
-  Query<T> withRelations(List<Join<T, Entity>> Function(JoinBuilder<T> builder) builder) {
+  Query<T> withRelations(
+      List<Join<T, Entity>> Function(JoinBuilder<T> builder) builder) {
     _joins
       ..clear()
       ..addAll(builder.call(_JoinBuilderImpl<T>()));
@@ -347,7 +358,8 @@ final class UpdateQuery extends QueryBase<UpdateQuery> {
   Future<void> execute() => runner.update(this);
 }
 
-final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with AggregateOperation, RelationsOperation<T> {
+final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery>
+    with AggregateOperation, RelationsOperation<T> {
   final Set<String> fieldSelections;
   final Set<OrderBy<T>>? orderByProps;
   final WhereClause? whereClause;
@@ -401,7 +413,9 @@ final class ReadQuery<T extends Entity<T>> extends QueryBase<ReadQuery> with Agg
     return SumAggregate(this, field).get();
   }
 
-  Future<List<T>> findMany({int? limit, int? offset, List<OrderBy<T>>? orderBy}) => $query.findMany(
+  Future<List<T>> findMany(
+          {int? limit, int? offset, List<OrderBy<T>>? orderBy}) =>
+      $query.findMany(
         limit: limit,
         offset: offset,
         where: (_) => whereClause!,

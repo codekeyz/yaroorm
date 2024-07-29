@@ -43,15 +43,21 @@ abstract class Entity<Parent extends Entity<Parent>> {
   }
 
   @protected
-  HasMany<Parent, RelatedModel> hasMany<RelatedModel extends Entity<RelatedModel>>(
-    Symbol methodName, {
+  HasMany<Parent, RelatedModel>
+      hasMany<RelatedModel extends Entity<RelatedModel>>({
+    required Symbol name,
+    Symbol? binding,
     Symbol? foreignKey,
   }) {
     final relatedModelTypeData = Query.getEntity<RelatedModel>();
-    foreignKey ??= relatedModelTypeData.bindings.entries.firstWhere((e) => e.value.type == Parent).key;
-    final referenceField = relatedModelTypeData.columns.firstWhere((e) => e.dartName == foreignKey);
+    foreignKey ??= relatedModelTypeData.bindings.entries
+        .firstWhere((e) => e.value.type == Parent)
+        .key;
+    final referenceField = relatedModelTypeData.columns
+        .firstWhere((e) => e.dartName == foreignKey);
 
-    var relation = _relationsPreloaded[Join._getKey(HasMany<Parent, RelatedModel>, symbolToString(methodName))];
+    var relation =
+        _relationsPreloaded[Join._getKey(HasMany<Parent, RelatedModel>, name)];
 
     if (relation is Map) {
       if (relation.isEmpty) {
@@ -69,38 +75,46 @@ abstract class Entity<Parent extends Entity<Parent>> {
   }
 
   @protected
-  HasOne<Parent, RelatedModel> hasOne<RelatedModel extends Entity<RelatedModel>>(
-    Symbol methodName, {
+  HasOne<Parent, RelatedModel>
+      hasOne<RelatedModel extends Entity<RelatedModel>>({
+    required Symbol name,
     Symbol? foreignKey,
   }) {
-    final relatedPrimaryKey = Query.getEntity<RelatedModel>().primaryKey.columnName;
+    final relatedPrimaryKey =
+        Query.getEntity<RelatedModel>().primaryKey.columnName;
     final typeData = Query.getEntity<Parent>();
 
-    foreignKey ??= typeData.bindings.entries.firstWhere((e) => e.value.type == RelatedModel).key;
+    foreignKey ??= typeData.bindings.entries
+        .firstWhere((e) => e.value.type == RelatedModel)
+        .key;
     final referenceFieldValue = typeData.mirror(this as Parent, foreignKey);
 
     return HasOne<Parent, RelatedModel>._(
       relatedPrimaryKey,
       referenceFieldValue,
       this as Parent,
-      _relationsPreloaded[Join._getKey(HasOne<Parent, RelatedModel>, symbolToString(methodName))],
+      _relationsPreloaded[Join._getKey(HasOne<Parent, RelatedModel>, name)],
     );
   }
 
   @protected
-  BelongsTo<Parent, RelatedModel> belongsTo<RelatedModel extends Entity<RelatedModel>>(
-    Symbol methodName, {
+  BelongsTo<Parent, RelatedModel>
+      belongsTo<RelatedModel extends Entity<RelatedModel>>({
+    required Symbol name,
     Symbol? foreignKey,
   }) {
-    final parentFieldName = Query.getEntity<RelatedModel>().primaryKey.columnName;
-    foreignKey ??= _typeDef.bindings.entries.firstWhere((e) => e.value.type == RelatedModel).key;
+    final parentFieldName =
+        Query.getEntity<RelatedModel>().primaryKey.columnName;
+    foreignKey ??= _typeDef.bindings.entries
+        .firstWhere((e) => e.value.type == RelatedModel)
+        .key;
     final referenceFieldValue = _typeDef.mirror(this as Parent, foreignKey);
 
     return BelongsTo<Parent, RelatedModel>._(
       parentFieldName,
       referenceFieldValue,
       this as Parent,
-      _relationsPreloaded[Join._getKey(BelongsTo<Parent, RelatedModel>, symbolToString(methodName))],
+      _relationsPreloaded[Join._getKey(BelongsTo<Parent, RelatedModel>, name)],
     );
   }
 }

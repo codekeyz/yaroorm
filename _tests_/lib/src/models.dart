@@ -22,7 +22,7 @@ class User extends Entity<User> {
     required this.homeAddress,
   });
 
-  HasMany<User, Post> get posts => hasMany<Post>(#posts);
+  HasMany<User, Post> get posts => hasMany<Post>(name: #posts);
 }
 
 @Table(name: 'posts')
@@ -33,7 +33,8 @@ class Post extends Entity<Post> {
   final String title;
   final String description;
 
-  @bindTo(User, onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.cascade)
+  @bindTo(User,
+      onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.cascade)
   final int userId;
 
   @createdAtCol
@@ -51,9 +52,10 @@ class Post extends Entity<Post> {
     required this.updatedAt,
   });
 
-  HasMany<Post, PostComment> get comments => hasMany<PostComment>(#comments);
+  HasMany<Post, PostComment> get comments =>
+      hasMany<PostComment>(name: #comments);
 
-  BelongsTo<Post, User> get owner => belongsTo<User>(#owner);
+  BelongsTo<Post, User> get owner => belongsTo<User>(name: #owner);
 }
 
 @table

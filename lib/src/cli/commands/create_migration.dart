@@ -2,11 +2,11 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:code_builder/code_builder.dart';
-import 'package:dart_style/dart_style.dart';
 import 'package:mason_logger/mason_logger.dart';
 
 import 'package:path/path.dart' as path;
 import 'package:recase/recase.dart';
+import 'package:yaroorm/src/cli/_misc.dart';
 import 'package:yaroorm/src/cli/commands/init_orm_command.dart';
 import 'package:yaroorm/src/cli/logger.dart';
 import '../../builder/utils.dart';
@@ -27,7 +27,8 @@ class CreateMigrationCommand extends Command<int> {
     final fileName = getMigrationFileName(name, time);
     final directory = Directory.current;
 
-    final progress = logger.progress('Create migration ${green.wrap(fileName)}');
+    final progress =
+        logger.progress('Create migration ${green.wrap(fileName)}');
 
     final library = Library((library) => library.body.addAll([
           Directive.import('package:yaroorm/yaroorm.dart'),
@@ -54,8 +55,8 @@ class CreateMigrationCommand extends Command<int> {
 
     final file = File(path.join(migrationsDir.path, '$fileName.dart'));
 
-    final emitter = DartEmitter(orderDirectives: true, useNullSafetySyntax: true);
-    await file.writeAsString(DartFormatter().format(library.accept(emitter).toString().split('\n').join('\n')));
+    await file.writeAsString(dartFormatter
+        .format(library.accept(dartEmitter).toString().split('\n').join('\n')));
 
     final result = await resolveMigrationAndEntitiesInDir(directory);
     if (result.migrations.isEmpty) {
@@ -63,11 +64,15 @@ class CreateMigrationCommand extends Command<int> {
       return ExitCode.software.code;
     }
 
-    await Future.wait([
-      if (migratorCheckSumFile.existsSync()) migratorCheckSumFile.delete(),
-      if (kernelFile.existsSync()) kernelFile.delete(),
-      initOrmInProject(directory, result.migrations, result.entities, result.dbConfig),
-    ]);
+    if (migratorCheckSumFile.existsSync()) migratorCheckSumFile.delete();
+    if (kernelFile.existsSync()) kernelFile.delete();
+
+    await initOrmInProject(
+      directory,
+      result.migrations,
+      result.entities,
+      result.dbConfig,
+    );
 
     progress.complete('Migration file created ✅');
 

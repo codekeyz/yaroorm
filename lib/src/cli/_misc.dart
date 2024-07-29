@@ -1,8 +1,18 @@
 import 'dart:io';
 
+import 'package:code_builder/code_builder.dart';
+import 'package:dart_style/dart_style.dart';
+
 import '../../yaroorm.dart';
 
 import 'model/migration.dart';
+
+final dartEmitter = DartEmitter(
+  orderDirectives: true,
+  useNullSafetySyntax: true,
+);
+
+final dartFormatter = DartFormatter();
 
 Future<void> ensureMigrationsTableReady(DatabaseDriver driver) async {
   final hasTable = await driver.hasTable(DB.config.migrationsTable);
@@ -16,7 +26,8 @@ Future<bool> hasAlreadyMigratedScript(
   String scriptName,
   DatabaseDriver driver,
 ) async {
-  final result = await MigrationEntityQuery.driver(driver).findByMigration(scriptName);
+  final result =
+      await MigrationEntityQuery.driver(driver).findByMigration(scriptName);
   return result != null;
 }
 
@@ -35,5 +46,6 @@ Future<int> getLastBatchNumber(
 /// exited already. This is useful to prevent Future chains from proceeding
 /// after you've decided to exit.
 Future<void> flushThenExit(int status) {
-  return Future.wait<void>([stdout.close(), stderr.close()]).then<void>((_) => exit(status));
+  return Future.wait<void>([stdout.close(), stderr.close()])
+      .then<void>((_) => exit(status));
 }
