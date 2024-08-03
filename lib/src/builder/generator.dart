@@ -253,7 +253,7 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
         ..fields.addAll(fieldsRequiredForCreate.map((f) => Field(
               (fb) => fb
                 ..name = f.name
-                ..type = refer('value<${f.type.withNullability}>')
+                ..type = refer('value<${f.type.withNullability}>${!f.type.isNullable ? '?' : ''}')
                 ..modifier = FieldModifier.final$,
             )))
         ..constructors.add(
@@ -261,11 +261,14 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
             (c) => c
               ..constant = true
               ..optionalParameters.addAll(fieldsRequiredForCreate.map(
-                (field) => Parameter((p) => p
-                  ..named = true
-                  ..name = field.name
-                  ..toThis = true
-                  ..defaultTo = Code('const NoValue()')),
+                (field) => Parameter((p) {
+                  p
+                    ..named = true
+                    ..name = field.name
+                    ..toThis = true;
+
+                  if (field.type.isNullable) p.defaultTo = Code('const NoValue()');
+                }),
               )),
           ),
         )
@@ -276,7 +279,12 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
           ..annotations.add(CodeExpression(Code('override')))
           ..lambda = true
           ..body = Code('''{
-      ${entity.normalFields.map((e) => 'if (${e.name} is! NoValue) #${e.name}: ${e.name}.val${!e.type.isNullable ? '!' : ''}'.trim()).join(',')},
+      ${entity.normalFields.map((e) {
+            if (e.type.isNullable) {
+              return 'if (${e.name} is! NoValue) #${e.name}: ${e.name}.val';
+            }
+            return 'if (${e.name} != null) #${e.name}: ${e.name}!.val';
+          }).join(',')},
 }''')))),
     ];
   }
@@ -417,11 +425,13 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
           )''';
     }
 
-    return '''DBEntityField(
-        $requiredOpts
-        ${field.type.isNullable ? 'nullable: true, ' : ''}
-        ${unique ? 'unique: true, ' : ''}
-        )''';
+    final args = [
+      requiredOpts,
+      if (field.type.isNullable) 'nullable: true',
+      if (unique) 'unique: true',
+    ].join(',');
+
+    return '''DBEntityField($args)''';
   }
 
   /// Generate JOIN for BelongsTo getters on Entity

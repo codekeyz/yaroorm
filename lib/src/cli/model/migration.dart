@@ -6,7 +6,7 @@ part 'migration.g.dart';
 
 @Table(name: 'migrations')
 class MigrationEntity extends Entity<MigrationEntity> {
-  @autoIncrementPrimary
+  @primaryKey
   final int id;
 
   final String migration;

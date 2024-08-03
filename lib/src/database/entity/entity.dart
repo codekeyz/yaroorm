@@ -151,16 +151,11 @@ class bindTo {
   const bindTo(this.type, {this.on, this.onUpdate, this.onDelete});
 }
 
-const autoIncrementPrimary = PrimaryKey(autoIncrement: true);
-const table = Table();
-const createdAtCol = CreatedAtColumn();
-const updatedAtCol = UpdatedAtColumn();
-
-class value<T extends Object> {
-  final T? val;
+class value<T> {
+  final T val;
   const value(this.val);
 }
 
-class NoValue<T extends Object> extends value<T> {
+class NoValue<T> extends value<T?> {
   const NoValue() : super(null);
 }

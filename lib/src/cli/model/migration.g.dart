@@ -65,17 +65,17 @@ class NewMigrationEntity extends CreateEntity<MigrationEntity> {
 
 class UpdateMigrationEntity extends UpdateEntity<MigrationEntity> {
   const UpdateMigrationEntity({
-    this.migration = const NoValue(),
-    this.batch = const NoValue(),
+    this.migration,
+    this.batch,
   });
 
-  final value<String> migration;
+  final value<String>? migration;
 
-  final value<int> batch;
+  final value<int>? batch;
 
   @override
   Map<Symbol, dynamic> get toMap => {
-        if (migration is! NoValue) #migration: migration.val!,
-        if (batch is! NoValue) #batch: batch.val!,
+        if (migration is! NoValue) #migration: migration!.val,
+        if (batch is! NoValue) #batch: batch!.val,
       };
 }

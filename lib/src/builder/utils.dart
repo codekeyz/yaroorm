@@ -167,9 +167,6 @@ Stream<(ResolvedLibraryResult, String, String)> _libraries(AnalysisContextCollec
     final futures =
         analyzedFiles.where((path) => path.endsWith('.dart') && !path.endsWith('_test.dart')).map((filePath) async {
       final library = await context.currentSession.getResolvedLibrary(filePath);
-
-      print(library);
-
       if (library is! ResolvedLibraryResult) return null;
       return (library, filePath, context.contextRoot.root.path);
     });
