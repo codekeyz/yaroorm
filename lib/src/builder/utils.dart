@@ -359,12 +359,9 @@ void main(List<String> args) async {
 ''';
 
 Future<void> ensureMigratorFile() async {
-  final dir = Directory(yaroormDirectory);
-  if (!dir.existsSync()) dir.createSync();
-
   final file = File(migratorFile);
   if (!file.existsSync()) {
-    await file.writeAsString(_migratorFileContent);
+    await (file..createSync(recursive: true)).writeAsString(_migratorFileContent);
   }
 }
 
@@ -374,10 +371,8 @@ Future<bool> invalidateKernelSnapshotIfNecessary() async {
       .flattened
       .join('\n');
 
-  if (migratorCheckSumFile.existsSync()) {
-    final existingChecksum = await migratorCheckSumFile.readAsString();
-    if (existingChecksum == entitiesMd5) return false;
-  }
+  final existingChecksum = await migratorCheckSumFile.readAsString().safeRun();
+  if (existingChecksum == entitiesMd5) return false;
 
   await [
     kernelFile.delete().safeRun(),
