@@ -3,14 +3,14 @@
 part of 'migration.dart';
 
 // **************************************************************************
-// YaroormGenerator
+// EntityGenerator
 // **************************************************************************
 
 // ignore_for_file: non_constant_identifier_names
 
 Query<MigrationEntity> get MigrationEntityQuery => DB.query<MigrationEntity>();
 CreateSchema get MigrationEntitySchema => Schema.fromEntity<MigrationEntity>();
-EntityTypeDefinition<MigrationEntity> get migration_entityTypeData => EntityTypeDefinition<MigrationEntity>(
+EntityTypeDefinition<MigrationEntity> get migrationentityTypeDef => EntityTypeDefinition<MigrationEntity>(
       "migrations",
       timestampsEnabled: false,
       columns: [
@@ -34,19 +34,7 @@ EntityTypeDefinition<MigrationEntity> get migration_entityTypeData => EntityType
 class OrderMigrationEntityBy extends OrderBy<MigrationEntity> {
   const OrderMigrationEntityBy.migration({OrderDirection order = OrderDirection.asc}) : super("migration", order);
 
-  const OrderMigrationEntityBy.batch({OrderDirection order = OrderDirection.desc}) : super("batch", order);
-}
-
-extension MigrationEntityQueryExtension on Query<MigrationEntity> {
-  Future<MigrationEntity?> findById(int val) => findOne(where: (q) => q.id(val));
-  Future<MigrationEntity?> findByMigration(String val) => findOne(where: (q) => q.migration(val));
-  Future<MigrationEntity?> findByBatch(int val) => findOne(where: (q) => q.batch(val));
-}
-
-extension MigrationEntityWhereBuilderExtension on WhereClauseBuilder<MigrationEntity> {
-  WhereClauseValue id(int value) => $equal<int>("id", value);
-  WhereClauseValue migration(String value) => $equal<String>("migration", value);
-  WhereClauseValue batch(int value) => $equal<int>("batch", value);
+  const OrderMigrationEntityBy.batch({OrderDirection order = OrderDirection.asc}) : super("batch", order);
 }
 
 class NewMigrationEntity extends CreateEntity<MigrationEntity> {
@@ -75,7 +63,22 @@ class UpdateMigrationEntity extends UpdateEntity<MigrationEntity> {
 
   @override
   Map<Symbol, dynamic> get toMap => {
-        if (migration is! NoValue) #migration: migration!.val,
-        if (batch is! NoValue) #batch: batch!.val,
+        if (migration != null) #migration: migration!.val,
+        if (batch != null) #batch: batch!.val,
       };
 }
+
+extension MigrationEntityWhereBuilderExtension on WhereClauseBuilder<MigrationEntity> {
+  WhereClauseValue id(int value) => $equal<int>("id", value);
+  WhereClauseValue migration(String value) => $equal<String>("migration", value);
+  WhereClauseValue batch(int value) => $equal<int>("batch", value);
+}
+
+extension MigrationEntityWhereHelperExtension on Query<MigrationEntity> {
+  Future<MigrationEntity?> findById(int val) => findOne(where: (migrationentity) => migrationentity.id(val));
+  Future<MigrationEntity?> findByMigration(String val) =>
+      findOne(where: (migrationentity) => migrationentity.migration(val));
+  Future<MigrationEntity?> findByBatch(int val) => findOne(where: (migrationentity) => migrationentity.batch(val));
+}
+
+extension MigrationEntityRelationsBuilder on JoinBuilder<MigrationEntity> {}
