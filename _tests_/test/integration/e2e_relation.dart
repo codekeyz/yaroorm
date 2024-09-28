@@ -55,12 +55,7 @@ void runRelationsE2ETest(String connectionName) {
       );
       expect(posts, hasLength(3));
       expect(
-        posts.map((e) => {
-              'id': e.id,
-              'title': e.title,
-              'desc': e.description,
-              'userId': e.userId
-            }),
+        posts.map((e) => {'id': e.id, 'title': e.title, 'desc': e.description, 'userId': e.userId}),
         [
           {'id': 3, 'title': 'Coo Kie 3', 'desc': 'foo bar 6', 'userId': 1},
           {'id': 2, 'title': 'Bee Moo 2', 'desc': 'foo bar 5', 'userId': 1},
@@ -70,9 +65,7 @@ void runRelationsE2ETest(String connectionName) {
     });
 
     test('should fetch posts with owner', () async {
-      final posts = await PostQuery.driver(driver)
-          .withRelations((post) => [post.owner])
-          .findMany();
+      final posts = await PostQuery.driver(driver).withRelations((post) => [post.owner]).findMany();
 
       expect(posts.first.owner.value, isA<User>());
     });
