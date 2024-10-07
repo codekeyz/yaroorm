@@ -4,7 +4,7 @@ part 'models.g.dart';
 
 @table
 class User extends Entity<User> {
-  @autoIncrementPrimary
+  @primaryKey
   final int id;
 
   final String firstname;
@@ -27,7 +27,7 @@ class User extends Entity<User> {
 
 @Table(name: 'posts')
 class Post extends Entity<Post> {
-  @autoIncrementPrimary
+  @primaryKey
   final int id;
 
   final String title;

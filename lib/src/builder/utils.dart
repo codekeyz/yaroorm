@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
@@ -13,6 +14,7 @@ import 'package:mason_logger/mason_logger.dart';
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:crypto/crypto.dart' show md5;
+import 'package:yaroorm/src/cli/orm.dart';
 
 import '../cli/commands/init_orm_command.dart';
 import '../database/database.dart' show UseORMConfig;
@@ -343,39 +345,6 @@ String symbolToString(Symbol symbol) {
   return symbolAsString.substring(8, symbolAsString.length - 2);
 }
 
-Future<String> _getFileCheckSum(File file) async {
-  final bytes = await file.readAsBytes();
-  return md5.convert(bytes).toString();
-}
-
-Future<void> syncProxyMigratorIfNecessary() async {
-  if (!(await databaseInitFile.exists())) {
-    throw Exception('ORM Initializer (database.dart) file not found.');
-  }
-
-  String? checkSum;
-
-  final results = await Future.wait([kernelFile.exists(), migratorCheckSumFile.exists()]);
-  if (results.every((exists) => exists)) {
-    final allCheckSums = await Future.wait([
-      _getFileCheckSum(databaseInitFile),
-      migratorCheckSumFile.readAsString(),
-    ]);
-    if (allCheckSums.toSet().length == 1) return;
-    checkSum = allCheckSums.first;
-  }
-
-  if (kernelFile.existsSync()) await kernelFile.delete();
-  if (migratorCheckSumFile.existsSync()) await migratorCheckSumFile.delete();
-
-  checkSum ??= await _getFileCheckSum(databaseInitFile);
-
-  await Process.run(
-    'dart',
-    ['compile', 'kernel', migratorFile, '-o', kernelFile.path],
-  ).then((value) => migratorCheckSumFile.writeAsStringSync(checkSum!));
-}
-
 const _migratorFileContent = '''
 import 'package:yaroorm/src/cli/orm.dart';
 import 'package:yaroorm/yaroorm.dart';
@@ -390,11 +359,53 @@ void main(List<String> args) async {
 ''';
 
 Future<void> ensureMigratorFile() async {
-  final dir = Directory(yaroormDirectory);
-  if (!dir.existsSync()) dir.createSync();
-
   final file = File(migratorFile);
   if (!file.existsSync()) {
-    await file.writeAsString(_migratorFileContent);
+    await (file..createSync(recursive: true)).writeAsString(_migratorFileContent);
+  }
+}
+
+Future<bool> invalidateKernelSnapshotIfNecessary() async {
+  final entitiesMd5 = OrmCLIRunner.resolvedProjectCache.entities
+      .map((e) => e.elements.map((clazz) => '${clazz.name}: ${_generateMD5ForClassElement(clazz)}'))
+      .flattened
+      .join('\n');
+
+  final existingChecksum = await migratorCheckSumFile.readAsString().safeRun();
+  if (existingChecksum == entitiesMd5) return false;
+
+  await [
+    kernelFile.delete().safeRun(),
+    migratorCheckSumFile.writeAsString(entitiesMd5, mode: FileMode.write).safeRun(),
+  ].wait;
+
+  return true;
+}
+
+String _generateMD5ForClassElement(ClassElement classElement) {
+  final classInfo = StringBuffer()..writeln('Class: ${classElement.name}');
+  for (var field in classElement.fields) {
+    classInfo.writeln('Field: ${field.type} ${field.name} ${field.type.isNullable}');
+  }
+
+  for (var method in classElement.methods) {
+    classInfo.writeln('Method: ${method.name}');
+  }
+
+  for (var metadata in classElement.metadata) {
+    classInfo.writeln('Metadata: ${metadata.toString()}');
+  }
+
+  return md5.convert(utf8.encode(classInfo.toString())).toString();
+}
+
+extension _SafeCall<T> on Future<T> {
+  Future<T?> safeRun({Function(Object error)? onError}) async {
+    try {
+      return await this;
+    } catch (_) {
+      onError?.call(_);
+    }
+    return null;
   }
 }

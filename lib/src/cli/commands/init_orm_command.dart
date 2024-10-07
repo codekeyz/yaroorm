@@ -7,6 +7,7 @@ import 'package:code_builder/code_builder.dart';
 import 'package:collection/collection.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:mason_logger/mason_logger.dart';
+import 'package:yaroorm/src/cli/orm.dart';
 
 import '../../builder/utils.dart';
 import '../logger.dart';
@@ -48,7 +49,7 @@ class InitializeOrmCommand extends Command<int> {
     final progress = logger.progress('Initializing Yaroorm 📦');
 
     try {
-      final result = await resolveMigrationAndEntitiesInDir(workingDir);
+      final result = OrmCLIRunner.resolvedProjectCache;
       if (result.migrations.isEmpty) {
         progress.fail('Yaroorm 📦 not initialized. No migrations found.');
         return ExitCode.software.code;

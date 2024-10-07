@@ -60,7 +60,7 @@ abstract class OrmCommand extends Command<int> {
       ExitCode.software.code;
     }
 
-    Query.addTypeDef<MigrationEntity>(migration_entityTypeData);
+    Query.addTypeDef<MigrationEntity>(migrationentityTypeDef);
 
     final driver = DB.driver(dbConnection);
     await driver.connect();

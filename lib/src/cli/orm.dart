@@ -1,6 +1,7 @@
 import 'package:cli_completion/cli_completion.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:args/command_runner.dart';
+import 'package:yaroorm/src/builder/utils.dart';
 
 import 'commands/migrate_rollback_command.dart';
 import 'commands/migrate_fresh_command.dart';
@@ -17,6 +18,8 @@ const executableName = 'yaroorm';
 const description = 'yaroorm command-line tool';
 
 class OrmCLIRunner extends CompletionCommandRunner<int> {
+  static late ResolvedProject resolvedProjectCache;
+
   static Future<void> start(List<String> args) async {
     run() async {
       try {

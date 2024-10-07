@@ -151,11 +151,7 @@ class bindTo {
   const bindTo(this.type, {this.on, this.onUpdate, this.onDelete});
 }
 
-class value<T> {
+final class value<T> {
   final T val;
   const value(this.val);
-}
-
-class NoValue<T> extends value<T?> {
-  const NoValue() : super(null);
 }
