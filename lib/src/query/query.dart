@@ -1,7 +1,7 @@
 import 'package:meta/meta.dart';
 
 import '../database/driver/driver.dart';
-import '../database/entity/entity.dart' hide value;
+import '../database/entity/entity.dart';
 import '../reflection.dart';
 import 'aggregates.dart';
 

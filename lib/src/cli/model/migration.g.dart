@@ -57,14 +57,14 @@ class UpdateMigrationEntity extends UpdateEntity<MigrationEntity> {
     this.batch,
   });
 
-  final value<String>? migration;
+  final Value<String>? migration;
 
-  final value<int>? batch;
+  final Value<int>? batch;
 
   @override
   Map<Symbol, dynamic> get toMap => {
-        if (migration != null) #migration: migration!.val,
-        if (batch != null) #batch: batch!.val,
+        if (migration != null) #migration: migration!.value,
+        if (batch != null) #batch: batch!.value,
       };
 }
 

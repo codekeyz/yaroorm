@@ -33,6 +33,8 @@ class Post extends Entity<Post> {
   final String title;
   final String description;
 
+  final String? imageUrl;
+
   @bindTo(User, onUpdate: ForeignKeyAction.cascade, onDelete: ForeignKeyAction.cascade)
   final int userId;
 
@@ -46,6 +48,7 @@ class Post extends Entity<Post> {
     this.id,
     this.title,
     this.description, {
+    this.imageUrl,
     required this.userId,
     required this.createdAt,
     required this.updatedAt,

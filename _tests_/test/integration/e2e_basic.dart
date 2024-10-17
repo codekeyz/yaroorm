@@ -110,8 +110,8 @@ void runBasicE2ETest(String connectionName) {
       expect(user!.id, 1);
 
       await query.update(UpdateUser(
-        firstname: value('Red Oil'),
-        age: value(100),
+        firstname: Value('Red Oil'),
+        age: Value(100),
       ));
 
       final userFromDB = await query.findOne();
@@ -128,9 +128,7 @@ void runBasicE2ETest(String connectionName) {
       expect(usersWithAge50.length, 4);
       expect(usersWithAge50.every((e) => e.age == 50), isTrue);
 
-      await age50Users.update(
-        UpdateUser(homeAddress: value('Keta, Ghana')),
-      );
+      await age50Users.update(UpdateUser(homeAddress: Value('Keta, Ghana')));
 
       final updatedResult = await age50Users.findMany();
       expect(updatedResult.length, 4);

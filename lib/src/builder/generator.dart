@@ -34,6 +34,31 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
     return _implementClass(element, annotation);
   }
 
+  Reference _getReferenceForField(FieldElement f) {
+    return f.type.isNullable
+        ? refer('Value<${f.type.withNullability}>${!f.type.isNullable ? '?' : ''}')
+        : refer(f.type.withNullability);
+  }
+
+  Parameter _makeOptional(FieldElement f) {
+    return Parameter((p) => p
+      ..required = false
+      ..defaultTo = Code('const Value.absent()')
+      ..named = true
+      ..name = f.name
+      ..toThis = true);
+  }
+
+  Parameter _getParameterForCreate(FieldElement f) {
+    if (f.type.isNullable) return _makeOptional(f);
+
+    return Parameter((p) => p
+      ..required = true
+      ..named = true
+      ..name = f.name
+      ..toThis = true);
+  }
+
   String _implementClass(ClassElement classElement, ConstantReader annotation) {
     final parsedEntity = ParsedEntityClass.parse(classElement);
     final className = classElement.name;
@@ -166,19 +191,17 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
               ..fields.addAll(relatedEntityCreateFields.map(
                 (f) => Field((fb) => fb
                   ..name = f.name
-                  ..type = refer(f.type.withNullability)
+                  ..type = _getReferenceForField(f)
                   ..modifier = FieldModifier.final$),
               ))
               ..constructors.add(
-                Constructor((c) => c
-                  ..constant = true
-                  ..optionalParameters.addAll(relatedEntityCreateFields.map(
-                    (field) => Parameter((p) => p
-                      ..required = true
-                      ..named = true
-                      ..name = field.name
-                      ..toThis = true),
-                  ))),
+                Constructor(
+                  (c) => c
+                    ..constant = true
+                    ..optionalParameters.addAll(
+                      relatedEntityCreateFields.map(_getParameterForCreate),
+                    ),
+                ),
               )
               ..methods.addAll([
                 Method((m) => m
@@ -196,7 +219,12 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
                     ..type = MethodType.getter
                     ..annotations.add(CodeExpression(Code('override')))
                     ..lambda = true
-                    ..body = Code('{ ${relatedEntityCreateFields.map((e) => '#${e.name} : ${e.name}').join(', ')} }'),
+                    ..body = Code('{ ${relatedEntityCreateFields.map((e) {
+                      if (e.type.isNullable) {
+                        return 'if (${e.name}.present) #${e.name} : ${e.name}.value';
+                      }
+                      return '#${e.name} : ${e.name}';
+                    }).join(', ')} }'),
                 ),
               ]));
           })
@@ -219,20 +247,16 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
           ..fields.addAll(fieldsRequiredForCreate.map(
             (f) => Field((fb) => fb
               ..name = f.name
-              ..type = refer(f.type.withNullability)
+              ..type = _getReferenceForField(f)
               ..modifier = FieldModifier.final$),
           ))
           ..constructors.add(
             Constructor(
               (c) => c
                 ..constant = true
-                ..optionalParameters.addAll(fieldsRequiredForCreate.map(
-                  (field) => Parameter((p) => p
-                    ..required = true
-                    ..named = true
-                    ..name = field.name
-                    ..toThis = true),
-                )),
+                ..optionalParameters.addAll(
+                  fieldsRequiredForCreate.map(_getParameterForCreate),
+                ),
             ),
           )
           ..methods.add(
@@ -243,7 +267,12 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
                 ..type = MethodType.getter
                 ..annotations.add(CodeExpression(Code('override')))
                 ..lambda = true
-                ..body = Code('{ ${fieldsRequiredForCreate.map((e) => '#${e.name} : ${e.name}').join(', ')} }'),
+                ..body = Code('{ ${fieldsRequiredForCreate.map((e) {
+                  if (e.type.isNullable) {
+                    return 'if (${e.name}.present) #${e.name}: ${e.name}.value';
+                  }
+                  return '#${e.name} : ${e.name}';
+                }).join(', ')} }'),
             ),
           ),
       ),
@@ -253,39 +282,31 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
         ..fields.addAll(fieldsRequiredForCreate.map((f) => Field(
               (fb) => fb
                 ..name = f.name
-                ..type = refer('value<${f.type.withNullability}>${!f.type.isNullable ? '?' : ''}')
+                ..type = refer('Value<${f.type.withNullability}>')
                 ..modifier = FieldModifier.final$,
             )))
         ..constructors.add(
           Constructor(
             (c) => c
               ..constant = true
-              ..optionalParameters.addAll(fieldsRequiredForCreate.map(
-                (field) => Parameter((p) {
-                  p
-                    ..named = true
-                    ..name = field.name
-                    ..toThis = true;
-
-                  if (field.type.isNullable) p.defaultTo = Code('const NoValue()');
-                }),
-              )),
+              ..optionalParameters.addAll(
+                fieldsRequiredForCreate.map(_makeOptional),
+              ),
           ),
         )
-        ..methods.add(Method((m) => m
-          ..name = 'toMap'
-          ..returns = refer('Map<Symbol, dynamic>')
-          ..type = MethodType.getter
-          ..annotations.add(CodeExpression(Code('override')))
-          ..lambda = true
-          ..body = Code('''{
-      ${entity.normalFields.map((e) {
-            if (e.type.isNullable) {
-              return 'if (${e.name} is! NoValue) #${e.name}: ${e.name}.val';
-            }
-            return 'if (${e.name} != null) #${e.name}: ${e.name}!.val';
-          }).join(',')},
-}''')))),
+        ..methods.add(Method(
+          (m) => m
+            ..name = 'toMap'
+            ..returns = refer('Map<Symbol, dynamic>')
+            ..type = MethodType.getter
+            ..annotations.add(CodeExpression(Code('override')))
+            ..lambda = true
+            ..body = Code('''{
+      ${entity.normalFields.map(
+                      (e) => 'if (${e.name}.present) #${e.name}: ${e.name}.value',
+                    ).join(',')},
+}'''),
+        ))),
     ];
   }
 
