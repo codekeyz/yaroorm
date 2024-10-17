@@ -50,28 +50,13 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
   }
 
   Parameter _getParameterForCreate(FieldElement f) {
-    if (f.type.isNullable) {
-      return Parameter((p) => p
-        ..required = false
-        ..defaultTo = Code('const Value.absent()')
-        ..named = true
-        ..name = f.name
-        ..toThis = true);
-    }
+    if (f.type.isNullable) return _makeOptional(f);
 
     return Parameter((p) => p
       ..required = true
       ..named = true
       ..name = f.name
       ..toThis = true);
-  }
-
-  Code _generateUpdateMapCode(List<FieldElement> elements) {
-    return Code('''{
-      ${elements.map(
-              (e) => 'if (${e.name}.present) #${e.name}: ${e.name}.value',
-            ).join(',')},
-}''');
   }
 
   String _implementClass(ClassElement classElement, ConstantReader annotation) {
@@ -309,13 +294,19 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
               ),
           ),
         )
-        ..methods.add(Method((m) => m
-          ..name = 'toMap'
-          ..returns = refer('Map<Symbol, dynamic>')
-          ..type = MethodType.getter
-          ..annotations.add(CodeExpression(Code('override')))
-          ..lambda = true
-          ..body = _generateUpdateMapCode(entity.normalFields)))),
+        ..methods.add(Method(
+          (m) => m
+            ..name = 'toMap'
+            ..returns = refer('Map<Symbol, dynamic>')
+            ..type = MethodType.getter
+            ..annotations.add(CodeExpression(Code('override')))
+            ..lambda = true
+            ..body = Code('''{
+      ${entity.normalFields.map(
+                      (e) => 'if (${e.name}.present) #${e.name}: ${e.name}.value',
+                    ).join(',')},
+}'''),
+        ))),
     ];
   }
 
