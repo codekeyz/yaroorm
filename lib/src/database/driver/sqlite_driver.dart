@@ -7,7 +7,7 @@ import '../../migration.dart';
 import '../../primitives/serializer.dart';
 import '../../query/aggregates.dart';
 import '../../query/query.dart';
-import '../entity/entity.dart' hide value;
+import '../entity/entity.dart';
 import '../entity/misc.dart';
 import 'driver.dart';
 

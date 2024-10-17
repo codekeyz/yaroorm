@@ -151,7 +151,88 @@ class bindTo {
   const bindTo(this.type, {this.on, this.onUpdate, this.onDelete});
 }
 
-final class value<T> {
-  final T val;
-  const value(this.val);
+/// A wrapper around arbitrary data [T] to indicate presence or absence
+/// explicitly.
+///
+/// [Value]s are commonly used in companions to distringuish between `null` and
+/// absent values.
+/// For instance, consider a table with a nullable column with a non-nullable
+/// default value:
+///
+/// ```sql
+/// CREATE TABLE orders (
+///   priority INT DEFAULT 1 -- may be null if there's no assigned priority
+/// );
+///
+/// For inserts in Dart, there are three different scenarios for the `priority`
+/// column:
+///
+/// - It may be set to `null`, overriding the default value
+/// - It may be absent, meaning that the default value should be used
+/// - It may be set to an `int` to override the default value
+/// ```
+///
+/// As you can see, a simple `int?` does not provide enough information to
+/// distinguish between the three cases. A `null` value could mean that the
+/// column is absent, or that it should explicitly be set to `null`.
+/// For this reason, drift introduces the [Value] wrapper to make the
+/// distinction explicit.
+class Value<T> {
+  /// Whether this [Value] wrapper contains a present [value] that should be
+  /// inserted or updated.
+  final bool present;
+
+  final T? _value;
+
+  /// If this value is [present], contains the value to update or insert.
+  T get value => _value as T;
+
+  /// Create a (present) value by wrapping the [value] provided.
+  const Value(T value)
+      : _value = value,
+        present = true;
+
+  /// Create an absent value that will not be written into the database, the
+  /// default value or null will be used instead.
+  const Value.absent()
+      : _value = null,
+        present = false;
+
+  /// Create a value that is absent if [value] is `null` and [present] if it's
+  /// not.
+  ///
+  /// The functionality is equiavalent to the following:
+  /// `x != null ? Value(x) : Value.absent()`.
+  ///
+  /// This constructor should only be used when [T] is not nullable. If [T] were
+  /// nullable, there wouldn't be a clear interpretation for a `null` [value].
+  /// See the overall documentation on [Value] for details.
+  @Deprecated('Use Value.absentIfNull instead')
+  const Value.ofNullable(T? value)
+      : assert(
+          value != null || null is! T,
+          "Value.ofNullable(null) can't be used for a nullable T, since the "
+          'null value could be both absent and present.',
+        ),
+        _value = value,
+        present = value != null;
+
+  /// Create a value that is absent if [value] is `null` and [present] if it's
+  /// not.
+  ///
+  /// The functionality is equiavalent to the following:
+  /// `x != null ? Value(x) : Value.absent()`.
+  const Value.absentIfNull(T? value)
+      : _value = value,
+        present = value != null;
+
+  @override
+  String toString() => present ? 'Value($value)' : 'Value.absent()';
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is Value && present == other.present && _value == other._value;
+
+  @override
+  int get hashCode => present.hashCode ^ _value.hashCode;
 }
