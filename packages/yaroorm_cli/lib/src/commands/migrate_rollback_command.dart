@@ -36,7 +36,7 @@ class MigrationRollbackCommand extends OrmCommand {
           final entry = entries.firstWhereOrNull((e) => e.migration == defn.name);
           return entry == null ? null : (entry: entry, schemas: defn.down);
         })
-        .whereNotNull()
+        .nonNulls
         .lastOrNull;
 
     if (migrationTask == null) {

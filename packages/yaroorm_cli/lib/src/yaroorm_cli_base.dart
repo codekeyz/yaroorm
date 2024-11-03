@@ -22,8 +22,8 @@ class OrmCLIRunner extends CompletionCommandRunner<int> {
     run() async {
       try {
         return (await OrmCLIRunner._().run(args)) ?? 0;
-      } on UsageException catch (_) {
-        print(_.toString());
+      } on UsageException catch (error) {
+        print(error.toString());
         return ExitCode.software.code;
       }
     }
