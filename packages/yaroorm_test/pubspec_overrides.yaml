@@ -1,0 +1,6 @@
+# melos_managed_dependency_overrides: yaroorm_cli,yaroorm
+dependency_overrides:
+  yaroorm:
+    path: ../..
+  yaroorm_cli:
+    path: ../yaroorm_cli

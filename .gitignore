@@ -9,3 +9,4 @@ pubspec.lock
 *.entity.dart
 *.g.dart
 !migration.g.dart
+.idea/

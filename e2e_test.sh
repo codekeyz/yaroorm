@@ -3,7 +3,7 @@
 
 set -e
 
-cd _tests_
+cd packages/yaroorm_test
 
 TEST_DIRECTORY="test/integration"
 
