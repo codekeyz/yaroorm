@@ -22,9 +22,13 @@ jobs:
       - uses: dart-lang/setup-dart@v1.3
         with:
           sdk: "3.5.3"
+      - uses: bluefireteam/melos-action@v3
+
 
       - name: Bootstrap
-        run: dart pub get
+        run: |
+          dart pub global activate melos
+          melos bootstrap
 
       - name: Check formatting
         run: dart format . --line-length=120 --set-exit-if-changed
@@ -70,26 +74,28 @@ jobs:
       - uses: dart-lang/setup-dart@v1.3
         with:
           sdk: "3.5.3"
+      - uses: bluefireteam/melos-action@v3
 
       - name: Prepare Workspace
         run: |
-          dart pub get
-          dart pub global activate coverage
-          cd _tests_
-          dart run build_runner build --delete-conflicting-outputs
-          dart run yaroorm init
+          dart pub global activate melos
+          melos bootstrap
+          cd packages/yaroorm_test && dart run build_runner build --delete-conflicting-outputs
+          dart run yaroorm_cli init
 
       - name: Run Unit Tests
         run: |
-          cd _tests_
-          dart test --coverage=coverage --fail-fast
+          cd packages/yaroorm_test
+          dart pub global activate coverage
+          dart pub global run coverage:test_with_coverage
 
       - name: Run E2E Tests
         run: ./e2e_test.sh
 
       - name: Combine Coverage
         run: |
-          cd _tests_
+          cd packages/yaroorm_test
+
           dart pub global run coverage:format_coverage --check-ignore --report-on=lib --lcov -o "coverage/yaroorm_lcov.info" -i ./coverage
           rm -rf coverage
 
@@ -98,4 +104,4 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
-          files: _tests_/coverage/*_lcov.info
+          files: packages/yaroorm_test/coverage/*_lcov.info

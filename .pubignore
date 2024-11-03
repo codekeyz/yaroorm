@@ -1,0 +1,5 @@
+packages/**
+docs/**
+docs.json
+docker-compose.yaml
+e2e_test.sh

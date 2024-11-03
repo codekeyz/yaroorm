@@ -6,10 +6,10 @@ import 'package:meta/meta.dart';
 
 import 'package:meta/meta_meta.dart';
 
-import '../../builder/utils.dart';
 import '../../migration.dart';
 import '../../query/query.dart';
 import '../../reflection.dart';
+import '../../utils.dart';
 import '../database.dart';
 import '../driver/driver.dart';
 

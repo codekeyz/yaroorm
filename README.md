@@ -6,7 +6,3 @@ Yaroorm makes it easy to interact with databases. Currently, it provides officia
 - MariaDB
 - MySQL
 - PostgreSQL
-
-## Documentation
-
-Find the quickstart & documentation here: https://docs.yaroo.dev/orm/quickstart

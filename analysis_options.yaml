@@ -9,4 +9,4 @@ include: package:lints/recommended.yaml
 analyzer:
   exclude:
     - "**.reflectable.dart"
-    - _tests_/
+    - packages/yaroorm_test
