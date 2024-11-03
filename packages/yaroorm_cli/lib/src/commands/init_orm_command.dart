@@ -29,7 +29,7 @@ Directory get migrationsDir {
 
 final databaseInitFile = File('${path.join(databaseDir.path, 'database')}.dart');
 
-final yaroormDirectory = path.join(Directory.current.path, '.dart_tool', 'yaroorm');
+final yaroormDirectory = path.join(Directory.current.path, '.dart_tool', 'yaroorm_cli');
 final kernelFile = File(path.join(yaroormDirectory, 'migrator.dill'));
 final migratorCheckSumFile = File(path.join(yaroormDirectory, '.migrator_checksum'));
 

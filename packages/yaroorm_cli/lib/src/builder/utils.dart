@@ -346,9 +346,7 @@ String symbolToString(Symbol symbol) {
 }
 
 const _migratorFileContent = '''
-import 'package:yaroorm/src/cli/orm.dart';
-import 'package:yaroorm/yaroorm.dart';
-
+import 'package:yaroorm_cli/yaroorm_cli.dart';
 import '../../database/database.dart';
 
 void main(List<String> args) async {
