@@ -78,10 +78,8 @@ Future<void> initOrmInProject(
   final entityNames = entities.map((e) => e.elements.map((e) => e.name)).fold(<String>{}, (preV, e) => preV..addAll(e));
   final databaseFile = File(path.join(databaseDir.path, 'database.dart'));
 
-  final configPath = path.relative(
-    path.relative(dbConfig.library.identifier.replaceFirst('file://', '').trim()),
-    from: databaseDir.path,
-  );
+  final fsPath = path.relative(dbConfig.library.identifier.replaceFirst('file://', '').trim());
+  final configPath = fsPath.startsWith('package:') ? fsPath : path.relative(fsPath, from: databaseDir.path);
 
   final migrationFileNameDateMap = migrations
       .map((e) => path.basename(e.path))
