@@ -81,7 +81,7 @@ jobs:
           dart pub global activate melos
           melos bootstrap
           cd packages/yaroorm_test && dart run build_runner build --delete-conflicting-outputs
-          dart run yaroorm init
+          dart run yaroorm_cli init
 
       - name: Run Unit Tests
         run: |
