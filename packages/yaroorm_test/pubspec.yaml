@@ -17,6 +17,7 @@ dev_dependencies:
   test: ^1.25.8
   collection: ^1.19.1
   build_runner: ^2.4.9
-
-  # yaroorm_cli:
-  #   path: ../packages/yaroorm_cli
+  yaroorm_cli: 
+    git:
+      url: https://github.com/codekeyz/yaroorm.git
+      path: 'packages/yaroorm_cli'
