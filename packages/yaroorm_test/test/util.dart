@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:test/test.dart';
 
 Future<void> runMigrator(String connectionName, String command) async {
-  final commands = ['run', 'yaroorm', command, '--connection=$connectionName'];
+  final commands = ['run', 'yaroorm_cli', command, '--connection=$connectionName'];
   print('> dart ${commands.join(' ')}\n');
 
   final result = await Process.run('dart', commands);
