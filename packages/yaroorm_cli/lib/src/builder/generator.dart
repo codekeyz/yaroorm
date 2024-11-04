@@ -585,7 +585,9 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
 }
 
 extension on DartType {
+  // ignore: deprecated_member_use
   String get withNullability => getDisplayString(withNullability: true);
 
+  // ignore: deprecated_member_use
   String get withoutNullability => getDisplayString(withNullability: false);
 }
