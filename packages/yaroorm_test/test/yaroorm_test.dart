@@ -20,10 +20,7 @@ void main() {
       setUpAll(() => driver = DB.driver('foo_sqlite'));
 
       test('should return SQLite Driver', () {
-        expect(
-            driver,
-            isA<SqliteDriver>().having(
-                (p0) => p0.type, 'has driver type', DatabaseDriverType.sqlite));
+        expect(driver, isA<SqliteDriver>().having((p0) => p0.type, 'has driver type', DatabaseDriverType.sqlite));
       });
 
       test('should have table blueprint', () {
@@ -41,10 +38,7 @@ void main() {
       setUpAll(() => driver = DB.driver('moo_mysql'));
 
       test('should return MySql Driver', () {
-        expect(
-            driver,
-            isA<MySqlDriver>().having(
-                (p0) => p0.type, 'has driver type', DatabaseDriverType.mysql));
+        expect(driver, isA<MySqlDriver>().having((p0) => p0.type, 'has driver type', DatabaseDriverType.mysql));
       });
 
       test('should have table blueprint', () {
@@ -62,10 +56,7 @@ void main() {
       setUpAll(() => driver = DB.driver('bar_mariadb'));
 
       test('should return MySql Driver', () {
-        expect(
-            driver,
-            isA<MySqlDriver>().having((p0) => p0.type, 'has driver type',
-                DatabaseDriverType.mariadb));
+        expect(driver, isA<MySqlDriver>().having((p0) => p0.type, 'has driver type', DatabaseDriverType.mariadb));
       });
 
       test('should have table blueprint', () {
@@ -83,10 +74,7 @@ void main() {
       setUpAll(() => driver = DB.driver('foo_pgsql'));
 
       test('should return Postgres Driver', () {
-        expect(
-            driver,
-            isA<PostgreSqlDriver>().having(
-                (p0) => p0.type, 'has driver type', DatabaseDriverType.pgsql));
+        expect(driver, isA<PostgreSqlDriver>().having((p0) => p0.type, 'has driver type', DatabaseDriverType.pgsql));
       });
 
       test('should have table blueprint', () {
@@ -99,18 +87,18 @@ void main() {
     });
   });
 
-  // test('should err when Query without driver', () async {
-  //   late Object error;
-  //   try {
-  //     await Query.table<User>().findMany();
-  //   } catch (e) {
-  //     error = e;
-  //   }
+  test('should err when Query without driver', () async {
+    late Object error;
+    try {
+      await Query.table<User>().findMany();
+    } catch (e) {
+      error = e;
+    }
 
-  //   expect(
-  //     error,
-  //     isA<StateError>()
-  //         .having((p0) => p0.message, '', 'Driver not set for query. Make sure you supply a driver using .driver()'),
-  //   );
-  // });
+    expect(
+      error,
+      isA<StateError>()
+          .having((p0) => p0.message, '', 'Driver not set for query. Make sure you supply a driver using .driver()'),
+    );
+  });
 }
