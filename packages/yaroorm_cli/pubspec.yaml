@@ -1,6 +1,6 @@
 name: yaroorm_cli
 description: A starting point for Dart libraries or applications.
-version: 0.0.2
+version: 0.0.3+1
 homepage: https://docs.yaroo.dev/orm/quickstart
 repository: https://github.com/codekeyz/yaroo
 
