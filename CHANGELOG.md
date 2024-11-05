@@ -1,3 +1,9 @@
+## 0.0.4
+
+- Make Entity a mixin.
+- Fixed orderBy query.
+- Minor improvements.
+
 ## 0.0.3
 
 - Separate code-gen package from yaroorm.
