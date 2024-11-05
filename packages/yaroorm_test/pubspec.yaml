@@ -9,7 +9,8 @@ environment:
 
 dependencies:
   uuid: ^4.4.0
-  yaroorm: ^0.0.3
+  yaroorm:
+    path: '../'
 
 dev_dependencies:
   test: ^1.25.8

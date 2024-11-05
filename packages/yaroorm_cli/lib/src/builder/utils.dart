@@ -154,7 +154,8 @@ class Item {
 
   final migrationClasses =
       classElements.where((element) => typeChecker(orm.Migration).isExactlyType(element.supertype!));
-  final entityClasses = classElements.where((element) => typeChecker(orm.Entity).isExactlyType(element.supertype!));
+  final entityClasses =
+      classElements.where((element) => element.mixins.any((mixin) => typeChecker(orm.Entity).isExactlyType(mixin)));
 
   return (
     migrations: migrationClasses.isEmpty ? null : Item(migrationClasses, identifier),
