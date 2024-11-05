@@ -238,27 +238,33 @@ final class ParsedEntityClass {
     this.getters = const [],
   });
 
-  factory ParsedEntityClass.parse(ClassElement element, {ConstantReader? reader}) {
-    final className = element.name;
-    final tableName = getTableName(element);
-    final fields = element.fields.where(_allowedTypes).toList(growable: false);
+  factory ParsedEntityClass.parse(ClassElement clazz, {ConstantReader? reader}) {
+    final className = clazz.name;
+    final tableName = getTableName(clazz);
 
-    final primaryKey = _getFieldAnnotationByType(fields, orm.PrimaryKey);
-    final createdAt = _getFieldAnnotationByType(fields, orm.CreatedAtColumn);
-    final updatedAt = _getFieldAnnotationByType(fields, orm.UpdatedAtColumn);
-
-    // Check should have primary key
-    if (primaryKey == null) {
-      throw Exception("${element.name} Entity doesn't have primary key");
-    }
+    final fields = switch (clazz.supertype?.element) {
+      null => clazz.fields.where(_allowedTypes).toList(growable: false),
+      _ => [...clazz.fields, ...(clazz.supertype!.element as ClassElement).fields]
+          .where(_allowedTypes)
+          .toList(growable: false)
+    };
 
     // Validate un-named class constructor
-    final primaryConstructor = element.constructors.firstWhereOrNull((e) => e.name == "");
+    final primaryConstructor = clazz.constructors.firstWhereOrNull((e) => e.name == "");
     if (primaryConstructor == null) {
       throw InvalidGenerationSource(
         '$className Entity does not have a default constructor',
-        element: element,
+        element: clazz,
       );
+    }
+
+    final primaryKey = _getFieldAnnotationByType(primaryConstructor, fields, orm.PrimaryKey);
+    final createdAt = _getFieldAnnotationByType(primaryConstructor, fields, orm.CreatedAtColumn);
+    final updatedAt = _getFieldAnnotationByType(primaryConstructor, fields, orm.UpdatedAtColumn);
+
+    // Check should have primary key
+    if (primaryKey == null) {
+      throw Exception("${clazz.name} Entity doesn't have primary key");
     }
 
     final fieldNames = fields.map((e) => e.name);
@@ -274,7 +280,7 @@ final class ParsedEntityClass {
         .where((e) => ![primaryKey.field, createdAt?.field, updatedAt?.field].contains(e))
         .toList(growable: false);
 
-    final fieldsWithBindings = _getFieldsAndReaders(normalFields, orm.bindTo);
+    final fieldsWithBindings = _getFieldsAndReaders(primaryConstructor, normalFields, orm.bindTo);
 
     final Map<Symbol, ({ParsedEntityClass entity, Symbol field, ConstantReader reader})> bindings = {};
 
@@ -306,11 +312,11 @@ final class ParsedEntityClass {
     return ParsedEntityClass(
       tableName,
       className,
-      element,
+      clazz,
       allFields: fields,
       bindings: bindings,
       normalFields: normalFields,
-      getters: element.fields.where((e) => e.getter?.isSynthetic == false).toList(),
+      getters: clazz.fields.where((e) => e.getter?.isSynthetic == false).toList(),
       primaryKey: primaryKey,
       constructor: primaryConstructor,
       createdAtField: createdAt,
@@ -322,9 +328,23 @@ final class ParsedEntityClass {
     return field.getter?.isSynthetic ?? false;
   }
 
-  static FieldElementAndReader? _getFieldAnnotationByType(List<FieldElement> fields, Type type) {
+  static FieldElementAndReader? _getFieldAnnotationByType(
+    ConstructorElement constructor,
+    List<FieldElement> fields,
+    Type type,
+  ) {
+    final checker = typeChecker(type);
+
     for (final field in fields) {
-      final result = typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
+      final fieldInConstructor = constructor.children
+          .firstWhereOrNull((e) => e.name == field.name && e is SuperFormalParameterElement && e.metadata.isNotEmpty);
+
+      var result = checker.firstAnnotationOf(field, throwOnUnresolved: false);
+
+      if (result == null && fieldInConstructor != null) {
+        result = checker.firstAnnotationOf(fieldInConstructor);
+      }
+
       if (result != null) {
         return (field: field, reader: ConstantReader(result));
       }
@@ -332,9 +352,22 @@ final class ParsedEntityClass {
     return null;
   }
 
-  static Iterable<FieldElementAndReader> _getFieldsAndReaders(List<FieldElement> fields, Type type) sync* {
+  static Iterable<FieldElementAndReader> _getFieldsAndReaders(
+    ConstructorElement constructor,
+    List<FieldElement> fields,
+    Type type,
+  ) sync* {
+    final checker = typeChecker(type);
+
     for (final field in fields) {
-      final result = typeChecker(type).firstAnnotationOf(field, throwOnUnresolved: false);
+      final fieldInConstructor = constructor.children
+          .firstWhereOrNull((e) => e.name == field.name && e is SuperFormalParameterElement && e.metadata.isNotEmpty);
+      var result = checker.firstAnnotationOf(field, throwOnUnresolved: false);
+
+      if (result == null && fieldInConstructor != null) {
+        result = checker.firstAnnotationOf(fieldInConstructor);
+      }
+
       if (result == null) continue;
       yield (field: field, reader: ConstantReader(result));
     }
