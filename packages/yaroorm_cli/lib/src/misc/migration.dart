@@ -5,7 +5,7 @@ import 'package:yaroorm/yaroorm.dart';
 part 'migration.g.dart';
 
 @Table(name: 'migrations')
-class MigrationEntity extends Entity<MigrationEntity> {
+class MigrationEntity with Entity<MigrationEntity> {
   @primaryKey
   final int id;
 
@@ -13,5 +13,7 @@ class MigrationEntity extends Entity<MigrationEntity> {
 
   final int batch;
 
-  MigrationEntity(this.id, this.migration, this.batch);
+  MigrationEntity(this.id, this.migration, this.batch) {
+    super.initialize();
+  }
 }

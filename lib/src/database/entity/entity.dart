@@ -17,7 +17,7 @@ part 'converter.dart';
 part 'relations.dart';
 part 'joins.dart';
 
-abstract class Entity<Parent extends Entity<Parent>> {
+mixin Entity<Parent extends Entity<Parent>> {
   final Map<String, dynamic> _relationsPreloaded = {};
 
   DriverContract _driver = DB.defaultDriver;
@@ -26,7 +26,8 @@ abstract class Entity<Parent extends Entity<Parent>> {
 
   String? get connection => null;
 
-  Entity() {
+  @protected
+  void initialize() {
     if (connection != null) _driver = DB.driver(connection!);
   }
 

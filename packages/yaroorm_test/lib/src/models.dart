@@ -3,7 +3,7 @@ import 'package:yaroorm/yaroorm.dart';
 part 'models.g.dart';
 
 @table
-class User extends Entity<User> {
+class User with Entity<User> {
   @primaryKey
   final int id;
 
@@ -20,13 +20,15 @@ class User extends Entity<User> {
     required this.lastname,
     required this.age,
     required this.homeAddress,
-  });
+  }) {
+    super.initialize();
+  }
 
   HasMany<User, Post> get posts => hasMany<Post>(#posts);
 }
 
 @Table(name: 'posts')
-class Post extends Entity<Post> {
+class Post with Entity<Post> {
   @primaryKey
   final int id;
 
@@ -52,7 +54,9 @@ class Post extends Entity<Post> {
     required this.userId,
     required this.createdAt,
     required this.updatedAt,
-  });
+  }) {
+    super.initialize();
+  }
 
   HasMany<Post, PostComment> get comments => hasMany<PostComment>(#comments);
 
@@ -60,7 +64,7 @@ class Post extends Entity<Post> {
 }
 
 @table
-class PostComment extends Entity<PostComment> {
+class PostComment with Entity<PostComment> {
   @PrimaryKey(autoIncrement: false)
   final String id;
 
@@ -69,7 +73,9 @@ class PostComment extends Entity<PostComment> {
   @bindTo(Post, onDelete: ForeignKeyAction.cascade)
   final int postId;
 
-  PostComment(this.id, this.comment, {required this.postId});
+  PostComment(this.id, this.comment, {required this.postId}) {
+    super.initialize();
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
