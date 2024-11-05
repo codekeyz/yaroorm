@@ -788,19 +788,3 @@ class SqliteTableBlueprint extends TableBlueprint {
     _foreignKeys.add(szler.acceptForeignKey(this, key));
   }
 }
-
-extension on String {
-  bool get escaped {
-    final parts = split('');
-    if (parts.isEmpty) return false;
-    return parts[0] == '"' && parts[parts.length - 1] == '"';
-  }
-
-  String get unescape {
-    if (!escaped) return this;
-    final parts = split('')
-      ..removeAt(0)
-      ..removeLast();
-    return parts.join();
-  }
-}
