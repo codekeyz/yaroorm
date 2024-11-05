@@ -117,7 +117,7 @@ class Table {
   });
 }
 
-@Target({TargetKind.field})
+@Target({TargetKind.field, TargetKind.parameter})
 class TableColumn {
   final String? name;
   final bool nullable;
@@ -126,23 +126,24 @@ class TableColumn {
   const TableColumn({this.name, this.nullable = false, this.unique = false});
 }
 
-@Target({TargetKind.field})
+@Target({TargetKind.field, TargetKind.parameter})
 class PrimaryKey extends TableColumn {
   final bool autoIncrement;
   const PrimaryKey({this.autoIncrement = false, super.name});
 }
 
-@Target({TargetKind.field})
+@Target({TargetKind.field, TargetKind.parameter})
 class CreatedAtColumn extends TableColumn {
   const CreatedAtColumn() : super(name: 'createdAt', nullable: false);
 }
 
-@Target({TargetKind.field})
+@Target({TargetKind.field, TargetKind.parameter})
 class UpdatedAtColumn extends TableColumn {
   const UpdatedAtColumn() : super(name: 'updatedAt', nullable: false);
 }
 
 /// Use this to reference other entities
+@Target({TargetKind.field, TargetKind.parameter})
 class bindTo {
   final Type type;
   final Symbol? on;
