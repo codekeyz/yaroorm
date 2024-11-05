@@ -241,7 +241,7 @@ class SqliteSerializer extends PrimitiveSerializer {
     /// ORDER BY
     final orderBys = query.orderByProps ?? {};
     if (orderBys.isNotEmpty) {
-      queryBuilder.write(' ORDER BY ${acceptOrderBy(orderBys.toList())}');
+      queryBuilder.write(' ORDER BY ${acceptOrderBy(tableName, orderBys.toList())}');
     }
 
     /// LIMIT
@@ -341,9 +341,9 @@ class SqliteSerializer extends PrimitiveSerializer {
   }
 
   @override
-  String acceptOrderBy(List<OrderBy> orderBys) {
+  String acceptOrderBy(String tableName, List<OrderBy> orderBys) {
     direction(OrderDirection dir) => dir == OrderDirection.asc ? 'ASC' : 'DESC';
-    return orderBys.map((e) => '${e.field} ${direction(e.direction)}').join(', ');
+    return orderBys.map((e) => '$tableName.${escapeStr(e.field)} ${direction(e.direction)}').join(', ');
   }
 
   @override

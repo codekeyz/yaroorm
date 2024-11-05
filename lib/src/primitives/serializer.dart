@@ -22,7 +22,7 @@ abstract class PrimitiveSerializer {
 
   String acceptSelect(String tableName, List<String> fields);
 
-  String acceptOrderBy(List<OrderBy> orderBys);
+  String acceptOrderBy(String tableName, List<OrderBy> orderBys);
 
   String acceptLimit(int limit);
 
