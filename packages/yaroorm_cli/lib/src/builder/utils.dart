@@ -264,7 +264,10 @@ final class ParsedEntityClass {
 
     // Check should have primary key
     if (primaryKey == null) {
-      throw Exception("${clazz.name} Entity doesn't have primary key");
+      throw InvalidGenerationSource(
+        '$className Entity does not have a primary key',
+        element: clazz,
+      );
     }
 
     final fieldNames = fields.map((e) => e.name);
