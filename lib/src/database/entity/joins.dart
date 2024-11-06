@@ -12,8 +12,9 @@ final class Join<Parent extends Entity<Parent>, Reference extends Entity<Referen
   /// of this relation in [Entity] relations cache.
   final String key;
 
-  Iterable<String> get aliasedForeignSelections =>
-      Query.getEntity<Reference>().columns.map((e) => '${on.table}.${e.columnName} as "$resultKey.${e.columnName}"');
+  Iterable<String> get aliasedForeignSelections => Query.getEntity<Reference>()
+      .columns
+      .map((e) => '"${on.table}"."${e.columnName}" as "$resultKey.${e.columnName}"');
 
   const Join(
     this.resultKey, {
