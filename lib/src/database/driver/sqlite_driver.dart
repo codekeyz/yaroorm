@@ -365,9 +365,7 @@ class SqliteSerializer extends PrimitiveSerializer {
 
   @override
   String acceptWhereClauseValue(WhereClauseValue clauseValue) {
-    final tableName = clauseValue.table;
-    final field = tableName == null ? escapeStr(clauseValue.field) : '$tableName.${escapeStr(clauseValue.field)}';
-
+    final field = '${escapeStr(clauseValue.table)}.${escapeStr(clauseValue.field)}';
     final valueOperator = clauseValue.operator;
 
     /// For this operators, Ignore the conversion of value to DB Type.

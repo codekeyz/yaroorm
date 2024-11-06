@@ -108,7 +108,7 @@ class WhereClauseValue<ValueType> extends WhereClause {
   final Operator operator;
   final ValueType value;
 
-  final String? table;
+  final String table;
 
   final Map<Type, EntityTypeConverter> _converters = {};
 
@@ -116,7 +116,7 @@ class WhereClauseValue<ValueType> extends WhereClause {
     this.field,
     this.operator,
     this.value, {
-    this.table,
+    required this.table,
   }) : super(const []) {
     if ([Operator.BETWEEN, Operator.NOT_BETWEEN].contains(operator)) {
       if (value is! Iterable || (value as Iterable).length != 2) {
@@ -136,7 +136,6 @@ class WhereClauseValue<ValueType> extends WhereClause {
 
   @override
   void validate(List<Join> joins) {
-    if (table == null) return;
     final tableJoined = joins.any((e) => [e.on.table, e.origin.table].contains(table));
     if (!tableJoined) {
       throw ArgumentError(
@@ -158,9 +157,9 @@ class WhereClauseValue<ValueType> extends WhereClause {
 }
 
 class WhereClauseBuilder<T extends Entity<T>> with WhereOperation {
-  final String? table;
+  final String table;
 
-  const WhereClauseBuilder({this.table});
+  WhereClauseBuilder() : table = Query.getEntity<T>().tableName;
 
   @override
   WhereClauseValue<V> $equal<V>(String field, V value) {

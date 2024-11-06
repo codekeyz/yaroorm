@@ -357,8 +357,6 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
     for (final (field) in [...parsed.hasManyGetters, ...parsed.belongsToGetters, ...parsed.hasOneGetters]) {
       final hasMany = field.getter!.returnType as InterfaceType;
       final referencedClass = hasMany.typeArguments.last.element as ClassElement;
-      final parsedReferenceClass = ParsedEntityClass.parse(referencedClass);
-
       final returnType = 'WhereClauseBuilder<${referencedClass.name}>';
 
       result.add(
@@ -367,7 +365,7 @@ class EntityGenerator extends GeneratorForAnnotation<entity.Table> {
           ..lambda = true
           ..type = MethodType.getter
           ..returns = refer(returnType)
-          ..body = Code('$returnType(table: "${parsedReferenceClass.table}")')),
+          ..body = Code('$returnType()')),
       );
     }
 
