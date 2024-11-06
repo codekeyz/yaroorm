@@ -21,7 +21,9 @@ dependencies:
   crypto: ^3.0.3
   recase: ^4.1.0
   grammer: ^1.0.3
-  yaroorm: ^0.0.3
+  yaroorm:
+    git: 
+      url: 'https://github.com/codekeyz/yaroorm.git'
   cli_table: ^1.0.2
   collection: ^1.19.1
   mason_logger: ^0.3.1
